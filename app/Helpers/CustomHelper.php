@@ -26,7 +26,8 @@ class CustomHelper
         $localPath = storage_path('app/public/' . $image_path);
 
         if ($image && File::exists($localPath)) {
-            $imageUrl = Storage::disk('public')->url($image_path);
+            $imageUrl = url('storage/app/public/' . $image_path);
+            // $imageUrl = Storage::disk('public')->url($image_path);
         } else {
             $imageUrl = URL::asset($imagePath);
         }
