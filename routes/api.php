@@ -74,6 +74,7 @@ Route::prefix('users')->group(function () {
         Route::post('/autobid', [ApiController::class, 'autobid']);
         Route::post('/autobid-list', [ApiController::class, 'autobidList']);
         Route::post('/lead-preferences', [ApiController::class, 'leadpreferences']);
+        Route::post('/get-lead-preferences', [ApiController::class, 'getleadpreferences']);
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

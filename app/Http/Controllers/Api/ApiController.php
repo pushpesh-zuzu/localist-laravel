@@ -129,6 +129,7 @@ class ApiController extends Controller
                 ->where('us.auto_bid', 1)
                 ->where('usl.status', 1)
                 ->where('u.total_credit', '>=', 20)
+                ->limit(5)
         );
 
         // Step 3: Fetch Sellers from Temp Table
@@ -220,40 +221,67 @@ class ApiController extends Controller
         $leadid = $request->lead_id; 
         $bids = [];
         if (!empty($leadid)) {
-            $bids = Bid::where('seller_id',$seller_id)->where('lead_id',$leadid)->orderBy('id','DESC')->get();
+            $bids = Bid::where('seller_id',$seller_id)->where('lead_id',$leadid)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
         }else{
-            $bids = Bid::where('seller_id',$seller_id)->orderBy('id','DESC')->get();
+            $bids = Bid::where('seller_id',$seller_id)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
         }
         return $this->sendResponse(__('AutoBid Data'), $bids);
     }
 
     public function leadpreferences(Request $request): JsonResponse
     {
-        $aVals = $request->all();
         $request->validate([
-            'service_id' => 'required',
-            'question_id' => 'required',
-            'user_id' => 'required',
-            'answers' => 'required',
+            'service_id'   => 'required',
+            'user_id'      => 'required|integer',
+            'question_id'  => 'required|array', // Expecting multiple question IDs
+            'answers'      => 'required|array', // Expecting multiple answers
         ]);
 
-        $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $aVals['answers']);
-    
-        // Remove trailing comma if it exists
-        $cleanedAnswer = rtrim($cleanedAnswer, ',');
+        $insertedOrUpdatedData = [];
 
-        // Filter out any empty values after splitting by comma
-        $answerArray = array_filter(explode(',', $cleanedAnswer), function($value) {
-            return trim($value) !== ''; // Ensure no empty entries
-        });
-        // Rebuild the answer string
-        $aVals['answers'] = implode(',', $answerArray);
-        $leadPreference = LeadPrefrence::create([
-            'service_id'  => $request->service_id,
-            'question_id' => $request->question_id,
-            'user_id'     => $request->user_id,
-            'answers'     => $aVals['answers'], 
+        foreach ($request->question_id as $index => $questionId) {
+            $answers = $request->answers[$index] ?? '';
+
+            // Clean and format answers (comma-separated)
+            $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $answers);
+            $cleanedAnswer = rtrim($cleanedAnswer, ','); // Remove trailing comma
+
+            // Check if an entry exists
+            $leadPreference = LeadPrefrence::where('service_id', $request->service_id)
+                ->where('user_id', $request->user_id)
+                ->where('question_id', $questionId)
+                ->first();
+
+            if ($leadPreference) {
+                // Update existing record
+                $leadPreference->update(['answers' => $cleanedAnswer]);
+            } else {
+                // Create a new record
+                $leadPreference = LeadPrefrence::create([
+                    'service_id'  => $request->service_id,
+                    'question_id' => $questionId,
+                    'user_id'     => $request->user_id,
+                    'answers'     => $cleanedAnswer,
+                ]);
+            }
+
+            $insertedOrUpdatedData[] = $leadPreference;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Data processed successfully'),
+            'data'    => $insertedOrUpdatedData,
         ]);
-        return $this->sendResponse(__('Data added sucessfully'), $leadPreference);
+    }
+
+    public function getleadpreferences(Request $request): JsonResponse
+    {
+        $user_id = $request->user_id; 
+        $service_id = $request->service_id; 
+        $leadPreference = LeadPrefrence::where('service_id', $service_id)
+                                        ->where('user_id', $user_id)
+                                        ->get();
+        return $this->sendResponse(__('Lead Preferences Data'), $leadPreference);                              
     }
 }
