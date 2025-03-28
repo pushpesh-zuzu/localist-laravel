@@ -24,17 +24,16 @@ Route::prefix('customer')->group(function () {
 
     Route::get('test',[CustomerController::class,'test']);
    
+    Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::prefix('my-request')->group(function () {
-        
-
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);
             Route::post('create-new-request',[MyRequestController::class,'createNewRequest']);
             Route::post('add-image-to-submitted-request',[MyRequestController::class,'addImageToSubmittedRequest']);
             Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);
-            Route::post('check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
+           
         });
 
         Route::prefix('setting')->group(function () {       
