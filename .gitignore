@@ -2,7 +2,7 @@
 /node_modules
 /storage/*.key
 /storage/pail
-.env
+/.env
 .env.backup
 .env.production
 .phpactor.json
