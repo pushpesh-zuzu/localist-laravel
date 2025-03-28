@@ -32,12 +32,10 @@ Route::prefix('customer')->group(function () {
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);
             Route::post('create-new-request',[MyRequestController::class,'createNewRequest']);
             Route::post('add-image-to-submitted-request',[MyRequestController::class,'addImageToSubmittedRequest']);
-            Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);
-           
+            Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);           
         });
 
-        Route::prefix('setting')->group(function () {       
-
+        Route::prefix('setting')->group(function () {
             Route::get('get-profile-info',[AccountSettingController::class,'getProfileInfo']);
             Route::get('update-profile-image',[AccountSettingController::class,'updateProfileImage']);
             Route::post('update-profile-info',[AccountSettingController::class,'updateProfileInfo']);
