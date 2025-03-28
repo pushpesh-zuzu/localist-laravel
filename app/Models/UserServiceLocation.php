@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class UserServiceLocation extends Model
+{
+    protected $fillable = ['user_id', 'service_id','miles','postcode','nation_wide','is_default','status'];
+
+    public static function createUserServiceLocation($aLocations)
+    {
+           // $aLocation = UserServiceLocation::create($aLocations);
+
+           $aLocation = UserServiceLocation::updateOrCreate(
+                ['user_id' => $aLocations['user_id'], 'service_id' => $aLocations['service_id'], 'postcode' => $aLocations['postcode']], // Search criteria
+                ['updated_at' => now(), 'miles' => $aLocations['miles']] // Fields to update or insert
+            );
+
+            return $aLocation;
+    }
+}
