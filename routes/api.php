@@ -37,7 +37,7 @@ Route::prefix('customer')->group(function () {
 
         Route::prefix('setting')->group(function () {
             Route::get('get-profile-info',[AccountSettingController::class,'getProfileInfo']);
-            Route::get('update-profile-image',[AccountSettingController::class,'updateProfileImage']);
+            Route::post('update-profile-image',[AccountSettingController::class,'updateProfileImage']);
             Route::post('update-profile-info',[AccountSettingController::class,'updateProfileInfo']);
             Route::post('change-password',[AccountSettingController::class,'changePassword']);
         });
