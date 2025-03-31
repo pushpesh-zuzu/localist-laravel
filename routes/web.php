@@ -10,6 +10,7 @@ use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ServiceQuestionsController;
+use App\Http\Controllers\UserController;
 
 
 Route::get('/clear-cache', function() {
@@ -33,6 +34,7 @@ Route::get('/install-api', function() {
 // Route::get('/', [DashboardController::class, 'index'])->middleware(['auth:admin', 'verified'])->name('dashboard');
 Route::middleware('auth:admin')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->middleware(['auth:admin'])->name('dashboard');
+    Route::get('/users/{type?}', [UserController::class, 'index'])->name('user.index');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

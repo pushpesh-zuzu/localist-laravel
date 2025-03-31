@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\Bid;
 use App\Models\LeadPrefrence;
+use App\Models\UserDetail;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ServiceQuestion;
@@ -268,11 +269,8 @@ class ApiController extends Controller
             $insertedOrUpdatedData[] = $leadPreference;
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => __('Data processed successfully'),
-            'data'    => $insertedOrUpdatedData,
-        ]);
+     
+        return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);   
     }
 
     public function getleadpreferences(Request $request): JsonResponse
@@ -283,5 +281,22 @@ class ApiController extends Controller
                                         ->where('user_id', $user_id)
                                         ->get();
         return $this->sendResponse(__('Lead Preferences Data'), $leadPreference);                              
+    }
+
+    public function switchAutobid(Request $request): JsonResponse
+    {
+        $user_id = $request->user_id; 
+        $autobid = $request->is_autobid;
+        $userdetails = UserDetail::where('user_id',$user_id)->first();
+        if(isset($userdetails) && $userdetails != ''){
+            $userdetails->update(['is_autobid' => $autobid]);
+        }else{
+            $userdetails = UserDetail::create([
+                'user_id'  => $user_id,
+                'is_autobid' => $autobid
+            ]);
+        }
+        $data = $userdetails;
+        return $this->sendResponse(__('Autobid switched successfully'),$data );   
     }
 }
