@@ -63,8 +63,10 @@ Route::prefix('users')->group(function () {
         // add services 
         Route::post('/add_service', [UserController::class, 'addUserService']);
         Route::post('/add_location', [UserController::class, 'addUserLocation']);
+
         Route::post('/get_user_services', [UserController::class, 'getUserServices']);
         Route::post('/get_user_locations', [UserController::class, 'getUserLocations']);
+
         Route::post('/switch_user', [UserController::class, 'switchUser']);
         Route::post('/edit-profile', [UserController::class, 'editProfile']);
         Route::post('/update-profile', [UserController::class, 'updateProfile']);
@@ -74,13 +76,19 @@ Route::prefix('users')->group(function () {
         
         Route::post('/autobid', [ApiController::class, 'autobid']);
         Route::post('/autobid-list', [ApiController::class, 'autobidList']);
+
         Route::post('/lead-preferences', [ApiController::class, 'leadpreferences']);
         Route::post('/get-lead-preferences', [ApiController::class, 'getleadpreferences']);
+        Route::post('/get-services', [ApiController::class, 'getservices']);
 
         Route::post('/switch-autobid', [ApiController::class, 'switchAutobid']);
+
         Route::post('/seller-myprofile', [ApiController::class, 'sellerMyprofile']);
         Route::post('/seller-myprofile-qa', [ApiController::class, 'sellerMyprofileqa']);
         Route::get('/seller-profile-ques', [ApiController::class, 'sellerProfileQues']);
+
+        Route::post('/seller-billing-details', [ApiController::class, 'sellerBillingDetails']);
+        Route::post('/seller-card-details', [ApiController::class, 'sellerCardDetails']);
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

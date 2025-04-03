@@ -19,6 +19,13 @@ class UserDetail extends Model
                             'twitter_link',
                             'is_link_desc',
                             'link_desc',
-                            'is_accreditations'
+                            'is_accreditations',
+                            'billing_contact_name',
+                            'billing_address1',
+                            'billing_address2',
+                            'billing_city',
+                            'billing_postcode',
+                            'billing_phone',
+                            'billing_vat_register'
                         ];
 }

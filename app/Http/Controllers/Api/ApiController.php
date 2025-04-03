@@ -10,6 +10,8 @@ use App\Models\UserAccreditation;
 use App\Models\UserServiceDetail;
 use App\Models\ProfileQuestion;
 use App\Models\ProfileQA;
+use App\Models\UserCardDetail;
+use App\Models\UserService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ServiceQuestion;
@@ -210,7 +212,6 @@ class ApiController extends Controller
         $encodedPostcode2 = urlencode($postcode2);
         $apiKey = "AIzaSyB29PyyFmCsm_nw8ELavLskRzMPd3XEIac"; // Replace with your API key
         $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$encodedPostcode1}&destinations={$encodedPostcode2}&key={$apiKey}";
-        // dd($url);
 
         $response = file_get_contents($url);
         $data = json_decode($response, true);
@@ -317,10 +318,14 @@ class ApiController extends Controller
                 if ($request->hasFile('company_logo')) {
                     $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');
                     $company_logo = $imagePath; 
+                }else{
+                    $company_logo = "";
                 }
                 if ($request->hasFile('profile_image')) {
                     $profileimagePath =  CustomHelper::fileUpload($aValues['profile_image'],'users');
                     $profile_image = $profileimagePath; 
+                }else{
+                    $profile_image = "";
                 }
                 $userData = self::aboutData($aValues,$company_logo,$profile_image,$users,$user_id);
         }
@@ -336,27 +341,64 @@ class ApiController extends Controller
                 }
                 
                 $company_photos = implode(',', $companyimgPaths); // Convert array to a comma-separated string
-                $userData = self::userdetailData($aValues,$company_photos,$userdetails,$user_id);
-                // return $this->sendResponse(__('MyProfile updated successfullysss'),$userData );
+            }else{
+                $company_photos = "";
             }
+            $userData = self::userdetailData($aValues,$company_photos,$userdetails,$user_id);
         }
-        
         if($aValues['type'] == 'accreditations'){
                 if ($request->hasFile('accre_image')) {
                     $imagePath =  CustomHelper::accfileUpload($aValues['accre_image'],'accreditations');
                     $accre_image = $imagePath; 
+                }else{
+                    $accre_image = "";
                 }
+                  // Handle delete condition
+                if (isset($aValues['deleteData']) && $aValues['deleteData'] == 1) {
+                    $accrDeleteIds = explode(',', $aValues['accr_delete_id']);
+                    $accDatas = UserAccreditation::whereIn('id', $accrDeleteIds)
+                                                 ->where('user_id', $user_id)
+                                                 ->get();
+                    if (count($accDatas)>0) {
+                        UserAccreditation::whereIn('id', $accrDeleteIds)
+                            ->where('user_id', $user_id)
+                            ->delete();
+                            return $this->sendResponse(__('Accreditations deleted successfully'), []);
+                    } else {
+                        return $this->sendError("No Data found");
+                        // Delete a single record
+                        // UserAccreditation::where('id', $aValues['accr_delete_id'])
+                        //     ->where('user_id', $user_id)
+                        //     ->delete();
+                    }
+
+                    
+                }
+
                 $userData = self::accreditationData($aValues,$accreditations,$user_id,$accre_image,$userdetails);
-                $userData->is_accreditations =  $aValues['is_accreditations'];
-                // return $this->sendResponse(__('MyProfile updated successfully'),$accreditationData );  
+                $userData->is_accreditations =  $aValues['is_accreditations']; 
         }
 
         if($aValues['type'] == 'userservices'){
+               // Handle delete condition
+               if (isset($aValues['deleteData']) && $aValues['deleteData'] == 1) {
+                $serviceDeleteIds = explode(',', $aValues['service_delete_id']);
+                $serDatas = UserServiceDetail::whereIn('id', $serviceDeleteIds)
+                                             ->where('user_id', $user_id)
+                                             ->get();
+                if (count($serDatas)>0) {
+                    UserServiceDetail::whereIn('id', $serviceDeleteIds)
+                                     ->where('user_id', $user_id)
+                                     ->delete();
+                } else {
+                    return $this->sendError("No Data found");
+                }
+
+                return $this->sendResponse(__('Services deleted successfully'), []);
+            }
             $userData = self::serviceData($aValues,$serviceDetails,$user_id);
-            // return $this->sendResponse(__('MyProfile updated successfully'),$serviceData );  
         }
         return $this->sendResponse(__('MyProfile updated successfully'),$userData );
-        // return $this->sendResponse(__('No data found'),[] );  
     }
 
     public function userdetailData($aValues,$company_photos,$userdetails,$user_id){
@@ -458,19 +500,124 @@ class ApiController extends Controller
 
     public function sellerMyprofileqa(Request $request): JsonResponse
     {
+        $user_id = $request->user_id;
+        $questions = $request->input('questions', []); // Get array of questions
+        $answers = $request->input('answers', []); // Get array of answers
+    
+        if (!is_array($questions) || !is_array($answers)) {
+            return $this->sendError("Invalid data format");
+        }
+    
+        $data = [];
+        foreach ($questions as $index => $question) {
+            $answer = $answers[$index] ?? null;
+    
+            if (empty($question) || empty($answer)) {
+                continue; // Skip if question or answer is empty
+            }
+    
+            // Check if the question already exists for this user
+            $profileQues = ProfileQA::where('user_id', $user_id)
+                ->where('questions', $question)
+                ->first();
+    
+            if ($profileQues) {
+                // Update existing record
+                $profileQues->update([
+                    'answer' => $answer
+                ]);
+                $data[] = $profileQues;
+            } else {
+                // Insert new record
+                $newQnA = ProfileQA::create([
+                    'user_id' => $user_id,
+                    'questions' => $question,
+                    'answer' => $answer
+                ]);
+                $data[] = $newQnA;
+            }
+        }
+    
+        if (empty($data)) {
+            return $this->sendError("No valid data submitted");
+        }
+    
+        return $this->sendResponse(__('Data Submitted successfully'), $data);
+    }
+
+    public function sellerBillingDetails(Request $request){
         $user_id = $request->user_id; 
         $aValues = $request->all();
-        $userdetails = ProfileQA::where('user_id',$user_id)->first();
+        $userdetails = UserDetail::where('user_id',$user_id)->first();
         if(isset($userdetails) && $userdetails != ''){
-            $userdetails->update(['is_autobid' => $autobid]);
+            $userdetails->update([
+                'billing_contact_name' => $aValues['billing_contact_name'],
+                'billing_address1' => $aValues['billing_address1'],
+                'billing_address2' => $aValues['billing_address2'],
+                'billing_city' => $aValues['billing_city'],
+                'billing_postcode' => $aValues['billing_postcode'],
+                'billing_phone' => $aValues['billing_phone'],
+                'billing_vat_register' => $aValues['billing_vat_register'],
+            ]);  
         }else{
             $userdetails = UserDetail::create([
                 'user_id'  => $user_id,
-                'is_autobid' => $autobid
+                'billing_contact_name' => $aValues['billing_contact_name'],
+                'billing_address1' => $aValues['billing_address1'],
+                'billing_address2' => $aValues['billing_address2'],
+                'billing_city' => $aValues['billing_city'],
+                'billing_postcode' => $aValues['billing_postcode'],
+                'billing_phone' => $aValues['billing_phone'],
+                'billing_vat_register' => $aValues['billing_vat_register'],
             ]);
         }
-        $data = $userdetails;
-        return $this->sendResponse(__('Autobid switched successfully'),$data );   
+        return $userdetails;
     }
+
+    public function sellerCardDetails(Request $request){
+        $user_id = $request->user_id; 
+        $aValues = $request->all();
+        $userdetails = UserCardDetail::where('user_id',$user_id)->first();
+        if(isset($userdetails) && $userdetails != ''){
+            $userdetails->update([
+                'card_number' => $aValues['card_number'],
+                'expiry_date' => $aValues['expiry_date'],
+                'cvc' => $aValues['cvc']
+            ]);  
+        }else{
+            $userdetails = UserCardDetail::create([
+                'user_id'  => $user_id,
+                'card_number' => $aValues['card_number'],
+                'expiry_date' => $aValues['expiry_date'],
+                'cvc' => $aValues['cvc']
+            ]);
+        }
+        return $userdetails;
+    }
+
+    public function getservices(Request $request){
+        $user_id = $request->user_id; 
+        $questions = UserService::whereIn('user_id',[$user_id])->with('userServices')->get();
+        return $this->sendResponse(__('Profile Questions Data'), $questions);
+    }
+
+    
+    
+    // public function sellerMyprofileqa(Request $request): JsonResponse
+    // {
+    //     $user_id = $request->user_id; 
+    //     $aValues = $request->all();
+    //     $profileQues = ProfileQA::where('user_id',$user_id)->where('questions',$aValues['questions'])->first();
+    //     if(isset($profileQues) && $profileQues != ''){
+    //         $profileQues->update(['is_autobid' => $autobid]);
+    //     }else{
+    //         $userdetails = UserDetail::create([
+    //             'user_id'  => $user_id,
+    //             'is_autobid' => $autobid
+    //         ]);
+    //     }
+    //     $data = $userdetails;
+    //     return $this->sendResponse(__('Autobid switched successfully'),$data );   
+    // }
 
 }
