@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 use App\Helpers\CustomHelper;
 
 use App\Models\User;
@@ -77,11 +78,25 @@ class MyRequestController extends Controller
         $data['created_at'] = date('y-m-d H:i:s');
         $data['updated_at'] = date('y-m-d H:i:s');
 
+        //evaluate Lead Badges
+        $data['is_phone_verified'] = User::where('id',$user_id)->value('phone_verified') == 1 ? 1 : 0;
+
+        $leadCount = LeadRequest::where('customer_id',$user_id)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
+        $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
+
+        $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
+        $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
+
+        $patternUrgent = "/\b(as soon as possible)\b/i";
+        $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
+        //end evaluate Lead Badges
+
+
         $sId = LeadRequest::insertGetId($data);
 
         if($sId){
             $rel['request_id'] = $sId;
-            return $this->sendResponse('Submitted Quotes',$rel);
+            return $this->sendResponse('Quote Submitted Sucessfully',$rel);
         }
         return $this->sendError('Something went wrong, try again!');
     }
