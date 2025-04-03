@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\Customer\MyRequestController;
 use App\Http\Controllers\Api\Customer\AccountSettingController;
+use App\Http\Controllers\Api\NotificationController;
 
 
 Route::get('/user', function (Request $request) {
@@ -19,6 +20,12 @@ Route::get('/check_api', function () {
     return "check api";
 });
 
+Route::prefix('notification')->group(function () {
+    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+        Route::post('add-update-notification',[NotificationController::class,'addUpdateNotification']);
+    });
+    
+});
 
 Route::prefix('customer')->group(function () {
 
@@ -41,6 +48,8 @@ Route::prefix('customer')->group(function () {
             Route::post('update-profile-info',[AccountSettingController::class,'updateProfileInfo']);
             Route::post('change-password',[AccountSettingController::class,'changePassword']);
         });
+
+        
 
     });
 
