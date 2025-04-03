@@ -13,4 +13,13 @@ class LeadRequest extends Model
 
     protected $fillable = ['customer_id', 'service_id','postcode','questions','phone'];
 
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id','id')->select('id','name','email');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'service_id','id')->select('id','name');
+    }
 }

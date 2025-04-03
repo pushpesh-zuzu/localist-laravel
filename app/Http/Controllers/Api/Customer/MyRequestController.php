@@ -27,7 +27,7 @@ class MyRequestController extends Controller
     public function getSubmittedRequestList(Request $request){
         $user_id = $request->user_id;
 
-        $list = LeadRequest::where('customer_id',$user_id)->get();
+        $list = LeadRequest::with(['customer','category'])->where('customer_id',$user_id)->get();
 
         return $this->sendResponse('Submitted Quotes',$list);
 
@@ -44,7 +44,7 @@ class MyRequestController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $info = LeadRequest::where('id',$request->request_id)->get();
+        $info = LeadRequest::with(['customer','category'])->where('id',$request->request_id)->get();
         return $this->sendResponse('Quotation Information',$info);
 
     }
@@ -73,6 +73,7 @@ class MyRequestController extends Controller
         $data['phone'] = $request->phone;
 
         $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
+        $data['credit_score'] = rand(15, 30);
         $data['created_at'] = date('y-m-d H:i:s');
         $data['updated_at'] = date('y-m-d H:i:s');
 
