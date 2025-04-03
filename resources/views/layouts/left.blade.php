@@ -61,7 +61,12 @@
                 {{ __('Service Questions') }}
             </a>   
         </li>
-        
+        <li class="nav-item">
+            <a href="{{ route('profilequestion.index') }}" class="nav-link {{ request()->routeIs('profilequestion.index') ? 'active' : '' }}">
+                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                {{ __('Profile Questions') }}
+            </a>   
+        </li>
         <li class="nav-item">
             <a href="{{ route('blogs.index') }}" class="nav-link {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
                 <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>

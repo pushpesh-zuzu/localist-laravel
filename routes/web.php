@@ -11,6 +11,7 @@ use App\Http\Controllers\SellerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ServiceQuestionsController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileQuesController;
 
 
 Route::get('/clear-cache', function() {
@@ -49,6 +50,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-incomplete-list', [SellerController::class, 'incompletelist'])->name('seller.incomplete');
     Route::resource('servicequestion', ServiceQuestionsController::class);
+    Route::resource('profilequestion', ProfileQuesController::class);
 
 });
 

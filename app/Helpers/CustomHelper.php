@@ -45,12 +45,10 @@ class CustomHelper
             $imgname = $image->getClientOriginalName();
 
             if (!in_array($imageext, $imageArray) && $chkext) {
-                dd('ddd');
                 return "";
             }
             $mimeType = $image->getMimeType();
             if (!in_array($mimeType, ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/bmp', 'image/svg+xml'])) {
-                // dd('sss');
                 return "";
             }
             $imagename =  time() . '.' . $imageext;
@@ -63,5 +61,32 @@ class CustomHelper
             }
         }
         return  $imagename;
-    }	
+    }
+    
+    public static function accfileUpload($image, $destinationFolder = '',$chkext = true)
+    {
+        $imageArray = array("png", "jpg", "jpeg", "gif", "bmp", "svg", "pdf");
+        $imagename = "profile.png";
+        if ($image) {
+            $imageext = $image->extension();
+            $imgname = $image->getClientOriginalName();
+
+            if (!in_array($imageext, $imageArray) && $chkext) {
+                return "";
+            }
+            $mimeType = $image->getMimeType();
+            if (!in_array($mimeType, ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/bmp', 'image/svg+xml', 'application/pdf'])) {
+                return "";
+            }
+            $imagename =  time() . '.' . $imageext;
+
+            if(env('APP_ENV', config('app.env')) == 'local'){
+                $folderPath = 'images/' . $destinationFolder;
+                $image->storeAs($folderPath, $imagename, 'public');
+            }else if(env('APP_ENV', config('app.env')) == 'production'){
+                $imagename = 'profile.png';
+            }
+        }
+        return  $imagename;
+    }
 }

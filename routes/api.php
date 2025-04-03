@@ -57,6 +57,8 @@ Route::prefix('users')->group(function () {
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
+    Route::post('/questions-answer', [ApiController::class, 'questionAnswer']);
+
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         // add services 
         Route::post('/add_service', [UserController::class, 'addUserService']);
@@ -69,14 +71,16 @@ Route::prefix('users')->group(function () {
         Route::post('/logout', [UserController::class, 'logout']);
         Route::post('/update-profile-image', [UserController::class, 'updateProfileImage']);
         Route::post('/change-password', [UserController::class, 'changePassword']);
-
-        Route::post('/questions-answer', [ApiController::class, 'questionAnswer']);
+        
         Route::post('/autobid', [ApiController::class, 'autobid']);
         Route::post('/autobid-list', [ApiController::class, 'autobidList']);
         Route::post('/lead-preferences', [ApiController::class, 'leadpreferences']);
         Route::post('/get-lead-preferences', [ApiController::class, 'getleadpreferences']);
 
         Route::post('/switch-autobid', [ApiController::class, 'switchAutobid']);
+        Route::post('/seller-myprofile', [ApiController::class, 'sellerMyprofile']);
+        Route::post('/seller-myprofile-qa', [ApiController::class, 'sellerMyprofileqa']);
+        Route::get('/seller-profile-ques', [ApiController::class, 'sellerProfileQues']);
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

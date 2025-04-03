@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\ServiceQuestion;
 use App\Models\Category;
 use Illuminate\Support\Facades\Validator;
-use App\Helpers\CustomHelper;
 
 class ServiceQuestionsController extends Controller
 {
@@ -35,7 +34,7 @@ class ServiceQuestionsController extends Controller
     public function store(Request $request)
     {
         $this->validateSave($request);   
-        return redirect()->route('servicequestion.index')->with('success', 'Leads created successfully.');
+        return redirect()->route('servicequestion.index')->with('success', 'Questions created successfully.');
     }
 
     /**
@@ -63,7 +62,7 @@ class ServiceQuestionsController extends Controller
         $leads = ServiceQuestion::where('id',$id)->first();
         $this->validateSave($request,$leads);      
         return redirect()->route('servicequestion.index')
-                         ->with('success', 'Leads updated successfully.');
+                         ->with('success', 'Questions updated successfully.');
     }
 
     /**
@@ -73,7 +72,7 @@ class ServiceQuestionsController extends Controller
     {
         ServiceQuestion::where('id',$id)->delete();
         return redirect()->route('servicequestion.index')
-                         ->with('success', 'Leads deleted successfully.');
+                         ->with('success', 'Question deleted successfully.');
     }
 
     protected function validateSave(Request $request,$isEdit = "")

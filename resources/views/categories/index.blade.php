@@ -37,7 +37,7 @@
           </tbody>
         </table>
         @else 
-        No records found
+        <p style="text-align:center">No records found</p>
         @endif
       </div>
     </div>
