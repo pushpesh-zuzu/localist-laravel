@@ -99,7 +99,7 @@ Route::prefix('users')->group(function () {
         Route::post('/seller-billing-details', [ApiController::class, 'sellerBillingDetails']);
         Route::post('/seller-card-details', [ApiController::class, 'sellerCardDetails']);
 
-        // Route::get('/get-plans', [ApiController::class, 'getPlans']);
+        Route::get('/get-plans', [ApiController::class, 'getPlans']);
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

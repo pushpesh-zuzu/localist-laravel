@@ -12,6 +12,7 @@ use App\Models\ProfileQuestion;
 use App\Models\ProfileQA;
 use App\Models\UserCardDetail;
 use App\Models\UserService;
+use App\Models\Plan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ServiceQuestion;
@@ -287,6 +288,7 @@ class ApiController extends Controller
                                         ->where('user_id', $user_id)
                                         ->get();
         if(count($leadPreference)>0){
+            $questions = [];
             foreach($leadPreference as $value){
                 $questions = ServiceQuestion::where('category', $value->question_id)->first();
                 $value['questions'] = $questions->questions;
@@ -612,9 +614,13 @@ class ApiController extends Controller
         return $this->sendResponse(__('Profile Questions Data'), $questions);
     }
 
-    // public function (){
-
-    // }
+    public function getPlans(Request $request){
+        $plans = Plan::where('status',1)->get();
+        foreach ($plans as $key => $value) {
+            // $value['per_credit'] = $value->
+        }
+        return $this->sendResponse(__('Plans Data'), $plans);
+    }
     
     
     // public function sellerMyprofileqa(Request $request): JsonResponse
