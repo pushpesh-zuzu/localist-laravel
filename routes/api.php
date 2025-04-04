@@ -100,6 +100,8 @@ Route::prefix('users')->group(function () {
         Route::post('/seller-card-details', [ApiController::class, 'sellerCardDetails']);
 
         Route::get('/get-plans', [ApiController::class, 'getPlans']);
+        Route::get('/get-lead-request', [ApiController::class, 'getLeadRequest']);
+        Route::post('/buy-credits', [ApiController::class, 'buyCredits']);
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

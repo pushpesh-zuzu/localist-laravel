@@ -12,6 +12,8 @@ use App\Models\ProfileQuestion;
 use App\Models\ProfileQA;
 use App\Models\UserCardDetail;
 use App\Models\UserService;
+use App\Models\LeadRequest;
+use App\Models\PurchaseHistory;
 use App\Models\Plan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -24,6 +26,7 @@ use Illuminate\Support\Facades\{
 use Illuminate\Support\Facades\Storage;
 use Log;
 use App\Helpers\CustomHelper;
+use \Carbon\Carbon;
 
 class ApiController extends Controller
 {
@@ -284,15 +287,20 @@ class ApiController extends Controller
     {
         $user_id = $request->user_id; 
         $service_id = $request->service_id; 
-        $leadPreference = LeadPrefrence::where('service_id', $service_id)
-                                        ->where('user_id', $user_id)
-                                        ->get();
+        $leadPreference = ServiceQuestion::where('category', $service_id)->get();
+        // $leadPreference = LeadPrefrence::where('service_id', $service_id)
+        //                                 ->where('user_id', $user_id)
+        //                                 ->get();
         if(count($leadPreference)>0){
             $questions = [];
             foreach($leadPreference as $value){
+                $value['answers'] = LeadPrefrence::where('question_id', $value->id)
+                                                    ->where('user_id', $user_id)
+                                                    ->pluck('answers')
+                                                    ->first();
                 // $questions = ServiceQuestion::where('category', $value->question_id)->first();
-                $value['questions'] = ServiceQuestion::where('category', $value->question_id)->pluck('questions')->first();
-                $value['answer'] = ServiceQuestion::where('category', $value->question_id)->pluck('answer')->first();
+                // $value['questions'] = ServiceQuestion::where('category', $value->question_id)->pluck('questions')->first();
+                // $value['answer'] = ServiceQuestion::where('category', $value->question_id)->pluck('answer')->first();
             }
             $leadPreferences = $leadPreference;
         }else{
@@ -602,10 +610,10 @@ class ApiController extends Controller
                 'user_id'  => $user_id,
                 'card_number' => $aValues['card_number'],
                 'expiry_date' => $aValues['expiry_date'],
-                'cvc' => $aValues['cvc']
+                'cvc' => Hash::make($aValues['cvc'])
             ]);
         }
-        return $userdetails;
+        return $this->sendResponse(__('Profile Questions Data'), $userdetails);
     }
 
     public function getservices(Request $request){
@@ -617,9 +625,46 @@ class ApiController extends Controller
     public function getPlans(Request $request){
         $plans = Plan::where('status',1)->get();
         foreach ($plans as $key => $value) {
-            // $value['per_credit'] = $value->
+            if ($value->no_of_leads > 0) {
+                $value['per_credit'] = round($value->price / (float) $value->no_of_leads, 2);
+            } else {
+                $value['per_credit'] = 0; // or null, or handle however you want
+            }
         }
         return $this->sendResponse(__('Plans Data'), $plans);
+    }
+
+    public function getLeadRequest(){
+        // $user_id = $request->user_id;
+        $leadrequest = LeadRequest::limit(5)->orderBy('id','DESC')->get();
+        return $this->sendResponse(__('Lead Request Data'), $leadrequest);
+
+    }
+    
+    public function buyCredits(Request $request){
+        $aValues = $request->all();
+        $plans = Plan::where('id',$aValues['plan_id'])->first();
+        // $userdetails = PurchaseHistory::where('user_id',$aValues['user_id'])->where('plan_id',$aValues['plan_id'])->first();
+        // if(isset($userdetails) && $userdetails != ''){
+        //     $userdetails->update([
+        //         'card_number' => $aValues['card_number'],
+        //         'expiry_date' => $aValues['expiry_date'],
+        //         'cvc' => $aValues['cvc']
+        //     ]);  
+        // }else{
+            $userdetails = PurchaseHistory::create([
+                'user_id'  => $aValues['user_id'],
+                'plan_id' => $aValues['plan_id'],
+                'purchase_date' => Carbon::now(),
+                'price' => $plans['price'],
+                'credits' => $plans['no_of_leads']
+            ]);
+            User::where('id',$aValues['user_id'])
+                ->update([
+                            'total_credit'=>DB::raw("total_credit + " . (int)$plans['no_of_leads'])
+                        ]);
+        // }
+        return $this->sendResponse(__('Plan has been sucessfully purchased '), );
     }
     
     
