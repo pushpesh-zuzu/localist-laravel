@@ -80,6 +80,12 @@
                 {{ __('Plans') }}
             </a>   
         </li>
+        <li class="nav-item">
+            <a href="{{ route('coupon.index') }}" class="nav-link {{ request()->routeIs('coupon.index') ? 'active' : '' }}">
+                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                {{ __('Coupons') }}
+            </a>   
+        </li>
       
       </ul>
 

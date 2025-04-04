@@ -102,6 +102,7 @@ Route::prefix('users')->group(function () {
         Route::get('/get-plans', [ApiController::class, 'getPlans']);
         Route::get('/get-lead-request', [ApiController::class, 'getLeadRequest']);
         Route::post('/buy-credits', [ApiController::class, 'buyCredits']);
+        Route::post('/add-coupon', [ApiController::class, 'addCoupon']);
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

@@ -12,7 +12,8 @@ class CouponController extends Controller
      */
     public function index()
     {
-        //
+        $aRows = Coupon::orderBy('id','DESC')->get(); 
+        return view('coupon.index',get_defined_vars());
     }
 
     /**
@@ -20,7 +21,8 @@ class CouponController extends Controller
      */
     public function create()
     {
-        //
+        $aRow = array();
+        return view('coupon.create',get_defined_vars());
     }
 
     /**
@@ -28,15 +30,16 @@ class CouponController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validateSave($request);   
+        return redirect()->route('coupon.index')->with('success', 'Coupon created successfully.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Coupon $coupon)
     {
-        //
+        return $coupon;
     }
 
     /**
@@ -44,7 +47,8 @@ class CouponController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $aRow = Coupon::where('id',$id)->first();
+        return view('coupon.create',get_defined_vars());
     }
 
     /**
@@ -52,7 +56,10 @@ class CouponController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $coupon = Coupon::where('id',$id)->first();
+        $this->validateSave($request,$coupon);      
+        return redirect()->route('coupon.index')
+                         ->with('success', 'Coupon updated successfully.');
     }
 
     /**
@@ -60,6 +67,34 @@ class CouponController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        Coupon::where('id',$id)->delete();
+        return redirect()->route('coupon.index')
+                         ->with('success', 'Coupon deleted successfully.');
+    }
+
+    protected function validateSave(Request $request,$isEdit = "")
+    {
+        $aValids['percentage'] =  'required';
+        $aValids['valid_from'] =  'required';
+        $aValids['valid_to'] =  'required';
+        $aValids['coupon_limit'] =  'required';
+
+        
+        if($isEdit)
+        {
+            $request->validate($aValids);
+            $aVals = $request->all();
+            $isEdit->update($aVals);
+        }
+        else{
+            $aValids['coupon_code'] =  'required';
+            $request->validate($aValids);
+            $aVals = $request->all();
+            Coupon::create($aVals);
+        }
+
+       
+
+        
     }
 }

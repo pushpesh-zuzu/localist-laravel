@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('user_id')->nullable();
             $table->string('card_number')->nullable();
             $table->string('expiry_date')->nullable();
-            $table->integer('cvc')->nullable();
+            $table->string('cvc')->nullable();
             $table->timestamps();
         });
     }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('valid_from')->nullable();
             $table->date('valid_to')->nullable();
             $table->integer('coupon_limit')->nullable();
+            $table->integer('status')->default(1);
             $table->timestamps();
         });
     }

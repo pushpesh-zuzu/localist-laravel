@@ -18,6 +18,7 @@ use App\Models\Plan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ServiceQuestion;
+use App\Models\Coupon;
 use App\Models\UserServiceLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -288,9 +289,6 @@ class ApiController extends Controller
         $user_id = $request->user_id; 
         $service_id = $request->service_id; 
         $leadPreference = ServiceQuestion::where('category', $service_id)->get();
-        // $leadPreference = LeadPrefrence::where('service_id', $service_id)
-        //                                 ->where('user_id', $user_id)
-        //                                 ->get();
         if(count($leadPreference)>0){
             $questions = [];
             foreach($leadPreference as $value){
@@ -298,9 +296,6 @@ class ApiController extends Controller
                                                     ->where('user_id', $user_id)
                                                     ->pluck('answers')
                                                     ->first();
-                // $questions = ServiceQuestion::where('category', $value->question_id)->first();
-                // $value['questions'] = ServiceQuestion::where('category', $value->question_id)->pluck('questions')->first();
-                // $value['answer'] = ServiceQuestion::where('category', $value->question_id)->pluck('answer')->first();
             }
             $leadPreferences = $leadPreference;
         }else{
@@ -603,7 +598,7 @@ class ApiController extends Controller
             $userdetails->update([
                 'card_number' => $aValues['card_number'],
                 'expiry_date' => $aValues['expiry_date'],
-                'cvc' => $aValues['cvc']
+                'cvc' => Hash::make($aValues['cvc'])
             ]);  
         }else{
             $userdetails = UserCardDetail::create([
@@ -665,6 +660,42 @@ class ApiController extends Controller
                         ]);
         // }
         return $this->sendResponse(__('Plan has been sucessfully purchased '), );
+    }
+
+    public function addCoupon(Request $request)
+    {
+        $aValues = $request->all();
+    
+        $coupon = Coupon::where('coupon_code', $aValues['coupon_code'])->first();
+    
+        if (!$coupon) {
+            return $this->sendError('Invalid coupon code');
+        }
+    
+        $today = now(); // Current date
+    
+        // Check date validity
+        if ($coupon->valid_from && $coupon->valid_to) {
+            if ($today->lt($coupon->valid_from) || $today->gt($coupon->valid_to)) {
+                return $this->sendError('Coupon is not valid at this time');
+            }
+        }
+    
+        // Check coupon usage limit
+        if ($coupon->coupon_limit <= 0) {
+            return $this->sendError('Coupon Expired');
+        }
+    
+        // Apply coupon logic (e.g., get discount)
+        $discount = $coupon->percentage;
+    
+        // Optionally decrement coupon_limit (if one-time use per request)
+        $coupon->decrement('coupon_limit');
+        return $this->sendResponse('Coupon applied successfully', []);
+        // return $this->sendResponse('Coupon applied successfully', [
+        //     'coupon_code' => $coupon->coupon_code,
+        //     'discount' => $discount
+        // ]);
     }
     
     
