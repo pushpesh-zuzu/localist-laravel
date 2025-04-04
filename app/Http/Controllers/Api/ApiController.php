@@ -287,6 +287,9 @@ class ApiController extends Controller
                                         ->where('user_id', $user_id)
                                         ->get();
         if(count($leadPreference)>0){
+            foreach($leadPreference as $value){
+                $value['questions'] = ServiceQuestion::where('category', $value->question_id)->pluck('questions')->first();
+            }
             $leadPreferences = $leadPreference;
         }else{
             $leadPreferences = ServiceQuestion::where('category', $service_id)->get();
