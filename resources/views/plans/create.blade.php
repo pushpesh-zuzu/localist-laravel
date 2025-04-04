@@ -62,7 +62,7 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label" for="price">{{ __('No of Leads') }}</label>
+              <label class="form-label" for="price">{{ __('No of Credits') }}</label>
               <input required type="number" min="0" id="no_of_leads" name="no_of_leads" class="form-control{{ $errors->has('no_of_leads') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->no_of_leads : old('no_of_leads') }}" />
              
               @if ($errors->has('no_of_leads'))

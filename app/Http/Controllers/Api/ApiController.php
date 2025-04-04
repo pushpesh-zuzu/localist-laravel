@@ -286,7 +286,13 @@ class ApiController extends Controller
         $leadPreference = LeadPrefrence::where('service_id', $service_id)
                                         ->where('user_id', $user_id)
                                         ->get();
-        return $this->sendResponse(__('Lead Preferences Data'), $leadPreference);                              
+        if(count($leadPreference)>0){
+            $leadPreferences = $leadPreference;
+        }else{
+            $leadPreferences = ServiceQuestion::where('category', $service_id)->get();
+            
+        }                          
+        return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);                              
     }
 
     public function switchAutobid(Request $request): JsonResponse
@@ -601,6 +607,9 @@ class ApiController extends Controller
         return $this->sendResponse(__('Profile Questions Data'), $questions);
     }
 
+    // public function (){
+
+    // }
     
     
     // public function sellerMyprofileqa(Request $request): JsonResponse
