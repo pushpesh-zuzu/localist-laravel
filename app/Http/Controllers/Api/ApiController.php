@@ -636,7 +636,7 @@ class ApiController extends Controller
 
     public function getLeadRequest(){
         // $user_id = $request->user_id;
-        $leadrequest = LeadRequest::limit(5)->orderBy('id','DESC')->get();
+        $leadrequest = LeadRequest::with(['customer','category'])->limit(5)->orderBy('id','DESC')->get();
         return $this->sendResponse(__('Lead Request Data'), $leadrequest);
 
     }
