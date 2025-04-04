@@ -61,12 +61,21 @@ class AccountSettingController extends Controller
         return $this->sendError('Something went wrong, try again!');
     }
 
+    private $request;
+
     public function updateProfileInfo(Request $request){
+        $this->request = $request;
+
         $user_id = $request->user_id;
+        
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:users,id',
             'name' => 'required',
-            'email' => 'required|email:filter|unique:users',
+            'email' => ['required','email:filter',
+                        Rule::unique('users')->where(function ($query){
+                            return $query->where('email', $this->request->email);
+                        })->ignore($this->request->user_id),
+            ],
             'phone' => 'required',
           ], [
             'name.required' => 'Profile name is required.'
