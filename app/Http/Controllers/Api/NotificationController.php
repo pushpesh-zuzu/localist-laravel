@@ -21,7 +21,7 @@ use App\Models\NotificationSetting;
 
 class NotificationController extends Controller
 {
-    public function addUpdateNotification(Request $request){
+    public function addUpdateNotificationSettings(Request $request){
         $user_id = $request->user_id;
 
         $validator = Validator::make($request->all(), [
@@ -70,5 +70,28 @@ class NotificationController extends Controller
             return $this->sendResponse('Notification Setting Updated');
         }
         return $this->sendError('Something went wrong, please check for proper notification name');
+    }
+
+    public function getNotificationSettings(Request $request){
+        $user_id = $request->user_id;
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:users,id',
+            'user_type' => 'required',
+            'noti_type' => 'required',
+          ], [
+            'user_type.required' => 'User type is required, either customer or buyer',
+            'noti_type.required' => 'User type is required, either email or browser'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+        $notiSettingList = NotificationSetting::with(['user'])
+            ->where('user_id',$user_id)
+            ->where('user_type',$request->user_type)
+            ->where('noti_type',$request->noti_type)
+            ->get();
+        return $this->sendResponse('Notification Settings List',$notiSettingList);
+
     }
 }

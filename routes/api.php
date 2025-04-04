@@ -22,7 +22,8 @@ Route::get('/check_api', function () {
 
 Route::prefix('notification')->group(function () {
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-        Route::post('add-update-notification',[NotificationController::class,'addUpdateNotification']);
+        Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
+        Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
     });
     
 });
