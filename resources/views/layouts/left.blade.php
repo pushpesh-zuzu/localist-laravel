@@ -68,6 +68,12 @@
             </a>   
         </li>
         <li class="nav-item">
+          <a href="{{ route('request-list.index') }}" class="nav-link {{ request()->routeIs('request-list.index') ? 'active' : '' }}">
+              <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+              {{ __('Request List (Leads)') }}
+          </a>   
+      </li>
+        <li class="nav-item">
             <a href="{{ route('blogs.index') }}" class="nav-link {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
                 <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
                 {{ __('Blogs') }}
