@@ -13,6 +13,7 @@ use App\Http\Controllers\ServiceQuestionsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileQuesController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\RequestListController;
 
 
 Route::get('/clear-cache', function() {
@@ -53,6 +54,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('servicequestion', ServiceQuestionsController::class);
     Route::resource('profilequestion', ProfileQuesController::class);
     Route::resource('coupon', CouponController::class);
+
+    Route::resource('request-list', RequestListController::class);
 
 });
 
