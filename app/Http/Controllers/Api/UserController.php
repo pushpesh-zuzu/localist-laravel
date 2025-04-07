@@ -37,12 +37,16 @@ class UserController extends Controller
         $loggedUser = $request->loggedUser;//For checking seller/buyer
         $users = User::where('email',$request->email)->first();
 
-        if(!empty($users) && $users != '' && $loggedUser == 2){
-            $token = $users->createToken('authToken', ['user_id' => $users->id])->plainTextToken;
-            $users->update(['remember_token' => $token]);
-            $users->remember_tokens = $token;
-            return $this->sendResponse('Email already exists', $users);
-        }else{
+        if($loggedUser == 2){
+            if(!empty($users) && $users != ''){
+                $token = $users->createToken('authToken', ['user_id' => $users->id])->plainTextToken;
+                $users->update(['remember_token' => $token]);
+                $users->remember_tokens = $token;
+                return $this->sendResponse('Email already exists', $users);
+            }
+            
+        }
+        if(!empty($users) && $users != ''){
             return $this->sendError('Email already exists');
         }
 
