@@ -91,6 +91,7 @@ Route::prefix('users')->group(function () {
         Route::post('/lead-preferences', [ApiController::class, 'leadpreferences']);
         Route::post('/get-lead-preferences', [ApiController::class, 'getleadpreferences']);
         Route::post('/get-services', [ApiController::class, 'getservices']);
+        Route::post('/remove-service', [ApiController::class, 'removeService']);
 
         Route::post('/switch-autobid', [ApiController::class, 'switchAutobid']);
 
@@ -104,6 +105,10 @@ Route::prefix('users')->group(function () {
         Route::get('/get-lead-request', [ApiController::class, 'getLeadRequest']);
         Route::post('/buy-credits', [ApiController::class, 'buyCredits']);
         Route::post('/add-coupon', [ApiController::class, 'addCoupon']);
+
+        
+
+
         
     });
     // Route::get('/{id}', [UserController::class, 'show']);

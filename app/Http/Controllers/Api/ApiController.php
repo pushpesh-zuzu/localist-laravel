@@ -633,6 +633,13 @@ class ApiController extends Controller
         return $this->sendResponse(__('Profile Questions Data'), $questions);
     }
 
+    public function removeService(Request $request){
+        $user_id = $request->user_id; 
+        $serviceid = $request->service_id; 
+        UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        return $this->sendResponse(__('Service deleted Sucessfully'));
+    }
+
     public function getPlans(Request $request){
         $plans = Plan::where('status',1)->get();
         foreach ($plans as $key => $value) {
