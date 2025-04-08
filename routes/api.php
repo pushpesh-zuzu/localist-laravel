@@ -65,6 +65,7 @@ Route::prefix('users')->group(function () {
     Route::post('/registration', [UserController::class, 'registration']);
     Route::post('/login', [UserController::class, 'login']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
+    Route::get('/all-services', [ApiController::class, 'allServices']);
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
     Route::post('/questions-answer', [ApiController::class, 'questionAnswer']);
