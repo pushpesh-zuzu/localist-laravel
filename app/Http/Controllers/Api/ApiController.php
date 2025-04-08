@@ -132,13 +132,12 @@ class ApiController extends Controller
             service_id INT,
             buyer_id INT,
             lead_id INT,
-            credit_scores INT,
             nation_wide TINYINT(1) DEFAULT 0
         )");
-        
+
         // Step 2: Insert Auto-Bid Sellers into Temporary Table
         DB::table('temp_sellers')->insertUsing(
-            ['user_id', 'postcode', 'total_credit', 'service_id', 'buyer_id', 'lead_id','credit_scores', 'nation_wide'],
+            ['user_id', 'postcode', 'total_credit', 'service_id', 'buyer_id', 'lead_id', 'nation_wide'],
             DB::table('user_services AS us')
                 ->join('user_service_locations AS usl', 'us.user_id', '=', 'usl.user_id')
                 ->join('users AS u', 'u.id', '=', 'us.user_id')
@@ -149,7 +148,6 @@ class ApiController extends Controller
                     DB::raw($leadRequest->service_id . ' AS service_id'),
                     DB::raw($leadRequest->customer_id . ' AS buyer_id'),
                     DB::raw($leadId . ' AS lead_id'),
-                    DB::raw($leadRequest->credit_score  . ' AS credit_scores'),
                     'usl.nation_wide' // Fetch nationwide from user_service_locations table
                 ])
                 ->where('us.service_id', $leadRequest->service_id)
@@ -203,17 +201,15 @@ class ApiController extends Controller
                     'seller_id'    => $seller->user_id,
                     'buyer_id'     => $seller->buyer_id,
                     'lead_id'      => $seller->lead_id,
-                    'bid'          => $seller->credit_scores, // Fixed bid amount
+                    'bid'          => 20, // Fixed bid amount
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ];
 
-                // $usersdet = DB::table('users')
-                //     ->where('id', $seller->user_id)->get();dd($usersdet);
                 // Deduct 20 credits from seller's total_credit
                 DB::table('users')
                     ->where('id', $seller->user_id)
-                    ->decrement('total_credit', $seller->credit_scores);
+                    ->decrement('total_credit', 20);
             }
 
             // Bulk Insert Bids
@@ -631,13 +627,6 @@ class ApiController extends Controller
         $user_id = $request->user_id; 
         $questions = UserService::whereIn('user_id',[$user_id])->with('userServices')->get();
         return $this->sendResponse(__('Profile Questions Data'), $questions);
-    }
-
-    public function removeService(Request $request){
-        $user_id = $request->user_id; 
-        $serviceid = $request->service_id; 
-        UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
-        return $this->sendResponse(__('Service deleted Sucessfully'));
     }
 
     public function getPlans(Request $request){
