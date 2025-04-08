@@ -249,9 +249,10 @@ class ApiController extends Controller
         $leadid = $request->lead_id; 
         $bids = [];
         if (!empty($leadid)) {
-            $bids = Bid::where('seller_id',$seller_id)->where('lead_id',$leadid)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
+            $bids = Bid::where('buyer_id',$seller_id)->where('lead_id',$leadid)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
         }else{
-            $bids = Bid::where('seller_id',$seller_id)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
+            $bids =[];
+            // $bids = Bid::where('buyer_id',$seller_id)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
         }
         return $this->sendResponse(__('AutoBid Data'), $bids);
     }
