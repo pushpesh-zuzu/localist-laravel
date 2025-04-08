@@ -18,6 +18,7 @@ use App\Models\UserService;
 use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
+use App\Http\Controllers\Api\ApiController;
 
 class MyRequestController extends Controller
 {
@@ -96,6 +97,12 @@ class MyRequestController extends Controller
 
         if($sId){
             $rel['request_id'] = $sId;
+
+            $request['lead_id'] = $sId;
+
+            $apiController = new ApiController();
+            $bidRel = $apiController->autobid($request);
+
             return $this->sendResponse('Quote Submitted Sucessfully',$rel);
         }
         return $this->sendError('Something went wrong, try again!');
