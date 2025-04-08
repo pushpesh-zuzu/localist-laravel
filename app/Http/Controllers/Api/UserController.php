@@ -325,7 +325,7 @@ class UserController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $service = UserService::createUserService($aVals['user_id'],$aVals['service_id']);
+        $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
         return $this->sendResponse(__('this service added to your profile successfully'));
     }
 
