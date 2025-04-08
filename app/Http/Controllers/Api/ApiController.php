@@ -40,7 +40,7 @@ class ApiController extends Controller
     public function popularServices()
     {
 
-        $aRows = Category::where('is_home',1)->orderBy('id','DESC')->where('status',1)->get();
+        $aRows = Category::where('is_home',1)->where('parent_id',0)->orderBy('id','DESC')->where('status',1)->get();
         foreach($aRows as $value){
             $value['baseurl'] = url('/').Storage::url('app/public/images/category');
         }
@@ -132,12 +132,13 @@ class ApiController extends Controller
             service_id INT,
             buyer_id INT,
             lead_id INT,
+            credit_scores INT,
             nation_wide TINYINT(1) DEFAULT 0
         )");
-
+        
         // Step 2: Insert Auto-Bid Sellers into Temporary Table
         DB::table('temp_sellers')->insertUsing(
-            ['user_id', 'postcode', 'total_credit', 'service_id', 'buyer_id', 'lead_id', 'nation_wide'],
+            ['user_id', 'postcode', 'total_credit', 'service_id', 'buyer_id', 'lead_id','credit_scores', 'nation_wide'],
             DB::table('user_services AS us')
                 ->join('user_service_locations AS usl', 'us.user_id', '=', 'usl.user_id')
                 ->join('users AS u', 'u.id', '=', 'us.user_id')
@@ -148,6 +149,7 @@ class ApiController extends Controller
                     DB::raw($leadRequest->service_id . ' AS service_id'),
                     DB::raw($leadRequest->customer_id . ' AS buyer_id'),
                     DB::raw($leadId . ' AS lead_id'),
+                    DB::raw($leadRequest->credit_score  . ' AS credit_scores'),
                     'usl.nation_wide' // Fetch nationwide from user_service_locations table
                 ])
                 ->where('us.service_id', $leadRequest->service_id)
@@ -201,15 +203,17 @@ class ApiController extends Controller
                     'seller_id'    => $seller->user_id,
                     'buyer_id'     => $seller->buyer_id,
                     'lead_id'      => $seller->lead_id,
-                    'bid'          => 20, // Fixed bid amount
+                    'bid'          => $seller->credit_scores, // Fixed bid amount
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ];
 
+                // $usersdet = DB::table('users')
+                //     ->where('id', $seller->user_id)->get();dd($usersdet);
                 // Deduct 20 credits from seller's total_credit
                 DB::table('users')
                     ->where('id', $seller->user_id)
-                    ->decrement('total_credit', 20);
+                    ->decrement('total_credit', $seller->credit_scores);
             }
 
             // Bulk Insert Bids
