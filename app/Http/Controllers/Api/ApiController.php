@@ -47,6 +47,18 @@ class ApiController extends Controller
         
         return $this->sendResponse(__('Category Data'),$aRows);
     }
+    
+     public function allServices()
+    {
+
+        $aRows = Category::where('is_home',1)->where('parent_id',0)->orderBy('id','DESC')->where('status',1)->get();
+        foreach($aRows as $value){
+            $value['subcategory'] = Category::where('is_home',1)->where('parent_id','!=',0)->where('parent_id',$value->id)->where('status',1)->orderBy('id','DESC')->get();
+            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        }
+        
+        return $this->sendResponse(__('Category Data'),$aRows);
+    }
 
     public function searchServices(Request $request)
     {

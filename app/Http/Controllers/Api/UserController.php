@@ -36,9 +36,23 @@ class UserController extends Controller
         $auto_bid = $request->auto_bid;
         $loggedUser = $request->loggedUser;//For checking seller/buyer
         $users = User::where('email',$request->email)->first();
+
+        if($loggedUser == 2){
+            if(!empty($users) && $users != ''){
+                $token = $users->createToken('authToken', ['user_id' => $users->id])->plainTextToken;
+                $users->update(['remember_token' => $token]);
+                $users->remember_tokens = $token;
+                return $this->sendResponse('Email already exists', $users);
+            }
+            
+        }
         if(!empty($users) && $users != ''){
             return $this->sendError('Email already exists');
         }
+
+        // if(!empty($users) && $users != ''){
+        //     return $this->sendError('Email already exists');
+        // }
         if($aVals['form_status'] == 1){
             $validator = self::validators($aVals,$loggedUser);
             if ($validator->fails()) {
@@ -49,7 +63,12 @@ class UserController extends Controller
                 return $this->sendError('Email is Invalid');
             }
         }
-        $aVals['password'] = Hash::make($request->password);
+        if($loggedUser == 2){
+            $aVals['password'] = "";
+        }else{
+            $aVals['password'] = Hash::make($request->password);
+        }
+        // $aVals['password'] = Hash::make($request->password);
         
         $user = User::create($aVals);
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
@@ -62,41 +81,41 @@ class UserController extends Controller
         if($user && $loggedUser == 1)
         {
               // Check if service_id is an array or convert it to one
-        $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
 
-        foreach ($serviceIds as $serviceId) {
-            // Create a separate row for each service_id
-            $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
+            foreach ($serviceIds as $serviceId) {
+                // Create a separate row for each service_id
+                $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
 
-            if ($service) {
-                $aLocations['service_id'] = $service->id;
-                $aLocations['user_id'] = $user->id;
-                if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
-                    $aLocations['miles'] = 0;
-                    $aLocations['postcode'] = '000000';
-                    $aLocations['nation_wide'] = 1;
-                }else{
-                    if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
-                        $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
-                    } elseif (!empty($aVals['miles1'])) {
-                        $aLocations['miles'] = $aVals['miles1'];
-                    } else {
-                        $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
+                if ($service) {
+                    $aLocations['service_id'] = $service->id;
+                    $aLocations['user_id'] = $user->id;
+                    if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
+                        $aLocations['miles'] = 0;
+                        $aLocations['postcode'] = '000000';
+                        $aLocations['nation_wide'] = 1;
+                    }else{
+                        if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
+                            $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
+                        } elseif (!empty($aVals['miles1'])) {
+                            $aLocations['miles'] = $aVals['miles1'];
+                        } else {
+                            $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
+                        }
+                        $aLocations['postcode'] = $aVals['postcode'];
+                        $aLocations['nation_wide'] = 0;
                     }
-                    $aLocations['postcode'] = $aVals['postcode'];
-                    $aLocations['nation_wide'] = 0;
+                    // if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
+                    //     $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
+                    // } elseif (!empty($aVals['miles1'])) {
+                    //     $aLocations['miles'] = $aVals['miles1'];
+                    // } else {
+                    //     $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
+                    // }
+                    // $aLocations['postcode'] = $aVals['postcode'];
+                    UserServiceLocation::createUserServiceLocation($aLocations);
                 }
-                // if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
-                //     $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
-                // } elseif (!empty($aVals['miles1'])) {
-                //     $aLocations['miles'] = $aVals['miles1'];
-                // } else {
-                //     $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
-                // }
-                // $aLocations['postcode'] = $aVals['postcode'];
-                UserServiceLocation::createUserServiceLocation($aLocations);
             }
-        }
             // $service = UserService::createUserService($user->id,$aVals['service_id']);
             // if($service)
             // {
@@ -129,12 +148,12 @@ class UserController extends Controller
             
         }else{
             $validator = Validator::make($aVals, [
-                'name' => 'required',
+                'name' => 'sometimes',
                 'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[@$!%*?&]/|max:16'
+                // 'password' => 'required|string|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[@$!%*?&]/|max:16'
               ], [
-                'password.min' => 'The new password must be at least 8 characters.',
-                'password.regex' => 'The new password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+                // 'password.min' => 'The new password must be at least 8 characters.',
+                // 'password.regex' => 'The new password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
             ]);
         }
         return $validator;
@@ -306,7 +325,7 @@ class UserController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $service = UserService::createUserService($aVals['user_id'],$aVals['service_id']);
+        $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
         return $this->sendResponse(__('this service added to your profile successfully'));
     }
 
