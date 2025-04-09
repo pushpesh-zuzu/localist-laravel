@@ -660,6 +660,9 @@ class ApiController extends Controller
     public function getservices(Request $request){
         $user_id = $request->user_id; 
         $questions = UserService::whereIn('user_id',[$user_id])->with('userServices')->get();
+        foreach ($questions as $key => $value) {
+            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('user_service_id',[$value->id])->count();
+        }
         return $this->sendResponse(__('Profile Questions Data'), $questions);
     }
 

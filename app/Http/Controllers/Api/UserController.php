@@ -90,7 +90,8 @@ class UserController extends Controller
                 $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
 
                 if ($service) {
-                    $aLocations['service_id'] = $service->id;
+                    $aLocations['service_id'] = $serviceId;
+                    $aLocations['user_service_id'] = $service->id;
                     $aLocations['user_id'] = $user->id;
                     if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
                         $aLocations['miles'] = 0;
@@ -352,22 +353,43 @@ class UserController extends Controller
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
-        if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
-            $aLocations['miles'] = 1;
-            $aLocations['postcode'] = 000000;
-            $aLocations['nation_wide'] = 1;
+        $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+        if ($serviceIds) {
+            foreach ($serviceIds as $serviceId) {
+                $aLocations['service_id'] = $serviceId;
+                $aLocations['user_service_id'] = 0;
+                $aLocations['user_id'] = $aVals['user_id'];
+                if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
+                    $aLocations['miles'] = 0;
+                    $aLocations['postcode'] = '000000';
+                    $aLocations['nation_wide'] = 1;
+                }else{
+                    $aLocations['miles'] = $aVals['miles'];
+                    $aLocations['postcode'] = $aVals['postcode'];
+                    $aLocations['nation_wide'] = 0;
+                }
+                UserServiceLocation::createUserServiceLocation($aLocations);
+            }
+            return $this->sendResponse(__('this location added to your profile successfully'));
         }else{
-            $aLocations['miles'] = $aVals['miles'];
-            $aLocations['postcode'] = $aVals['postcode'];
-            $aLocations['nation_wide'] = 0;
+            return $this->sendResponse(__('Select Service to proceed'));
         }
-        $aLocations['service_id'] = $aVals['service_id'];
-        $aLocations['user_id'] = $aVals['user_id'];
+        // if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
+        //     $aLocations['miles'] = 1;
+        //     $aLocations['postcode'] = 000000;
+        //     $aLocations['nation_wide'] = 1;
+        // }else{
+        //     $aLocations['miles'] = $aVals['miles'];
+        //     $aLocations['postcode'] = $aVals['postcode'];
+        //     $aLocations['nation_wide'] = 0;
+        // }
+        // $aLocations['service_id'] = $aVals['service_id'];
+        // $aLocations['user_id'] = $aVals['user_id'];
         // $aLocations['miles'] = $aVals['miles'];
         // $aLocations['postcode'] = $aVals['postcode'];
-        UserServiceLocation::createUserServiceLocation($aLocations);
+        // UserServiceLocation::createUserServiceLocation($aLocations);
 
-        return $this->sendResponse(__('this location added to your profile successfully'));
+        
     }
 
 
@@ -384,19 +406,42 @@ class UserController extends Controller
 
     }
 
-
-
     public function getUserLocations(Request $request): JsonResponse
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
 
-        $aRows = UserServiceLocation::where('user_id',$userId)
-        ->join('categories', 'categories.id', '=', 'user_service_locations.service_id')
-        ->select('user_service_locations.*', 'categories.name')
-        ->get();
-        return $this->sendResponse(__('User Service Data'),$aRows);
+        // Get all locations for the user
+        $aRows = UserServiceLocation::where('user_id', $userId)
+            ->orderBy('postcode')
+            ->get();
+
+        // Group by postcode to remove duplicates (only first entry per postcode)
+        $uniqueRows = $aRows->unique('postcode')->values();
+
+        // Add total services per postcode
+        foreach ($uniqueRows as $value) {
+            $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
+        }
+
+        return $this->sendResponse(__('User Service Data'), $uniqueRows);
     }
+
+
+    // public function getUserLocations(Request $request): JsonResponse
+    // {
+    //     $aVals = $request->all();
+    //     $userId = $aVals['user_id'];
+    //     $aRows = UserServiceLocation::where('user_id',$userId)->orderby('postcode')->get();
+    //     foreach ($aRows as $key => $value) {
+    //         $value['total_services'] = UserServiceLocation::where('user_id',$userId)->where('postcode',$value->postcode)->count();
+    //     }
+    //     // $aRows = UserServiceLocation::where('user_id',$userId)
+    //     // ->join('categories', 'categories.id', '=', 'user_service_locations.service_id')
+    //     // ->select('user_service_locations.*', 'categories.name')
+    //     // ->get();
+    //     return $this->sendResponse(__('User Service Data'),$aRows);
+    // }
     
     public function switchUser(Request $request): JsonResponse
     {
