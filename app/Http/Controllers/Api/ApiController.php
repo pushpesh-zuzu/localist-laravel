@@ -48,17 +48,46 @@ class ApiController extends Controller
         return $this->sendResponse(__('Category Data'),$aRows);
     }
     
-     public function allServices()
+    public function allServices()
     {
-
-        $aRows = Category::where('is_home',1)->where('parent_id',0)->orderBy('id','DESC')->where('status',1)->get();
-        foreach($aRows as $value){
-            $value['subcategory'] = Category::where('is_home',1)->where('parent_id','!=',0)->where('parent_id',$value->id)->where('status',1)->orderBy('id','DESC')->get();
-            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        $categories = Category::where('is_home', 1)
+            ->where('parent_id', 0)
+            ->where('status', 1)
+            ->orderBy('id', 'DESC')
+            ->get();
+    
+        $result = [];
+    
+        foreach ($categories as $category) {
+            $subcategories = Category::where('is_home', 1)
+                ->where('parent_id', $category->id)
+                ->where('status', 1)
+                ->orderBy('id', 'DESC')
+                ->get();
+    
+            // Only add the category if subcategories exist
+            if ($subcategories->isNotEmpty()) {
+                $category['subcategory'] = $subcategories;
+                $category['baseurl'] = url('/') . Storage::url('app/public/images/category');
+                $result[] = $category;
+            }
         }
-        
-        return $this->sendResponse(__('Category Data'),$aRows);
+    
+        return $this->sendResponse(__('Category Data'), $result);
     }
+
+    
+    //  public function allServices()
+    // {
+
+    //     $aRows = Category::where('is_home',1)->where('parent_id',0)->orderBy('id','DESC')->where('status',1)->get();
+    //     foreach($aRows as $value){
+    //         $value['subcategory'] = Category::where('is_home',1)->where('parent_id','!=',0)->where('parent_id',$value->id)->where('status',1)->orderBy('id','DESC')->get();
+    //         $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+    //     }
+        
+    //     return $this->sendResponse(__('Category Data'),$aRows);
+    // }
 
     public function searchServices(Request $request)
     {

@@ -14,7 +14,7 @@ class UserServiceLocation extends Model
 
            $aLocation = UserServiceLocation::updateOrCreate(
                 ['user_id' => $aLocations['user_id'], 'service_id' => $aLocations['service_id'], 'postcode' => $aLocations['postcode']], // Search criteria
-                ['updated_at' => now(), 'miles' => $aLocations['miles']] // Fields to update or insert
+                ['updated_at' => now(), 'miles' => $aLocations['miles'],'nation_wide' => $aLocations['nation_wide']] // Fields to update or insert
             );
 
             return $aLocation;

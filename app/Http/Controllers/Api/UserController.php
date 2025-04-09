@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\{
 use Illuminate\Validation\Rule;
 use App\Helpers\CustomHelper;
 use App\Services\ZeroBounceService;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -64,7 +65,8 @@ class UserController extends Controller
             }
         }
         if($loggedUser == 2){
-            $aVals['password'] = "";
+            $randomString = Str::random(10);
+            $aVals['password'] = Hash::make($randomString);
         }else{
             $aVals['password'] = Hash::make($request->password);
         }
@@ -105,6 +107,7 @@ class UserController extends Controller
                         $aLocations['postcode'] = $aVals['postcode'];
                         $aLocations['nation_wide'] = 0;
                     }
+                    // dd($aLocations['nation_wide']);
                     // if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
                     //     $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
                     // } elseif (!empty($aVals['miles1'])) {
@@ -394,49 +397,107 @@ class UserController extends Controller
         ->get();
         return $this->sendResponse(__('User Service Data'),$aRows);
     }
-
+    
     public function switchUser(Request $request): JsonResponse
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
-        $userType = $aVals['user_type']; // 'buyer' or 'seller'
-
+        $userType = $aVals['user_type']; // 1 = buyer, 2 = seller
     
         $user = User::find($userId);
-
+    
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-
-        // Determine new type and active_status
+    
+        // If user_type is already 3, don't change it again — only update active_status
+        if ($user->user_type == 3) {
+            if ($userType == 1) {
+                $user->active_status = 1;
+                $mode = 'Seller';
+            } elseif ($userType == 2) {
+                $user->active_status = 2;
+                $mode = 'Buyer';
+            } else {
+                return response()->json(['error' => 'Invalid user type'], 400);
+            }
+    
+            $user->save();
+            return $this->sendResponse(__('Switched to ' . $mode));
+        }
+    
+        // Update user_type and active_status if user_type is not 3 yet
         if ($userType == 2) {
-            if ($user->user_type == 1) { 
-                $user->user_type = 3; // Both Seller & Buyer
-            } 
-            else {
+            if ($user->user_type == 1) {
+                $user->user_type = 3; // Upgrade to Both
+            } else {
                 $user->user_type = 2; // Only Seller
             }
             $user->active_status = 2;
+            $mode = 'Buyer';
         } elseif ($userType == 1) {
-            if ($user->user_type == 2) { 
-                $user->user_type = 3; // Both Seller & Buyer
+            if ($user->user_type == 2) {
+                $user->user_type = 3; // Upgrade to Both
             } else {
                 $user->user_type = 1; // Only Buyer
             }
             $user->active_status = 1;
+            $mode = 'Seller';
         } else {
             return response()->json(['error' => 'Invalid user type'], 400);
         }
-
-        // Save updates
+    
         $user->save();
-        if($userType == 1){
-            $users = 'Seller';
-        }else{
-            $users = 'Buyer';
-        }
-        return $this->sendResponse(__('Switched to '.$users));
+        return $this->sendResponse(__('Switched to ' . $mode));
     }
+
+
+    // public function switchUser(Request $request): JsonResponse
+    // {
+    //     $aVals = $request->all();
+    //     $userId = $aVals['user_id'];
+    //     $userType = $aVals['user_type']; // 'buyer' or 'seller'
+
+    
+    //     $user = User::find($userId);
+
+    //     if (!$user) {
+    //         return response()->json(['error' => 'User not found'], 404);
+    //     }
+        
+    //     if ($user->user_type == 3) {
+    //         return $this->sendResponse(__('User already has both Buyer and Seller roles.'));
+    //     }   
+
+    //     // Determine new type and active_status
+    //     if ($userType == 2) {
+    //         if ($user->user_type == 1) { 
+    //             $user->user_type = 3; // Both Seller & Buyer
+    //         } 
+    //         else {
+    //             $user->user_type = 2; // Only Seller
+    //         }
+    //         $user->active_status = 2;
+    //     } elseif ($userType == 1) {
+    //         if ($user->user_type == 2) { 
+    //             $user->user_type = 3; // Both Seller & Buyer
+    //         } else {
+    //             $user->user_type = 1; // Only Buyer
+    //         }
+    //         $user->active_status = 1;
+    //     } else {
+    //         return response()->json(['error' => 'Invalid user type'], 400);
+    //     }
+
+    //     // Save updates
+    //     $user->save();
+    //     if($userType == 1){
+    //         $users = 'Seller';
+    //     }else{
+    //         $users = 'Buyer';
+    //     }
+    //     return $this->sendResponse(__('Switched to '.$users));
+    // }
 
     public function editProfile(Request $request): JsonResponse
     {
