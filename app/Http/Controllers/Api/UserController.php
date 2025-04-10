@@ -141,7 +141,7 @@ class UserController extends Controller
             $modes = 'Buyer Registration';
         }
        
-        CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+        // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
         return $this->sendResponse('Registration Successful.', $user);
         // return $this->sendResponse(__('registration successfully',$user));
 
