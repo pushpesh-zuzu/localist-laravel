@@ -6,7 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserService;
 use App\Models\UserServiceLocation;
+use App\Models\PurchaseHistory;
+use App\Models\LeadRequest;
+use App\Models\Plan;
 use App\Models\Category;
+use App\Models\Bid;
 
 class SellerController extends Controller
 {
@@ -81,13 +85,21 @@ class SellerController extends Controller
         $aRows = Category::whereIn('id', $serviceId)->get();
         foreach ($aRows as $key => $value) {
             $value['locations'] = UserServiceLocation::whereIn('user_id',[$userid])->whereIn('service_id', [$value->id])->select(['miles','postcode','nation_wide'])->get()->toArray();
+            $value['autobid'] = UserService::where('user_id', $userid)->where('service_id', $value->id)->pluck('auto_bid')->first();
         }
         return view('seller.services', compact('aRows'));
     }
 
-    // public function sellerLocations($userid){
-    //     $serviceId = UserService::where('user_id', $userid)->pluck('service_id')->toArray();
-    //     $aRows = Category::whereIn('id', $serviceId)->get();
-    //     return view('seller.services', compact('aRows'));
-    // }
+    public function creditPlans($userid){
+        $user = User::where('id', $userid)->pluck('name')->first();
+        $aRows = PurchaseHistory::where('user_id', $userid)->with(['plans','users'])->get();
+        return view('seller.credit_plans', get_defined_vars());
+    }
+
+    public function sellerBids($userid){
+        $buyerId = Bid::whereIn('seller_id', $userid)->pluck(['buyer_id'])->toArray();
+        $leadId = Bid::whereIn('seller_id', $userid)->pluck(['lead_id'])->toArray();
+        $aRows = LeadRequest::whereIn('customer_id', $buyerId)->whereIn('id',$leadId)->get();dd($aRows);
+        return view('seller.credit_plans', compact('aRows'));
+    }
 }

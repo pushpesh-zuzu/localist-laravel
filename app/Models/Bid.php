@@ -17,4 +17,9 @@ class Bid extends Model
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
+
+    public function leads()
+    {
+        return $this->belongsTo(LeadRequest::class, 'buyer_id');
+    }
 }

@@ -12,7 +12,8 @@
           <tr>
             <th scope="col" width="20px;">#</th>
             <th scope="col" width="200px;">Image</th>
-            <th scope="col">Category Name</th>
+            <th scope="col">Sector</th>
+            <th scope="col">Autobid</th>
             <th scope="col">Location</th>
           </tr>
           </thead>
@@ -27,12 +28,15 @@
                     @endif
             </td>
             <td >{{ $aRow->name }}</td>
-            <td rowspan="2">
+            <td >{{ $aRow->autobid  == 1 ? 'Yes' : 'No'}}</td>
+            <td >
                 @foreach($aRow->locations as $location)
-                    <p>Miles: {{$location['miles']}}</p>
-                    <p>Postcode: {{$location['postcode']}}</p>
-                    <p>Nation Wide: {{ $location['nation_wide'] == 1 ? 'Yes' : 'No' }}</p>
-                    <hr>
+                    <span class="fw-bold">Miles:</span> {{$location['miles']}}<br/>
+                    <span class="fw-bold">Postcode:</span> {{$location['postcode']}}</br/>
+                    <span class="fw-bold">Nation Wide:</span> {{ $location['nation_wide'] == 1 ? 'Yes' : 'No' }}
+                    @if (!$loop->last)
+                        <hr>
+                    @endif
                 @endforeach
             </td>
           </tr>

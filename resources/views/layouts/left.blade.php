@@ -19,20 +19,20 @@
         </li> 
         <li class="nav-item">
             <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                <i class="bi bi-list nav-icon"></i>
                 {{ __('Sector') }}
             </a>   
         </li> 
         
         <li class="nav-item">
             <a href="{{ route('subcategories.index') }}" class="nav-link {{ request()->routeIs('subcategories.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                <i class="bi bi-list nav-icon"></i>
                 {{ __('Sub Sector') }}
             </a>   
         </li>
         <li class="nav-group" aria-expanded="false">
-        <a class="nav-link nav-group-toggle" href="#">
-        <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg> {{ __('Lead Buyers') }}</a>
+            <a class="nav-link nav-group-toggle" href="#">
+            <i class="fa-solid fa-user nav-icon"></i> {{ __('Lead Buyers') }}</a>
               <ul class="nav-group-items compact" style="height: 100px;">
                
                 <li class="nav-item">
@@ -51,19 +51,18 @@
         </li>
         <li class="nav-item">
             <a href="{{ route('buyer.index') }}" class="nav-link {{ request()->routeIs('buyer.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+            <i class="fa-solid fa-users nav-icon"></i>
                 {{ __('Quote Customers') }}
             </a>   
         </li>
         <li class="nav-item">
             <a href="{{ route('servicequestion.index') }}" class="nav-link {{ request()->routeIs('servicequestion.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
-                {{ __('Service Questions') }}
+            <i class="bi bi-question-circle nav-icon"></i> {{ __('Service Questions') }} 
             </a>   
         </li>
         <li class="nav-item">
             <a href="{{ route('profilequestion.index') }}" class="nav-link {{ request()->routeIs('profilequestion.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+              <i class="bi bi-question-octagon nav-icon"></i>
                 {{ __('Profile Questions') }}
             </a>   
         </li>
@@ -75,20 +74,20 @@
       </li>
         <li class="nav-item">
             <a href="{{ route('blogs.index') }}" class="nav-link {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                  <i class="fa-solid fa-blog nav-icon"></i>
                 {{ __('Blogs') }}
             </a>   
         </li>
 
         <li class="nav-item">
             <a href="{{ route('plans.index') }}" class="nav-link {{ request()->routeIs('plans.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                <i class="bi bi-list-task nav-icon"></i>
                 {{ __('Plans') }}
             </a>   
         </li>
         <li class="nav-item">
             <a href="{{ route('coupon.index') }}" class="nav-link {{ request()->routeIs('coupon.index') ? 'active' : '' }}">
-                <svg class="nav-icon"><use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-puzzle') }}"></use></svg>
+                    <i class="fa-solid fa-gift nav-icon"></i>
                 {{ __('Coupons') }}
             </a>   
         </li>

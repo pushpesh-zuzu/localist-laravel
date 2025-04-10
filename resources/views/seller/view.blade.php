@@ -77,8 +77,40 @@
             <td>Company Website</td>
             <td>{{ $aRow->company_website }}</td>
           </tr>
-          
-          @endforeach
+          <tr>
+            <td>Company Email</td>
+            <td>{{ $aRow->company_email }}</td>
+          </tr>
+          <tr>
+            <td>Mobile</td>
+            <td>{{ $aRow->company_phone }}</td>
+          </tr>
+          <tr>
+            <td>Company Location</td>
+            <td>{{ $aRow->company_location }}</td>
+          </tr>
+          <tr>
+            <td>Location Reason</td>
+            <td>{{ $aRow->company_location_reason }}</td>
+          </tr>
+          <tr>
+            <td>Total Years</td>
+            <td>{{ $aRow->company_total_years }}</td>
+          </tr>
+          <tr>
+            <td>About</td>
+            <td>{{ $aRow->about_company }}</td>
+          </tr>
+          <tr>
+            <td>Company Logo</td>
+            <td>
+              @if($aRow && $aRow->banner_image) 
+                    <img src="{{ \App\Helpers\CustomHelper::displayImage($aRow->company_logo, 'users') }}" height="100" width="100" class="mt-2" />                
+                  @endif
+              @endforeach
+            </td>
+          </tr>
+         
           </tbody>
         </table>
       </div>
