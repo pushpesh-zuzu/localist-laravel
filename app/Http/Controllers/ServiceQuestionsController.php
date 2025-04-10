@@ -15,6 +15,7 @@ class ServiceQuestionsController extends Controller
     public function index()
     {
         $aRows = ServiceQuestion::with('categories')->orderBy('id','DESC')->get(); 
+        //  $aRows = ServiceQuestion::with('categories')->orderBy('id','DESC')->get()->groupBy('categories.name');
         return view('servicequestion.index',get_defined_vars());
     }
 
