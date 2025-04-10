@@ -86,11 +86,48 @@ class NotificationController extends Controller
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
-        $notiSettingList = NotificationSetting::with(['user'])
-            ->where('user_id',$user_id)
+        $notiSettingList = NotificationSetting::where('user_id',$user_id)
             ->where('user_type',$request->user_type)
             ->where('noti_type',$request->noti_type)
-            ->get();
+            ->select(['user_id','noti_name','noti_value','user_type','noti_type'])
+            ->get()->toArray();
+        
+        //for customer
+        if($request->user_type == 'customer'){            
+            //Changes to my requests
+            if (!in_array('customer_email_change_in_request', array_column($notiSettingList, 'noti_name'))) {
+                $noti = array(
+                    "user_id"=> $user_id,
+                    "noti_name"=> "customer_email_change_in_request",
+                    "noti_value"=> 0,
+                    "user_type"=> "customer",
+                    "noti_type"=> "email"
+                );
+                array_push($notiSettingList,$noti);
+            }
+            //Reminders to reply to Professionals
+            if (!in_array('customer_email_reminder_to_reply', array_column($notiSettingList, 'noti_name'))) {
+                $noti = array(
+                    "user_id"=> $user_id,
+                    "noti_name"=> "customer_email_reminder_to_reply",
+                    "noti_value"=> 0,
+                    "user_type"=> "customer",
+                    "noti_type"=> "email"
+                );
+                array_push($notiSettingList,$noti);
+            }
+            //Updates about new features on Bark
+            if (!in_array('customer_email_update_about_new_feature', array_column($notiSettingList, 'noti_name'))) {
+                $noti = array(
+                    "user_id"=> $user_id,
+                    "noti_name"=> "customer_email_update_about_new_feature",
+                    "noti_value"=> 0,
+                    "user_type"=> "customer",
+                    "noti_type"=> "email"
+                );
+                array_push($notiSettingList,$noti);
+            }
+        }
         return $this->sendResponse('Notification Settings List',$notiSettingList);
 
     }
