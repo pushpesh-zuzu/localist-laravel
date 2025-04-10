@@ -19,4 +19,9 @@ class UserServiceLocation extends Model
 
             return $aLocation;
     }
+    
+    public function userServices()
+    {
+        return $this->hasMany(Category::class,'id','service_id');
+    }
 }

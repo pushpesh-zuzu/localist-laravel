@@ -95,7 +95,6 @@ class UserController extends Controller
                     $aLocations['user_id'] = $user->id;
                     if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
                         $aLocations['miles'] = 0;
-                        $aLocations['postcode'] = '000000';
                         $aLocations['nation_wide'] = 1;
                     }else{
                         if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
@@ -105,8 +104,13 @@ class UserController extends Controller
                         } else {
                             $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
                         }
-                        $aLocations['postcode'] = $aVals['postcode'];
+                        // $aLocations['postcode'] = $aVals['postcode'];
                         $aLocations['nation_wide'] = 0;
+                    }
+                    if(isset($aVals['postcode']) && $aVals['postcode'] !=''){
+                        $aLocations['postcode'] = $aVals['postcode'];
+                    }else{
+                        $aLocations['postcode'] = '000000';
                     }
                     // dd($aLocations['nation_wide']);
                     // if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
