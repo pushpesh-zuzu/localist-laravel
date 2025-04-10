@@ -60,7 +60,7 @@ class UserController extends Controller
                 return $this->sendError($validator->errors());
             }
             $result = $this->zeroBounceService->validateEmail($request->email);
-            if ($result['status'] === 'invalid') {
+            if (isset($result['status']) && $result['status'] === 'invalid') {
                 return $this->sendError('Email is Invalid');
             }
         }

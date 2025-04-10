@@ -227,15 +227,18 @@ class ApiController extends Controller
             $insertData = [];
 
             foreach ($sortedSellers as $seller) {
-                $insertData[] = [
-                    'service_id'   => $seller->service_id,
-                    'seller_id'    => $seller->user_id,
-                    'buyer_id'     => $seller->buyer_id,
-                    'lead_id'      => $seller->lead_id,
-                    'bid'          => $seller->credit_scores, // Fixed bid amount
-                    'created_at'   => now(),
-                    'updated_at'   => now(),
-                ];
+                if($seller->buyer_id != $seller->user_id){
+                    $insertData[] = [
+                        'service_id'   => $seller->service_id,
+                        'seller_id'    => $seller->user_id,
+                        'buyer_id'     => $seller->buyer_id,
+                        'lead_id'      => $seller->lead_id,
+                        'bid'          => $seller->credit_scores, // Fixed bid amount
+                        'created_at'   => now(),
+                        'updated_at'   => now(),
+                    ];
+                }
+             
 
                 // $usersdet = DB::table('users')
                 //     ->where('id', $seller->user_id)->get();dd($usersdet);

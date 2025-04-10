@@ -96,10 +96,42 @@ class SellerController extends Controller
         return view('seller.credit_plans', get_defined_vars());
     }
 
-    public function sellerBids($userid){
-        $buyerId = Bid::whereIn('seller_id', $userid)->pluck(['buyer_id'])->toArray();
-        $leadId = Bid::whereIn('seller_id', $userid)->pluck(['lead_id'])->toArray();
-        $aRows = LeadRequest::whereIn('customer_id', $buyerId)->whereIn('id',$leadId)->get();dd($aRows);
-        return view('seller.credit_plans', compact('aRows'));
+    public function sellerBids($userid)
+    {
+        $buyerIds = Bid::where('seller_id', $userid)->pluck('buyer_id')->unique()->toArray();
+
+        $leads = LeadRequest::whereIn('customer_id', $buyerIds)->get();
+
+        // Group all leads by customer_id
+        $groupedLeads = $leads->groupBy('customer_id');
+
+        $aRows = [];
+
+        foreach ($groupedLeads as $customerId => $customerLeads) {
+            $user = User::find($customerId);
+            
+            $aRows[] = [
+                'buyer_name' => $user ? $user->name : '',
+                'customer_id' => $customerId,
+                'leads' => $customerLeads->map(function ($lead) {
+                    $lead->service_name = Category::where('id', $lead->service_id)->pluck('name')->first();
+                    return $lead;
+                })
+            ];
+        }
+
+        return view('seller.autobid_leads', compact('aRows'));
     }
+
+
+    // public function sellerBids($userid){
+    //     $buyerId = Bid::whereIn('seller_id', [$userid])->pluck('buyer_id')->toArray();
+    //     // $leadId = Bid::whereIn('seller_id', $userid)->pluck(['lead_id'])->toArray();
+    //     $aRows = LeadRequest::whereIn('customer_id', $buyerId)->get();
+    //     foreach ($aRows as $key => $value) {
+    //         $value['buyer_name'] = User::where('id', $value->customer_id)->pluck('name')->first();
+    //         $value['service_name'] = Category::where('id', $value->service_id)->pluck('name')->first();
+    //     }
+    //     return view('seller.autobid_leads', compact('aRows'));
+    // }
 }
