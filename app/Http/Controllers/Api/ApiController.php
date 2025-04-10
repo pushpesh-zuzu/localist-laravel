@@ -279,6 +279,10 @@ class ApiController extends Controller
         $bids = [];
         if (!empty($leadid)) {
             $bids = Bid::where('buyer_id',$seller_id)->where('lead_id',$leadid)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
+
+            foreach($bids as $value){
+                $value['service_name'] = Category::where('id',$value->service_id)->pluck('name')->first();
+            }
         }else{
             $bids =[];
             // $bids = Bid::where('buyer_id',$seller_id)->with(['sellers','buyers'])->orderBy('id','DESC')->get();

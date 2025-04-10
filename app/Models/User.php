@@ -45,6 +45,7 @@ class User extends Authenticatable
         'new_jobs',
         'social_media',
         'suite',
+        'total_credit',
         'status',
         'city',
         'state',
