@@ -134,6 +134,14 @@ class UserController extends Controller
             //     UserServiceLocation::createUserServiceLocation($aLocations);
             // }
         }
+        // CustomHelper::sendEmail();
+        if($aVals['active_status'] == 1){
+            $modes = 'Seller Registration';
+        }else{
+            $modes = 'Buyer Registration';
+        }
+       
+        CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
         return $this->sendResponse('Registration Successful.', $user);
         // return $this->sendResponse(__('registration successfully',$user));
 

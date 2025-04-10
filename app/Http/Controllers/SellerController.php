@@ -99,9 +99,7 @@ class SellerController extends Controller
     public function sellerBids($userid)
     {
         $buyerIds = Bid::where('seller_id', $userid)->pluck('buyer_id')->unique()->toArray();
-
         $leads = LeadRequest::whereIn('customer_id', $buyerIds)->get();
-
         // Group all leads by customer_id
         $groupedLeads = $leads->groupBy('customer_id');
 
