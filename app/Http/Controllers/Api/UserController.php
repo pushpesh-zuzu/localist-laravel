@@ -37,7 +37,9 @@ class UserController extends Controller
         $auto_bid = $request->auto_bid;
         $loggedUser = $request->loggedUser;//For checking seller/buyer
         $users = User::where('email',$request->email)->first();
-
+        if(!empty($users) && $users != ''){
+            return $this->sendError('Email already exists');
+        }
         if($loggedUser == 2){
             if(!empty($users) && $users != ''){
                 $token = $users->createToken('authToken', ['user_id' => $users->id])->plainTextToken;
@@ -47,9 +49,7 @@ class UserController extends Controller
             }
             
         }
-        if(!empty($users) && $users != ''){
-            return $this->sendError('Email already exists');
-        }
+       
 
         // if(!empty($users) && $users != ''){
         //     return $this->sendError('Email already exists');

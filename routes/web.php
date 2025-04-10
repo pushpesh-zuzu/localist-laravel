@@ -51,6 +51,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('seller', SellerController::class);
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-incomplete-list', [SellerController::class, 'incompletelist'])->name('seller.incomplete');
+    Route::get('seller-services/{userid}', [SellerController::class, 'sellerServices'])->name('seller.services');
     Route::resource('servicequestion', ServiceQuestionsController::class);
     Route::resource('profilequestion', ProfileQuesController::class);
     Route::resource('coupon', CouponController::class);

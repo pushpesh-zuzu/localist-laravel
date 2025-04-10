@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\UserService;
+use App\Models\UserServiceLocation;
+use App\Models\Category;
 
 class SellerController extends Controller
 {
@@ -72,4 +75,19 @@ class SellerController extends Controller
         $aRows = User::whereIn('user_type', [1, 3])->where('form_status',0)->orderBy('id','DESC')->get(); 
         return view('seller.incomplete', compact('aRows'));
     }
+
+    public function sellerServices($userid){
+        $serviceId = UserService::where('user_id', $userid)->pluck('service_id')->toArray();
+        $aRows = Category::whereIn('id', $serviceId)->get();
+        foreach ($aRows as $key => $value) {
+            $value['locations'] = UserServiceLocation::whereIn('user_id',[$userid])->whereIn('service_id', [$value->id])->select(['miles','postcode','nation_wide'])->get()->toArray();
+        }
+        return view('seller.services', compact('aRows'));
+    }
+
+    // public function sellerLocations($userid){
+    //     $serviceId = UserService::where('user_id', $userid)->pluck('service_id')->toArray();
+    //     $aRows = Category::whereIn('id', $serviceId)->get();
+    //     return view('seller.services', compact('aRows'));
+    // }
 }

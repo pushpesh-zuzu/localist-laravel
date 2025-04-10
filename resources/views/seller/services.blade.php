@@ -1,0 +1,48 @@
+<x-app-layout>
+    <x-slot name="header">{{ __('User Services') }} </x-slot>
+
+    <div class="card mb-4">
+      <div class="card-header">
+          <strong>{{ __('Services List') }}</strong>
+      </div>
+      <div class="card-body">
+        @if(count($aRows) > 0)
+        <table class="table table-bordered" id="dataTable">
+          <thead>
+          <tr>
+            <th scope="col" width="20px;">#</th>
+            <th scope="col" width="200px;">Image</th>
+            <th scope="col">Category Name</th>
+            <th scope="col">Location</th>
+          </tr>
+          </thead>
+          <tbody>
+          @foreach($aRows as $aKey => $aRow)
+          <tr>
+            <th scope="row">{{ $aKey+1 }}</th>
+            <td>    @if($aRow && $aRow->banner_image) 
+                        <img src="{{ \App\Helpers\CustomHelper::displayImage($aRow->banner_image, 'category') }}" height="100" width="100" class="mt-2" />        
+                    @else
+                        <img src="{{asset('/images/no_image.jpg')}}" height="100" width="100" class="mt-2" />       
+                    @endif
+            </td>
+            <td >{{ $aRow->name }}</td>
+            <td rowspan="2">
+                @foreach($aRow->locations as $location)
+                    <p>Miles: {{$location['miles']}}</p>
+                    <p>Postcode: {{$location['postcode']}}</p>
+                    <p>Nation Wide: {{ $location['nation_wide'] == 1 ? 'Yes' : 'No' }}</p>
+                    <hr>
+                @endforeach
+            </td>
+          </tr>
+          @endforeach
+          </tbody>
+        </table>
+        @else 
+        No records found
+        @endif
+      </div>
+    </div>
+ 
+</x-app-layout>           

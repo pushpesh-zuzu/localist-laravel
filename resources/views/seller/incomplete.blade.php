@@ -28,6 +28,7 @@
             <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>
+                <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary">Service</a>
                 <a href="{{ route('seller.show',$aRow->id) }}"><i class="icon  cil-pencil"></i></a>
                 <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();"><i class="icon cil-trash"></i>
                 </a>
