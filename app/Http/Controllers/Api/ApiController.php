@@ -841,7 +841,16 @@ class ApiController extends Controller
         // ]);
     }
 
-    
+    public function pendingLeads(Request $request)
+    {
+        $aValues = $request->all();
+        $serviceIds = is_array($aValues['service_id']) ? $aValues['service_id'] : explode(',', $aValues['service_id']);
+        // $ser = UserServiceLocation::whereIn('service_id', $serviceIds)
+        // ->where('user_id', $aValues['user_id'])->get();dd($ser);
+        $leadcount = LeadRequest::whereIn('service_id', $serviceIds)
+                            ->get()->count();
+        return $this->sendResponse('Pending Leads', $leadcount);
+    }
     
     
     // public function sellerMyprofileqa(Request $request): JsonResponse
