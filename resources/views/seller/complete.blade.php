@@ -13,7 +13,7 @@
             <th scope="col" width="20px;">#</th>
             <th scope="col">Name</th>
             <th scope="col">Email</th>
-            <th scope="col">User Role</th>
+            <th scope="col">Total Credit</th>
             <th scope="col">Status</th>
             <th scope="col">Action</th>
           </tr>
@@ -24,7 +24,7 @@
             <th scope="row">{{ $aKey+1 }}</th>
             <td>{{ $aRow->name }}</td>
             <td>{{ $aRow->email }}</td>
-            <td>{{'Seller' }}</td>
+            <td class="text text-center">{{ $aRow->total_credit }}</td>
             <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>

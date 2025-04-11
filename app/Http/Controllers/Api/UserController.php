@@ -71,7 +71,8 @@ class UserController extends Controller
             $aVals['password'] = Hash::make($request->password);
         }
         // $aVals['password'] = Hash::make($request->password);
-        $aVals['total_credit'] = "1000";
+        $randomNumber = rand(1000, 5000);
+        $aVals['total_credit'] = $randomNumber;
         $user = User::create($aVals);
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
