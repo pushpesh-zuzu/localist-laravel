@@ -77,6 +77,7 @@ Route::prefix('users')->group(function () {
 
         Route::post('/get_user_services', [UserController::class, 'getUserServices']);
         Route::post('/get_user_locations', [UserController::class, 'getUserLocations']);
+        Route::post('/remove-location', [ApiController::class, 'removeLocation']);
 
         Route::post('/switch_user', [UserController::class, 'switchUser']);
         Route::post('/edit-profile', [UserController::class, 'editProfile']);

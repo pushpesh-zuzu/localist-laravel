@@ -5,13 +5,13 @@
               <use xlink:href="{{ asset('coreui/node_modules/@coreui/icons/sprites/free.svg#cil-menu') }}"></use>
             </svg>
           </button>
-          <ul class="header-nav d-none d-lg-flex">
+          <!-- <ul class="header-nav d-none d-lg-flex">
             <li class="nav-item">
                 <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="nav-link">
                         {{ __('Dashboard') }}
                 </x-nav-link>
             </li>
-          </ul>
+          </ul> -->
 
           <ul class="header-nav">
             

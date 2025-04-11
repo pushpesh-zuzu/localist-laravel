@@ -28,7 +28,7 @@
             <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>
-              <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary">AutoBid</a>
+              <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn"></i></a>
               <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary"><i class="bi bi-person-lines-fill"></i></a>
               <a href="{{ route('seller.creditPlans',$aRow->id) }}" class="text text-primary"><i class="bi bi-list-task nav-icon"></i></a>
                 <a href="{{ route('seller.show',$aRow->id) }}"><i class="icon  cil-pencil"></i></a>

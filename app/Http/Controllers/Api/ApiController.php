@@ -225,28 +225,54 @@ class ApiController extends Controller
         // Step 6: Insert into `bids` Table
         if (!$sortedSellers->isEmpty()) {
             $insertData = [];
+            $existingCombos = [];
 
             foreach ($sortedSellers as $seller) {
-                if($seller->buyer_id != $seller->user_id){
+                // Unique key for this combo
+                $uniqueKey = $seller->user_id . '-' . $seller->lead_id . '-' . $seller->service_id;
+
+                // Only insert if this combo hasn't been added yet
+                if (!isset($existingCombos[$uniqueKey]) && $seller->buyer_id != $seller->user_id) {
                     $insertData[] = [
                         'service_id'   => $seller->service_id,
                         'seller_id'    => $seller->user_id,
                         'buyer_id'     => $seller->buyer_id,
                         'lead_id'      => $seller->lead_id,
-                        'bid'          => $seller->credit_scores, // Fixed bid amount
+                        'bid'          => $seller->credit_scores,
                         'created_at'   => now(),
                         'updated_at'   => now(),
                     ];
+
+                    $existingCombos[$uniqueKey] = true;
+
+                    // Deduct credit only once per unique seller-lead-service combo
+                    DB::table('users')
+                        ->where('id', $seller->user_id)
+                        ->decrement('total_credit', $seller->credit_scores);
                 }
+            }
+
+            // foreach ($sortedSellers as $seller) {
+            //     if($seller->buyer_id != $seller->user_id){
+            //         $insertData[] = [
+            //             'service_id'   => $seller->service_id,
+            //             'seller_id'    => $seller->user_id,
+            //             'buyer_id'     => $seller->buyer_id,
+            //             'lead_id'      => $seller->lead_id,
+            //             'bid'          => $seller->credit_scores, // Fixed bid amount
+            //             'created_at'   => now(),
+            //             'updated_at'   => now(),
+            //         ];
+            //     }
              
 
-                // $usersdet = DB::table('users')
-                //     ->where('id', $seller->user_id)->get();dd($usersdet);
-                // Deduct 20 credits from seller's total_credit
-                DB::table('users')
-                    ->where('id', $seller->user_id)
-                    ->decrement('total_credit', $seller->credit_scores);
-            }
+            //     // $usersdet = DB::table('users')
+            //     //     ->where('id', $seller->user_id)->get();dd($usersdet);
+            //     // Deduct 20 credits from seller's total_credit
+            //     DB::table('users')
+            //         ->where('id', $seller->user_id)
+            //         ->decrement('total_credit', $seller->credit_scores);
+            // }
 
             // Bulk Insert Bids
             DB::table('bids')->insert($insertData);
@@ -276,22 +302,55 @@ class ApiController extends Controller
         }
     }
 
-    public function autobidList(Request $request){
+    public function autobidList(Request $request)
+    {
         $seller_id = $request->user_id; 
         $leadid = $request->lead_id; 
-        $bids = [];
-        if (!empty($leadid)) {
-            $bids = Bid::where('buyer_id',$seller_id)->where('lead_id',$leadid)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
+        $result = [];
 
-            foreach($bids as $value){
-                $value['service_name'] = Category::where('id',$value->service_id)->pluck('name')->first();
+        if (!empty($leadid)) {
+            // Fetch all matching bids
+            $bids = Bid::where('buyer_id', $seller_id)
+                ->where('lead_id', $leadid)
+                ->get();
+
+            // Get seller IDs and unique service IDs
+            $sellerIds = $bids->pluck('seller_id')->toArray();
+            $serviceIds = $bids->pluck('service_id')->unique()->toArray();
+
+            // Get users and categories
+            $users = User::whereIn('id', $sellerIds)->get()->keyBy('id'); // index by seller_id
+            $services = Category::whereIn('id', $serviceIds)->pluck('name', 'id'); // id => name
+
+            foreach ($bids as $bid) {
+                $seller = $users[$bid->seller_id] ?? null;
+                if ($seller) {
+                    $sellerData = $seller->toArray();
+                    $sellerData['service_name'] = $services[$bid->service_id] ?? 'Unknown Service';
+                    $sellerData['bid'] = $bid->bid; // Optionally include bid amount
+                    $result[] = $sellerData;
+                }
             }
-        }else{
-            $bids =[];
-            // $bids = Bid::where('buyer_id',$seller_id)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
         }
-        return $this->sendResponse(__('AutoBid Data'), $bids);
+
+        return $this->sendResponse(__('AutoBid Data'), $result);
     }
+    // public function autobidList(Request $request){
+    //     $seller_id = $request->user_id; 
+    //     $leadid = $request->lead_id; 
+    //     $bids = [];
+    //     if (!empty($leadid)) {
+    //         $bids = Bid::where('buyer_id',$seller_id)->where('lead_id',$leadid)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
+
+    //         foreach($bids as $value){
+    //             $value['service_name'] = Category::where('id',$value->service_id)->pluck('name')->first();
+    //         }
+    //     }else{
+    //         $bids =[];
+    //         // $bids = Bid::where('buyer_id',$seller_id)->with(['sellers','buyers'])->orderBy('id','DESC')->get();
+    //     }
+    //     return $this->sendResponse(__('AutoBid Data'), $bids);
+    // }
 
     public function leadpreferences(Request $request): JsonResponse
     {
@@ -765,6 +824,24 @@ class ApiController extends Controller
         //     'discount' => $discount
         // ]);
     }
+
+    public function removeLocation(Request $request)
+    {
+        $aValues = $request->all();
+        $serviceIds = is_array($aValues['service_id']) ? $aValues['service_id'] : explode(',', $aValues['service_id']);
+        // $ser = UserServiceLocation::whereIn('service_id', $serviceIds)
+        // ->where('user_id', $aValues['user_id'])->get();dd($ser);
+        UserServiceLocation::whereIn('service_id', $serviceIds)
+                            ->where('user_id', $aValues['user_id'])
+                            ->delete();
+        return $this->sendResponse('Location deleted sucessfully', []);
+        // return $this->sendResponse('Coupon applied successfully', [
+        //     'coupon_code' => $coupon->coupon_code,
+        //     'discount' => $discount
+        // ]);
+    }
+
+    
     
     
     // public function sellerMyprofileqa(Request $request): JsonResponse
