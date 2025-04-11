@@ -14,6 +14,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileQuesController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\RequestListController;
+use App\Helpers\CustomHelper;
 
 
 Route::get('/clear-cache', function() {
@@ -24,6 +25,14 @@ Route::get('/clear-cache', function() {
 	$exitCode = Artisan::call('optimize');
     return 'DONE'; //Return anything
 });
+
+
+Route::get('/testemail', function() {
+  CustomHelper::sendEmail(array("to" => "webplanetsoft@gmail.com","subject" => "test", "body" => "test body ",'receiver' => 'Ankit'));
+});
+
+
+
 
 Route::get('/install-api', function() {
     $exitCode = Artisan::call('install:api');

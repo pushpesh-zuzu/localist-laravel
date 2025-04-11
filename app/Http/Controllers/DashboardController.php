@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Blog;
 use App\Models\Category;
+use App\Helpers\CustomHelper;
 
 class DashboardController extends Controller
 {
@@ -13,6 +14,9 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        
+         // CustomHelper::sendEmail(array("to" => "webplanetsoft@gmail.com","subject" => "test", "body" => "this is test body",'receiver' => "Ankit "));
+        
         $totalusers = User::count();
         $totalsellers = User::where('user_type',[1, 3])->count();
         $totalbuyer = User::where('user_type',[2, 3])->count();
