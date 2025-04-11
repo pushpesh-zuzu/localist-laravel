@@ -34,6 +34,7 @@
           </thead>
           <tbody>
             @foreach($aRows as $aKey => $aRow)
+              @if(!empty($aRow->customer->name))
             <tr>
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->customer->name }}</td>
@@ -66,6 +67,7 @@
               <td>{{ date('m/d/Y h:i a', strtotime($aRow->created_at)) }}</td>
   
             </tr>
+              @endif
             @endforeach
            
           </tbody>
