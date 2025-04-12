@@ -137,8 +137,167 @@ class ApiController extends Controller
     
         return $this->sendResponse(__('Category Data'), $categories);
     }
+    
+    
+     public function autobid(Request $request)
+    {
+        $leadId = $request->lead_id;
 
-    public function autobid(Request $request)
+        // Fetch Lead Request Data
+        $leadRequest = DB::table('lead_requests')
+            ->where('id', $leadId)
+            ->first();
+
+        if (!$leadRequest) {
+            return $this->sendError(__('Lead request not found'), 404);
+        }
+
+        // Step 1: Create Temporary Table with Nationwide Column
+        DB::statement("CREATE TEMPORARY TABLE temp_sellers (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT,
+            postcode VARCHAR(10),
+            total_credit INT,
+            distance VARCHAR(255),
+            service_id INT,
+            buyer_id INT,
+            lead_id INT,
+            credit_scores INT,
+            nation_wide TINYINT(1) DEFAULT 0
+        )");
+        
+        // Step 2: Insert Auto-Bid Sellers into Temporary Table
+        // Subquery: Count how many users have each total_credit
+        $creditCounts = DB::table('users')
+        ->select('total_credit', DB::raw('COUNT(*) as credit_count'))
+        ->groupBy('total_credit');
+
+        DB::table('temp_sellers')->insertUsing(
+        ['user_id', 'postcode', 'total_credit', 'service_id', 'buyer_id', 'lead_id', 'credit_scores', 'nation_wide'],
+        DB::table('user_services as us')
+            ->join('users as u', 'us.user_id', '=', 'u.id')
+            ->join('user_service_locations as usl', function ($join) {
+                $join->on('us.user_id', '=', 'usl.user_id')
+                    ->on('us.service_id', '=', 'usl.service_id');
+            })
+            ->joinSub($creditCounts, 'cc', function ($join) {
+                $join->on('u.total_credit', '=', 'cc.total_credit');
+            })
+            ->where('us.service_id', $leadRequest->service_id)
+            ->orderByRaw('cc.credit_count = 1 DESC') // Unique credits come first
+            ->orderByDesc('u.total_credit')  
+            ->limit(5)       // Then by total_credit descending
+            ->select(
+                'u.id as user_id',
+                'usl.postcode',
+                'u.total_credit',
+                'us.service_id',
+                DB::raw($leadRequest->customer_id . ' as buyer_id'),
+                DB::raw($leadId . ' as lead_id'),
+                DB::raw($leadRequest->credit_score . ' as credit_scores'),
+                'usl.nation_wide'
+            )
+        );
+      
+
+        // Step 3: Fetch Sellers from Temp Table
+        $sellers = DB::table('temp_sellers')->get();
+        $leadpostcode = $leadRequest->postcode; // Always use lead's actual location
+
+        if ($sellers->isEmpty()) {
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_sellers");
+            return $this->sendError(__('No auto-bid sellers found'), 404);
+        }
+
+        // Step 4: Calculate Distance for Each Seller & Update Table
+        foreach ($sellers as $seller) {
+            if ($seller->nation_wide == 1) {
+                // If seller is nationwide, set distance to infinity
+                DB::table('temp_sellers')
+                    ->where('user_id', $seller->user_id)
+                    ->update(['distance' => INF]);
+            } else {
+                // Seller has specific postcode, calculate real distance
+                $distance = $this->getDistance($leadpostcode, $seller->postcode);
+                if ($distance !== "Distance not found") {
+                    $cleanDistance = (float) str_replace([' km', ','], '', $distance);
+                    DB::table('temp_sellers')
+                        ->where('user_id', $seller->user_id)
+                        ->update(['distance' => $cleanDistance]);
+                }
+            }
+        }
+
+        // Step 5: Fetch Sorted Sellers (By Distance & Highest Credit)
+        $sortedSellers = DB::table('temp_sellers')
+            ->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END, distance ASC')
+            ->orderByDesc('total_credit')
+            ->get();
+
+        // Step 6: Insert into `bids` Table
+        if (!$sortedSellers->isEmpty()) {
+            $insertData = [];
+            $existingCombos = [];
+
+            foreach ($sortedSellers as $seller) {
+                // Unique key for this combo
+                $uniqueKey = $seller->user_id . '-' . $seller->lead_id . '-' . $seller->service_id;
+
+                // Only insert if this combo hasn't been added yet
+                if (!isset($existingCombos[$uniqueKey]) && $seller->buyer_id != $seller->user_id) {
+                    $insertData[] = [
+                        'service_id'   => $seller->service_id,
+                        'seller_id'    => $seller->user_id,
+                        'buyer_id'     => $seller->buyer_id,
+                        'lead_id'      => $seller->lead_id,
+                        'bid'          => $seller->credit_scores,
+                        'distance'     => $seller->distance,
+                        'created_at'   => now(),
+                        'updated_at'   => now(),
+                    ];
+
+                    $existingCombos[$uniqueKey] = true;
+
+                    // Deduct credit only once per unique seller-lead-service combo
+                    DB::table('users')
+                        ->where('id', $seller->user_id)
+                        ->decrement('total_credit', $seller->credit_scores);
+                }
+            }
+
+            // foreach ($sortedSellers as $seller) {
+            //     if($seller->buyer_id != $seller->user_id){
+            //         $insertData[] = [
+            //             'service_id'   => $seller->service_id,
+            //             'seller_id'    => $seller->user_id,
+            //             'buyer_id'     => $seller->buyer_id,
+            //             'lead_id'      => $seller->lead_id,
+            //             'bid'          => $seller->credit_scores, // Fixed bid amount
+            //             'created_at'   => now(),
+            //             'updated_at'   => now(),
+            //         ];
+            //     }
+             
+
+            //     // $usersdet = DB::table('users')
+            //     //     ->where('id', $seller->user_id)->get();dd($usersdet);
+            //     // Deduct 20 credits from seller's total_credit
+            //     DB::table('users')
+            //         ->where('id', $seller->user_id)
+            //         ->decrement('total_credit', $seller->credit_scores);
+            // }
+
+            // Bulk Insert Bids
+            DB::table('bids')->insert($insertData);
+        }
+
+        // Step 7: Drop Temporary Table
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_sellers");
+
+        return $this->sendResponse(__('Bids inserted successfully'),[]);
+    }
+
+    public function autobid123(Request $request)
     {
         $leadId = $request->lead_id;
 
@@ -328,6 +487,7 @@ class ApiController extends Controller
                     $sellerData = $seller->toArray();
                     $sellerData['service_name'] = $services[$bid->service_id] ?? 'Unknown Service';
                     $sellerData['bid'] = $bid->bid; // Optionally include bid amount
+                    $sellerData['distance'] = @$bid->distance;
                     $result[] = $sellerData;
                 }
             }
@@ -756,9 +916,49 @@ class ApiController extends Controller
         return $this->sendResponse(__('Plans Data'), $plans);
     }
 
-    public function getLeadRequest(){
-        // $user_id = $request->user_id;
-        $leadrequest = LeadRequest::with(['customer','category'])->limit(5)->orderBy('id','DESC')->get();
+    public function getLeadRequest(Request $request){
+        $user_id = $request->user_id;
+        
+        //$leadrequest = LeadRequest::with(['customer','category'])->limit(5)->orderBy('id','DESC')->get();
+        
+        
+        //  $user_id = 53; // replace with your actual user ID
+        
+        
+        $userServices = DB::table('user_services')
+            ->where('user_id', $user_id)
+            ->pluck('service_id')
+            ->toArray();
+        
+        // Step 2: Get flat list of all answers from lead_prefrences
+        // $searchTerms = DB::table('lead_prefrences')
+        //     ->where('user_id', $user_id)
+        //     ->pluck('answers')
+        //     ->flatMap(function ($json) {
+        //         return collect(json_decode($json, true))->pluck('answers');
+        //     })
+        //     ->unique()
+        //     ->values()
+        //     ->toArray();
+        
+        $searchTerms = DB::table('lead_prefrences')
+            ->where('user_id', $user_id)
+            ->pluck('answers')
+            ->toArray();
+            
+        
+        $leadrequest = LeadRequest::with(['customer', 'category'])
+        ->where('customer_id','!=',$user_id)
+    ->whereIn('service_id', $userServices)
+    
+    ->where(function ($query) use ($searchTerms) {
+        foreach ($searchTerms as $term) {
+            $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+        }
+    })
+    ->orderBy('id', 'DESC')
+    ->get();
+        
         return $this->sendResponse(__('Lead Request Data'), $leadrequest);
 
     }
@@ -786,7 +986,7 @@ class ApiController extends Controller
                             'total_credit'=>DB::raw("total_credit + " . (int)$plans['no_of_leads'])
                         ]);
         // }
-        return $this->sendResponse(__('Plan has been sucessfully purchased '), );
+        return $this->sendResponse(__('Plan has been sucessfully purchased ') );
     }
 
     public function addCoupon(Request $request)
@@ -850,6 +1050,43 @@ class ApiController extends Controller
         $leadcount = LeadRequest::whereIn('service_id', $serviceIds)
                             ->get()->count();
         return $this->sendResponse('Pending Leads', $leadcount);
+    }
+    
+    public function getLeadByPrefer()
+    {
+         $userId = 53; // replace with your actual user ID
+        
+        
+        $userServices = DB::table('user_services')
+            ->where('user_id', $userId)
+            ->pluck('service_id')
+            ->toArray();
+        
+        // Step 2: Get flat list of all answers from lead_prefrences
+        $searchTerms = DB::table('lead_prefrences')
+            ->where('user_id', $userId)
+            ->pluck('answers')
+            ->toArray();
+            
+        
+        $leadrequest = LeadRequest::with(['customer', 'category'])
+        ->where('customer_id','!=',$userId)
+    ->whereIn('service_id', $userServices)
+    
+    ->where(function ($query) use ($searchTerms) {
+        foreach ($searchTerms as $term) {
+            $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+        }
+    })
+    ->orderBy('id', 'DESC')
+    ->get();
+        
+        
+        
+        
+        
+
+            dd($userServices,$searchTerms,$leadrequest);
     }
     
     

@@ -20,6 +20,12 @@ Route::get('/check_api', function () {
     return "check api";
 });
 
+
+Route::get('test_lead',[ApiController::class,'getLeadByPrefer']);
+
+
+
+
 Route::prefix('notification')->group(function () {
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
@@ -104,7 +110,7 @@ Route::prefix('users')->group(function () {
         Route::post('/seller-card-details', [ApiController::class, 'sellerCardDetails']);
 
         Route::get('/get-plans', [ApiController::class, 'getPlans']);
-        Route::get('/get-lead-request', [ApiController::class, 'getLeadRequest']);
+        Route::post('/get-lead-request', [ApiController::class, 'getLeadRequest']);
         Route::post('/buy-credits', [ApiController::class, 'buyCredits']);
         Route::post('/add-coupon', [ApiController::class, 'addCoupon']);
 
