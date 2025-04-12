@@ -94,17 +94,56 @@ class CustomHelper
     {
         $mailDriver = strtolower(config("mail.driver"));
         $response = false;
+
         try {
-            $defaults = array_merge(array('sendAs' => 'html', 'template' => 'send', 'body' => 'Thankyou for registration', 'from' => 'ankit@zuzucodes.com'), $config);
-            $body = $defaults['body'];
-            Mail::send('emails.' . $defaults['template'], ['title' => @$defaults['title'], 'link' => @$defaults['link'], 'body' => $body, 'extra' => (isset($defaults['extra']) ? $defaults['extra'] : [])], function ($message) use ($defaults) {
+            $defaults = array_merge([
+                'sendAs'   => 'html',
+                'template' => 'send',
+                'body'     => '',
+                'from'     => 'ankit@zuzucodes.com',
+                'to'       => '',
+                'subject'  => '',
+                'receiver' => '',
+                'title'    => '',
+                'link'     => '',
+                'extra'    => [],
+            ], $config);
+
+            // Prepare data to pass into the email view
+            $emailData = [
+                'body'    => $defaults['body'],
+                'receiver'=> $defaults['receiver']
+            ];
+
+            Mail::send('emails.' . $defaults['template'], $emailData, function ($message) use ($defaults) {
                 $message->from($defaults['from']);
                 $message->to($defaults['to']);
                 $message->subject($defaults['subject']);
             });
+
             $response = true;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
+            // Log the error if needed: \Log::error($e->getMessage());
         }
+
         return $response;
     }
+    // public static function sendEmail($config = array())
+    // {
+    //     $mailDriver = strtolower(config("mail.driver"));
+    //     $response = false;
+    //     try {
+    //         $defaults = array_merge(array('sendAs' => 'html', 'template' => 'send', 'body' => 'Thankyou for registration', 'from' => 'ankit@zuzucodes.com'), $config);
+    //         $body = $defaults['body'];
+    //         Mail::send('emails.' . $defaults['template'], ['title' => @$defaults['title'], 'link' => @$defaults['link'], 'body' => $body, 'extra' => (isset($defaults['extra']) ? $defaults['extra'] : [])], function ($message) use ($defaults) {
+    //             $message->from($defaults['from']);
+    //             $message->to($defaults['to']);
+    //             $message->subject($defaults['subject']);
+    //         });
+    //         $response = true;
+    //     } catch (Exception $e) {
+    //     }
+    //     return $response;
+    // }
+
 }
