@@ -220,10 +220,11 @@ class ApiController extends Controller
                 // Seller has specific postcode, calculate real distance
                 $distance = $this->getDistance($leadpostcode, $seller->postcode);
                 if ($distance !== "Distance not found") {
-                    $cleanDistance = (float) str_replace([' km', ','], '', $distance);
+                    // $cleanDistance = (float) str_replace([' km', ','], '', $distance);
+                    $miles = round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2);
                     DB::table('temp_sellers')
                         ->where('user_id', $seller->user_id)
-                        ->update(['distance' => $cleanDistance]);
+                        ->update(['distance' => $miles]);
                 }
             }
         }

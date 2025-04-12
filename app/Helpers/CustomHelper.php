@@ -100,7 +100,7 @@ class CustomHelper
                 'sendAs'   => 'html',
                 'template' => 'send',
                 'body'     => '',
-                'from'     => 'ankit@zuzucodes.com',
+                'from'     => 'info@localists.com',
                 'to'       => '',
                 'subject'  => '',
                 'receiver' => '',
