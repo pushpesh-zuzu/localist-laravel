@@ -14,9 +14,20 @@ class ServiceQuestionsController extends Controller
      */
     public function index()
     {
-        $aRows = ServiceQuestion::with('categories')->orderBy('id','DESC')->get(); 
-        //  $aRows = ServiceQuestion::with('categories')->orderBy('id','DESC')->get()->groupBy('categories.name');
-        return view('servicequestion.index',get_defined_vars());
+         // Get all category IDs that have service questions
+        $categoryIdsWithQuestions = ServiceQuestion::distinct()->pluck('category')->toArray();
+
+        // Fetch only those categories which have questions
+        $aRows = Category::whereIn('id', $categoryIdsWithQuestions)
+                        ->where('status', 1)
+                        ->get();
+
+        // Attach service questions to each category
+        foreach ($aRows as $key => $value) {
+            $value['servQuestions'] = ServiceQuestion::where('category', $value->id)->get();
+        }
+
+        return view('servicequestion.index', get_defined_vars());
     }
 
     /**

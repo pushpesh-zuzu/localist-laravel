@@ -75,6 +75,7 @@ Route::prefix('users')->group(function () {
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
     Route::post('/questions-answer', [ApiController::class, 'questionAnswer']);
+    Route::post('/pending-leads', [ApiController::class, 'pendingLeads']);
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         // add services 
@@ -99,7 +100,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-preferences', [ApiController::class, 'getleadpreferences']);
         Route::post('/get-services', [ApiController::class, 'getservices']);
         Route::post('/remove-service', [ApiController::class, 'removeService']);
-        Route::post('/pending-leads', [ApiController::class, 'pendingLeads']);
+        
 
         Route::post('/switch-autobid', [ApiController::class, 'switchAutobid']);
 
@@ -113,11 +114,6 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-request', [ApiController::class, 'getLeadRequest']);
         Route::post('/buy-credits', [ApiController::class, 'buyCredits']);
         Route::post('/add-coupon', [ApiController::class, 'addCoupon']);
-
-        
-
-
-        
     });
     // Route::get('/{id}', [UserController::class, 'show']);
     // Route::put('/{id}', [UserController::class, 'update']);

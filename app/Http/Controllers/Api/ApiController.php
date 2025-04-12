@@ -916,7 +916,8 @@ class ApiController extends Controller
         return $this->sendResponse(__('Plans Data'), $plans);
     }
 
-    public function getLeadRequest(Request $request){
+    public function getLeadRequest(Request $request)
+    {
         $user_id = $request->user_id;
         
         //$leadrequest = LeadRequest::with(['customer','category'])->limit(5)->orderBy('id','DESC')->get();
@@ -949,31 +950,23 @@ class ApiController extends Controller
         
         $leadrequest = LeadRequest::with(['customer', 'category'])
         ->where('customer_id','!=',$user_id)
-    ->whereIn('service_id', $userServices)
-    
-    ->where(function ($query) use ($searchTerms) {
-        foreach ($searchTerms as $term) {
-            $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
-        }
-    })
-    ->orderBy('id', 'DESC')
-    ->get();
+        ->whereIn('service_id', $userServices)
         
-        return $this->sendResponse(__('Lead Request Data'), $leadrequest);
+        ->where(function ($query) use ($searchTerms) {
+            foreach ($searchTerms as $term) {
+                $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+            }
+        })
+        ->orderBy('id', 'DESC')
+        ->get();
+            
+            return $this->sendResponse(__('Lead Request Data'), $leadrequest);
 
     }
     
     public function buyCredits(Request $request){
         $aValues = $request->all();
         $plans = Plan::where('id',$aValues['plan_id'])->first();
-        // $userdetails = PurchaseHistory::where('user_id',$aValues['user_id'])->where('plan_id',$aValues['plan_id'])->first();
-        // if(isset($userdetails) && $userdetails != ''){
-        //     $userdetails->update([
-        //         'card_number' => $aValues['card_number'],
-        //         'expiry_date' => $aValues['expiry_date'],
-        //         'cvc' => $aValues['cvc']
-        //     ]);  
-        // }else{
             $userdetails = PurchaseHistory::create([
                 'user_id'  => $aValues['user_id'],
                 'plan_id' => $aValues['plan_id'],
@@ -985,7 +978,6 @@ class ApiController extends Controller
                 ->update([
                             'total_credit'=>DB::raw("total_credit + " . (int)$plans['no_of_leads'])
                         ]);
-        // }
         return $this->sendResponse(__('Plan has been sucessfully purchased ') );
     }
 
@@ -1045,8 +1037,6 @@ class ApiController extends Controller
     {
         $aValues = $request->all();
         $serviceIds = is_array($aValues['service_id']) ? $aValues['service_id'] : explode(',', $aValues['service_id']);
-        // $ser = UserServiceLocation::whereIn('service_id', $serviceIds)
-        // ->where('user_id', $aValues['user_id'])->get();dd($ser);
         $leadcount = LeadRequest::whereIn('service_id', $serviceIds)
                             ->get()->count();
         return $this->sendResponse('Pending Leads', $leadcount);
@@ -1071,16 +1061,16 @@ class ApiController extends Controller
         
         $leadrequest = LeadRequest::with(['customer', 'category'])
         ->where('customer_id','!=',$userId)
-    ->whereIn('service_id', $userServices)
-    
-    ->where(function ($query) use ($searchTerms) {
-        foreach ($searchTerms as $term) {
-            $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
-        }
-    })
-    ->orderBy('id', 'DESC')
-    ->get();
-        
+            ->whereIn('service_id', $userServices)
+            
+            ->where(function ($query) use ($searchTerms) {
+                foreach ($searchTerms as $term) {
+                    $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+                }
+            })
+            ->orderBy('id', 'DESC')
+            ->get();
+                
         
         
         
@@ -1088,23 +1078,5 @@ class ApiController extends Controller
 
             dd($userServices,$searchTerms,$leadrequest);
     }
-    
-    
-    // public function sellerMyprofileqa(Request $request): JsonResponse
-    // {
-    //     $user_id = $request->user_id; 
-    //     $aValues = $request->all();
-    //     $profileQues = ProfileQA::where('user_id',$user_id)->where('questions',$aValues['questions'])->first();
-    //     if(isset($profileQues) && $profileQues != ''){
-    //         $profileQues->update(['is_autobid' => $autobid]);
-    //     }else{
-    //         $userdetails = UserDetail::create([
-    //             'user_id'  => $user_id,
-    //             'is_autobid' => $autobid
-    //         ]);
-    //     }
-    //     $data = $userdetails;
-    //     return $this->sendResponse(__('Autobid switched successfully'),$data );   
-    // }
 
 }

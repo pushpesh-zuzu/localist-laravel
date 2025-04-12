@@ -8,7 +8,7 @@
       </div>
       <div class="card-body">
         @if(count($aRows) > 0)
-          <table class="table table-striped" id="dataTable">
+          <table class="table table-bordered" id="dataTable">
             <thead>
             <tr>
               <th scope="col" width="20px;">#</th>
@@ -23,8 +23,18 @@
             @foreach($aRows as $aKey => $aRow)
             <tr>
               <th scope="row">{{ $aKey+1 }}</th>
-              <td>{{ $aRow->categories->name ?? '' }}</td>
-              <td>{{ $aRow->questions }}<br><span class="text text-sm">Soln: {{ $aRow->answer }}</span></td>
+              <td>{{ $aRow->name ?? '' }}</td>
+              <td>
+                @if(count($aRow->servQuestions)>0)
+                  @foreach($aRow->servQuestions as $ques)
+                      <span class="fw-bold">Ques:</span> {{$ques['questions']}}<br/>
+                      <span class="fw-bold">Soln:</span> {{$ques['answer']}}</br/>
+                      @if (!$loop->last)
+                          <hr>
+                      @endif
+                  @endforeach
+                @endif  
+               </td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <td>
                   <a href="{{ route('servicequestion.edit',$aRow->id) }}"><i class="icon  cil-pencil"></i></a>

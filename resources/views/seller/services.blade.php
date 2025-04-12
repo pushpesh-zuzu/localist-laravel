@@ -13,6 +13,7 @@
             <th scope="col" width="20px;">#</th>
             <th scope="col" width="200px;">Image</th>
             <th scope="col">Sector</th>
+            <th scope="col">Leads</th>
             <th scope="col">Autobid</th>
             <th scope="col">Location</th>
           </tr>
@@ -28,8 +29,20 @@
                     @endif
             </td>
             <td >{{ $aRow->name }}</td>
+            <td >
+              @if(count($aRow->leadpref)>0)
+                @foreach($aRow->leadpref as $leads)
+                    <span class="fw-bold">Ques:</span> {{$leads['serquestions']['questions']}}<br/>
+                    <span class="fw-bold">Soln:</span> {{$leads['answers']}}</br/>
+                    @if (!$loop->last)
+                        <hr>
+                    @endif
+                @endforeach
+              @endif  
+            </td>
             <td >{{ $aRow->autobid  == 1 ? 'Yes' : 'No'}}</td>
             <td >
+              @if(count($aRow->locations)>0)
                 @foreach($aRow->locations as $location)
                     <span class="fw-bold">Miles:</span> {{$location['miles']}}<br/>
                     <span class="fw-bold">Postcode:</span> {{$location['postcode']}}</br/>
@@ -38,6 +51,7 @@
                         <hr>
                     @endif
                 @endforeach
+              @endif  
             </td>
           </tr>
           @endforeach

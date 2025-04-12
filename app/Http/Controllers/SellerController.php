@@ -87,11 +87,11 @@ class SellerController extends Controller
         foreach ($aRows as $key => $value) {
             $value['locations'] = UserServiceLocation::whereIn('user_id',[$userid])->whereIn('service_id', [$value->id])->select(['miles','postcode','nation_wide'])->get()->toArray();
             $value['leadpref'] = LeadPrefrence::whereIn('service_id', [$value->id])
-                                                ->whereIn('user_id', [$userid])
-                                                ->with('questions')
+                                                ->where('user_id', $userid)
+                                                ->with('serquestions')
                                                 ->get();
             $value['autobid'] = UserService::where('user_id', $userid)->where('service_id', $value->id)->pluck('auto_bid')->first();
-        }dd($aRows);
+        }
         return view('seller.services', compact('aRows'));
     }
 
