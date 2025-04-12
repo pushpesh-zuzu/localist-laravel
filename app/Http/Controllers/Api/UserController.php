@@ -346,72 +346,72 @@ class UserController extends Controller
         return $this->sendResponse(__('this service added to your profile successfully'));
     }
 
-    public function addUserLocation(Request $request): JsonResponse
-    {
-        $aVals = $request->all();
-        $userId = $aVals['user_id'];
+    // public function addUserLocation(Request $request): JsonResponse
+    // {
+    //     $aVals = $request->all();
+    //     $userId = $aVals['user_id'];
 
-        $validator = Validator::make($aVals, [
-            'service_id' => [
-                'required',
-                'exists:categories,id',
-            ],
-            'user_id' => 'required|exists:users,id',
-        ],
-        [
-            'user_id.exists' => 'The selected user does not exist.',
-            'service_id.exists' => 'The selected service does not exist.',
-        ]);
+    //     $validator = Validator::make($aVals, [
+    //         'service_id' => [
+    //             'required',
+    //             'exists:categories,id',
+    //         ],
+    //         'user_id' => 'required|exists:users,id',
+    //     ],
+    //     [
+    //         'user_id.exists' => 'The selected user does not exist.',
+    //         'service_id.exists' => 'The selected service does not exist.',
+    //     ]);
 
-        if ($validator->fails()) {
-            return $this->sendError($validator->errors());
-        }
+    //     if ($validator->fails()) {
+    //         return $this->sendError($validator->errors());
+    //     }
 
-        $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+    //     $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
 
-        foreach ($serviceIds as $serviceId) {
-            // Get corresponding user_service_id
-            $userService = UserService::where('user_id', $userId)
-                                    ->where('service_id', $serviceId)
-                                    ->first();
+    //     foreach ($serviceIds as $serviceId) {
+    //         // Get corresponding user_service_id
+    //         $userService = UserService::where('user_id', $userId)
+    //                                 ->where('service_id', $serviceId)
+    //                                 ->first();
 
-            if (!$userService) {
-                continue; // skip if user_service does not exist
-            }
+    //         if (!$userService) {
+    //             continue; // skip if user_service does not exist
+    //         }
 
-            $userServiceId = $userService->id;
+    //         $userServiceId = $userService->id;
 
-            $postcode = isset($aVals['postcode']) && $aVals['postcode'] !== '' ? $aVals['postcode'] : '000000';
-            $miles = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 0 : $aVals['miles'];
-            $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
+    //         $postcode = isset($aVals['postcode']) && $aVals['postcode'] !== '' ? $aVals['postcode'] : '000000';
+    //         $miles = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 0 : $aVals['miles'];
+    //         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
 
-            // Check if location already exists
-            $location = UserServiceLocation::where('user_id', $userId)
-                                            ->where('service_id', $serviceId)
-                                            ->first();
+    //         // Check if location already exists
+    //         $location = UserServiceLocation::where('user_id', $userId)
+    //                                         ->where('service_id', $serviceId)
+    //                                         ->first();
 
-            if ($location) {
-                // Update existing location
-                $location->update([
-                    'postcode' => $postcode,
-                    'miles' => $miles,
-                    'nation_wide' => $nationWide
-                ]);
-            } else {
-                // Create new location
-                UserServiceLocation::create([
-                    'user_id' => $userId,
-                    'user_service_id' => $userServiceId,
-                    'service_id' => $serviceId,
-                    'postcode' => $postcode,
-                    'miles' => $miles,
-                    'nation_wide' => $nationWide
-                ]);
-            }
-        }
+    //         if ($location) {
+    //             // Update existing location
+    //             $location->update([
+    //                 'postcode' => $postcode,
+    //                 'miles' => $miles,
+    //                 'nation_wide' => $nationWide
+    //             ]);
+    //         } else {
+    //             // Create new location
+    //             UserServiceLocation::create([
+    //                 'user_id' => $userId,
+    //                 'user_service_id' => $userServiceId,
+    //                 'service_id' => $serviceId,
+    //                 'postcode' => $postcode,
+    //                 'miles' => $miles,
+    //                 'nation_wide' => $nationWide
+    //             ]);
+    //         }
+    //     }
 
-        return $this->sendResponse(__('Location added successfully'));
-    }
+    //     return $this->sendResponse(__('Location added successfully'));
+    // }
 
     public function editUserLocation(Request $request): JsonResponse
     {
@@ -435,12 +435,13 @@ class UserController extends Controller
         }
 
         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
-
+        
+        
         // Step 1: Remove entries not in the new list
         UserServiceLocation::where('user_id', $userId)
-            ->whereNotIn('service_id', $serviceIds)
+            ->whereIn('postcode', [$aVals['postcode_old']])
             ->delete();
-
+        
         // Step 2: Update or create the rest
         foreach ($serviceIds as $serviceId) {
             $userService = UserService::where('user_id', $userId)
@@ -450,33 +451,20 @@ class UserController extends Controller
             if (!$userService) {
                 continue; // skip if user_service does not exist
             }
-
+            
             $userServiceId = $userService->id;
-
             $postcode = isset($aVals['postcode']) && $aVals['postcode'] !== '' ? $aVals['postcode'] : '000000';
             $miles = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 0 : $aVals['miles'];
             $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
-
-            $location = UserServiceLocation::where('user_id', $userId)
-                                            ->where('service_id', $serviceId)
-                                            ->first();
-
-            if ($location) {
-                $location->update([
-                    'postcode' => $postcode,
-                    'miles' => $miles,
-                    'nation_wide' => $nationWide
-                ]);
-            } else {
-                UserServiceLocation::create([
-                    'user_id' => $userId,
-                    'user_service_id' => $userServiceId,
-                    'service_id' => $serviceId,
-                    'postcode' => $postcode,
-                    'miles' => $miles,
-                    'nation_wide' => $nationWide
-                ]);
-            }
+           
+            $aLocations['service_id'] = $serviceId;
+            $aLocations['user_service_id'] = $userServiceId;
+            $aLocations['user_id'] = $aVals['user_id'];
+            $aLocations['postcode'] =$postcode;
+            $aLocations['miles'] = $miles;
+            $aLocations['nation_wide'] = $nationWide;
+            UserServiceLocation::createUserServiceLocation($aLocations);
+            
         }
 
         return $this->sendResponse(__('Location updated successfully'));
@@ -551,67 +539,80 @@ class UserController extends Controller
     // }
 
 
-    // public function addUserLocation(Request $request): JsonResponse
-    // {
-    //     $aVals = $request->all();
-    //     $userId = $aVals['user_id'];
-    //     $validator = Validator::make($aVals, [
-    //         //'service_id' => 'required|exists:services,id',
-    //         'service_id' => [
-    //             'required',
-    //             'exists:categories,id',
-    //         ],
-    //         'user_id' => 'required|exists:users,id',
-    //       ],
-    //       [
-    //         'user_id.exists' => 'The selected user does not exist.',
-    //         'service_id.exists' => 'The selected service does not exist.',
-    //     ]);
+    public function addUserLocation(Request $request): JsonResponse
+    {
+        $aVals = $request->all();
+        $userId = $aVals['user_id'];
+        $validator = Validator::make($aVals, [
+            //'service_id' => 'required|exists:services,id',
+            'service_id' => [
+                'required',
+                'exists:categories,id',
+            ],
+            'user_id' => 'required|exists:users,id',
+          ],
+          [
+            'user_id.exists' => 'The selected user does not exist.',
+            'service_id.exists' => 'The selected service does not exist.',
+        ]);
 
-    //     if ($validator->fails()) {
-    //         return $this->sendError($validator->errors());
-    //     }
-    //     $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
-    //     if ($serviceIds) {
-    //         foreach ($serviceIds as $serviceId) {
-    //             $aLocations['service_id'] = $serviceId;
-    //             $aLocations['user_service_id'] = 0;
-    //             $aLocations['user_id'] = $aVals['user_id'];
-    //             if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
-    //                 $aLocations['miles'] = 0;
-    //                 $aLocations['nation_wide'] = 1;
-    //             }else{
-    //                 $aLocations['miles'] = $aVals['miles'];
-    //                 $aLocations['nation_wide'] = 0;
-    //             }
-    //             if(isset($aVals['postcode']) && $aVals['postcode'] !=''){
-    //                 $aLocations['postcode'] = $aVals['postcode'];
-    //             }else{
-    //                 $aLocations['postcode'] = '000000';
-    //             }
-    //             UserServiceLocation::createUserServiceLocation($aLocations);
-    //         }
-    //         return $this->sendResponse(__('this location added to your profile successfully'));
-    //     }else{
-    //         return $this->sendResponse(__('Select Service to proceed'));
-    //     }
-    //     // if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
-    //     //     $aLocations['miles'] = 1;
-    //     //     $aLocations['postcode'] = 000000;
-    //     //     $aLocations['nation_wide'] = 1;
-    //     // }else{
-    //     //     $aLocations['miles'] = $aVals['miles'];
-    //     //     $aLocations['postcode'] = $aVals['postcode'];
-    //     //     $aLocations['nation_wide'] = 0;
-    //     // }
-    //     // $aLocations['service_id'] = $aVals['service_id'];
-    //     // $aLocations['user_id'] = $aVals['user_id'];
-    //     // $aLocations['miles'] = $aVals['miles'];
-    //     // $aLocations['postcode'] = $aVals['postcode'];
-    //     // UserServiceLocation::createUserServiceLocation($aLocations);
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+        $userlocations = UserServiceLocation::where('user_id',$userId)->where('postcode',$aVals['postcode'])->first();
+        
+        if(isset($userlocations) && $userlocations !=''){
+            return $this->sendError('Postcode with the same user already exists');
+        }
+        $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+        if ($serviceIds) {
+            foreach ($serviceIds as $serviceId) {
+                 $userService = UserService::where('user_id', $userId)
+                                    ->where('service_id', $serviceId)
+                                    ->first();
+
+                    if (!$userService) {
+                        continue; // skip if user_service does not exist
+                    }
+        
+                    $userServiceId = $userService->id;
+                    
+                    
+        
+                    $postcode = isset($aVals['postcode']) && $aVals['postcode'] !== '' ? $aVals['postcode'] : '000000';
+                    $miles = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 0 : $aVals['miles'];
+                    $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
+
+           
+                $aLocations['service_id'] = $serviceId;
+                $aLocations['user_service_id'] = $userServiceId;
+                $aLocations['user_id'] = $aVals['user_id'];
+                $aLocations['postcode'] =$postcode;
+                $aLocations['miles'] = $miles;
+                $aLocations['nation_wide'] = $nationWide;
+                UserServiceLocation::createUserServiceLocation($aLocations);
+            }
+            return $this->sendResponse(__('Location updated successfully'));
+        }else{
+            return $this->sendResponse(__('Select Service to proceed'));
+        }
+        // if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
+        //     $aLocations['miles'] = 1;
+        //     $aLocations['postcode'] = 000000;
+        //     $aLocations['nation_wide'] = 1;
+        // }else{
+        //     $aLocations['miles'] = $aVals['miles'];
+        //     $aLocations['postcode'] = $aVals['postcode'];
+        //     $aLocations['nation_wide'] = 0;
+        // }
+        // $aLocations['service_id'] = $aVals['service_id'];
+        // $aLocations['user_id'] = $aVals['user_id'];
+        // $aLocations['miles'] = $aVals['miles'];
+        // $aLocations['postcode'] = $aVals['postcode'];
+        // UserServiceLocation::createUserServiceLocation($aLocations);
 
         
-    // }
+    }
 
 
     public function getUserServices(Request $request): JsonResponse

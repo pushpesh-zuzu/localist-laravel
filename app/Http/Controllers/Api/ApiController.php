@@ -215,7 +215,7 @@ class ApiController extends Controller
                 // If seller is nationwide, set distance to infinity
                 DB::table('temp_sellers')
                     ->where('user_id', $seller->user_id)
-                    ->update(['distance' => INF]);
+                    ->update(['distance' => 0]);
             } else {
                 // Seller has specific postcode, calculate real distance
                 $distance = $this->getDistance($leadpostcode, $seller->postcode);
@@ -1021,10 +1021,8 @@ class ApiController extends Controller
     public function removeLocation(Request $request)
     {
         $aValues = $request->all();
-        $serviceIds = is_array($aValues['service_id']) ? $aValues['service_id'] : explode(',', $aValues['service_id']);
-        // $ser = UserServiceLocation::whereIn('service_id', $serviceIds)
-        // ->where('user_id', $aValues['user_id'])->get();dd($ser);
-        UserServiceLocation::whereIn('service_id', $serviceIds)
+        // $serviceIds = is_array($aValues['user_service_id']) ? $aValues['user_service_id'] : explode(',', $aValues['user_service_id']);
+        UserServiceLocation::whereIn('postcode', [$aValues['postcode']])
                             ->where('user_id', $aValues['user_id'])
                             ->delete();
         return $this->sendResponse('Location deleted sucessfully', []);
