@@ -81,6 +81,7 @@ Route::prefix('users')->group(function () {
         // add services 
         Route::post('/add_service', [UserController::class, 'addUserService']);
         Route::post('/add_location', [UserController::class, 'addUserLocation']);
+        Route::post('/edit-location', [UserController::class, 'editUserLocation']);
 
         Route::post('/get_user_services', [UserController::class, 'getUserServices']);
         Route::post('/get_user_locations', [UserController::class, 'getUserLocations']);
