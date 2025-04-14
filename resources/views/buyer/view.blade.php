@@ -22,10 +22,10 @@
             <td>Mobile</td>
             <td>{{ $aRow->phone }}</td>
           </tr>
-          <tr>
+          <!-- <tr>
             <td>Dob</td>
             <td>{{ $aRow->dob }}</td>
-          </tr>
+          </tr> -->
           <tr>
             <td>City</td>
             <td>{{ $aRow->city }}</td>

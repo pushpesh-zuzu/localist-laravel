@@ -22,10 +22,10 @@
             <td>Mobile</td>
             <td>{{ $aRow->phone }}</td>
           </tr>
-          <tr>
+          <!-- <tr>
             <td>Dob</td>
             <td>{{ $aRow->dob }}</td>
-          </tr>
+          </tr> -->
           <tr>
             <td>City</td>
             <td>{{ $aRow->city }}</td>
@@ -77,15 +77,15 @@
             <td>Company Website</td>
             <td>{{ $aRow->company_website }}</td>
           </tr>
-          <tr>
+          <!-- <tr>
             <td>Company Email</td>
             <td>{{ $aRow->company_email }}</td>
-          </tr>
-          <tr>
+          </tr> -->
+          <!-- <tr>
             <td>Mobile</td>
             <td>{{ $aRow->company_phone }}</td>
-          </tr>
-          <tr>
+          </tr> -->
+          <!-- <tr>
             <td>Company Location</td>
             <td>{{ $aRow->company_location }}</td>
           </tr>
@@ -100,8 +100,8 @@
           <tr>
             <td>About</td>
             <td>{{ $aRow->about_company }}</td>
-          </tr>
-          <tr>
+          </tr> -->
+          <!-- <tr>
             <td>Company Logo</td>
             <td>
               @if($aRow && $aRow->banner_image) 
@@ -109,7 +109,7 @@
                   @endif
               @endforeach
             </td>
-          </tr>
+          </tr> -->
          
           </tbody>
         </table>
