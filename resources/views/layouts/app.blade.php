@@ -82,6 +82,8 @@
             }
             document.getElementById('coupon_code').value = code;
         }
+        const tooltipTriggerList = document.querySelectorAll('[data-coreui-toggle="tooltip"]')
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new coreui.Tooltip(tooltipTriggerEl))
       </script>
   </body>
 </html>

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-slot name="header">{{ __('User Services') }} </x-slot>
+    <x-slot name="header">{{ 'User Services' . (!empty($user) ? " ($user)" : '') }} </x-slot>
 
     <div class="card mb-4">
       <div class="card-header">

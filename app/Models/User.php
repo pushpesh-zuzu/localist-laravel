@@ -80,4 +80,19 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function userDetails()
+    {
+        return $this->belongsTo(UserDetail::class,'id','user_id');
+    }      
+
+    public function accreditations()
+    {
+        return $this->hasMany(UserAccreditation::class,'id','user_id');
+    }
+
+    public function serviceDetails()
+    {
+        return $this->hasMany(UserServiceDetail::class,'id','user_id');
+    }
 }

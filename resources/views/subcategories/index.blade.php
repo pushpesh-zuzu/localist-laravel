@@ -24,8 +24,8 @@
             <td>{{ $aRow->parent->name  }}</td>
             <td>{{ $aRow->name }}</td>
             <td>
-                <a href="{{ route('subcategories.edit',$aRow->id) }}"><i class="icon  cil-pencil"></i></i></a>
-                <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();"><i class="icon cil-trash"></i></i>
+                <a href="{{ route('subcategories.edit',$aRow->id) }}"><i class="icon  cil-pencil" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"></i></i></a>
+                <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>
                 </a>
                 <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('subcategories.destroy',$aRow->id) }}" method="post" style="display: none;">
                    {{ method_field('DELETE') }}

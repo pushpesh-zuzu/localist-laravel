@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\UserService;
 use App\Models\UserServiceLocation;
+use App\Models\UserAccreditation;
+use App\Models\UserServiceDetail;
 use App\Models\PurchaseHistory;
-use App\Models\LeadRequest;
 use App\Models\LeadPrefrence;
-use App\Models\Plan;
+use App\Models\UserService;
+use App\Models\LeadRequest;
+use App\Models\UserDetail;
 use App\Models\Category;
+use App\Models\User;
+use App\Models\Plan;
 use App\Models\Bid;
 
 class SellerController extends Controller
@@ -45,7 +48,7 @@ class SellerController extends Controller
      */
     public function show(string $id)
     {
-        $aRows = User::where('id',$id)->get(); 
+        $aRows = User::where('id',$id)->with(['userDetails'])->first(); 
         return view('seller.view', compact('aRows'));
     }
 
@@ -82,6 +85,7 @@ class SellerController extends Controller
     }
 
     public function sellerServices($userid){
+        $user = User::where('id', $userid)->pluck('name')->first();
         $serviceId = UserService::where('user_id', $userid)->pluck('service_id')->toArray();
         $aRows = Category::whereIn('id', $serviceId)->get();
         foreach ($aRows as $key => $value) {
@@ -92,7 +96,7 @@ class SellerController extends Controller
                                                 ->get();
             $value['autobid'] = UserService::where('user_id', $userid)->where('service_id', $value->id)->pluck('auto_bid')->first();
         }
-        return view('seller.services', compact('aRows'));
+        return view('seller.services', get_defined_vars());
     }
 
     public function creditPlans($userid){
@@ -125,6 +129,20 @@ class SellerController extends Controller
 
         return view('seller.autobid_leads', compact('aRows'));
     }
+
+    public function sellerAccreditations($userid){
+        $aRows = UserAccreditation::where('user_id', $userid)->get();
+        $user = User::where('id', $userid)->pluck('name')->first();
+        return view('seller.seller_accreditations', get_defined_vars());
+    }
+
+    public function sellerProfileServices($userid){
+        $aRows = UserServiceDetail::where('user_id', $userid)->get();
+        $user = User::where('id', $userid)->pluck('name')->first();
+        return view('seller.seller_services', get_defined_vars());
+    }
+
+    
 
 
     // public function sellerBids($userid){

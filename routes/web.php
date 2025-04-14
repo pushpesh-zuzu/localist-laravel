@@ -58,6 +58,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('seller-services/{userid}', [SellerController::class, 'sellerServices'])->name('seller.services');
     Route::get('credit-plans/{userid}', [SellerController::class, 'creditPlans'])->name('seller.creditPlans');
     Route::get('seller-bids/{userid}', [SellerController::class, 'sellerBids'])->name('seller.sellerBids');
+    Route::get('seller-accreditations/{userid}', [SellerController::class, 'sellerAccreditations'])->name('seller.sellerAccreditations');
+    Route::get('seller-profile-services/{userid}', [SellerController::class, 'sellerProfileServices'])->name('seller.sellerProfileServices');
     Route::resource('servicequestion', ServiceQuestionsController::class);
     Route::resource('profilequestion', ProfileQuesController::class);
     Route::resource('coupon', CouponController::class);

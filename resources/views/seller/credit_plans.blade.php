@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-slot name="header">{{ __("Credit Plan History ($user)") }} </x-slot>
+    <x-slot name="header">{{ 'Credit Plan History' . (!empty($user) ? " ($user)" : '') }} </x-slot>
 
     <div class="card mb-4">
       <div class="card-header">

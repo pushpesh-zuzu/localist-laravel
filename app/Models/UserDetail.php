@@ -28,4 +28,8 @@ class UserDetail extends Model
                             'billing_phone',
                             'billing_vat_register'
                         ];
+    public function users()
+    {
+        return $this->belongsTo(User::class);
+    }                    
 }
