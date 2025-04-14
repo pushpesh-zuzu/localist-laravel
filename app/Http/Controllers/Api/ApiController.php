@@ -1040,6 +1040,21 @@ class ApiController extends Controller
                             ->get()->count();
         return $this->sendResponse('Pending Leads', $leadcount);
     }
+
+    public function getServiceWiseLocation(Request $request): JsonResponse
+    {
+        $aVals = $request->all();
+        $userId = $aVals['user_id'];
+
+        // Get all locations for the user
+        $aRows = UserServiceLocation::where('user_id', $userId)
+                                    ->whereIn('service_id', [$aVals['service_id']])
+                                    ->get();
+
+
+        return $this->sendResponse(__('User Service Data'), $aRows);
+    }
+
     
     public function getLeadByPrefer()
     {

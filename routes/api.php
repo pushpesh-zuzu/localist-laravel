@@ -101,6 +101,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-preferences', [ApiController::class, 'getleadpreferences']);
         Route::post('/get-services', [ApiController::class, 'getservices']);
         Route::post('/remove-service', [ApiController::class, 'removeService']);
+        Route::post('/get-service-wise-location', [ApiController::class, 'getServiceWiseLocation']);
         
 
         Route::post('/switch-autobid', [ApiController::class, 'switchAutobid']);
