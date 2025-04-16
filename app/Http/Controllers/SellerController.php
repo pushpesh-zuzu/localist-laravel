@@ -14,7 +14,7 @@ use App\Models\UserDetail;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Plan;
-use App\Models\Bid;
+use App\Models\RecommendedLead;
 
 class SellerController extends Controller
 {
@@ -107,7 +107,7 @@ class SellerController extends Controller
 
     public function sellerBids($userid)
     {
-        $buyerIds = Bid::where('seller_id', $userid)->pluck('buyer_id')->unique()->toArray();
+        $buyerIds = RecommendedLead::where('seller_id', $userid)->pluck('buyer_id')->unique()->toArray();
         $leads = LeadRequest::whereIn('customer_id', $buyerIds)->get();
         // Group all leads by customer_id
         $groupedLeads = $leads->groupBy('customer_id');
@@ -146,8 +146,8 @@ class SellerController extends Controller
 
 
     // public function sellerBids($userid){
-    //     $buyerId = Bid::whereIn('seller_id', [$userid])->pluck('buyer_id')->toArray();
-    //     // $leadId = Bid::whereIn('seller_id', $userid)->pluck(['lead_id'])->toArray();
+    //     $buyerId = RecommendedLead::whereIn('seller_id', [$userid])->pluck('buyer_id')->toArray();
+    //     // $leadId = RecommendedLead::whereIn('seller_id', $userid)->pluck(['lead_id'])->toArray();
     //     $aRows = LeadRequest::whereIn('customer_id', $buyerId)->get();
     //     foreach ($aRows as $key => $value) {
     //         $value['buyer_name'] = User::where('id', $value->customer_id)->pluck('name')->first();
