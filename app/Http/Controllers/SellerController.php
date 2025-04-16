@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\UserServiceLocation;
 use App\Models\UserAccreditation;
 use App\Models\UserServiceDetail;
+use App\Models\SuggestedQuestion;
 use App\Models\PurchaseHistory;
 use App\Models\LeadPrefrence;
 use App\Models\UserService;
@@ -141,6 +142,25 @@ class SellerController extends Controller
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('seller.seller_services', get_defined_vars());
     }
+
+    public function suggestedQuestions($userid){
+        // $categoryId = SuggestedQuestion::distinct()->pluck('service_id')->toArray();
+
+        // // Fetch only those categories which have questions
+        // $aRows = Category::whereIn('id', $categoryId)
+        //                 ->where('status', 1)
+        //                 ->get();
+
+        // // Attach service questions to each category
+        // foreach ($aRows as $key => $value) {
+        //     $value['questions'] = SuggestedQuestion::where('service_id', $value->id)->get();
+        // }
+        $aRows = SuggestedQuestion::where('user_id', $userid)->with('services')->orderBy('service_id')->get();
+        $user = User::where('id', $userid)->pluck('name')->first();
+        return view('seller.suggested_questions', get_defined_vars());
+    }
+
+    
 
     
 
