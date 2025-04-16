@@ -31,7 +31,7 @@
             <td>{{ $aRow->answer_type ?? '' }}</td>
             <td>{{ $aRow->question ?? '' }}</td>
             <td>{{ $aRow->answer ?? '' }}</td>
-            <td>{{ $aRow->answer ?? '' }}</td>
+            <td>{{ $aRow->reason ?? '' }}</td>
             
           </tr>
           @endforeach

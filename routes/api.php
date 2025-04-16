@@ -63,6 +63,7 @@ Route::prefix('customer')->group(function () {
 
 Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
+    Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
@@ -78,7 +79,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get_user_services', [LeadPreferenceController::class, 'getUserServices']);
         Route::post('/lead-preferences', [LeadPreferenceController::class, 'leadpreferences']);
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
-        Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
+        
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
         Route::post('/remove-service', [LeadPreferenceController::class, 'removeService']);
@@ -102,6 +103,7 @@ Route::prefix('users')->group(function () {
 
         Route::post('/switch-autobid', [RecommendedLeadsController::class, 'switchRecommendedLeads']);
         Route::post('/autobid-list', [RecommendedLeadsController::class, 'getRecommendedLeads']);
+        Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
 
         Route::post('/buy-credits', [CreditController::class, 'buyCredits']);

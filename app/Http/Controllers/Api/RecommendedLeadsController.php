@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use App\Models\UserServiceLocation;
+use App\Models\LeadPrefrence;
+use App\Models\LeadRequest;
+use App\Models\UserService;
 use App\Models\UserDetail;
 use App\Models\Category;
 use App\Models\User;
@@ -175,7 +179,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
 
-    private function getDistance($postcode1, $postcode2)
+    private function getDistance1($postcode1, $postcode2)
     {
         $encodedPostcode1  = urlencode($postcode1);
         $encodedPostcode2 = urlencode($postcode2);
@@ -389,4 +393,123 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
+
+    // public function getManualLeads(Request $request)
+    // {
+    //     $leadId = $request->lead_id;
+
+    //     // Fetch Lead Request Data
+    //     $leadRequest = DB::table('lead_requests')
+    //         ->where('id', $leadId)
+    //         ->first();
+
+    //     if (!$leadRequest) {
+    //         return $this->sendError(__('Lead request not found'), 404);
+    //     }
+    // }
+
+    public function getManualLeads(Request $request)
+    {
+        // Step 1: Get lead info
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return [];
+
+        $serviceId = $lead->service_id;
+        $leadPostcode = $lead->postcode;
+        $customerId = $lead->customer_id;
+        $questions = json_decode($lead->questions, true); // assuming JSON format
+
+        // Step 2: Get auto-bid user_services excluding the lead's customer
+        $userServices = UserService::where('service_id', $serviceId)
+            ->where('auto_bid', 1)
+            ->where('user_id', '!=', $customerId)
+            ->join('users', 'user_services.user_id', '=', 'users.id')
+            ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
+            ->select('user_services.user_id', 'users.total_credit')
+            ->get();
+
+        if ($userServices->isEmpty()) return [];
+
+        // Step 3: Get list of user_ids ordered by total_credit
+        $sortedUserIds = $userServices->pluck('user_id')->toArray();
+
+        // Step 4: Get nearby postcodes
+        // $nearbyPostcodes = getNearbyPostcodes($leadPostcode); // Implement this helper
+        $nearbyPostcodes = self::getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds);
+        // Step 5: Filter users by service location match
+        $locationMatchedUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->whereIn('postcode', $nearbyPostcodes)
+            ->pluck('user_id')
+            ->unique()
+            ->toArray();
+
+        if (empty($locationMatchedUsers)) return [];
+
+        // Step 6: Match preferences with lead questions
+        $matchedPreferences = LeadPrefrence::whereIn('user_id', $locationMatchedUsers)
+            ->where('service_id', $serviceId)
+            ->where(function($query) use ($questions) {
+                foreach ($questions as $questionId => $answer) {
+                    $query->orWhere(function ($q) use ($questionId, $answer) {
+                        $q->where('question_id', $questionId)
+                        ->where('answers', $answer);
+                    });
+                }
+            })->get();
+
+        // Step 7: Score users based on preference match count
+        $scoredUsers = $matchedPreferences->groupBy('user_id')->map(function ($prefs) {
+            return $prefs->count();
+        });
+
+        // Step 8: Sort users by preference score, then by total_credit as fallback
+        $finalUsers = collect($sortedUserIds)->mapWithKeys(function ($userId) use ($scoredUsers) {
+            return [$userId => $scoredUsers[$userId] ?? 0];
+        })->sortDesc();
+
+        return $finalUsers;
+    }
+
+    public function getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds, $maxMiles = 25)
+    {
+        $sellerLocations = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+                                                ->where('service_id', $serviceId)
+                                                ->whereNotNull('postcode')
+                                                ->get();
+
+        $nearbyPostcodes = [];
+
+        foreach ($sellerLocations as $location) {
+            $distance = self::getDistance($leadPostcode, $location->postcode);
+            
+            if ($distance !== "Distance not found") {
+                $miles = round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2);
+
+                if ($miles <= $maxMiles) {
+                    $nearbyPostcodes[] = $location->postcode;
+                }
+            }
+        }
+
+        return array_unique($nearbyPostcodes);
+    }
+    function getDistance($postcode1, $postcode2)
+    {
+        $encodedPostcode1 = urlencode($postcode1);
+        $encodedPostcode2 = urlencode($postcode2);
+        $apiKey = "AIzaSyB29PyyFmCsm_nw8ELavLskRzMPd3XEIac"; // Replace with your API key
+
+        $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$encodedPostcode1}&destinations={$encodedPostcode2}&key={$apiKey}";
+
+        $response = file_get_contents($url);
+        $data = json_decode($response, true);
+
+        if ($data['status'] == 'OK' && isset($data['rows'][0]['elements'][0]['distance'])) {
+            return $data['rows'][0]['elements'][0]['distance']['text']; // e.g., "12.5 km"
+        } else {
+            return "Distance not found";
+        }
+    }
+
 }
