@@ -575,7 +575,7 @@ class RecommendedLeadsController extends Controller
         // Step 7: Build final list with user info, service name, and distance
         $serviceName = Category::find($serviceId)->name ?? '';
     
-        $finalUsers = collect($matchedUserIds)->map(function ($userId) use (
+        $finalUsers = $scoredUsers->keys()->map(function ($userId) use (
             $locationMatchedUsers,
             $leadPostcode,
             $scoredUsers,
@@ -589,12 +589,14 @@ class RecommendedLeadsController extends Controller
                 ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
                 : null;
     
-            return [
-                ...$user->toArray(),
-                'service_name' => $serviceName,
-                'distance' => $miles,
-                'score' => $scoredUsers[$userId] ?? 0,
-            ];
+                return array_merge(
+                    $user->toArray(),
+                    [
+                        'service_name' => $serviceName,
+                        'distance' => $miles,
+                        'score' => $scoredUsers[$userId] ?? 0,
+                    ]
+                );
         })->sortByDesc('score')->values();
         return $this->sendResponse(__('AutoBid Data'), $finalUsers);
         
