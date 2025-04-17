@@ -516,7 +516,15 @@ class RecommendedLeadsController extends Controller
     {
         // Step 1: Get lead info
         $lead = LeadRequest::find($request->lead_id);
-        if (!$lead) return [];
+        if (!$lead) {
+            return $this->sendError(__('No Data found'), 404);
+        }
+        $bidCount = RecommendedLead::where('buyer_id', $customerId)
+        ->where('lead_id', $lead->id)
+        ->get()->count();
+        if($bidCount==5){
+            return $this->sendError(__('Bid Limit exceed'), 404);
+        }
     
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
@@ -608,6 +616,7 @@ class RecommendedLeadsController extends Controller
     
         // Step 7: Build final list with user info, service name, and distance
         $serviceName = Category::find($serviceId)->name ?? '';
+       
         $finalUsers = $scoredUsers->filter(function ($score) {
             return $score > 0;
         })->keys()->map(function ($userId) use (
@@ -637,7 +646,13 @@ class RecommendedLeadsController extends Controller
                     ]
                 );
         })->sortByDesc('score')->values();
-        return $this->sendResponse(__('AutoBid Data'), $finalUsers);
+        return $this->sendResponse(__('AutoBid Data'), [
+            [
+                'bidcount' => $bidCount,
+                'users' => $finalUsers
+            ]
+        ]);
+        // return $this->sendResponse(__('AutoBid Data'), $finalUsers);
         
     }
 
