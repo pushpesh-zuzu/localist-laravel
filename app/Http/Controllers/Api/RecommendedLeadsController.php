@@ -549,17 +549,34 @@ class RecommendedLeadsController extends Controller
         if ($locationMatchedUsers->isEmpty()) return [];
     
         $matchedUserIds = $locationMatchedUsers->keys()->toArray();
+
+        // Step 1: Get question text → ID map
+        $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
+        ->pluck('id', 'questions')
+        ->toArray();
+
+        // Step 2: Replace question text in $questions array with their IDs
+        $questionFilters = collect($questions)
+        ->filter(fn($q) => isset($questionTextToId[$q['ques']]))
+        ->map(function ($q) use ($questionTextToId) {
+            return [
+                'question_id' => $questionTextToId[$q['ques']],
+                'answer' => $q['ans'],
+            ];
+        });
     
         // Step 5: Match preferences and include question_text
         $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
             ->where('service_id', $serviceId)
-            ->where(function ($query) use ($questions) {
-                foreach ($questions as $q) {
-                    $query->orWhere(function ($q2) use ($q) {
-                        $q2->whereHas('question', function ($q3) use ($q) {
-                            $q3->where('questions', $q['ques']);
-                        })->where('answers', $q['ans']);
-                    });
+            ->where(function ($query) use ($questionFilters) {
+                foreach ($questionFilters as $filter) {
+                    $answers = explode(',', $filter['answer']); // Handle multiple answers from lead
+                    foreach ($answers as $ans) {
+                        $query->orWhere(function ($q2) use ($filter, $ans) {
+                            $q2->where('question_id', $filter['question_id'])
+                               ->where('answers', trim($ans)); // Match individual answer
+                        });
+                    }
                 }
             })
             ->with(['question' => function ($q) {
@@ -575,11 +592,12 @@ class RecommendedLeadsController extends Controller
         // Step 7: Build final list with user info, service name, and distance
         $serviceName = Category::find($serviceId)->name ?? '';
     
-        $finalUsers = $scoredUsers->keys()->map(function ($userId) use (
+        $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
             $locationMatchedUsers,
             $leadPostcode,
             $scoredUsers,
-            $serviceName
+            $serviceName,
+            $serviceId
         ) {
             $user = User::find($userId);
             $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
@@ -593,6 +611,7 @@ class RecommendedLeadsController extends Controller
                     $user->toArray(),
                     [
                         'service_name' => $serviceName,
+                        'service_id' => $serviceId,
                         'distance' => $miles,
                         'score' => $scoredUsers[$userId] ?? 0,
                     ]
@@ -644,6 +663,32 @@ class RecommendedLeadsController extends Controller
         }
     }
 
+
+    public function addManualBid(Request $request){
+        $aVals = $request->all();
+        if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'reply'){
+            RecommendedLead::create([
+                'service_id' => $aVals['service_id'], 
+                'seller_id' => $aVals['seller_id'], 
+                'buyer_id' => $aVals['buyer_id'], //buyer
+                'lead_id' => $aVals['lead_id'], 
+                'bid' => $aVals['bid'], 
+                'distance' => $aVals['distance'], 
+            ]); 
+        }else{
+            RecommendedLead::create([
+                'service_id' => $aVals['service_id'], 
+                'seller_id' => $aVals['seller_id'], //seller
+                'buyer_id' => $aVals['buyer_id'], 
+                'lead_id' => $aVals['lead_id'], 
+                'bid' => $aVals['bid'], 
+                'distance' => $aVals['distance'], 
+            ]); 
+        }
+
+        return $this->sendResponse(__('Bids inserted successfully'),[]);
+          
+    }
 
      
 
