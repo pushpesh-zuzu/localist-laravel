@@ -519,7 +519,7 @@ class RecommendedLeadsController extends Controller
         if (!$lead) {
             return $this->sendError(__('No Data found'), 404);
         }
-        $bidCount = RecommendedLead::where('buyer_id', $customerId)
+        $bidCount = RecommendedLead::where('buyer_id', $lead->customer_id)
         ->where('lead_id', $lead->id)
         ->get()->count();
         
