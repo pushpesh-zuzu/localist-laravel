@@ -704,7 +704,7 @@ class RecommendedLeadsController extends Controller
         }
         
         if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'reply'){
-            $bidCount = RecommendedLead::where('buyer_id', $aVals['buyer_id'])
+            $bidCount = RecommendedLead::where('buyer_id', $aVals['user_id'])
                                     ->where('lead_id', $aVals['lead_id'])
                                     ->get()->count();
             if($bidCount==5){
@@ -713,14 +713,14 @@ class RecommendedLeadsController extends Controller
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
                 'seller_id' => $aVals['seller_id'], 
-                'buyer_id' => $aVals['buyer_id'], //buyer
+                'buyer_id' => $aVals['user_id'], //buyer
                 'lead_id' => $aVals['lead_id'], 
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
         }
         if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'purchase_leads'){
-            $bidCount = RecommendedLead::where('seller_id', $aVals['seller_id'])
+            $bidCount = RecommendedLead::where('seller_id', $aVals['user_id'])
             ->where('lead_id', $aVals['lead_id'])
             ->get()->count();
             if($bidCount==5){
@@ -728,7 +728,7 @@ class RecommendedLeadsController extends Controller
             }
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
-                'seller_id' => $aVals['seller_id'], //seller
+                'seller_id' => $aVals['user_id'], //seller
                 'buyer_id' => $aVals['buyer_id'], 
                 'lead_id' => $aVals['lead_id'], 
                 'bid' => $aVals['bid'], 
