@@ -522,9 +522,7 @@ class RecommendedLeadsController extends Controller
         $bidCount = RecommendedLead::where('buyer_id', $customerId)
         ->where('lead_id', $lead->id)
         ->get()->count();
-        if($bidCount==5){
-            return $this->sendError(__('Bid Limit exceed'), 404);
-        }
+        
     
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
@@ -704,7 +702,14 @@ class RecommendedLeadsController extends Controller
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
         }
+        
         if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'reply'){
+            $bidCount = RecommendedLead::where('buyer_id', $aVals['buyer_id'])
+                                    ->where('lead_id', $aVals['lead_id'])
+                                    ->get()->count();
+            if($bidCount==5){
+                return $this->sendError(__('Bid Limit exceed'), 404);
+            }
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
                 'seller_id' => $aVals['seller_id'], 
@@ -715,6 +720,12 @@ class RecommendedLeadsController extends Controller
             ]); 
         }
         if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'purchase_leads'){
+            $bidCount = RecommendedLead::where('seller_id', $aVals['seller_id'])
+            ->where('lead_id', $aVals['lead_id'])
+            ->get()->count();
+            if($bidCount==5){
+            return $this->sendError(__('Bid Limit exceed'), 404);
+            }
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
                 'seller_id' => $aVals['seller_id'], //seller
