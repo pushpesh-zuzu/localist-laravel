@@ -644,13 +644,13 @@ class RecommendedLeadsController extends Controller
                     ]
                 );
         })->sortByDesc('score')->values();
-        return $this->sendResponse(__('AutoBid Data'), [
-            [
-                'bidcount' => $bidCount,
-                'users' => $finalUsers
-            ]
-        ]);
-        // return $this->sendResponse(__('AutoBid Data'), $finalUsers);
+        // return $this->sendResponse(__('AutoBid Data'), [
+        //     [
+        //         'bidcount' => $bidCount,
+        //         'users' => $finalUsers
+        //     ]
+        // ]);
+        return $this->sendResponse(__('AutoBid Data'), $finalUsers);
         
     }
 
