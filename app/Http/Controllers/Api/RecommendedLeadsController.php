@@ -533,7 +533,10 @@ class RecommendedLeadsController extends Controller
             ->select('user_services.user_id', 'users.total_credit')
             ->get();
             
-        if ($userServices->isEmpty()) return [];
+        if ($userServices->isEmpty()) {
+            return $this->sendError(__('No Data found'), 404);
+        }
+       
     
         $sortedUserIds = $userServices->pluck('user_id')->toArray();
     
@@ -547,7 +550,9 @@ class RecommendedLeadsController extends Controller
             ->get()
             ->groupBy('user_id');
     
-        if ($locationMatchedUsers->isEmpty()) return [];
+        if ($locationMatchedUsers->isEmpty()) {
+            return $this->sendError(__('No Data found'), 404);
+        }
     
         $matchedUserIds = $locationMatchedUsers->keys()->toArray();
 
@@ -557,8 +562,19 @@ class RecommendedLeadsController extends Controller
         ->toArray();
 
         // Step 2: Replace question text in $questions array with their IDs
+        // $questionFilters = collect($questions)
+        // ->filter(fn($q) => isset($questionTextToId[$q['ques']]))
+        // ->map(function ($q) use ($questionTextToId) {
+        //     return [
+        //         'question_id' => $questionTextToId[$q['ques']],
+        //         'answer' => $q['ans'],
+        //     ];
+        // });
+
         $questionFilters = collect($questions)
-        ->filter(fn($q) => isset($questionTextToId[$q['ques']]))
+        ->filter(function ($q) use ($questionTextToId) {
+            return is_array($q) && isset($q['ques']) && isset($questionTextToId[$q['ques']]);
+        })
         ->map(function ($q) use ($questionTextToId) {
             return [
                 'question_id' => $questionTextToId[$q['ques']],
