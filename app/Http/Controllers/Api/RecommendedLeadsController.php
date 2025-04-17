@@ -666,8 +666,11 @@ class RecommendedLeadsController extends Controller
 
     public function addManualBid(Request $request){
         $aVals = $request->all();
+        if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
+            return $this->sendError(__('Lead request not found'), 404);
+        }
         if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'reply'){
-            RecommendedLead::create([
+            $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
                 'seller_id' => $aVals['seller_id'], 
                 'buyer_id' => $aVals['buyer_id'], //buyer
@@ -675,8 +678,9 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
-        }else{
-            RecommendedLead::create([
+        }
+        if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'purchase_leads'){
+            $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
                 'seller_id' => $aVals['seller_id'], //seller
                 'buyer_id' => $aVals['buyer_id'], 
@@ -685,8 +689,9 @@ class RecommendedLeadsController extends Controller
                 'distance' => $aVals['distance'], 
             ]); 
         }
-
-        return $this->sendResponse(__('Bids inserted successfully'),[]);
+            return $this->sendResponse(__('Bids inserted successfully'),[]);
+       
+        
           
     }
 
