@@ -100,9 +100,9 @@ class MyRequestController extends Controller
 
             $request['lead_id'] = $sId;
 
-            $apiController = new ApiController();
-            $bidRel = $apiController->autobid($request);
-            unset($apiController);
+            // $apiController = new ApiController();
+            // $bidRel = $apiController->autobid($request);
+            // unset($apiController);
 
             return $this->sendResponse('Quote Submitted Sucessfully',$rel);
         }
