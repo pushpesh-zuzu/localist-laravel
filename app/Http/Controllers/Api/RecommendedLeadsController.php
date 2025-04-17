@@ -608,8 +608,9 @@ class RecommendedLeadsController extends Controller
     
         // Step 7: Build final list with user info, service name, and distance
         $serviceName = Category::find($serviceId)->name ?? '';
-    
-        $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
+        $finalUsers = $scoredUsers->filter(function ($score) {
+            return $score > 0;
+        })->keys()->map(function ($userId) use (
             $locationMatchedUsers,
             $leadPostcode,
             $leadCreditScore,
