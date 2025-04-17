@@ -519,6 +519,7 @@ class RecommendedLeadsController extends Controller
         if (!$lead) return [];
     
         $serviceId = $lead->service_id;
+        $leadCreditScore = $lead->credit_score;
         $leadPostcode = $lead->postcode;
         $customerId = $lead->customer_id;
         $questions = json_decode($lead->questions, true); // e.g. [{"ques":"...","ans":"..."}]
@@ -595,6 +596,7 @@ class RecommendedLeadsController extends Controller
         $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
             $locationMatchedUsers,
             $leadPostcode,
+            $leadCreditScore,
             $scoredUsers,
             $serviceName,
             $serviceId
@@ -610,6 +612,7 @@ class RecommendedLeadsController extends Controller
                 return array_merge(
                     $user->toArray(),
                     [
+                        'credit_score' => $leadCreditScore,
                         'service_name' => $serviceName,
                         'service_id' => $serviceId,
                         'distance' => $miles,
