@@ -28,6 +28,7 @@ class LeadPreferenceController extends Controller
         $categories = Category::whereIn('id', $serviceId)->get();
         foreach ($categories as $key => $value) {
             $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
         }
         return $this->sendResponse(__('Service Data'), $categories);
     }
@@ -480,6 +481,7 @@ class LeadPreferenceController extends Controller
         // Add total services per postcode
         foreach ($uniqueRows as $value) {
             $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
+            $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
         }
 
         return $this->sendResponse(__('User Service Data'), $uniqueRows);
