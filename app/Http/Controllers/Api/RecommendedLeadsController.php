@@ -517,19 +517,20 @@ class RecommendedLeadsController extends Controller
         // Step 1: Get lead info
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) {
-            return $this->sendError(__('No Data found'), 404);
+            return $this->sendError(__('No Lead found'), 404);
         }
         $bidCount = RecommendedLead::where('buyer_id', $lead->customer_id)
         ->where('lead_id', $lead->id)
         ->get()->count();
         
     
-        $serviceId = $lead->service_id;
+        $serviceId = 1;
         $leadCreditScore = $lead->credit_score;
         $leadPostcode = $lead->postcode;
         $customerId = $lead->customer_id;
         $questions = json_decode($lead->questions, true); // e.g. [{"ques":"...","ans":"..."}]
-        
+        $serviceName = Category::find($serviceId)->name ?? '';
+
         // Step 2: Get auto-bid user_services excluding the lead's customer
         $userServices = UserService::where('service_id', $serviceId)
             ->where('auto_bid', 1)
@@ -540,7 +541,12 @@ class RecommendedLeadsController extends Controller
             ->get();
             
         if ($userServices->isEmpty()) {
-            return $this->sendError(__('No Data found'), 404);
+            return $this->sendResponse(__('No Leads found'), [
+                [
+                    'service_name' => $serviceName,
+                    'sellers' => []
+                ]
+            ]);
         }
        
     
@@ -557,26 +563,22 @@ class RecommendedLeadsController extends Controller
             ->groupBy('user_id');
     
         if ($locationMatchedUsers->isEmpty()) {
-            return $this->sendError(__('No Data found'), 404);
+            return $this->sendResponse(__('No Leads found'), [
+                [
+                    'service_name' => $serviceName,
+                    'sellers' => []
+                ]
+            ]);
         }
     
         $matchedUserIds = $locationMatchedUsers->keys()->toArray();
 
-        // Step 1: Get question text → ID map
+        // Step 5: Get question text → ID map
         $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
         ->pluck('id', 'questions')
         ->toArray();
 
-        // Step 2: Replace question text in $questions array with their IDs
-        // $questionFilters = collect($questions)
-        // ->filter(fn($q) => isset($questionTextToId[$q['ques']]))
-        // ->map(function ($q) use ($questionTextToId) {
-        //     return [
-        //         'question_id' => $questionTextToId[$q['ques']],
-        //         'answer' => $q['ans'],
-        //     ];
-        // });
-
+        // Step 6: Replace question text in $questions array with their IDs
         $questionFilters = collect($questions)
         ->filter(function ($q) use ($questionTextToId) {
             return is_array($q) && isset($q['ques']) && isset($questionTextToId[$q['ques']]);
@@ -588,7 +590,7 @@ class RecommendedLeadsController extends Controller
             ];
         });
     
-        // Step 5: Match preferences and include question_text
+        // Step 7: Match preferences and include question_text
         $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
             ->where('service_id', $serviceId)
             ->where(function ($query) use ($questionFilters) {
@@ -607,13 +609,13 @@ class RecommendedLeadsController extends Controller
             }])
             ->get();
     
-        // Step 6: Score users
+        // Step 8: Score users
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map(function ($prefs) {
             return $prefs->count();
         });
     
-        // Step 7: Build final list with user info, service name, and distance
-        $serviceName = Category::find($serviceId)->name ?? '';
+        // Step 9: Build final list with user info, service name, and distance
+       
        
         $finalUsers = $scoredUsers->filter(function ($score) {
             return $score > 0;
@@ -650,7 +652,17 @@ class RecommendedLeadsController extends Controller
         //         'users' => $finalUsers
         //     ]
         // ]);
-        return $this->sendResponse(__('AutoBid Data'), $finalUsers);
+        if(count($finalUsers)>0){
+            return $this->sendResponse(__('AutoBid Data'), $finalUsers);
+        }else{
+            return $this->sendResponse(__('No Leads found'), [
+                [
+                    'service_name' => $serviceName,
+                    'sellers' => []
+                ]
+            ]);
+        }
+        
         
     }
 
@@ -702,13 +714,16 @@ class RecommendedLeadsController extends Controller
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
         }
-        
-        if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'reply'){
-            $bidCount = RecommendedLead::where('buyer_id', $aVals['user_id'])
-                                    ->where('lead_id', $aVals['lead_id'])
-                                    ->get()->count();
+        $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
+        if($aVals['bidtype'] == 'reply'){
+            $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
+            $bidCount = $bidsUser->get()->count();
+            $bidCheck = $bidsUser->where('seller_id',$aVals['seller_id'])->first();
             if($bidCount==5){
                 return $this->sendError(__('Bid Limit exceed'), 404);
+            }
+            if(!empty($bidCheck)){
+                return $this->sendError(__('Bid already placed for this seller'), 404);
             }
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
@@ -719,12 +734,15 @@ class RecommendedLeadsController extends Controller
                 'distance' => $aVals['distance'], 
             ]); 
         }
-        if(!empty($aVals['bidtype']) && $aVals['bidtype'] == 'purchase_leads'){
-            $bidCount = RecommendedLead::where('seller_id', $aVals['user_id'])
-            ->where('lead_id', $aVals['lead_id'])
-            ->get()->count();
+        if($aVals['bidtype'] == 'purchase_leads'){
+            $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
+            $bidCount = $bidsUser->get()->count();
+            $bidCheck = $bidsUser->where('buyer_id',$aVals['buyer_id'])->first();
             if($bidCount==5){
             return $this->sendError(__('Bid Limit exceed'), 404);
+            }
+            if(!empty($bidCheck)){
+                return $this->sendError(__('Bid already placed for this seller'), 404);
             }
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
@@ -736,9 +754,6 @@ class RecommendedLeadsController extends Controller
             ]); 
         }
             return $this->sendResponse(__('Bids inserted successfully'),[]);
-       
-        
-          
     }
 
      

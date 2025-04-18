@@ -11,6 +11,7 @@ use App\Models\LeadPrefrence;
 use App\Models\LeadRequest;
 use App\Models\UserService;
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
@@ -353,6 +354,15 @@ class LeadPreferenceController extends Controller
                             ->where('user_id', $aValues['user_id'])
                             ->delete();
         return $this->sendResponse('Location deleted sucessfully', []);
+    }
+
+    public function leadsByFilter(Request $request){
+        $aVals = $request->all();
+        $datas = [];
+        if(!empty($aVals['name'])){
+            $datas = User::where('name', 'like', '%' . $aVals['name'] . '%')->get();
+        }
+        return $this->sendResponse(__('Filter Data'),$datas);
     }
 
     
