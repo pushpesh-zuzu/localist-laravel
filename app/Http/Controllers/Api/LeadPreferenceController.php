@@ -555,6 +555,19 @@ class LeadPreferenceController extends Controller
     public function getCreditList(): JsonResponse
     {
         $aRows = CreditList::get();
+        foreach ($aRows as $key => $value) {
+            // Extract min and max from the credit label like "1-5 Credits"
+            if (preg_match('/(\d+)\s*-\s*(\d+)/', $value->credits, $matches)) {
+                $min = (int)$matches[1];
+                $max = (int)$matches[2];
+    
+                // Count leads in leadrequest table where credit_score falls in the range
+                $leadCount = LeadRequest::whereBetween('credit_score', [$min, $max])->count();
+                $value['leadcount'] = $leadCount;
+            } else {
+                $value['leadcount'] = 0; // Default if no valid range
+            }
+        }
         return $this->sendResponse(__('Credit Data'), $aRows);
     }
 
