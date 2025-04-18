@@ -10,6 +10,7 @@ use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\LeadRequest;
 use App\Models\UserService;
+use App\Models\CreditList;
 use App\Models\Category;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -137,8 +138,8 @@ class LeadPreferenceController extends Controller
     public function getLeadRequest(Request $request)
     {
         $aVals = $request->all();
-        // $user_id = 207;
-        $user_id = $request->user_id;
+        $user_id = 207;
+        // $user_id = $request->user_id;
         $searchName = $aVals['name'] ?? null;
         $leadSubmitted = $aVals['lead_time'] ?? null;
          // Extract miles and postcode if provided
@@ -156,10 +157,14 @@ class LeadPreferenceController extends Controller
         $creditValues = [];
 
         if (!empty($creditFilter)) {
-            // Extract numbers from "X Credits"
-            preg_match_all('/(\d+)\s*Credits/', $creditFilter, $matches);
-            if (!empty($matches[1])) {
-                $creditValues = array_map('intval', $matches[1]);
+            // Split multiple filters by comma
+            $creditParts = array_map('trim', explode(',', $creditFilter));
+            foreach ($creditParts as $part) {
+                if (preg_match('/(\d+)\s*-\s*(\d+)\s*Credits/', $part, $matches)) {
+                    $min = (int) $matches[1];
+                    $max = (int) $matches[2];
+                    $creditRanges[] = [$min, $max];
+                }
             }
         }
        
@@ -184,11 +189,14 @@ class LeadPreferenceController extends Controller
             $baseQuery = $baseQuery->whereIn('service_id', $serviceIds);
         }
 
-         // Apply credit score filter if provided
-        if (!empty($creditValues)) {
-            $baseQuery = $baseQuery->whereIn('credit_score', $creditValues);
+        // Apply credit range filters if any
+        if (!empty($creditRanges)) {
+            $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
+                foreach ($creditRanges as $range) {
+                    $query->orWhereBetween('credit_score', $range);
+                }
+            });
         }
-
          // Apply lead spotlight filters if provided
         if (!empty($spotlightConditions)) {
             foreach ($spotlightConditions as $condition) {
@@ -540,6 +548,12 @@ class LeadPreferenceController extends Controller
                             ->where('user_id', $aValues['user_id'])
                             ->delete();
         return $this->sendResponse('Location deleted sucessfully', []);
+    }
+
+    public function getCreditList(): JsonResponse
+    {
+        $aRows = CreditList::get();
+        return $this->sendResponse(__('Credit Data'), $aRows);
     }
 
     // public function leadsByFilter(Request $request){

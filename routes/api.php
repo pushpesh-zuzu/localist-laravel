@@ -87,6 +87,7 @@ Route::prefix('users')->group(function () {
         Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
         Route::post('/add_service', [LeadPreferenceController::class, 'addUserService']);
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
+        Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);
         // Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
         
         Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
