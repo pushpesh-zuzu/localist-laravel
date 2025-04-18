@@ -137,8 +137,8 @@ class LeadPreferenceController extends Controller
     public function getLeadRequest(Request $request)
     {
         $aVals = $request->all();
-        // $user_id = 207;
-        $user_id = $request->user_id;
+        $user_id = 207;
+        // $user_id = $request->user_id;
         $searchName = $aVals['name'] ?? null;
         $leadSubmitted = $aVals['lead_time'] ?? null;
          // Extract miles and postcode if provided
@@ -163,7 +163,13 @@ class LeadPreferenceController extends Controller
             }
         }
        
-        // $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+          // Parse Lead Spotlights filter input (Urgent, Updated, Additional Details)
+        $spotlightFilter = $aVals['lead_spotlights'] ?? null;
+        $spotlightConditions = [];
+        if (!empty($spotlightFilter)) {
+            // Example format: "Urgent requests, Updated requests, Has additional details"
+            $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
+        }
     
         $baseQuery = self::basequery($user_id, $requestPostcode, $requestMiles);
 
@@ -181,6 +187,25 @@ class LeadPreferenceController extends Controller
          // Apply credit score filter if provided
         if (!empty($creditValues)) {
             $baseQuery = $baseQuery->whereIn('credit_score', $creditValues);
+        }
+
+         // Apply lead spotlight filters if provided
+        if (!empty($spotlightConditions)) {
+            foreach ($spotlightConditions as $condition) {
+                switch (strtolower($condition)) {
+                    case 'urgent requests':
+                        $baseQuery = $baseQuery->where('is_urgent', 1);
+                        break;
+
+                    case 'updated requests':
+                        $baseQuery = $baseQuery->where('is_updated', 1);
+                        break;
+
+                    case 'has additional details':
+                        $baseQuery = $baseQuery->where('has_additional_details', 1);
+                        break;
+                }
+            }
         }
     
         // If name is provided, search based on user name first
@@ -226,7 +251,6 @@ class LeadPreferenceController extends Controller
             });
         }
 
-        
     
         // If no matching data found by name or name not given, return all
         $leadrequest = $baseQuery->orderBy('id', 'DESC')->get();
