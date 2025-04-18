@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
 use Illuminate\Support\Facades\Storage;
+use \Carbon\Carbon;
 
 class LeadPreferenceController extends Controller
 {
@@ -134,6 +135,167 @@ class LeadPreferenceController extends Controller
     }
 
     public function getLeadRequest(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = 207;
+        // $user_id = $request->user_id;
+        $searchName = $aVals['name'] ?? null;
+        $leadSubmitted = $aVals['lead_time'] ?? null;
+         // Extract miles and postcode if provided
+        $distanceFilter = $aVals['distance_filter'] ?? null;
+        $requestMiles = null;
+        $requestPostcode = null;
+
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
+            $requestMiles = (int)$matches[1];       // e.g., 10
+            $requestPostcode = strtoupper($matches[2]); // e.g., SS21
+        }
+
+         // Handle credit filter input
+        $creditFilter = $aVals['credits'] ?? null;
+        $creditValues = [];
+
+        if (!empty($creditFilter)) {
+            // Extract numbers from "X Credits"
+            preg_match_all('/(\d+)\s*Credits/', $creditFilter, $matches);
+            if (!empty($matches[1])) {
+                $creditValues = array_map('intval', $matches[1]);
+            }
+        }
+       
+        // $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+    
+        $baseQuery = self::basequery($user_id, $requestPostcode, $requestMiles);
+
+        // Fix: use $aVals, not $aValues
+        $serviceIds = [];
+        if (!empty($aVals['service_id'])) {
+            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+        }
+
+         // Apply service_id filter if provided
+        if (!empty($serviceIds)) {
+            $baseQuery = $baseQuery->whereIn('service_id', $serviceIds);
+        }
+
+         // Apply credit score filter if provided
+        if (!empty($creditValues)) {
+            $baseQuery = $baseQuery->whereIn('credit_score', $creditValues);
+        }
+    
+        // If name is provided, search based on user name first
+        if ($searchName) {
+            $namedLeadRequest = (clone $baseQuery)
+                ->whereHas('customer', function ($query) use ($searchName) {
+                    $query->where('name', 'LIKE', '%' . $searchName . '%');
+                })
+                ->orderBy('id', 'DESC')
+                ->get();
+    
+            // If matching data found by name, return it
+            if ($namedLeadRequest->isNotEmpty()) {
+                return $this->sendResponse(__('Lead Request Data (Filtered by Name)'), $namedLeadRequest);
+            }
+        }
+
+         // Apply lead_time filter if provided
+        if ($leadSubmitted && $leadSubmitted != 'Any time') {
+            $baseQuery = $baseQuery->where(function ($query) use ($leadSubmitted) {
+                $now = Carbon::now();
+                switch ($leadSubmitted) {
+                    case 'Today':
+                        $query->whereDate('created_at', $now->toDateString());
+                        break;
+
+                    case 'Yesterday':
+                        $query->whereDate('created_at', $now->subDay()->toDateString());
+                        break;
+
+                    case 'Last 2-3 days':
+                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(3));
+                        break;
+
+                    case 'Last 7 days':
+                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(7));
+                        break;
+
+                    case 'Last 14+ days':
+                        $query->whereDate('created_at', '<', Carbon::now()->subDays(14));
+                        break;
+                }
+            });
+        }
+
+        
+    
+        // If no matching data found by name or name not given, return all
+        $leadrequest = $baseQuery->orderBy('id', 'DESC')->get();
+    
+        return $this->sendResponse(__('Lead Request Data'), $leadrequest);
+    }
+
+    public function basequery($user_id, $requestPostcode = null, $requestMiles = null){
+        $userServices = DB::table('user_services')
+            ->where('user_id', $user_id)
+            ->pluck('service_id')
+            ->toArray();
+    
+        $searchTerms = DB::table('lead_prefrences')
+            ->where('user_id', $user_id)
+            ->pluck('answers')
+            ->toArray();
+    
+        // Base leadrequest query
+        $baseQuery = LeadRequest::with(['customer', 'category'])
+                                ->where('customer_id', '!=', $user_id)
+                                ->whereIn('service_id', $userServices)
+                                ->where(function ($query) use ($searchTerms) {
+                                    foreach ($searchTerms as $term) {
+                                        $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+                                    }
+                                });
+        if ($requestPostcode && $requestMiles) {
+            $leadIdsWithinDistance = [];
+            $leads = LeadRequest::select('id', 'postcode')
+                ->where('customer_id', '!=', $user_id)
+                ->get();
+        
+            foreach ($leads as $lead) {
+                if ($lead->postcode) {
+                    $distance = $this->getDistance($requestPostcode, $lead->postcode); // returns in km
+                    if ($distance && ($distance <= ($requestMiles * 1.60934))) {
+                        $leadIdsWithinDistance[] = $lead->id;
+                    }
+                }
+            }
+        
+            $baseQuery->whereIn('id', $leadIdsWithinDistance);
+        }                        
+        return $baseQuery;                        
+    }
+
+    public function getDistance($postcode1, $postcode2)
+    {
+        $encodedPostcode1 = urlencode($postcode1);
+        $encodedPostcode2 = urlencode($postcode2);
+        $apiKey = "AIzaSyB29PyyFmCsm_nw8ELavLskRzMPd3XEIac"; // Replace with your API key
+
+        $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$encodedPostcode1}&destinations={$encodedPostcode2}&key={$apiKey}";
+
+        $response = file_get_contents($url);
+        $data = json_decode($response, true);
+
+        if ($data['status'] == 'OK' && isset($data['rows'][0]['elements'][0]['distance'])) {
+            $distanceText = $data['rows'][0]['elements'][0]['distance']['text']; // e.g., "12.5 km"
+            return floatval(str_replace(['km', ','], '', $distanceText)); // return distance as float (km)
+        } else {
+            return null;
+        }
+    }
+
+    
+
+    public function getLeadRequest1(Request $request)
     {
         $user_id = $request->user_id;
         $userServices = DB::table('user_services')
@@ -356,14 +518,14 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Location deleted sucessfully', []);
     }
 
-    public function leadsByFilter(Request $request){
-        $aVals = $request->all();
-        $datas = [];
-        if(!empty($aVals['name'])){
-            $datas = User::where('name', 'like', '%' . $aVals['name'] . '%')->get();
-        }
-        return $this->sendResponse(__('Filter Data'),$datas);
-    }
+    // public function leadsByFilter(Request $request){
+    //     $aVals = $request->all();
+    //     $datas = [];
+    //     if(!empty($aVals['name'])){
+    //         $datas = User::where('name', 'like', '%' . $aVals['name'] . '%')->get();
+    //     }
+    //     return $this->sendResponse(__('Filter Data'),$datas);
+    // }
 
     
 }
