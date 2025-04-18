@@ -139,8 +139,8 @@ class LeadPreferenceController extends Controller
     public function getLeadRequest(Request $request)
     {
         $aVals = $request->all();
-        $user_id = 207;
-        // $user_id = $request->user_id;
+        // $user_id = 207;
+        $user_id = $request->user_id;
         $searchName = $aVals['name'] ?? null;
         $leadSubmitted = $aVals['lead_time'] ?? null;
          // Extract miles and postcode if provided
