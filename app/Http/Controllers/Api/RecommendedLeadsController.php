@@ -524,7 +524,7 @@ class RecommendedLeadsController extends Controller
         ->get()->count();
         
     
-        $serviceId = 1;
+        $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
         $leadPostcode = $lead->postcode;
         $customerId = $lead->customer_id;
@@ -653,6 +653,12 @@ class RecommendedLeadsController extends Controller
         //     ]
         // ]);
         if(count($finalUsers)>0){
+             return $this->sendResponse(__('No Leads found'), [
+                [
+                    'service_name' => $serviceName,
+                    'sellers' => $finalUsers
+                ]
+            ]);
             return $this->sendResponse(__('AutoBid Data'), $finalUsers);
         }else{
             return $this->sendResponse(__('No Leads found'), [
