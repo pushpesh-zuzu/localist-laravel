@@ -24,12 +24,13 @@ class LeadPreferenceController extends Controller
 {
     public function getservices(Request $request){
         $user_id = $request->user_id; 
-        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
-        $categories = Category::whereIn('id', $serviceId)->get();
-        foreach ($categories as $key => $value) {
-            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
-            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
-        }
+        $categories = self::getFilterservices($user_id);
+        // $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
+        // $categories = Category::whereIn('id', $serviceId)->get();
+        // foreach ($categories as $key => $value) {
+        //     $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+        //     $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
+        // }
         return $this->sendResponse(__('Service Data'), $categories);
     }
 
@@ -326,8 +327,6 @@ class LeadPreferenceController extends Controller
         }
     }
 
-    
-
     public function getLeadRequest1(Request $request)
     {
         $user_id = $request->user_id;
@@ -469,20 +468,20 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
-
+        $uniqueRows = self::getFilterLocations($userId);
         // Get all locations for the user
-        $aRows = UserServiceLocation::where('user_id', $userId)
-            ->orderBy('postcode')
-            ->get();
+        // $aRows = UserServiceLocation::where('user_id', $userId)
+        //     ->orderBy('postcode')
+        //     ->get();
 
-        // Group by postcode to remove duplicates (only first entry per postcode)
-        $uniqueRows = $aRows->unique('postcode')->values();
+        // // Group by postcode to remove duplicates (only first entry per postcode)
+        // $uniqueRows = $aRows->unique('postcode')->values();
 
-        // Add total services per postcode
-        foreach ($uniqueRows as $value) {
-            $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
-            $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
-        }
+        // // Add total services per postcode
+        // foreach ($uniqueRows as $value) {
+        //     $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
+        //     $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
+        // }
 
         return $this->sendResponse(__('User Service Data'), $uniqueRows);
     }
@@ -552,7 +551,129 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Location deleted sucessfully', []);
     }
 
-    public function getCreditList(): JsonResponse
+    // public function getCreditList(): JsonResponse
+    // {
+    //     $aRows = CreditList::get();
+    //     foreach ($aRows as $key => $value) {
+    //         // Extract min and max from the credit label like "1-5 Credits"
+    //         if (preg_match('/(\d+)\s*-\s*(\d+)/', $value->credits, $matches)) {
+    //             $min = (int)$matches[1];
+    //             $max = (int)$matches[2];
+    
+    //             // Count leads in leadrequest table where credit_score falls in the range
+    //             $leadCount = LeadRequest::whereBetween('credit_score', [$min, $max])->count();
+    //             $value['leadcount'] = $leadCount;
+    //         } else {
+    //             $value['leadcount'] = 0; // Default if no valid range
+    //         }
+    //     }
+    //     return $this->sendResponse(__('Credit Data'), $aRows);
+    // }
+
+    public function leadsByFilter(Request $request){
+        $aVals = $request->all();
+        $user_id = $aVals['user_id'];
+        $spotlights = [
+            'All lead spotlights' => 'all',
+            'Urgent requests' => 'is_urgent',
+            'Updated requests' => 'is_updated',
+            'Has additional details' => 'has_additional_details',
+        ];
+        
+        $leadSpotlights = self::filterCount($spotlights, $user_id);
+        $leadTimeCounts = self::getLeadTimeData($user_id);
+        $services = self::getFilterservices($user_id);
+        $location = self::getFilterLocations($user_id);
+        $credits = self::getFilterCreditList();
+        
+        return $this->sendResponse(__('Filter Data'), [
+            [
+                'leadSpotlights' => $leadSpotlights,
+                'leadTime' => $leadTimeCounts,
+                'services' => $services,
+                'location' => $location,
+                'credits' => $credits,
+            ]
+        ]);
+        // return $this->sendResponse(__('Filter Data'),$datas);
+    }
+
+    public function filterCount($spotlights, $user_id){
+        $leadSpotlights = [];
+        foreach ($spotlights as $label => $column) {
+            if($column == 'all'){
+                $count = LeadRequest::where('customer_id', '!=', $user_id)->count();
+            }else{
+                $count = LeadRequest::where($column, 1)->where('customer_id', '!=', $user_id)->count();
+            }
+            $leadSpotlights[] = [
+                'spotlight' => $label,
+                'count' => $count,
+            ];
+        }
+        return $leadSpotlights;
+    }
+
+    public static function getLeadTimeData($user_id = null)
+    {
+        $now = Carbon::now();
+
+        $timeFilters = [
+            'Any time' => function () {
+                return LeadRequest::count();
+            },
+            'Today' => function () use ($now) {
+                return LeadRequest::whereDate('created_at', $now->toDateString())->count();
+            },
+            'Yesterday' => function () use ($now) {
+                return LeadRequest::whereDate('created_at', $now->copy()->subDay()->toDateString())->count();
+            },
+            'Last 2-3 days' => function () use ($now) {
+                return LeadRequest::whereDate('created_at', '>=', $now->copy()->subDays(3))->count();
+            },
+            'Last 7 days' => function () use ($now) {
+                return LeadRequest::whereDate('created_at', '>=', $now->copy()->subDays(7))->count();
+            },
+        ];
+
+        $result = [];
+        foreach ($timeFilters as $label => $callback) {
+            $result[] = [
+                'time' => $label,
+                'count' => $callback(),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function getFilterservices($user_id){
+        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
+        $categories = Category::whereIn('id', $serviceId)->get();
+        foreach ($categories as $key => $value) {
+            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
+        }
+        return $categories;
+    }
+
+    public function getFilterLocations($user_id)
+    {
+        $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
+
+        // Group by postcode to remove duplicates (only first entry per postcode)
+        $uniqueRows = $aRows->unique('postcode')->values();
+
+        // Add total services per postcode
+        foreach ($uniqueRows as $value) {
+            $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
+            $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
+        }
+
+        return $uniqueRows;
+    }
+
+    public function getFilterCreditList()
     {
         $aRows = CreditList::get();
         foreach ($aRows as $key => $value) {
@@ -568,17 +689,8 @@ class LeadPreferenceController extends Controller
                 $value['leadcount'] = 0; // Default if no valid range
             }
         }
-        return $this->sendResponse(__('Credit Data'), $aRows);
+        return $aRows;
     }
-
-    // public function leadsByFilter(Request $request){
-    //     $aVals = $request->all();
-    //     $datas = [];
-    //     if(!empty($aVals['name'])){
-    //         $datas = User::where('name', 'like', '%' . $aVals['name'] . '%')->get();
-    //     }
-    //     return $this->sendResponse(__('Filter Data'),$datas);
-    // }
 
     
 }
