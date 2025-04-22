@@ -64,6 +64,7 @@ Route::prefix('customer')->group(function () {
 Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
+    Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
@@ -84,7 +85,7 @@ Route::prefix('users')->group(function () {
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
         Route::post('/remove-service', [LeadPreferenceController::class, 'removeService']);
         Route::post('/add_location', [LeadPreferenceController::class, 'addUserLocation']);
-        Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
+        
         Route::post('/add_service', [LeadPreferenceController::class, 'addUserService']);
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
         // Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);

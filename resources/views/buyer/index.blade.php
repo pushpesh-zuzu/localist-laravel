@@ -5,7 +5,24 @@
       <div class="card-header">
           <strong>{{ __('Quote Customers') }}</strong>
       </div>
+      
       <div class="card-body">
+          <!-- <form action="{{route('buyer.index')}}" method="post" accept-charset="utf-8" style="float:right">
+						@csrf
+						<div class="card-body" style="border-bottom: 1px solid #f1f5f7;padding: 0.9rem 1.25rem;">
+							<div class="row  justify-content-between">
+								<div class="col-8">
+									<input class="form-control" type="text" placeholder="Search by CustomerId, mobile number, name..." name="search_filter" value="@php echo (!empty($aryFilterSession) && $aryFilterSession['search_filter']!='')?$aryFilterSession['search_filter']:''; @endphp">
+								</div>
+								<div class="col-lg-2">
+									<button type="submit" class="btn btn-primary waves-effect waves-light" style="margin-left: 5px;display: flex;align-items: center;justify-content: center;float: left;">Search</button>
+									@if(!empty($aryFilterSession))
+                    <a href="{{route('csadmin.customerfilter')}}" class="btn btn-danger waves-effect waves-light" style="margin-left: 5px;align-items: center;justify-content: center;">Reset</a>
+                  @endif
+								</div>
+							</div>
+						</div>
+					</form> -->
         @if(count($aRows) > 0)
         <table class="table table-striped" id="dataTable">
           <thead>

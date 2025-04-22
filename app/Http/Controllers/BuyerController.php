@@ -37,7 +37,7 @@ class BuyerController extends Controller
      */
     public function show(string $id)
     {
-        $aRows = User::where('id',$id)->get(); 
+        $aRows = User::where('id',$id)->with(['leadRequests.category'])->first(); 
         return view('buyer.view', compact('aRows'));
     }
 
