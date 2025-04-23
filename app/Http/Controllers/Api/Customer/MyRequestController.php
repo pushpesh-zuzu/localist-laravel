@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
+use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Helpers\CustomHelper;
@@ -52,23 +54,88 @@ class MyRequestController extends Controller
     }
 
     public function createNewRequest(Request $request){
-        $user_id = $request->user_id;
-
+        
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|integer|exists:categories,id',
             'postcode' => 'required',
             'questions' => 'required',
-            'phone' => 'required'
+            'phone' => 'required',
+            'form_status' => 'required'
           ], [
             'postcode.required' => 'Location Postcode is required.',
-            'service_id.exists' => 'Provided service id does not exists.'
+            'service_id.exists' => 'Provided service id does not exists.',
+            'form_status.required' => 'Form Status is required.'
         ]);
 
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
 
-        $data['customer_id'] = $user_id;
+        $phoneOtp = "";
+        $euId = "";
+        $token = "";
+        //check if it is registration request or not
+        if(!empty($request->email)){
+            
+            //check if user exists for the given email or not
+            $password = "";
+            $euId = User::where('email',$request->email)->value('id');
+            if(empty($euId)){
+                $dataUser['name'] = $request->name;
+                $dataUser['email'] = $request->email;
+                $password = Str::random(10);
+                $dataUser['password'] = Hash::make($password);
+                $dataUser['user_type'] = 2;
+                $dataUser['active_status'] = 2;
+                $dataUser['form_status'] = $request->form_status;
+                $dataUser['created_at'] = date('y-m-d H:i:s');
+                $dataUser['updated_at'] = date('y-m-d H:i:s');
+                $euId = User::insertGetId($dataUser);
+
+
+                $phoneOtp = "123456"; //random_int(100000, 999999);
+                
+                $dataUser['template'] = 'emails.buyer_registration';
+                $dataUser['service'] = Category::where('id',$request->service_id)->value('name');
+                $dataUser['password'] = $password;
+                $dataUser['otp'] = $phoneOtp;
+                //send registration mail
+                Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
+                    $message->from('info@localists.com');
+                    $message->to($dataUser['email']);
+                    $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
+                });
+
+                //send otp mail
+                Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
+                    $message->from('info@localists.com');
+                    $message->to($dataUser['email']);
+                    $message->subject("Verify your phone number");
+                });
+            }
+            $user = User::where('id',$euId)->first();
+            $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+            $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
+            $user->remember_tokens = $token;
+
+        }else{
+            //take bearer token and extract user id from token
+            $token = $request->bearerToken();
+            if (!$token) {
+                return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+            }
+            $accessToken = PersonalAccessToken::findToken($token);
+            if (!$accessToken) {
+                return response()->json(['error' => 'Unauthorized','message' => 'Invalid token.'], 401);
+            }
+            // Extract user_id from token abilities
+            $euId = $accessToken->abilities['user_id'] ?? null;
+            if (!$euId) {
+                return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+            }
+        }
+
+        $data['customer_id'] = $euId;
         $data['service_id'] = $request->service_id;
         $data['postcode'] = $request->postcode;
         $data['questions'] = $request->questions;
@@ -80,9 +147,9 @@ class MyRequestController extends Controller
         $data['updated_at'] = date('y-m-d H:i:s');
 
         //evaluate Lead Badges
-        $data['is_phone_verified'] = User::where('id',$user_id)->value('phone_verified') == 1 ? 1 : 0;
+        $data['is_phone_verified'] = User::where('id',$euId)->value('phone_verified') == 1 ? 1 : 0;
 
-        $leadCount = LeadRequest::where('customer_id',$user_id)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
+        $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
         $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
 
         $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
@@ -96,9 +163,10 @@ class MyRequestController extends Controller
         $sId = LeadRequest::insertGetId($data);
 
         if($sId){
+            $rel['user_id'] = $euId;
+            $rel['token'] = $token;
+            $rel['phone_otp'] = $phoneOtp;
             $rel['request_id'] = $sId;
-
-            $request['lead_id'] = $sId;
 
             // $apiController = new ApiController();
             // $bidRel = $apiController->autobid($request);

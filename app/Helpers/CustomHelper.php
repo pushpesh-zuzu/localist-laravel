@@ -146,4 +146,12 @@ class CustomHelper
     //     return $response;
     // }
 
+    public static function pp($data='',$die=TRUE){
+        echo '<pre>';
+        print_r($data);
+        echo '</pre>';
+
+        if($die)die;
+    }
+
 }

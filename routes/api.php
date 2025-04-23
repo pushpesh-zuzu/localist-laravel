@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\SuggestedQuestionController;
 use App\Http\Controllers\Api\RecommendedLeadsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SettingController;
-use App\Http\Controllers\Api\CreditController;
+use App\Http\Controllers\Api\CreditPlanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
 
@@ -42,11 +42,12 @@ Route::prefix('notification')->group(function () {
 Route::prefix('customer')->group(function () {
     Route::get('test',[CustomerController::class,'test']);
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
+    Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
+
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);
-            Route::post('create-new-request',[MyRequestController::class,'createNewRequest']);
             Route::post('add-image-to-submitted-request',[MyRequestController::class,'addImageToSubmittedRequest']);
             Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);           
         });
@@ -110,9 +111,9 @@ Route::prefix('users')->group(function () {
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
 
-        Route::post('/buy-credits', [CreditController::class, 'buyCredits']);
-        Route::post('/add-coupon', [CreditController::class, 'addCoupon']);
-        Route::get('/get-plans', [CreditController::class, 'getPlans']);
+        Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);
+        Route::post('/add-coupon', [CreditPlanController::class, 'addCoupon']);
+        Route::get('/get-plans', [CreditPlanController::class, 'getPlans']);
 
         Route::post('/add-suggested-que', [SuggestedQuestionController::class, 'addSuggestedQue']);
 
