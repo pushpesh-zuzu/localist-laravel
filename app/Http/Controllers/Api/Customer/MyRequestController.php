@@ -168,8 +168,12 @@ class MyRequestController extends Controller
         $sId = LeadRequest::insertGetId($data);
 
         if($sId){
+            $fUser = User::where('id',$euId)->first();
             $rel['user_id'] = $euId;
-            $rel['token'] = $token;
+            $rel['name'] = $fUser->name;
+            $rel['email'] = $fUser->email;
+            $rel['phone'] = $fUser->phone;
+            $rel['remember_token'] = $token;
             $rel['phone_otp'] = $phoneOtp;
             $rel['request_id'] = $sId;
 
