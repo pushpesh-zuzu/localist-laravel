@@ -18,6 +18,7 @@ use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
+use Illuminate\Support\Facades\Storage;
 
 class RecommendedLeadsController extends Controller
 {
