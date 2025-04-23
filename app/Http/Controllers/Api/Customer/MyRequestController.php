@@ -91,7 +91,7 @@ class MyRequestController extends Controller
                 $dataUser['form_status'] = $request->form_status;
                 $dataUser['created_at'] = date('y-m-d H:i:s');
                 $dataUser['updated_at'] = date('y-m-d H:i:s');
-                $phoneOtp = "123456"; //random_int(100000, 999999);
+                $phoneOtp = "1234"; //random_int(1000, 9999);
                 $dataUser['otp'] = $phoneOtp;
                 $euId = User::insertGetId($dataUser);
 
