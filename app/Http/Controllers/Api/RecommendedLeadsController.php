@@ -646,16 +646,13 @@ class RecommendedLeadsController extends Controller
                     ]
                 );
         })->sortByDesc('score')->values();
-        // return $this->sendResponse(__('AutoBid Data'), [
-        //     [
-        //         'bidcount' => $bidCount,
-        //         'users' => $finalUsers
-        //     ]
-        // ]);
+       
+       
         if(count($finalUsers)>0){
              return $this->sendResponse(__('No Leads found'), [
                 [
                     'service_name' => $serviceName,
+                    'baseurl' => url('/').Storage::url('app/public/images/users'),
                     'sellers' => $finalUsers
                 ]
             ]);
@@ -664,6 +661,7 @@ class RecommendedLeadsController extends Controller
             return $this->sendResponse(__('No Leads found'), [
                 [
                     'service_name' => $serviceName,
+                    'baseurl' => url('/').Storage::url('app/public/images/users'),
                     'sellers' => []
                 ]
             ]);
