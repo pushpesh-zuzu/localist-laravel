@@ -285,9 +285,14 @@ class LeadPreferenceController extends Controller
                                 ->whereIn('service_id', $userServices)
                                 ->where(function ($query) use ($searchTerms) {
                                     foreach ($searchTerms as $term) {
-                                        $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+                                        $query->whereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
                                     }
                                 });
+                                // ->where(function ($query) use ($searchTerms) {
+                                //     foreach ($searchTerms as $term) {
+                                //         $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
+                                //     }
+                                // });
         if ($requestPostcode && $requestMiles) {
             $leadIdsWithinDistance = [];
             $leads = LeadRequest::select('id', 'postcode')

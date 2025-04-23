@@ -108,6 +108,7 @@ Route::prefix('users')->group(function () {
         Route::post('/autobid-list', [RecommendedLeadsController::class, 'getRecommendedLeads']);
         Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
+        Route::post('/add-multiple-manual-bid', [RecommendedLeadsController::class, 'addMultipleManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
 
         Route::post('/buy-credits', [CreditController::class, 'buyCredits']);

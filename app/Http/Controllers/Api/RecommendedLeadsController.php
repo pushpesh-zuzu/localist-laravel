@@ -763,6 +763,50 @@ class RecommendedLeadsController extends Controller
             return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
 
-     
+    public function addMultipleManualBid(Request $request){
+        $aVals = $request->all();
+        if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
+            return $this->sendError(__('Lead request not found'), 404);
+        }
+        $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
+        $sellerIds = $aVals['seller_id']; // array
+        $serviceIds = $aVals['service_id']; // array
+        $bids = $aVals['bid']; // array
+        $distances = $aVals['distance']; // array
+        foreach ($sellerIds as $index => $sellerId) {
+            $serviceId = $serviceIds[$index];
+            $bid = $bids[$index];
+            $distance = $distances[$index];
+    
+            $bidsUser = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                ->where('service_id', $serviceId)
+                ->where('buyer_id', $aVals['user_id']);
+    
+            $bidCount = $bidsUser->count();
+            $bidCheck = $bidsUser->where('seller_id', $sellerId)->first();
+    
+            if ($bidCount >= 5) {
+                return $this->sendError(__('Bid Limit exceeded for service ID ' . $serviceId), 404);
+            }
+    
+            if (!empty($bidCheck)) {
+                continue; // Skip if already placed for this seller
+            }
+    
+            RecommendedLead::create([
+                'service_id' => $serviceId,
+                'seller_id' => $sellerId,
+                'buyer_id' => $aVals['user_id'],
+                'lead_id' => $aVals['lead_id'],
+                'bid' => $bid,
+                'distance' => $distance,
+            ]);
+    
+            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $bid);
+        }
+        
+       
+            return $this->sendResponse(__('Bids inserted successfully'),[]);
+    } 
 
 }
