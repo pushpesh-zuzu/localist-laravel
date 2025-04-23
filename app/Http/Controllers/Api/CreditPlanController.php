@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
 
-class CreditController extends Controller
+class CreditPlanController extends Controller
 {
     public function getPlans(Request $request){
         $plans = Plan::where('status',1)->get();
