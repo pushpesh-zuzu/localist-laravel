@@ -103,7 +103,6 @@ class UserController extends Controller
                         } else {
                             $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
                         }
-                        // $aLocations['postcode'] = $aVals['postcode'];
                         $aLocations['nation_wide'] = 0;
                     }
                     if(isset($aVals['postcode']) && $aVals['postcode'] !=''){
@@ -111,28 +110,21 @@ class UserController extends Controller
                     }else{
                         $aLocations['postcode'] = '000000';
                     }
-                    // dd($aLocations['nation_wide']);
-                    // if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
-                    //     $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
-                    // } elseif (!empty($aVals['miles1'])) {
-                    //     $aLocations['miles'] = $aVals['miles1'];
-                    // } else {
-                    //     $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
-                    // }
-                    // $aLocations['postcode'] = $aVals['postcode'];
+                   
                     UserServiceLocation::createUserServiceLocation($aLocations);
                 }
             }
-            // $service = UserService::createUserService($user->id,$aVals['service_id']);
-            // if($service)
-            // {
-            //     $aLocations['service_id'] = $service->id;
-            //     $aLocations['user_id'] = $user->id;
-            //     $aLocations['miles'] = $aVals['miles'];
-            //     $aLocations['postcode'] = $aVals['postcode'];
-            //     UserServiceLocation::createUserServiceLocation($aLocations);
-            // }
+            $data = $user->toArray();
+            $data['template'] = 'emails.seller_registration';
+            $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
+            $data['password'] = $aVals['password'];
+            Mail::send($data['template'], $data, function ($message) use ($user) {
+                $message->from('info@localists.com');
+                $message->to($user->email);
+                $message->subject("Welcome to Localist " .$user->name ."!");
+            });
         }
+       
         // CustomHelper::sendEmail();
         if($aVals['active_status'] == 1){
             $modes = 'Seller Registration';
@@ -142,7 +134,9 @@ class UserController extends Controller
        
         // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
         // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
-        CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" =>  $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+        // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" =>  $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+          //send registration mail
+       
         return $this->sendResponse('Registration Sucessful.', $user);
         // return $this->sendResponse(__('registration successfully',$user));
 
