@@ -83,6 +83,7 @@ class MyRequestController extends Controller
             if(empty($euId)){
                 $dataUser['name'] = $request->name;
                 $dataUser['email'] = $request->email;
+                $dataUser['phone'] = $request->phone;
                 $password = Str::random(10);
                 $dataUser['password'] = Hash::make($password);
                 $dataUser['user_type'] = 2;
@@ -90,15 +91,17 @@ class MyRequestController extends Controller
                 $dataUser['form_status'] = $request->form_status;
                 $dataUser['created_at'] = date('y-m-d H:i:s');
                 $dataUser['updated_at'] = date('y-m-d H:i:s');
+                $phoneOtp = "123456"; //random_int(100000, 999999);
+                $dataUser['otp'] = $phoneOtp;
                 $euId = User::insertGetId($dataUser);
 
 
-                $phoneOtp = "123456"; //random_int(100000, 999999);
+               
                 
                 $dataUser['template'] = 'emails.buyer_registration';
                 $dataUser['service'] = Category::where('id',$request->service_id)->value('name');
                 $dataUser['password'] = $password;
-                $dataUser['otp'] = $phoneOtp;
+                
                 //send registration mail
                 Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
                     $message->from('info@localists.com');
@@ -117,6 +120,8 @@ class MyRequestController extends Controller
             $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
             $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
             $user->remember_tokens = $token;
+
+        
 
         }else{
             //take bearer token and extract user id from token
@@ -281,5 +286,33 @@ class MyRequestController extends Controller
                  
         return $this->sendError('Something went wrong, try again!',$data);
     } 
+
+
+    public function verifyPhoneNumber(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:users,id',
+            'otp' => 'required',
+          ], [
+            'image_file.required' => 'Location Postcode is required.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $cOtp = User::where('id',$request->user_id)->value('otp');
+        $otp = $request->otp;
+
+        if($cOtp == $otp){
+            $data['phone_verified'] = 1;
+            $data['updated_at'] = date('Y-m-d H:i:s');
+            User::where('id',$request->user_id)->update($data);
+            return $this->sendResponse('Phone number verified successfully!');
+
+        }
+        print_r($cOtp);
+        echo "<br>";
+        print_r($otp);
+        return $this->sendError('Wrong OTP, try again!');
+    }
 
 }

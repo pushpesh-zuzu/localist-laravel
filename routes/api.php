@@ -43,7 +43,7 @@ Route::prefix('customer')->group(function () {
     Route::get('test',[CustomerController::class,'test']);
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
-
+    Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
