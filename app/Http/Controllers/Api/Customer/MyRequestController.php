@@ -173,7 +173,7 @@ class MyRequestController extends Controller
             $rel['name'] = $fUser->name;
             $rel['email'] = $fUser->email;
             $rel['phone'] = $fUser->phone;
-            $rel['remember_token'] = $token;
+            $rel['remember_tokens'] = $token;
             $rel['phone_otp'] = $phoneOtp;
             $rel['request_id'] = $sId;
 
