@@ -773,6 +773,7 @@ class RecommendedLeadsController extends Controller
         $serviceIds = $aVals['service_id']; // array
         $bids = $aVals['bid']; // array
         $distances = $aVals['distance']; // array
+        $anyInserted = false;
         foreach ($sellerIds as $index => $sellerId) {
             $serviceId = $serviceIds[$index];
             $bid = $bids[$index];
@@ -803,10 +804,16 @@ class RecommendedLeadsController extends Controller
             ]);
     
             DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $bid);
+
+            $anyInserted = true; //  Mark that at least one entry was inserted
         }
-        
+        if ($anyInserted) {
+            return $this->sendResponse(__('Bids inserted successfully'), []);
+        } else {
+            return $this->sendError(__('Bids already placed for all selected sellers'), 404);
+        }
        
-            return $this->sendResponse(__('Bids inserted successfully'),[]);
+           
     } 
 
 }
