@@ -52,6 +52,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('blogs', BlogsController::class);
     Route::resource('plans', PlansController::class);
     Route::resource('buyer', BuyerController::class);
+    Route::get('buyer-lead-details/{leadid}', [BuyerController::class, 'leadDetails'])->name('buyer.leadDetails');
+    Route::get('buyer-bids/{userid}', [BuyerController::class, 'buyerBids'])->name('seller.buyerBids');
     Route::resource('seller', SellerController::class);
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-incomplete-list', [SellerController::class, 'incompletelist'])->name('seller.incomplete');

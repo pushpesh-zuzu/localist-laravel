@@ -739,6 +739,7 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
+            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
             $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
@@ -758,6 +759,7 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
+            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
             return $this->sendResponse(__('Bids inserted successfully'),[]);
     }

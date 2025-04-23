@@ -45,6 +45,7 @@
             <!-- <td>{{ $aRow->user_type == 2 ? 'Buyer' : 'Seller, Buyer' }}</td> -->
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>
+                <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
                 <a href="{{ route('buyer.show',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
                 <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>
                 </a>
