@@ -62,12 +62,12 @@ class UserController extends Controller
                 return $this->sendError('Email is Invalid');
             }
         }
-        if($loggedUser == 2){
+        // if($loggedUser == 2){
             $randomString = Str::random(10);
             $aVals['password'] = Hash::make($randomString);
-        }else{
-            $aVals['password'] = Hash::make($request->password);
-        }
+        // }else{
+        //     $aVals['password'] = Hash::make($request->password);
+        // }
         // $aVals['password'] = Hash::make($request->password);
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = $randomNumber;
@@ -157,10 +157,10 @@ class UserController extends Controller
                 'service_id' => 'required',
                 'name' => 'required',
                 'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[@$!%*?&]/|max:16'
-              ], [
-                'password.min' => 'The new password must be at least 8 characters.',
-                'password.regex' => 'The new password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+            //     'password' => 'required|string|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[@$!%*?&]/|max:16'
+            //   ], [
+            //     'password.min' => 'The new password must be at least 8 characters.',
+            //     'password.regex' => 'The new password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
             ]);
             
         }else{
