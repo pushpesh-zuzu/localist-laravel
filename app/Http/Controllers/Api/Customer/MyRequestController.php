@@ -71,117 +71,144 @@ class MyRequestController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $phoneOtp = "";
-        $euId = "";
-        $token = "";
-        //check if it is registration request or not
-        if(!empty($request->email)){
+        if($request->form_status == "1"){
+            $phoneOtp = "";
+            $euId = "";
+            $token = "";
+            //check if it is registration request or not
+            if(!empty($request->email)){
+                
+                //check if user exists for the given email or not
+                $password = "";
+                $euId = User::where('email',$request->email)->value('id');
+                if(empty($euId)){
+                    $dataUser['name'] = $request->name;
+                    $dataUser['email'] = $request->email;
+                    $dataUser['phone'] = $request->phone;
+                    $password = Str::random(10);
+                    $dataUser['password'] = Hash::make($password);
+                    $dataUser['user_type'] = 2;
+                    $dataUser['active_status'] = 2;
+                    $dataUser['form_status'] = $request->form_status;
+                    $dataUser['created_at'] = date('y-m-d H:i:s');
+                    $dataUser['updated_at'] = date('y-m-d H:i:s');
+                    $phoneOtp = "1234"; //random_int(1000, 9999);
+                    $dataUser['otp'] = $phoneOtp;
+                    $euId = User::insertGetId($dataUser);
+
+
+                
+                    
+                    $dataUser['template'] = 'emails.buyer_registration';
+                    $dataUser['service'] = Category::where('id',$request->service_id)->value('name');
+                    $dataUser['password'] = $password;
+                    
+                    //send registration mail
+                    Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
+                        $message->from('info@localists.com');
+                        $message->to($dataUser['email']);
+                        $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
+                    });
+
+                    //send otp mail
+                    Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
+                        $message->from('info@localists.com');
+                        $message->to($dataUser['email']);
+                        $message->subject("Verify your phone number");
+                    });
+                }
+                $user = User::where('id',$euId)->first();
+                $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
+                $user->remember_tokens = $token;
+
             
-            //check if user exists for the given email or not
-            $password = "";
-            $euId = User::where('email',$request->email)->value('id');
-            if(empty($euId)){
-                $dataUser['name'] = $request->name;
-                $dataUser['email'] = $request->email;
-                $dataUser['phone'] = $request->phone;
-                $password = Str::random(10);
-                $dataUser['password'] = Hash::make($password);
-                $dataUser['user_type'] = 2;
-                $dataUser['active_status'] = 2;
-                $dataUser['form_status'] = $request->form_status;
-                $dataUser['created_at'] = date('y-m-d H:i:s');
-                $dataUser['updated_at'] = date('y-m-d H:i:s');
-                $phoneOtp = "1234"; //random_int(1000, 9999);
-                $dataUser['otp'] = $phoneOtp;
-                $euId = User::insertGetId($dataUser);
 
-
-               
-                
-                $dataUser['template'] = 'emails.buyer_registration';
-                $dataUser['service'] = Category::where('id',$request->service_id)->value('name');
-                $dataUser['password'] = $password;
-                
-                //send registration mail
-                Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
-                    $message->from('info@localists.com');
-                    $message->to($dataUser['email']);
-                    $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
-                });
-
-                //send otp mail
-                Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
-                    $message->from('info@localists.com');
-                    $message->to($dataUser['email']);
-                    $message->subject("Verify your phone number");
-                });
+            }else{
+                //take bearer token and extract user id from token
+                $token = $request->bearerToken();
+                if (!$token) {
+                    return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+                }
+                $accessToken = PersonalAccessToken::findToken($token);
+                if (!$accessToken) {
+                    return response()->json(['error' => 'Unauthorized','message' => 'Invalid token.'], 401);
+                }
+                // Extract user_id from token abilities
+                $euId = $accessToken->abilities['user_id'] ?? null;
+                if (!$euId) {
+                    return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+                }
             }
-            $user = User::where('id',$euId)->first();
-            $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-            $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
-            $user->remember_tokens = $token;
 
-        
+            $data['customer_id'] = $euId;
+            $data['service_id'] = $request->service_id;
+            $data['postcode'] = $request->postcode;
+            $data['questions'] = $request->questions;
+            $data['phone'] = $request->phone;
 
+            $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
+            $data['credit_score'] = rand(15, 30);
+            $data['created_at'] = date('y-m-d H:i:s');
+            $data['updated_at'] = date('y-m-d H:i:s');
+
+            //evaluate Lead Badges
+            $data['is_phone_verified'] = User::where('id',$euId)->value('phone_verified') == 1 ? 1 : 0;
+
+            $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
+            $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
+
+            $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
+            $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
+
+            $patternUrgent = "/\b(as soon as possible)\b/i";
+            $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
+            //end evaluate Lead Badges
+
+
+            $sId = LeadRequest::insertGetId($data);
+
+            if($sId){
+                $fUser = User::where('id',$euId)->first();
+                $rel['user_id'] = $euId;
+                
+                $rel['user_type'] = $fUser->user_type; 
+                $rel['form_status'] = $fUser->form_status; 
+                $rel['active_status'] = $fUser->active_status; 
+                $rel['remember_tokens'] = $token; 
+                $rel['name'] = $fUser->name; 
+                $rel['email'] = $fUser->email; 
+                $rel['phone'] = $fUser->phone; 
+                $rel['uuid'] = $fUser->uuid; 
+                $rel['is_online'] = $fUser->is_online; 
+                $rel['profile_image'] = $fUser->profile_image; 
+                $rel['total_credit'] = $fUser->total_credit; 
+                $rel['nation_wide'] = $fUser->nation_wide;
+                $rel['request_id'] = $sId;
+
+                // $apiController = new ApiController();
+                // $bidRel = $apiController->autobid($request);
+                // unset($apiController);
+
+                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+            }
         }else{
-            //take bearer token and extract user id from token
-            $token = $request->bearerToken();
-            if (!$token) {
-                return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+            $euId = User::where('email',$request->email)->value('id');
+            if(!empty($euId)){
+                return $this->sendResponse('Abodned user!');
             }
-            $accessToken = PersonalAccessToken::findToken($token);
-            if (!$accessToken) {
-                return response()->json(['error' => 'Unauthorized','message' => 'Invalid token.'], 401);
-            }
-            // Extract user_id from token abilities
-            $euId = $accessToken->abilities['user_id'] ?? null;
-            if (!$euId) {
-                return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
-            }
-        }
-
-        $data['customer_id'] = $euId;
-        $data['service_id'] = $request->service_id;
-        $data['postcode'] = $request->postcode;
-        $data['questions'] = $request->questions;
-        $data['phone'] = $request->phone;
-
-        $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
-        $data['credit_score'] = rand(15, 30);
-        $data['created_at'] = date('y-m-d H:i:s');
-        $data['updated_at'] = date('y-m-d H:i:s');
-
-        //evaluate Lead Badges
-        $data['is_phone_verified'] = User::where('id',$euId)->value('phone_verified') == 1 ? 1 : 0;
-
-        $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
-        $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
-
-        $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
-        $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
-
-        $patternUrgent = "/\b(as soon as possible)\b/i";
-        $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
-        //end evaluate Lead Badges
-
-
-        $sId = LeadRequest::insertGetId($data);
-
-        if($sId){
-            $fUser = User::where('id',$euId)->first();
-            $rel['user_id'] = $euId;
-            $rel['name'] = $fUser->name;
-            $rel['email'] = $fUser->email;
-            $rel['phone'] = $fUser->phone;
-            $rel['remember_tokens'] = $token;
-            $rel['phone_otp'] = $phoneOtp;
-            $rel['request_id'] = $sId;
-
-            // $apiController = new ApiController();
-            // $bidRel = $apiController->autobid($request);
-            // unset($apiController);
-
-            return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+            $dataUser['name'] = $request->name;
+            $dataUser['email'] = $request->email;
+            $dataUser['phone'] = $request->phone;
+            $password = Str::random(10);
+            $dataUser['password'] = Hash::make($password);
+            $dataUser['user_type'] = 2;
+            $dataUser['active_status'] = 2;
+            $dataUser['form_status'] = $request->form_status;
+            $dataUser['created_at'] = date('y-m-d H:i:s');
+            $dataUser['updated_at'] = date('y-m-d H:i:s');
+            $euId = User::insertGetId($dataUser);
+            return $this->sendResponse('Abodned user!');
         }
         return $this->sendError('Something went wrong, try again!');
     }
