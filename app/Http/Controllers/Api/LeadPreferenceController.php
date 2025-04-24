@@ -772,6 +772,6 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
     
         $isDataExists = User::where('id',$aVals['user_id'])->pluck('total_credit')->first();
-        return $this->sendResponse('Switched update', $isDataExists);                                               
+        return $this->sendResponse('Total Credits', $isDataExists);                                               
     }
 }
