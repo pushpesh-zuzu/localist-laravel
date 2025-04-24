@@ -83,6 +83,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
+        Route::post('/get-save-for-later-list', [LeadPreferenceController::class, 'getSaveForLaterList']);
         
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
