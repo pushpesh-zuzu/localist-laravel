@@ -15,7 +15,7 @@ class LeadRequest extends Model
 
     public function customer()
     {
-        return $this->belongsTo(User::class, 'customer_id','id')->select('id','name','email');
+        return $this->belongsTo(User::class, 'customer_id','id')->select('id','name','email','total_credit');
     }
 
     public function category()
