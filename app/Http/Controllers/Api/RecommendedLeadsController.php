@@ -913,7 +913,7 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
-            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
+            // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
             $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
@@ -933,9 +933,10 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
-            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
+            // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
-            return $this->sendResponse(__('Bids inserted successfully'),[]);
+        DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
+        return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
 
     public function addMultipleManualBid(Request $request){
@@ -983,9 +984,31 @@ class RecommendedLeadsController extends Controller
             return $this->sendResponse(__('Bids inserted successfully'), []);
         } else {
             return $this->sendError(__('Bids already placed for all selected sellers'), 404);
-        }
-       
-           
+        }  
     } 
+
+    public function closeLeads()
+    {
+        $twoWeeksAgo = Carbon::now()->subWeeks(2);
+
+        $leadsToClose = LeadRequest::where('status', 0)
+            ->where('created_at', '<', $twoWeeksAgo)
+            ->get();
+
+        foreach ($leadsToClose as $lead) {
+            // Count only unique sellers the buyer has bid on
+            $selectedSellerCount = RecommendedLead::where('lead_id', $lead->id)
+                ->where('buyer_id', $lead->customer_id)
+                ->distinct('seller_id') // ensure unique seller count
+                ->count('seller_id');
+
+            if ($selectedSellerCount < 5) {
+                $lead->status = 1; // Mark as closed
+                $lead->save();
+            }
+        }
+
+        return response()->json(['message' => 'Eligible leads closed successfully.']);
+    }
 
 }
