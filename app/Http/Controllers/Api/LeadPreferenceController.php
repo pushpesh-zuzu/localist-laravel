@@ -759,9 +759,9 @@ class LeadPreferenceController extends Controller
 
     public function onlineRemoteSwitch(Request $request){ 
         $aVals = $request->all();
-  
+    
         $isDataExists = User::where('id',$aVals['user_id'])->first();
-        if(!empty($isDataExists)){
+        if(empty($isDataExists)){
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             return $this->sendResponse('Switched update', []);   
         }      
@@ -772,6 +772,6 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
     
         $isDataExists = User::where('id',$aVals['user_id'])->pluck('total_credit')->first();
-        return $this->sendResponse('Total Credits', $isDataExists);                                               
+        return $this->sendResponse('Switched update', $isDataExists);                                               
     }
 }
