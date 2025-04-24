@@ -765,9 +765,6 @@ class RecommendedLeadsController extends Controller
 
     public function addMultipleManualBid(Request $request){
         $aVals = $request->all();
-        if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
-            return $this->sendError(__('Lead request not found'), 404);
-        }
         $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
         $sellerIds = $aVals['seller_id']; // array
         $serviceIds = $aVals['service_id']; // array
