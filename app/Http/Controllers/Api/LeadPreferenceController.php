@@ -756,4 +756,15 @@ class LeadPreferenceController extends Controller
 
         return $this->sendResponse(__('Saved Leads'), $savedLeads);
     }
+
+    public function onlineRemoteSwitch(Request $request){
+        $aVals = $request->all();
+    
+        $isDataExists = User::where('id',$aVals['user_id'])->first();
+        if(empty($isDataExists)){
+            $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
+            return $this->sendResponse('Switched update', []);   
+        }      
+        return $this->sendError('Something went wrong.');                                              
+    }
 }

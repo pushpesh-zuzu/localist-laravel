@@ -94,6 +94,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
         // Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);
         Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
+        Route::post('/online-remote-switch', [LeadPreferenceController::class, 'onlineRemoteSwitch']);
         
         Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
         Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);
