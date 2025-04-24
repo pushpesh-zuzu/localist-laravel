@@ -615,9 +615,11 @@ class RecommendedLeadsController extends Controller
             return $prefs->count();
         });
     
+        $existingBids = RecommendedLead::where('buyer_id', $customerId)
+                                        ->where('lead_id', $lead->id)
+                                        ->pluck('seller_id')
+                                        ->toArray();
         // Step 9: Build final list with user info, service name, and distance
-       
-       
         $finalUsers = $scoredUsers->filter(function ($score) {
             return $score > 0;
         })->keys()->map(function ($userId) use (
@@ -626,8 +628,12 @@ class RecommendedLeadsController extends Controller
             $leadCreditScore,
             $scoredUsers,
             $serviceName,
-            $serviceId
+            $serviceId,
+            $existingBids
         ) {
+            if (in_array($userId, $existingBids)) {
+                return null; // skip sellers already bid by buyer
+            }
             $user = User::find($userId);
             $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
     
@@ -646,7 +652,7 @@ class RecommendedLeadsController extends Controller
                         'score' => $scoredUsers[$userId] ?? 0,
                     ]
                 );
-        })->sortByDesc('score')->values();
+        })->filter()->sortByDesc('score')->values();
        
        
         if(count($finalUsers)>0){
