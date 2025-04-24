@@ -15,6 +15,8 @@ use Illuminate\Validation\Rule;
 use App\Helpers\CustomHelper;
 use App\Services\ZeroBounceService;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
+use App\Models\LoginHistory;
 
 class UserController extends Controller
 {
@@ -191,6 +193,18 @@ class UserController extends Controller
                 {
                     return $this->sendError("User is inactive");
                 }
+                 // Update last_login
+                $user->last_login = Carbon::now();
+                $user->save();
+
+                // Insert into login_histories
+                LoginHistory::create([
+                    'user_id' => $user->id,
+                    'login_at' => Carbon::now(),
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+                
                 $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
                 $user->update(['remember_token' => $token]);
                 $user->remember_tokens = $token;

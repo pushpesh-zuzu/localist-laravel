@@ -10,14 +10,15 @@
             <table class="table table-striped">
             <thead>
               <tr>
-                <th rowspan="2" scope="col">Name</th>
-                <th rowspan="2" scope="col">Email</th>
-                <th rowspan="2" scope="col">Mobile</th>
-                <th rowspan="2" scope="col">City</th>
-                <th rowspan="2" scope="col">State</th>
-                <th rowspan="2" scope="col">Zipcode</th>
-                <th rowspan="2" scope="col">Apartment</th>
-                <th rowspan="2" scope="col">Registration Date</th>
+                <th  scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Mobile</th>
+                <th scope="col">City</th>
+                <th scope="col">State</th>
+                <th scope="col">Zipcode</th>
+                <th scope="col">Apartment</th>
+                <th scope="col">Registration Date</th>
+                <th scope="col">Last Login</th>
               </tr>
             </thead>
               <tbody>
@@ -30,6 +31,7 @@
                 <td>{{ $aRows->zipcode }}</td>
                 <td>{{ $aRows->apartment }}</td>
                 <td>{{ $aRows->created_at->format('d-m-Y') }}</td>
+                <td>{{ $aRows->last_login }}</td>
               </tr>
               </tbody>
             </table>

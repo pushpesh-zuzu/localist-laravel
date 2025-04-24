@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\RecommendedLead;
 use App\Models\LeadRequest;
+use App\Models\LoginHistory;
 use App\Models\User;
 
 class BuyerController extends Controller
@@ -99,5 +100,11 @@ class BuyerController extends Controller
         }
 
         return view('buyer.autobid_leads', compact('aRows'));
+    }
+
+    public function buyerLogin($userid){
+        $aRows =  LoginHistory::where('user_id',$userid)->get();
+        $user = User::where('id', $userid)->pluck('name')->first();
+        return view('buyer.login_history', get_defined_vars());
     }
 }

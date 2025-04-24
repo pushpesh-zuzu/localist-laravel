@@ -9,6 +9,7 @@ use App\Models\UserServiceDetail;
 use App\Models\SuggestedQuestion;
 use App\Models\PurchaseHistory;
 use App\Models\LeadPrefrence;
+use App\Models\LoginHistory;
 use App\Models\UserService;
 use App\Models\LeadRequest;
 use App\Models\UserDetail;
@@ -160,6 +161,11 @@ class SellerController extends Controller
         return view('seller.suggested_questions', get_defined_vars());
     }
 
+    public function sellerLogin($userid){
+        $aRows =  LoginHistory::where('user_id',$userid)->get();
+        $user = User::where('id', $userid)->pluck('name')->first();
+        return view('seller.login_history', get_defined_vars());
+    }
     
 
     

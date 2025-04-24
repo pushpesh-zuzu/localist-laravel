@@ -41,6 +41,11 @@
               <td>Registration</td>
               <td>{{ $aRows->created_at->format('d-m-Y') }}</td>
             </tr>
+            <tr>
+              <td>Last Login</td>
+              <td>{{ $aRows->last_login }}</td>
+            </tr>
+            
             </tbody>
           </table>
         </div>
