@@ -181,6 +181,10 @@ class LeadPreferenceController extends Controller
     
         $baseQuery = self::basequery($user_id, $requestPostcode, $requestMiles);
 
+        // Exclude leads already saved by the seller
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
+
         // Fix: use $aVals, not $aValues
         $serviceIds = [];
         if (!empty($aVals['service_id'])) {
@@ -265,7 +269,6 @@ class LeadPreferenceController extends Controller
     
         // If no matching data found by name or name not given, return all
         $leadrequest = $baseQuery->orderBy('id', 'DESC')->get();
-    
         return $this->sendResponse(__('Lead Request Data'), $leadrequest);
     }
 
@@ -730,5 +733,27 @@ class LeadPreferenceController extends Controller
             return $this->sendResponse('Data added Sucessfully', []);   
         }      
         return $this->sendError('Data already added for this user');                                              
+    }
+
+    public function getSaveForLaterList(Request $request)
+    {
+        $userId = $request->user_id; // seller_id
+
+        // Step 1: Get all lead_ids saved by this seller
+        $savedLeadIds = SaveForLater::where('seller_id', $userId)
+                                    ->pluck('lead_id')
+                                    ->toArray();
+
+        // Step 2: Fetch the actual lead data from LeadRequest
+        $savedLeads = LeadRequest::with(['customer', 'category'])
+                                ->whereIn('id', $savedLeadIds)
+                                ->orderBy('id', 'DESC')
+                                ->get();
+
+        if ($savedLeads->isEmpty()) {
+            return $this->sendError('No saved leads found');
+        }
+
+        return $this->sendResponse(__('Saved Leads'), $savedLeads);
     }
 }
