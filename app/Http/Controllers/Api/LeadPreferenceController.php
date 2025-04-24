@@ -269,13 +269,6 @@ class LeadPreferenceController extends Controller
     
         // If no matching data found by name or name not given, return all
         $leadrequest = $baseQuery->orderBy('id', 'DESC')->get();
-        $users = User::where('id',$user_id)->pluck('total_credit')->first();
-        return $this->sendResponse(__('No Leads found'), [
-            [
-                'total_credit' => $users,
-                'leaddata' => $leadrequest
-            ]
-        ]);
         return $this->sendResponse(__('Lead Request Data'), $leadrequest);
     }
 
