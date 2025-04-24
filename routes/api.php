@@ -81,6 +81,8 @@ Route::prefix('users')->group(function () {
         Route::post('/get_user_services', [LeadPreferenceController::class, 'getUserServices']);
         Route::post('/lead-preferences', [LeadPreferenceController::class, 'leadpreferences']);
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
+        Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
+        Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
         
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
@@ -89,7 +91,6 @@ Route::prefix('users')->group(function () {
         
         Route::post('/add_service', [LeadPreferenceController::class, 'addUserService']);
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
-        Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         // Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);
         Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
         
@@ -106,11 +107,11 @@ Route::prefix('users')->group(function () {
         Route::post('/switch_user', [UserController::class, 'switchUser']);
         Route::post('/logout', [UserController::class, 'logout']);
 
+        Route::post('/add-multiple-manual-bid', [RecommendedLeadsController::class, 'addMultipleManualBid']);
         Route::post('/switch-autobid', [RecommendedLeadsController::class, 'switchRecommendedLeads']);
         Route::post('/autobid-list', [RecommendedLeadsController::class, 'getRecommendedLeads']);
         Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
-        Route::post('/add-multiple-manual-bid', [RecommendedLeadsController::class, 'addMultipleManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
 
         Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);

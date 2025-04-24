@@ -9,6 +9,7 @@ use App\Models\UserServiceLocation;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\LeadRequest;
+use App\Models\SaveForLater;
 use App\Models\UserService;
 use App\Models\CreditList;
 use App\Models\Category;
@@ -179,6 +180,10 @@ class LeadPreferenceController extends Controller
         }
     
         $baseQuery = self::basequery($user_id, $requestPostcode, $requestMiles);
+
+        // Exclude leads already saved by the seller
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
 
         // Fix: use $aVals, not $aValues
         $serviceIds = [];
@@ -697,7 +702,7 @@ class LeadPreferenceController extends Controller
         return $aRows;
     }
 
-     public function getLeadProfile(Request $request){
+    public function getLeadProfile(Request $request){
         $aVals = $request->all();
         $users = User::where('id',$aVals['user_id'])->first();  
         if ($users) {
@@ -712,5 +717,22 @@ class LeadPreferenceController extends Controller
             $users->leads = $leads;
         }
         return $this->sendResponse('Profile Data', $users);                    
+    }
+
+    public function saveForLater(Request $request){
+        $aVals = $request->all();
+        $isDataExists = SaveForLater::where('seller_id',$aVals['user_id'])
+                                    ->where('user_id',$aVals['buyer_id'])    
+                                    ->where('lead_id',$aVals['lead_id'])   
+                                    ->first();
+        if(empty($isDataExists)){
+            $bids = SaveForLater::create([
+                'seller_id' => $aVals['user_id'], 
+                'user_id' => $aVals['buyer_id'], //buyer
+                'lead_id' => $aVals['lead_id']
+            ]); 
+            return $this->sendResponse('Data added Sucessfully', []);   
+        }      
+        return $this->sendError('Data already added for this user');                                              
     }
 }
