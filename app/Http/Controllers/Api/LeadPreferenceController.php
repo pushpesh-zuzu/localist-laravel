@@ -25,13 +25,13 @@ class LeadPreferenceController extends Controller
 {
     public function getservices(Request $request){
         $user_id = $request->user_id; 
-        $categories = self::getFilterservices($user_id);
-        // $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
-        // $categories = Category::whereIn('id', $serviceId)->get();
-        // foreach ($categories as $key => $value) {
-        //     $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
-        //     $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
-        // }
+        // $categories = self::getFilterservices($user_id);
+        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
+        $categories = Category::whereIn('id', $serviceId)->get();
+        foreach ($categories as $key => $value) {
+            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
+        }
         return $this->sendResponse(__('Service Data'), $categories);
     }
 
@@ -479,20 +479,20 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
-        $uniqueRows = self::getFilterLocations($userId);
+        // $uniqueRows = self::getFilterLocations($userId);
         // Get all locations for the user
-        // $aRows = UserServiceLocation::where('user_id', $userId)
-        //     ->orderBy('postcode')
-        //     ->get();
+        $aRows = UserServiceLocation::where('user_id', $userId)
+            ->orderBy('postcode')
+            ->get();
 
-        // // Group by postcode to remove duplicates (only first entry per postcode)
-        // $uniqueRows = $aRows->unique('postcode')->values();
+        // Group by postcode to remove duplicates (only first entry per postcode)
+        $uniqueRows = $aRows->unique('postcode')->values();
 
-        // // Add total services per postcode
-        // foreach ($uniqueRows as $value) {
-        //     $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
-        //     $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
-        // }
+        // Add total services per postcode
+        foreach ($uniqueRows as $value) {
+            $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
+            $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
+        }
 
         return $this->sendResponse(__('User Service Data'), $uniqueRows);
     }
