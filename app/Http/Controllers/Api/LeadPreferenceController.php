@@ -767,4 +767,11 @@ class LeadPreferenceController extends Controller
         }      
         return $this->sendError('Something went wrong.');                                              
     }
+
+    public function totalCredit(Request $request){ 
+        $aVals = $request->all();
+    
+        $isDataExists = User::where('id',$aVals['user_id'])->pluck('total_credit')->first();
+        return $this->sendResponse('Switched update', $isDataExists);                                               
+    }
 }
