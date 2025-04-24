@@ -42,18 +42,7 @@ class UserController extends Controller
         if(!empty($users) && $users != ''){
             return $this->sendError('Email already exists');
         }
-        if($loggedUser == 2){
-            if(!empty($users) && $users != ''){
-                $token = $users->createToken('authToken', ['user_id' => $users->id])->plainTextToken;
-                $users->update(['remember_token' => $token]);
-                $users->remember_tokens = $token;
-                return $this->sendResponse('Email already exists', $users);
-            }
-        }
 
-        // if(!empty($users) && $users != ''){
-        //     return $this->sendError('Email already exists');
-        // }
         if($aVals['form_status'] == 1){
             $validator = self::validators($aVals,$loggedUser);
             if ($validator->fails()) {
@@ -64,28 +53,19 @@ class UserController extends Controller
                 return $this->sendError('Email is Invalid');
             }
         }
-        // if($loggedUser == 2){
-            $randomString = Str::random(10);
-            $aVals['password'] = Hash::make($randomString);
-        // }else{
-        //     $aVals['password'] = Hash::make($request->password);
-        // }
-        // $aVals['password'] = Hash::make($request->password);
+        $randomString = Str::random(10);
+        $aVals['password'] = Hash::make($randomString);
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = $randomNumber;
         $user = User::create($aVals);
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
         $user->remember_tokens = $token;
-        // $aVals['password'] = Hash::make($request->password);
 
-        // $user = User::create($aVals);
-
-        if($user && $loggedUser == 1)
+        if(!empty($user))
         {
               // Check if service_id is an array or convert it to one
             $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
-
             foreach ($serviceIds as $serviceId) {
                 // Create a separate row for each service_id
                 $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
@@ -95,31 +75,32 @@ class UserController extends Controller
                     $aLocations['user_service_id'] = $service->id;
                     $aLocations['user_id'] = $user->id;
                     if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
-                        $aLocations['miles'] = 0;
                         $aLocations['nation_wide'] = 1;
                     }else{
-                        if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
-                            $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
-                        } elseif (!empty($aVals['miles1'])) {
-                            $aLocations['miles'] = $aVals['miles1'];
-                        } else {
-                            $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
-                        }
                         $aLocations['nation_wide'] = 0;
                     }
+                    if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
+                        $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
+                    } elseif (!empty($aVals['miles1'])) {
+                        $aLocations['miles'] = $aVals['miles1'];
+                    } else {
+                        $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
+                    }
+                    
                     if(isset($aVals['postcode']) && $aVals['postcode'] !=''){
                         $aLocations['postcode'] = $aVals['postcode'];
                     }else{
                         $aLocations['postcode'] = '000000';
                     }
-                   
                     UserServiceLocation::createUserServiceLocation($aLocations);
                 }
             }
+            //Mail send
             $data = $user->toArray();
             $data['template'] = 'emails.seller_registration';
             $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
             $data['password'] = $aVals['password'];
+
             Mail::send($data['template'], $data, function ($message) use ($user) {
                 $message->from('info@localists.com');
                 $message->to($user->email);
@@ -134,15 +115,119 @@ class UserController extends Controller
             $modes = 'Buyer Registration';
         }
        
-        // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
-        // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
-        // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" =>  $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
-          //send registration mail
-       
         return $this->sendResponse('Registration Sucessful.', $user);
-        // return $this->sendResponse(__('registration successfully',$user));
 
     }
+    // public function registration(Request $request): JsonResponse
+    // {
+    //     $aVals = $request->all();
+    //     $auto_bid = $request->auto_bid;
+    //     $loggedUser = $request->loggedUser;//For checking seller/buyer
+    //     $users = User::where('email',$request->email)->first();
+    //     if(!empty($users) && $users != ''){
+    //         return $this->sendError('Email already exists');
+    //     }
+    //     if($loggedUser == 2){
+    //         if(!empty($users) && $users != ''){
+    //             $token = $users->createToken('authToken', ['user_id' => $users->id])->plainTextToken;
+    //             $users->update(['remember_token' => $token]);
+    //             $users->remember_tokens = $token;
+    //             return $this->sendResponse('Email already exists', $users);
+    //         }
+    //     }
+
+    //     // if(!empty($users) && $users != ''){
+    //     //     return $this->sendError('Email already exists');
+    //     // }
+    //     if($aVals['form_status'] == 1){
+    //         $validator = self::validators($aVals,$loggedUser);
+    //         if ($validator->fails()) {
+    //             return $this->sendError($validator->errors());
+    //         }
+    //         $result = $this->zeroBounceService->validateEmail($request->email);
+    //         if (isset($result['status']) && $result['status'] === 'invalid') {
+    //             return $this->sendError('Email is Invalid');
+    //         }
+    //     }
+    //     // if($loggedUser == 2){
+    //         $randomString = Str::random(10);
+    //         $aVals['password'] = Hash::make($randomString);
+    //     // }else{
+    //     //     $aVals['password'] = Hash::make($request->password);
+    //     // }
+    //     // $aVals['password'] = Hash::make($request->password);
+    //     $randomNumber = rand(1000, 5000);
+    //     $aVals['total_credit'] = $randomNumber;
+    //     $user = User::create($aVals);
+    //     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+    //     $user->update(['remember_token' => $token]);
+    //     $user->remember_tokens = $token;
+    //     // $aVals['password'] = Hash::make($request->password);
+
+    //     // $user = User::create($aVals);
+
+    //     if($user && $loggedUser == 1)
+    //     {
+    //           // Check if service_id is an array or convert it to one
+    //         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+
+    //         foreach ($serviceIds as $serviceId) {
+    //             // Create a separate row for each service_id
+    //             $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
+
+    //             if ($service) {
+    //                 $aLocations['service_id'] = $serviceId;
+    //                 $aLocations['user_service_id'] = $service->id;
+    //                 $aLocations['user_id'] = $user->id;
+    //                 // if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
+    //                     $aLocations['miles'] = 0;
+    //                     $aLocations['nation_wide'] = 1;
+    //                 // }else{
+    //                     if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
+    //                         $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
+    //                     } elseif (!empty($aVals['miles1'])) {
+    //                         $aLocations['miles'] = $aVals['miles1'];
+    //                     } else {
+    //                         $aLocations['miles'] = 0; // Default value to avoid undefined variable issues
+    //                     }
+    //                     $aLocations['nation_wide'] = 0;
+    //                 // }
+    //                 if(isset($aVals['postcode']) && $aVals['postcode'] !=''){
+    //                     $aLocations['postcode'] = $aVals['postcode'];
+    //                 }else{
+    //                     $aLocations['postcode'] = '000000';
+    //                 }
+                   
+    //                 UserServiceLocation::createUserServiceLocation($aLocations);
+    //             }
+    //         }
+    //         $data = $user->toArray();
+    //         $data['template'] = 'emails.seller_registration';
+    //         $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
+    //         $data['password'] = $aVals['password'];
+    //         Mail::send($data['template'], $data, function ($message) use ($user) {
+    //             $message->from('info@localists.com');
+    //             $message->to($user->email);
+    //             $message->subject("Welcome to Localist " .$user->name ."!");
+    //         });
+    //     }
+       
+    //     // CustomHelper::sendEmail();
+    //     if($aVals['active_status'] == 1){
+    //         $modes = 'Seller Registration';
+    //     }else{
+    //         $modes = 'Buyer Registration';
+    //     }
+       
+    //     // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+    //     // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+    //     // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" =>  $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+    //       //send registration mail
+       
+    //     return $this->sendResponse('Registration Sucessful.', $user);
+    //     // return $this->sendResponse(__('registration successfully',$user));
+
+    // }
 
     public function validators($aVals,$loggedUser){
         if($loggedUser == 1){
@@ -204,7 +289,7 @@ class UserController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
-                
+
                 $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
                 $user->update(['remember_token' => $token]);
                 $user->remember_tokens = $token;

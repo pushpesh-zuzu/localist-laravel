@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\{
 class CreditPlanController extends Controller
 {
     public function getPlans(Request $request){
-        $plans = Plan::where('status',1)->get();
+        $plans = Plan::where('status',1)->orderBy('id','DESC')->get();
         foreach ($plans as $key => $value) {
             if ($value->no_of_leads > 0) {
                 $value['per_credit'] = round($value->price / (float) $value->no_of_leads, 2);
