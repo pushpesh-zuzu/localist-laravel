@@ -656,6 +656,21 @@ class RecommendedLeadsController extends Controller
             $miles = $distance !== "Distance not found"
                 ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
                 : null;
+
+                //weighting code starts here
+                // Normalize distance to get a score (0 - 1 scale)
+                $maxDistance = 25; // Max miles for the filter
+                $distanceScore = $miles !== null ? max(0, 1 - ($miles / $maxDistance)) : 0; // Closer distance = higher score
+
+                // Step 11: Calculate credit score (80% weight)
+                $unusedCredit = $user->total_credit; // Assuming 'total_credit' is the unused credit value
+                $maxCredit = 1000; // Set max credit score for normalization (adjust as needed)
+                $creditScore = min(1, $unusedCredit / $maxCredit); // Normalize credit score (0 - 1 scale)
+
+                // Step 12: Calculate final score using weighted average
+                $finalScore = (0.2 * $distanceScore) + (0.8 * $creditScore);
+
+                //weighting code ends here
     
                 return array_merge(
                     $user->toArray(),
@@ -665,13 +680,14 @@ class RecommendedLeadsController extends Controller
                         'service_id' => $serviceId,
                         'distance' => $miles,
                         'score' => $scoredUsers[$userId] ?? 0,
+                        'final_score' => $finalScore,
                     ]
                 );
         })->filter()->sortByDesc('total_credit')->values();
        
        
         if(count($finalUsers)>0){
-             return $this->sendResponse(__('No Leads found'), [
+             return $this->sendResponse(__('AutoBid Data'), [
                 [
                     'service_name' => $serviceName,
                     'baseurl' => url('/').Storage::url('app/public/images/users'),
