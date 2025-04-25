@@ -208,6 +208,7 @@ class RecommendedLeadsController extends Controller
             // Fetch all matching bids
             $bids = RecommendedLead::where('buyer_id', $seller_id)
                 ->where('lead_id', $leadid)
+                ->orderBy('id','DESC')
                 ->get();
 
             // Get seller IDs and unique service IDs
@@ -228,6 +229,7 @@ class RecommendedLeadsController extends Controller
                     $result[] = $sellerData;
                 }
             }
+            $bids->groupBy('distance');
         }
 
         return $this->sendResponse(__('AutoBid Data'), $result);
@@ -534,7 +536,7 @@ class RecommendedLeadsController extends Controller
 
         // Step 2: Get auto-bid user_services excluding the lead's customer
         $userServices = UserService::where('service_id', $serviceId)
-            ->where('auto_bid', 1)
+            // ->where('auto_bid', 1)
             ->where('user_id', '!=', $customerId)
             ->join('users', 'user_services.user_id', '=', 'users.id')
             ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
@@ -659,16 +661,16 @@ class RecommendedLeadsController extends Controller
 
                 //weighting code starts here
                 // Normalize distance to get a score (0 - 1 scale)
-                $maxDistance = 25; // Max miles for the filter
-                $distanceScore = $miles !== null ? max(0, 1 - ($miles / $maxDistance)) : 0; // Closer distance = higher score
+                // $maxDistance = 25; // Max miles for the filter
+                // $distanceScore = $miles !== null ? max(0, 1 - ($miles / $maxDistance)) : 0; // Closer distance = higher score
 
                 // Step 11: Calculate credit score (80% weight)
-                $unusedCredit = $user->total_credit; // Assuming 'total_credit' is the unused credit value
-                $maxCredit = 1000; // Set max credit score for normalization (adjust as needed)
-                $creditScore = min(1, $unusedCredit / $maxCredit); // Normalize credit score (0 - 1 scale)
+                // $unusedCredit = $user->total_credit; // Assuming 'total_credit' is the unused credit value
+                // $maxCredit = 1000; // Set max credit score for normalization (adjust as needed)
+                // $creditScore = min(1, $unusedCredit / $maxCredit); // Normalize credit score (0 - 1 scale)
 
                 // Step 12: Calculate final score using weighted average
-                $finalScore = (0.2 * $distanceScore) + (0.8 * $creditScore);
+                // $finalScore = (0.2 * $distanceScore) + (0.8 * $creditScore);
 
                 //weighting code ends here
     
@@ -680,7 +682,7 @@ class RecommendedLeadsController extends Controller
                         'service_id' => $serviceId,
                         'distance' => $miles,
                         'score' => $scoredUsers[$userId] ?? 0,
-                        'final_score' => $finalScore,
+                        // 'final_score' => $finalScore,
                     ]
                 );
         })->filter()->sortByDesc('total_credit')->values();
