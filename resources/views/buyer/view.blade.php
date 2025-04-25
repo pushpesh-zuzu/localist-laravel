@@ -7,34 +7,30 @@
               <strong>{{ __('Personal Details') }}</strong>
           </div>
           <div class="card-body">
-            <table class="table table-striped">
-            <thead>
-              <tr>
-                <th  scope="col">Name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Mobile</th>
-                <th scope="col">City</th>
-                <th scope="col">State</th>
-                <th scope="col">Zipcode</th>
-                <th scope="col">Apartment</th>
-                <th scope="col">Registration Date</th>
-                <th scope="col">Last Login</th>
-              </tr>
-            </thead>
-              <tbody>
-              <tr>
-                <td>{{ $aRows->name }}</td>
-                <td>{{ $aRows->email }}</td>
-                <td>{{ $aRows->phone }}</td>
-                <td>{{ $aRows->city }}</td>
-                <td>{{ $aRows->state }}</td>
-                <td>{{ $aRows->zipcode }}</td>
-                <td>{{ $aRows->apartment }}</td>
-                <td>{{ $aRows->created_at->format('d-m-Y') }}</td>
-                <td>{{ $aRows->last_login }}</td>
-              </tr>
-              </tbody>
-            </table>
+            <div class="row">
+              <div class="col-md-4"><b>Name: </b> {{ $aRows->name }}</div>
+              <div class="col-md-4"><b>Email: </b> {{ $aRows->email }}</div>
+              <div class="col-md-4"><b>Mobile: </b> {{ $aRows->phone }}</div>
+              <div class="col-md-4"><b>City: </b> {{ $aRows->city }}</div>
+              <div class="col-md-4"><b>State: </b> {{ $aRows->state }}</div>
+              <div class="col-md-4"><b>Zipcode: </b> {{ $aRows->zipcode }}</div>
+              <div class="col-md-4"><b>Apartment: </b> {{ $aRows->apartment }}</div>
+              <div class="col-md-4"><b>Registration Date: </b> {{ $aRows->created_at->format('d-m-Y') }}</div>
+              <div class="col-md-4"><b>Last Login: </b> {{ $aRows->last_login }}</div>
+              <div class="col-md-4"><b>Number of hirers: </b> 0</div>
+              <?php
+                $badges = "";
+                $is_phone_verified =  App\Models\User::where('id',$user_id)->value('phone_verified') == 1 ? 1 : 0;
+                if($is_phone_verified){
+                  if(!empty($badges)){
+                    $badges .=", ";
+                  }
+                  $badges .= 'Phone Verified';
+                }
+              ?>
+              <div class="col-md-4">
+                <b>Badges: </b> {{$badges}} </div>
+            </div>
           </div>
         </div>
     </div>
