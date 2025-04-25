@@ -718,23 +718,24 @@ class LeadPreferenceController extends Controller
     public function getFilterCreditList1($user_id = null)
     {
         $creditList = CreditList::get();
-
+    
         foreach ($creditList as $creditItem) {
             if (preg_match('/(\d+)\s*-\s*(\d+)/', $creditItem->credits, $matches)) {
                 $min = (int)$matches[1];
                 $max = (int)$matches[2];
-
-                // Use basequery and filter by credit range
+    
+                // Cast credit_score to integer if stored as string
                 $creditItem['leadcount'] = $this->basequery($user_id)
-                                                ->whereBetween('credit_score', [$min, $max])
-                                                ->count();
+                    ->whereRaw('CAST(credit_score AS UNSIGNED) BETWEEN ? AND ?', [$min, $max])
+                    ->count();
             } else {
                 $creditItem['leadcount'] = 0;
             }
         }
-
+    
         return $creditList;
     }
+    
 
 
 
