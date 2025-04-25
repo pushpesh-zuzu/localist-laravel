@@ -613,7 +613,7 @@ class LeadPreferenceController extends Controller
         $leadTimeCounts = self::getLeadTimeData($user_id);
         $services = self::getFilterservices1($user_id);
         $location = self::getFilterLocations1($user_id);
-        $credits = self::getFilterCreditList1();
+        $credits = self::getFilterCreditList1($user_id);
         $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
         
         return $this->sendResponse(__('Filter Data'), [
