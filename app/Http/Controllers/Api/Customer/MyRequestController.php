@@ -55,23 +55,25 @@ class MyRequestController extends Controller
 
     public function createNewRequest(Request $request){
         
-        $validator = Validator::make($request->all(), [
-            'service_id' => 'required|integer|exists:categories,id',
-            'postcode' => 'required',
-            'questions' => 'required',
-            'phone' => 'required',
-            'form_status' => 'required'
-          ], [
-            'postcode.required' => 'Location Postcode is required.',
-            'service_id.exists' => 'Provided service id does not exists.',
-            'form_status.required' => 'Form Status is required.'
-        ]);
-
-        if($validator->fails()){
-            return $this->sendError($validator->errors());
-        }
+        
 
         if($request->form_status == "1"){
+            $validator = Validator::make($request->all(), [
+                'service_id' => 'required|integer|exists:categories,id',
+                'postcode' => 'required',
+                'questions' => 'required',
+                'phone' => 'required',
+                'form_status' => 'required'
+              ], [
+                'postcode.required' => 'Location Postcode is required.',
+                'service_id.exists' => 'Provided service id does not exists.',
+                'form_status.required' => 'Form Status is required.'
+            ]);
+    
+            if($validator->fails()){
+                return $this->sendError($validator->errors());
+            }
+            
             $phoneOtp = "";
             $euId = "";
             $token = "";
