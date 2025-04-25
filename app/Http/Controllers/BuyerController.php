@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\RecommendedLead;
 use App\Models\LeadRequest;
 use App\Models\LoginHistory;
+use App\Models\Category;
 use App\Models\User;
 
 class BuyerController extends Controller
@@ -79,8 +80,8 @@ class BuyerController extends Controller
 
     public function buyerBids($userid)
     {
-        $buyerIds = RecommendedLead::where('buyer_id', $userid)->pluck('seller_id')->unique()->toArray();
-        $leads = LeadRequest::whereIn('customer_id', $buyerIds)->get();
+        // $buyerIds = RecommendedLead::where('buyer_id', $userid)->pluck('seller_id')->unique()->toArray();
+        $leads = LeadRequest::whereIn('customer_id', [$userid])->get();
         // Group all leads by customer_id
         $groupedLeads = $leads->groupBy('customer_id');
 
