@@ -60,7 +60,7 @@
           
          
 
-          <h5 class="mt-5 mb-3">Seo Information</h5>
+          <!-- <h5 class="mt-5 mb-3">Seo Information</h5>
 
           <div class="row mb-3">
             <div class="col-md-12">
@@ -77,7 +77,7 @@
               placeholder="Seo Description">{{ $aRow ? $aRow->seo_description : old('seo_description') }}</textarea>
 
             </div>
-          </div>
+          </div> -->
 
 
           <button type="submit" class="btn btn-dark mt-4">@if($aRow) Update @else Save @endif </button>
