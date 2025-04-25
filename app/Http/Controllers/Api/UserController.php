@@ -99,7 +99,7 @@ class UserController extends Controller
             $data = $user->toArray();
             $data['template'] = 'emails.seller_registration';
             $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
-            $data['password'] = $aVals['password'];
+            $data['password'] = $randomString;
 
             Mail::send($data['template'], $data, function ($message) use ($user) {
                 $message->from('info@localists.com');
