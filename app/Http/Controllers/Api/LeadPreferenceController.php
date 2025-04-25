@@ -145,6 +145,7 @@ class LeadPreferenceController extends Controller
         $user_id = $request->user_id;
         $searchName = $aVals['name'] ?? null;
         $leadSubmitted = $aVals['lead_time'] ?? null;
+        $unread = $aVals['unread'] ?? null;
          // Extract miles and postcode if provided
         $distanceFilter = $aVals['distance_filter'] ?? null;
         $requestMiles = null;
@@ -177,6 +178,10 @@ class LeadPreferenceController extends Controller
         if (!empty($spotlightFilter)) {
             // Example format: "Urgent requests, Updated requests, Has additional details"
             $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
+        }
+
+        if (!empty($unread) && $unread == 1) {
+            $baseQuery = $baseQuery->where('is_read', 0);
         }
     
         $baseQuery = self::basequery($user_id, $requestPostcode, $requestMiles);
