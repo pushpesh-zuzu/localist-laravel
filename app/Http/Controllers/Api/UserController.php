@@ -101,19 +101,21 @@ class UserController extends Controller
             $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
             $data['password'] = $randomString;
 
-            Mail::send($data['template'], $data, function ($message) use ($user) {
-                $message->from('info@localists.com');
-                $message->to($user->email);
-                $message->subject("Welcome to Localist " .$user->name ."!");
-            });
+            CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => "Seller Registration", "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+            // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" =>  $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
+            // Mail::send($data['template'], $data, function ($message) use ($user) {
+            //     $message->from('info@localists.com');
+            //     $message->to($user->email);
+            //     $message->subject("Welcome to Localist " .$user->name ."!");
+            // });
         }
        
         // CustomHelper::sendEmail();
-        if($aVals['active_status'] == 1){
-            $modes = 'Seller Registration';
-        }else{
-            $modes = 'Buyer Registration';
-        }
+        // if($aVals['active_status'] == 1){
+        //     $modes = 'Seller Registration';
+        // }else{
+        //     $modes = 'Buyer Registration';
+        // }
        
         return $this->sendResponse('Registration Sucessful.', $user);
 

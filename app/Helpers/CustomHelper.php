@@ -92,42 +92,78 @@ class CustomHelper
 
     public static function sendEmail($config = array())
     {
-        $mailDriver = strtolower(config("mail.driver"));
         $response = false;
-
         try {
             $defaults = array_merge([
-                'sendAs'   => 'html',
+                'sendAs' => 'html',
                 'template' => 'send',
-                'body'     => '',
-                'from'     => 'info@localists.com',
-                'to'       => '',
-                'subject'  => '',
-                'receiver' => '',
-                'title'    => '',
-                'link'     => '',
-                'extra'    => [],
+                'from' => 'info@localists.zuzucodes.com'
             ], $config);
 
-            // Prepare data to pass into the email view
-            $emailData = [
-                'body'    => $defaults['body'],
-                'receiver'=> $defaults['receiver']
-            ];
+            // Validate required keys
+            if (empty($defaults['to']) || empty($defaults['subject']) || empty($defaults['body'])) {
+                throw new \Exception("Required mail fields missing.");
+            }
 
-            Mail::send('emails.' . $defaults['template'], $emailData, function ($message) use ($defaults) {
+            $body = $defaults['body'];
+
+            Mail::send('emails.' . $defaults['template'], [
+                'title' => $defaults['title'] ?? null,
+                'link' => $defaults['link'] ?? null,
+                'subject' => $defaults['subject'] ?? null,
+                'body' => $body
+            ], function ($message) use ($defaults) {
                 $message->from($defaults['from']);
                 $message->to($defaults['to']);
                 $message->subject($defaults['subject']);
             });
-
             $response = true;
         } catch (\Exception $e) {
-            // Log the error if needed: \Log::error($e->getMessage());
+
+            \Log::error('Mail sending failed: ' .$e->getMessage() );
         }
 
         return $response;
     }
+
+    // public static function sendEmail($config = array())
+    // {
+    //     $mailDriver = strtolower(config("mail.driver"));
+    //     $response = false;
+
+    //     try {
+    //         $defaults = array_merge([
+    //             'sendAs'   => 'html',
+    //             'template' => 'send',
+    //             'body'     => '',
+    //             'from'     => 'info@localists.com',
+    //             'to'       => '',
+    //             'subject'  => '',
+    //             'receiver' => '',
+    //             'title'    => '',
+    //             'link'     => '',
+    //             'extra'    => [],
+    //         ], $config);
+
+    //         // Prepare data to pass into the email view
+    //         $emailData = [
+    //             'body'    => $defaults['body'],
+    //             'receiver'=> $defaults['receiver']
+    //         ];
+
+    //         Mail::send('emails.' . $defaults['template'], $emailData, function ($message) use ($defaults) {
+    //             $message->from($defaults['from']);
+    //             $message->to($defaults['to']);
+    //             $message->subject($defaults['subject']);
+    //         });
+
+    //         $response = true;
+    //     } catch (\Exception $e) {
+    //         // Log the error if needed: \Log::error($e->getMessage());
+    //     }
+
+    //     return $response;
+    // }
     // public static function sendEmail($config = array())
     // {
     //     $mailDriver = strtolower(config("mail.driver"));
