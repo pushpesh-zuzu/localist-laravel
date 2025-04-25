@@ -110,7 +110,7 @@ class SellerController extends Controller
     public function sellerBids($userid)
     {
         $buyerIds = RecommendedLead::where('seller_id', $userid)->pluck('buyer_id')->unique()->toArray();
-        $leads = LeadRequest::whereIn('customer_id', $buyerIds)->get();
+        $leads = LeadRequest::whereIn('customer_id', $buyerIds)->orderBy('id','DESC')->get();
         // Group all leads by customer_id
         $groupedLeads = $leads->groupBy('customer_id');
 
@@ -133,13 +133,13 @@ class SellerController extends Controller
     }
 
     public function sellerAccreditations($userid){
-        $aRows = UserAccreditation::where('user_id', $userid)->get();
+        $aRows = UserAccreditation::where('user_id', $userid)->orderBy('id','DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('seller.seller_accreditations', get_defined_vars());
     }
 
     public function sellerProfileServices($userid){
-        $aRows = UserServiceDetail::where('user_id', $userid)->get();
+        $aRows = UserServiceDetail::where('user_id', $userid)->orderBy('id','DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('seller.seller_services', get_defined_vars());
     }
@@ -162,7 +162,7 @@ class SellerController extends Controller
     }
 
     public function sellerLogin($userid){
-        $aRows =  LoginHistory::where('user_id',$userid)->get();
+        $aRows =  LoginHistory::where('user_id',$userid)->orderBy('id','DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('seller.login_history', get_defined_vars());
     }

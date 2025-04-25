@@ -16,7 +16,7 @@ class BuyerController extends Controller
      */
     public function index()
     {
-        $aRows = User::whereIn('user_type', [2, 3])->get(); 
+        $aRows = User::whereIn('user_type', [2, 3])->orderBy('id','DESC')->get(); 
         return view('buyer.index', compact('aRows'));
     }
 
@@ -81,7 +81,7 @@ class BuyerController extends Controller
     public function buyerBids($userid)
     {
         // $buyerIds = RecommendedLead::where('buyer_id', $userid)->pluck('seller_id')->unique()->toArray();
-        $leads = LeadRequest::whereIn('customer_id', [$userid])->get();
+        $leads = LeadRequest::whereIn('customer_id', [$userid])->orderBy('id','DESC')->get();
         // Group all leads by customer_id
         $groupedLeads = $leads->groupBy('customer_id');
 
@@ -104,7 +104,7 @@ class BuyerController extends Controller
     }
 
     public function buyerLogin($userid){
-        $aRows =  LoginHistory::where('user_id',$userid)->get();
+        $aRows =  LoginHistory::where('user_id',$userid)->orderBy('id','DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('buyer.login_history', get_defined_vars());
     }
