@@ -180,16 +180,17 @@ class LeadPreferenceController extends Controller
             $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
         }
 
-        if (!empty($unread) && $unread == 1) {
-            $baseQuery = $baseQuery->where('is_read', 0);
-        }
+       
     
         $baseQuery = self::basequery($user_id, $requestPostcode, $requestMiles);
 
         // Exclude leads already saved by the seller
         $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
         $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
-
+        
+         if (!empty($unread) && $unread == 1) {
+            $baseQuery = $baseQuery->where('is_read', 0);
+        }
         // Fix: use $aVals, not $aValues
         $serviceIds = [];
         if (!empty($aVals['service_id'])) {
@@ -283,11 +284,25 @@ class LeadPreferenceController extends Controller
             ->pluck('service_id')
             ->toArray();
     
-        $searchTerms = DB::table('lead_prefrences')
-            ->where('user_id', $user_id)
-            ->pluck('answers')
-            ->toArray();
-    
+        // $searchTerms = DB::table('lead_prefrences')
+        //     ->where('user_id', $user_id)
+        //     ->pluck('answers')
+        //     ->toArray();
+        
+        $rawAnswers = DB::table('lead_prefrences')
+                            ->where('user_id', $user_id)
+                            ->pluck('answers')
+                            ->toArray();
+                        
+        $searchTerms = [];
+                        
+        foreach ($rawAnswers as $answer) {
+            $decoded = json_decode($answer, true);
+            if (is_array($decoded)) {
+                $searchTerms = array_merge($searchTerms, $decoded);
+            }
+        }
+                            
         // Base leadrequest query
         $baseQuery = LeadRequest::with(['customer', 'category'])
                                 ->where('customer_id', '!=', $user_id)
@@ -599,6 +614,7 @@ class LeadPreferenceController extends Controller
         $services = self::getFilterservices($user_id);
         $location = self::getFilterLocations($user_id);
         $credits = self::getFilterCreditList();
+        $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
         
         return $this->sendResponse(__('Filter Data'), [
             [
@@ -607,6 +623,7 @@ class LeadPreferenceController extends Controller
                 'services' => $services,
                 'location' => $location,
                 'credits' => $credits,
+                'unread' => $unread,
             ]
         ]);
         // return $this->sendResponse(__('Filter Data'),$datas);

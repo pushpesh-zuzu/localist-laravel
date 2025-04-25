@@ -600,7 +600,8 @@ class RecommendedLeadsController extends Controller
                     foreach ($answers as $ans) {
                         $query->orWhere(function ($q2) use ($filter, $ans) {
                             $q2->where('question_id', $filter['question_id'])
-                               ->where('answers', trim($ans)); // Match individual answer
+                                    ->whereRaw("JSON_SEARCH(answers, 'one', ?) IS NOT NULL", [trim($ans)]);
+                            //   ->where('answers', trim($ans)); // Match individual answer
                         });
                     }
                 }
@@ -1007,8 +1008,11 @@ class RecommendedLeadsController extends Controller
                 $lead->save();
             }
         }
+        
+        
+        // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
 
-        return response()->json(['message' => 'Eligible leads closed successfully.']);
+        return response()->json(['message' => 'Leads closed successfully.']);
     }
 
 }

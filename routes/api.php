@@ -69,6 +69,7 @@ Route::prefix('customer')->group(function () {
 Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
+    Route::get('/closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::post('/search-services', [ApiController::class, 'searchServices']);
@@ -120,7 +121,7 @@ Route::prefix('users')->group(function () {
         Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
-        Route::get('/closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
+        
 
         Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);
         Route::post('/add-coupon', [CreditPlanController::class, 'addCoupon']);
