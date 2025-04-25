@@ -23,10 +23,17 @@
             @foreach($aRows as $aKey => $aRow)
             <tr>
               <th scope="row">{{ $aKey+1 }}</th>
-              <td>{{ $aRow->categories->name ?? '' }}</td>
+              <td>{{ $aRow->name ?? '' }}</td>
               <td>
-                    <span class="fw-bold">Ques:</span> {{$aRow->questions ?? '' }}<br/>
-                    <span class="fw-bold">Soln:</span> {{$aRow->answer ?? ''}}</br/>
+                @if(count($aRow->servQuestions)>0)
+                  @foreach($aRow->servQuestions as $ques)
+                      <span class="fw-bold">Ques:</span> {{$ques['questions']}}<br/>
+                      <span class="fw-bold">Soln:</span> {{$ques['answer']}}</br/>
+                      @if (!$loop->last)
+                          <hr>
+                      @endif
+                  @endforeach
+                @endif  
                </td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <td>
