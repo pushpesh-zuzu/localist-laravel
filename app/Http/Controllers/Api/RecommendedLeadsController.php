@@ -208,7 +208,7 @@ class RecommendedLeadsController extends Controller
             // Fetch all matching bids
             $bids = RecommendedLead::where('buyer_id', $seller_id)
                 ->where('lead_id', $leadid)
-                ->orderBy('id','DESC')
+                ->orderBy('distance','DESC')
                 ->get();
 
             // Get seller IDs and unique service IDs
@@ -229,7 +229,7 @@ class RecommendedLeadsController extends Controller
                     $result[] = $sellerData;
                 }
             }
-            $bids->groupBy('distance');
+            // $bids->groupBy('distance');
         }
 
         return $this->sendResponse(__('AutoBid Data'), $result);
