@@ -837,7 +837,7 @@ class LeadPreferenceController extends Controller
 
     public function getLeadProfile(Request $request){
         $aVals = $request->all();
-        $users = User::where('id',$aVals['user_id'])->first();  
+        $users = User::where('id',$aVals['customer_id'])->first();  
         if ($users) {
             // Update is_read = 1 for all lead requests of this user (or filter as needed)
             LeadRequest::where('customer_id', $users->id)->update(['is_read' => 1]);

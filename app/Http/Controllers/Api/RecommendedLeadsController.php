@@ -590,22 +590,36 @@ class RecommendedLeadsController extends Controller
                 'answer' => $q['ans'],
             ];
         });
+        
     
         // Step 7: Match preferences and include question_text
         $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
             ->where('service_id', $serviceId)
             ->where(function ($query) use ($questionFilters) {
                 foreach ($questionFilters as $filter) {
-                    $answers = explode(',', $filter['answer']); // Handle multiple answers from lead
+                    $answers = array_map('trim', explode(',', $filter['answer']));
+                    
                     foreach ($answers as $ans) {
                         $query->orWhere(function ($q2) use ($filter, $ans) {
                             $q2->where('question_id', $filter['question_id'])
-                                    ->whereRaw("JSON_SEARCH(answers, 'one', ?) IS NOT NULL", [trim($ans)]);
-                            //   ->where('answers', trim($ans)); // Match individual answer
-                        });
+                                ->where('answers', 'LIKE', '%' . $ans . '%');
+                            });
                     }
                 }
             })
+            // ->where(function ($query) use ($questionFilters) {
+            //     foreach ($questionFilters as $filter) {
+            //         $answers = explode(',', $filter['answer']); // Handle multiple answers from lead
+            //         foreach ($answers as $ans) {
+            //             $query->orWhere(function ($q2) use ($filter, $ans) {
+            //                 $q2->where('question_id', $filter['question_id'])
+            //                 ->whereRaw("JSON_TYPE(answers) IS NOT NULL AND JSON_SEARCH(answers, 'one', ?) IS NOT NULL", [trim($ans)]);
+            //                         // ->whereRaw("JSON_SEARCH(answers, 'one', ?) IS NOT NULL", [trim($ans)]);
+            //                 //   ->where('answers', trim($ans)); // Match individual answer
+            //             });
+            //         }
+            //     }
+            // })
             ->with(['question' => function ($q) {
                 $q->select('id', 'questions as question_text');
             }])
