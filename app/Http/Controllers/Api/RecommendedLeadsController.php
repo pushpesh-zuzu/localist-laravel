@@ -520,10 +520,10 @@ class RecommendedLeadsController extends Controller
         if (!$lead) {
             return $this->sendError(__('No Lead found'), 404);
         }
-        $bidCount = RecommendedLead::where('buyer_id', $lead->customer_id)
-        ->where('lead_id', $lead->id)
-        ->get()->count();
-        
+        // $bidCount = RecommendedLead::where('buyer_id', $lead->customer_id)
+        // ->where('lead_id', $lead->id)
+        // ->get()->count();
+        $bidCount = RecommendedLead::where('lead_id', $lead->id)->get()->count();
     
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
@@ -691,7 +691,8 @@ class RecommendedLeadsController extends Controller
                 [
                     'service_name' => $serviceName,
                     'baseurl' => url('/').Storage::url('app/public/images/users'),
-                    'sellers' => $finalUsers
+                    'sellers' => $finalUsers,
+                    'bidcount' => $bidCount
                 ]
             ]);
             return $this->sendResponse(__('AutoBid Data'), $finalUsers);
@@ -700,7 +701,8 @@ class RecommendedLeadsController extends Controller
                 [
                     'service_name' => $serviceName,
                     'baseurl' => url('/').Storage::url('app/public/images/users'),
-                    'sellers' => []
+                    'sellers' => [],
+                    'bidcount' => $bidCount
                 ]
             ]);
         }
