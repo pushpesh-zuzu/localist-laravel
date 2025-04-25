@@ -21,11 +21,21 @@
               <?php
                 $badges = "";
                 $is_phone_verified =  App\Models\User::where('id',$user_id)->value('phone_verified') == 1 ? 1 : 0;
+                $leadCount = App\Models\LeadRequest::where('customer_id',$user_id)->where('created_at', '>=', Carbon\Carbon::now()->subMonths(3))->count();
+                $is_frequent_user = $leadCount > 0 ? 1: 0;
+
                 if($is_phone_verified){
                   if(!empty($badges)){
                     $badges .=", ";
                   }
                   $badges .= 'Phone Verified';
+                }
+
+                if($is_frequent_user){
+                  if(!empty($badges)){
+                    $badges .=", ";
+                  }
+                  $badges .= 'Frequent User';
                 }
               ?>
               <div class="col-md-4">
