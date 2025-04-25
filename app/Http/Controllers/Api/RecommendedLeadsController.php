@@ -208,7 +208,7 @@ class RecommendedLeadsController extends Controller
             // Fetch all matching bids
             $bids = RecommendedLead::where('buyer_id', $seller_id)
                 ->where('lead_id', $leadid)
-                ->orderBy('distance','DESC')
+                ->orderBy('distance','ASC')
                 ->get();
 
             // Get seller IDs and unique service IDs
