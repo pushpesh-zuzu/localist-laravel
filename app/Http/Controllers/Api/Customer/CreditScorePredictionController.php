@@ -25,39 +25,21 @@ use App\Http\Controllers\Api\ApiController;
 
 class CreditScorePredictionController extends Controller
 {
-    public function predictCreditScore(Request $request)
-    {
+    public function predictCreditScore(Request $request){
+        try {
+            $json = file_get_contents('php://input');
+            $escapedJson = escapeshellarg($json);
         
-
-        $user_id = $request['user_id'];
-
-        //remove unwanted params
-        unset($request['user_id']);
-
-        $input = $request->all();
-        $jsonInput = json_encode($input);
-
-        $pythonApiPath = base_path('python/landscaping.py');
-        // Call Python script
-        // echo PHP_INT_SIZE === 8 ? '64-bit PHP' : '32-bit PHP';
-        // print_r(getenv('PYTHON_PATH'));
-
+            // Adjust the path based on where you put predict.py
+            $command = "python3 python/predict.py $escapedJson";
+            $output = shell_exec($command);
         
-        $process = new Process([getenv('PYTHON_PATH'), $pythonApiPath, $jsonInput]);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            return response()->json([
-                'success' => false,
-                'error' => $process->getErrorOutput()
-            ], 500);
+            echo $output;
+        } catch (Exception $e) {
+            echo json_encode([
+                "success" => false,
+                "error" => $e->getMessage()
+            ]);
         }
-
-        $output = json_decode($process->getOutput(), true);
-
-        return response()->json([
-            'success' => true,
-            'prediction' => $output['prediction'] ?? null
-        ]);
     }
 }
