@@ -667,7 +667,7 @@ class RecommendedLeadsController extends Controller
                         'score' => $scoredUsers[$userId] ?? 0,
                     ]
                 );
-        })->filter()->sortByDesc('score')->values();
+        })->filter()->sortByDesc('total_credit')->values();
        
        
         if(count($finalUsers)>0){

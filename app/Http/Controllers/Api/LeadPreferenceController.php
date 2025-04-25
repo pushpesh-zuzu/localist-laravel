@@ -278,6 +278,72 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Request Data'), $leadrequest);
     }
 
+    public function sortByCredit(Request $request)
+    {
+        $aVals = $request->all();
+        $sortCredit = strtolower($aVals['sort_credit'] ?? '');  // Get the 'sort_credit' parameter
+
+        // Validate the 'sort_credit' parameter (it should be 'high', 'medium', or 'low')
+        if (!in_array($sortCredit, ['high', 'medium', 'low'])) {
+            return $this->sendResponse(__('Invalid credit category'), [], 400);
+        }
+
+        // Use basequery to get the leads (same as in your original code)
+        $baseQuery = $this->basequery($request->user_id);
+
+        // Retrieve the leads from the database
+        $leadRequests = $baseQuery->get();
+
+        // Initialize arrays to hold leads based on customer total_credit categories
+        $highCreditLeads = [];
+        $mediumCreditLeads = [];
+        $lowCreditLeads = [];
+
+        // Loop through the leads and classify them based on customer_id's total_credit
+        foreach ($leadRequests as $lead) {
+            // Get the total_credit of the customer associated with this lead
+            $customerTotalCredit = DB::table('users')->where('id', $lead->customer_id)->value('total_credit');
+
+            // Classify the customer based on total_credit
+            if ($customerTotalCredit >= 800) {
+                $creditCategory = 'high';
+            } elseif ($customerTotalCredit >= 500 && $customerTotalCredit < 800) {
+                $creditCategory = 'medium';
+            } else {
+                $creditCategory = 'low';
+            }
+
+            // Categorize the lead based on the customer's credit category
+            if ($creditCategory == 'high') {
+                $highCreditLeads[] = $lead;
+            } elseif ($creditCategory == 'medium') {
+                $mediumCreditLeads[] = $lead;
+            } else {
+                $lowCreditLeads[] = $lead;
+            }
+        }
+
+        // Based on the 'sort_credit' parameter, return the corresponding leads
+        switch ($sortCredit) {
+            case 'high':
+                $sortedLeads = $highCreditLeads;
+                break;
+
+            case 'medium':
+                $sortedLeads = $mediumCreditLeads;
+                break;
+
+            case 'low':
+                $sortedLeads = $lowCreditLeads;
+                break;
+        }
+
+        // Return the sorted leads
+        return $this->sendResponse(__('Lead Request Data Sorted by Customer Total Credit'), $sortedLeads);
+    }
+
+    
+
     public function basequery($user_id, $requestPostcode = null, $requestMiles = null){
         $userServices = DB::table('user_services')
             ->where('user_id', $user_id)

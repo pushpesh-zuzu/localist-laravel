@@ -18,6 +18,7 @@
               <div class="col-md-4"><b>Registration Date: </b> {{ $aRows->created_at->format('d-m-Y') }}</div>
               <div class="col-md-4"><b>Last Login: </b> {{ $aRows->last_login }}</div>
               <div class="col-md-4"><b>Number of hirers: </b> 0</div>
+              <div class="col-md-4"><b>Total Credits: </b> {{ $aRows->total_credit }}</div>
               <?php
                 $badges = "";
                 $is_phone_verified =  App\Models\User::where('id',$user_id)->value('phone_verified') == 1 ? 1 : 0;

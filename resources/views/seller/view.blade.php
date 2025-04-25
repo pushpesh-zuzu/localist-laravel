@@ -45,6 +45,11 @@
               <td>Last Login</td>
               <td>{{ $aRows->last_login }}</td>
             </tr>
+            <tr>
+              <td>Total Credit</td>
+              <td>{{ $aRows->total_credit }}</td>
+            </tr>
+            
             
             </tbody>
           </table>
