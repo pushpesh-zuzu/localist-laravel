@@ -1003,7 +1003,7 @@ class RecommendedLeadsController extends Controller
                 ->count('seller_id');
 
             if ($selectedSellerCount < 5) {
-                $lead->status = 1; // Mark as closed
+                $lead->closed_status = 1; // Mark as closed
                 $lead->save();
             }
         }
