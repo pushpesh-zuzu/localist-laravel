@@ -843,6 +843,15 @@ class RecommendedLeadsController extends Controller
                 // Step 12: Calculate final score using weighted average
                 // $finalScore = (0.2 * $distanceScore) + (0.8 * $creditScore);
 
+                $maxDistance = 25; // or any value you consider as far
+                $distanceScore = $miles !== null ? max(0, 1 - ($miles / $maxDistance)) : 0;
+
+                $unusedCredit = $user->total_credit ?? 0;
+                $maxCredit = 1000; // Or use max from userServices for dynamic scaling
+                $creditScore = min(1, $unusedCredit / $maxCredit);
+
+                $finalScore = (0.5 * $distanceScore) + (0.5 * $creditScore); // adjust weights as needed
+
                 //weighting code ends here
     
                 return array_merge(
@@ -853,10 +862,10 @@ class RecommendedLeadsController extends Controller
                         'service_id' => $serviceId,
                         'distance' => $miles,
                         'score' => $scoredUsers[$userId] ?? 0,
-                        // 'final_score' => $finalScore,
+                        'final_score' => $finalScore,
                     ]
                 );
-        })->filter()->sortBy('distance')->values();
+        })->filter()->sortBy('finalScore')->values();
        
        
         if(count($finalUsers)>0){
