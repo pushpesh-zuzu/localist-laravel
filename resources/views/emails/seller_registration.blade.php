@@ -75,7 +75,7 @@
         Password: <span class="username">{{$password}}</span>
       </p>
      
-      <a href="{{url(env('APP_URL') .'/signin')}}" class="button">Log in to Localist</a>
+      <a href="https://locallists-react.vercel.app/login" class="button">Log in to Localist</a>
     </div>
   </div>
 </body>
