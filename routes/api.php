@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Customer\AccountSettingController;
 use App\Http\Controllers\Api\LeadPreferenceController;
 use App\Http\Controllers\Api\Customer\MyRequestController;
+use App\Http\Controllers\Api\Customer\CreditScorePredictionController;
 use App\Http\Controllers\Api\SuggestedQuestionController;
 use App\Http\Controllers\Api\RecommendedLeadsController;
 use App\Http\Controllers\Api\NotificationController;
@@ -45,6 +46,9 @@ Route::prefix('customer')->group(function () {
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+
+        Route::post('predict-credit-score',[CreditScorePredictionController::class,'predictCreditScore']);
+        
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);
