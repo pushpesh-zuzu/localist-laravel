@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\UserServiceLocation;
+use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\LeadRequest;
@@ -246,7 +247,7 @@ class LeadPreferenceController extends Controller
         // $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
 
         // Exclude leads from recommended table starts
-        $recommendedLeadIds = Recommended::where('seller_id', $user_id)
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
         ->pluck('lead_id')
         ->toArray();
 
