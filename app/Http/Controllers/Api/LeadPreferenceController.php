@@ -361,28 +361,30 @@ class LeadPreferenceController extends Controller
             ->where('user_id', $user_id)
             ->pluck('service_id')
             ->toArray();
-
+    
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->whereIn('service_id', $userServices)
             ->whereHas('customer', function($query) {
                 $query->where('form_status', 1);
             });
-
-        // Default seller postcode if not given
+    
+        // 👇 Default seller postcode if not given
         if (!$requestPostcode) {
-            $requestPostcode = DB::table('users')->where('id', $user_id)->value('postcode');
+            $requestPostcode = DB::table('user_service_locations')
+                ->where('user_id', $user_id)
+                ->value('postcode');
         }
-
+    
         if ($requestPostcode) {
             if (!$requestMiles) {
                 $requestMiles = 20; // Default miles
             }
-
+    
             $leadIdsWithinDistance = [];
             $leads = LeadRequest::select('id', 'postcode')
                 ->where('customer_id', '!=', $user_id)
                 ->get();
-
+    
             foreach ($leads as $lead) {
                 if ($lead->postcode) {
                     $distance = $this->getDistance($requestPostcode, $lead->postcode);
@@ -391,12 +393,13 @@ class LeadPreferenceController extends Controller
                     }
                 }
             }
-
+    
             $baseQuery->whereIn('id', $leadIdsWithinDistance);
         }
-
+    
         return $baseQuery;
     }
+    
 
     
     
