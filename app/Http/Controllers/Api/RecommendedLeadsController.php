@@ -209,6 +209,7 @@ class RecommendedLeadsController extends Controller
             // Fetch all matching bids
             $bids = RecommendedLead::where('buyer_id', $seller_id)
                 ->where('lead_id', $leadid)
+                ->where('distance','!=' ,0)
                 ->orderBy('distance','ASC')
                 ->get();
 
@@ -810,7 +811,56 @@ class RecommendedLeadsController extends Controller
                                         ->pluck('seller_id')
                                         ->toArray();
         // Step 9: Build final list with user info, service name, and distance
-        $finalUsers = $scoredUsers->filter(function ($score) {
+        // $finalUsers = $scoredUsers->filter(function ($score) {
+        //     return $score > 0;
+        // })->keys()->map(function ($userId) use (
+        //     $locationMatchedUsers,
+        //     $leadPostcode,
+        //     $leadCreditScore,
+        //     $scoredUsers,
+        //     $serviceName,
+        //     $serviceId,
+        //     $existingBids
+        // ) {
+        //     if (in_array($userId, $existingBids)) {
+        //         return null; // skip sellers already bid by buyer
+        //     }
+        //     $user = User::find($userId);
+        //     $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
+    
+        //     $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
+        //     $miles = $distance !== "Distance not found"
+        //         ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
+        //         : null;
+
+        //         //weighting code starts here
+        //         // Normalize distance to get a score (0 - 1 scale)
+        //         // $maxDistance = 25; // Max miles for the filter
+        //         // $distanceScore = $miles !== null ? max(0, 1 - ($miles / $maxDistance)) : 0; // Closer distance = higher score
+
+        //         // Step 11: Calculate credit score (80% weight)
+        //         // $unusedCredit = $user->total_credit; // Assuming 'total_credit' is the unused credit value
+        //         // $maxCredit = 1000; // Set max credit score for normalization (adjust as needed)
+        //         // $creditScore = min(1, $unusedCredit / $maxCredit); // Normalize credit score (0 - 1 scale)
+
+        //         // Step 12: Calculate final score using weighted average
+        //         // $finalScore = (0.2 * $distanceScore) + (0.8 * $creditScore);
+
+        //         //weighting code ends here
+    
+        //         return array_merge(
+        //             $user->toArray(),
+        //             [
+        //                 'credit_score' => $leadCreditScore,
+        //                 'service_name' => $serviceName,
+        //                 'service_id' => $serviceId,
+        //                 'distance' => $miles,
+        //                 'score' => $scoredUsers[$userId] ?? 0,
+        //                 // 'final_score' => $finalScore,
+        //             ]
+        //         );
+        // })->filter()->sortBy('distance')->values();
+       $finalUsers = $scoredUsers->filter(function ($score) {
             return $score > 0;
         })->keys()->map(function ($userId) use (
             $locationMatchedUsers,
@@ -826,40 +876,28 @@ class RecommendedLeadsController extends Controller
             }
             $user = User::find($userId);
             $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
-    
+        
             $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
             $miles = $distance !== "Distance not found"
                 ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
                 : null;
-
-                //weighting code starts here
-                // Normalize distance to get a score (0 - 1 scale)
-                // $maxDistance = 25; // Max miles for the filter
-                // $distanceScore = $miles !== null ? max(0, 1 - ($miles / $maxDistance)) : 0; // Closer distance = higher score
-
-                // Step 11: Calculate credit score (80% weight)
-                // $unusedCredit = $user->total_credit; // Assuming 'total_credit' is the unused credit value
-                // $maxCredit = 1000; // Set max credit score for normalization (adjust as needed)
-                // $creditScore = min(1, $unusedCredit / $maxCredit); // Normalize credit score (0 - 1 scale)
-
-                // Step 12: Calculate final score using weighted average
-                // $finalScore = (0.2 * $distanceScore) + (0.8 * $creditScore);
-
-                //weighting code ends here
-    
-                return array_merge(
-                    $user->toArray(),
-                    [
-                        'credit_score' => $leadCreditScore,
-                        'service_name' => $serviceName,
-                        'service_id' => $serviceId,
-                        'distance' => $miles,
-                        'score' => $scoredUsers[$userId] ?? 0,
-                        // 'final_score' => $finalScore,
-                    ]
-                );
+        
+            // *** Skip if miles is 0 ***
+            if ($miles === 0) {
+                return null;
+            }
+        
+            return array_merge(
+                $user->toArray(),
+                [
+                    'credit_score' => $leadCreditScore,
+                    'service_name' => $serviceName,
+                    'service_id' => $serviceId,
+                    'distance' => $miles,
+                    'score' => $scoredUsers[$userId] ?? 0,
+                ]
+            );
         })->filter()->sortBy('distance')->values();
-       
        
         if(count($finalUsers)>0){
              return $this->sendResponse(__('AutoBid Data'), [
