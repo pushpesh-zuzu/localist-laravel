@@ -367,7 +367,7 @@ class LeadPreferenceController extends Controller
             ->toArray();
 
         $baseQuery = LeadRequest::with(['customer', 'category'])
-            ->where('customer_id', '!=', $user_id)
+            // ->where('customer_id', '!=', $user_id)
             ->whereIn('service_id', $userServices)
             ->whereHas('customer', function($query) {
                 $query->where('form_status', 1);
