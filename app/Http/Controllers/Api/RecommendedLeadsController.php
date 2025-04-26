@@ -238,13 +238,13 @@ class RecommendedLeadsController extends Controller
     public function getSellerRecommendedLeads(Request $request)
     {
         $seller_id = $request->user_id; 
-        $leadid = $request->lead_id; 
+        // $leadid = $request->lead_id; 
         $result = [];
 
         if (!empty($leadid)) {
             // Fetch all matching bids
             $bids = RecommendedLead::where('seller_id', $seller_id)
-                ->where('lead_id', $leadid)
+                // ->where('lead_id', $leadid)
                 ->orderBy('distance','ASC')
                 ->get();
 
