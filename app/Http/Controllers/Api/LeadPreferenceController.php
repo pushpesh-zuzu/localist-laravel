@@ -350,20 +350,20 @@ class LeadPreferenceController extends Controller
             ->where('user_id', $user_id)
             ->pluck('service_id')
             ->toArray();
-
+    
         $rawPreferences = DB::table('lead_prefrences')
             ->where('user_id', $user_id)
             ->get(['question_id', 'answers']);
-
+    
         $groupedPreferences = [];
-
+    
         foreach ($rawPreferences as $pref) {
             $decodedAnswers = json_decode($pref->answers, true);
             if (is_array($decodedAnswers)) {
                 $groupedPreferences[$pref->question_id] = $decodedAnswers;
             }
         }
-
+    
         // Start base query
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->where('customer_id', '!=', $user_id)
@@ -372,18 +372,18 @@ class LeadPreferenceController extends Controller
                 foreach ($groupedPreferences as $questionId => $answers) {
                     $query->where(function ($subQuery) use ($answers) {
                         foreach ($answers as $answer) {
-                            $subQuery->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$answer]);
+                            $subQuery->orWhereRaw("JSON_CONTAINS(questions, '\"$answer\"')"); 
                         }
                     });
                 }
             });
-
+    
         if ($requestPostcode && $requestMiles) {
             $leadIdsWithinDistance = [];
             $leads = LeadRequest::select('id', 'postcode')
                 ->where('customer_id', '!=', $user_id)
                 ->get();
-
+    
             foreach ($leads as $lead) {
                 if ($lead->postcode) {
                     $distance = $this->getDistance($requestPostcode, $lead->postcode);
@@ -392,12 +392,13 @@ class LeadPreferenceController extends Controller
                     }
                 }
             }
-
+    
             $baseQuery->whereIn('id', $leadIdsWithinDistance);
         }
-
+    
         return $baseQuery;
     }
+    
 
     public function basequery_old($user_id, $requestPostcode = null, $requestMiles = null){
         $userServices = DB::table('user_services')
