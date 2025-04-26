@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Models\UserServiceLocation;
 use App\Models\LeadPrefrence;
+use App\Models\SaveForLater;
 use App\Models\ServiceQuestion;
 use App\Models\LeadRequest;
 use App\Models\UserService;
@@ -970,6 +971,10 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
+            SaveForLater::where('seller_id',$aVals['user_id'])
+                        ->where('user_id',$aVals['buyer_id'])  
+                        ->where('lead_id',$aVals['lead_id'])
+                        ->delete();
             // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
         DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
