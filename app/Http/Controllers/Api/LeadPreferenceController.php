@@ -1213,8 +1213,6 @@ class LeadPreferenceController extends Controller
     {
         $seller_id = $request->user_id; 
         $result = [];
-
-        // if (!empty($leadid)) {
             // Fetch all matching bids
             $bids = RecommendedLead::where('seller_id', $seller_id)
                 ->orderBy('distance','ASC')
@@ -1243,6 +1241,5 @@ class LeadPreferenceController extends Controller
                 ]);
             }
         
-        return $this->sendResponse(__('AutoBid Data'), $result);
     }
 }
