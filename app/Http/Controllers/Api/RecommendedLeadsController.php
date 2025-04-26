@@ -241,7 +241,7 @@ class RecommendedLeadsController extends Controller
         // $leadid = $request->lead_id; 
         $result = [];
 
-        if (!empty($leadid)) {
+        // if (!empty($leadid)) {
             // Fetch all matching bids
             $bids = RecommendedLead::where('seller_id', $seller_id)
                 // ->where('lead_id', $leadid)
@@ -267,7 +267,7 @@ class RecommendedLeadsController extends Controller
                 }
             }
             // $bids->groupBy('distance');
-        }
+        // }
         if(!empty($result)){
             return $this->sendResponse(__('AutoBid Data'), [
                 [
