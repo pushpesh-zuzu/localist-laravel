@@ -138,7 +138,252 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Service deleted Sucessfully')); 
     }
 
+  
+
+    public function sortByCredit(Request $request)
+    {
+        $aVals = $request->all();
+        $sortCredit = strtolower($aVals['sort_credit'] ?? '');  // Get the 'sort_credit' parameter
+
+        // Validate the 'sort_credit' parameter (it should be 'high', 'medium', or 'low')
+        if (!in_array($sortCredit, ['high', 'medium', 'low'])) {
+            return $this->sendResponse(__('Invalid credit category'), [], 400);
+        }
+
+        // Use basequery to get the leads (same as in your original code)
+        $baseQuery = $this->basequery($request->user_id);
+
+        // Retrieve the leads from the database
+        $leadRequests = $baseQuery->get();
+
+        // Initialize arrays to hold leads based on customer total_credit categories
+        $highCreditLeads = [];
+        $mediumCreditLeads = [];
+        $lowCreditLeads = [];
+
+        // Loop through the leads and classify them based on customer_id's total_credit
+        foreach ($leadRequests as $lead) {
+            // Get the total_credit of the customer associated with this lead
+            $customerTotalCredit = DB::table('users')->where('id', $lead->customer_id)->value('total_credit');
+
+            // Classify the customer based on total_credit
+            if ($customerTotalCredit >= 800) {
+                $creditCategory = 'high';
+            } elseif ($customerTotalCredit >= 500 && $customerTotalCredit < 800) {
+                $creditCategory = 'medium';
+            } else {
+                $creditCategory = 'low';
+            }
+
+            // Categorize the lead based on the customer's credit category
+            if ($creditCategory == 'high') {
+                $highCreditLeads[] = $lead;
+            } elseif ($creditCategory == 'medium') {
+                $mediumCreditLeads[] = $lead;
+            } else {
+                $lowCreditLeads[] = $lead;
+            }
+        }
+
+        // Based on the 'sort_credit' parameter, return the corresponding leads
+        switch ($sortCredit) {
+            case 'high':
+                $sortedLeads = $highCreditLeads;
+                break;
+
+            case 'medium':
+                $sortedLeads = $mediumCreditLeads;
+                break;
+
+            case 'low':
+                $sortedLeads = $lowCreditLeads;
+                break;
+        }
+
+        // Return the sorted leads
+        return $this->sendResponse(__('Lead Request Data Sorted by Customer Total Credit'), $sortedLeads);
+    }
+
     public function getLeadRequest(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+
+        $searchName = $aVals['name'] ?? null;
+        $leadSubmitted = $aVals['lead_time'] ?? null;
+        $unread = $aVals['unread'] ?? null;
+        $distanceFilter = $aVals['distance_filter'] ?? null;
+        $creditFilter = $aVals['credits'] ?? null;
+        $spotlightFilter = $aVals['lead_spotlights'] ?? null;
+
+        $requestMiles = null;
+        $requestPostcode = null;
+
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
+            $requestMiles = (int)$matches[1];
+            $requestPostcode = strtoupper($matches[2]);
+        }
+
+        // Credit Filter
+        $creditRanges = [];
+        if (!empty($creditFilter)) {
+            $creditParts = array_map('trim', explode(',', $creditFilter));
+            foreach ($creditParts as $part) {
+                if (preg_match('/(\d+)\s*-\s*(\d+)\s*Credits/', $part, $matches)) {
+                    $min = (int) $matches[1];
+                    $max = (int) $matches[2];
+                    $creditRanges[] = [$min, $max];
+                }
+            }
+        }
+
+        // Spotlight filter
+        $spotlightConditions = [];
+        if (!empty($spotlightFilter)) {
+            $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
+        }
+
+        $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
+
+        // Exclude saved leads
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
+
+        if (!empty($unread) && $unread == 1) {
+            $baseQuery = $baseQuery->where('is_read', 0);
+        }
+
+        // Service Filter
+        if (!empty($aVals['service_id'])) {
+            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+            $baseQuery = $baseQuery->whereIn('service_id', $serviceIds);
+        }
+
+        // Credit Range Filter
+        if (!empty($creditRanges)) {
+            $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
+                foreach ($creditRanges as $range) {
+                    $query->orWhereBetween('credit_score', $range);
+                }
+            });
+        }
+
+        // Spotlight Conditions
+        foreach ($spotlightConditions as $condition) {
+            switch (strtolower($condition)) {
+                case 'urgent requests':
+                    $baseQuery = $baseQuery->where('is_urgent', 1);
+                    break;
+                case 'updated requests':
+                    $baseQuery = $baseQuery->where('is_updated', 1);
+                    break;
+                case 'has additional details':
+                    $baseQuery = $baseQuery->where('has_additional_details', 1);
+                    break;
+            }
+        }
+
+        // Lead Time Filter
+        if ($leadSubmitted && $leadSubmitted != 'Any time') {
+            $baseQuery = $baseQuery->where(function ($query) use ($leadSubmitted) {
+                $now = Carbon::now();
+                switch ($leadSubmitted) {
+                    case 'Today':
+                        $query->whereDate('created_at', $now->toDateString());
+                        break;
+                    case 'Yesterday':
+                        $query->whereDate('created_at', $now->subDay()->toDateString());
+                        break;
+                    case 'Last 2-3 days':
+                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(3));
+                        break;
+                    case 'Last 7 days':
+                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(7));
+                        break;
+                    case 'Last 14+ days':
+                        $query->whereDate('created_at', '<', Carbon::now()->subDays(14));
+                        break;
+                }
+            });
+        }
+
+        // Final fetch and filter by answer match logic
+        $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
+
+        // Get lead preferences for current user
+        $rawAnswers = DB::table('lead_prefrences')
+            ->where('user_id', $user_id)
+            ->pluck('answers')
+            ->toArray();
+
+        $preferenceMap = [];
+        foreach ($rawAnswers as $answerSet) {
+            $decoded = json_decode($answerSet, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $item) {
+                    if (!empty($item['ques']) && !empty($item['ans'])) {
+                        $preferenceMap[$item['ques']][] = $item['ans'];
+                    }
+                }
+            }
+        }
+
+        $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
+            $leadQuestions = json_decode($lead->questions, true);
+            if (!is_array($leadQuestions)) return false;
+
+            $leadMap = [];
+            foreach ($leadQuestions as $q) {
+                $leadMap[$q['ques']] = $q['ans'];
+            }
+
+            foreach ($preferenceMap as $question => $selectedAnswers) {
+                if (!isset($leadMap[$question])) return false;
+                if (!in_array($leadMap[$question], $selectedAnswers)) return false;
+            }
+
+            return true;
+        });
+
+        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
+    }
+
+
+    public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
+    {
+        $userServices = DB::table('user_services')
+            ->where('user_id', $user_id)
+            ->pluck('service_id')
+            ->toArray();
+    
+        $baseQuery = LeadRequest::with(['customer', 'category'])
+            ->where('customer_id', '!=', $user_id)
+            ->whereIn('service_id', $userServices);
+    
+        // Distance filter logic
+        if ($requestPostcode && $requestMiles) {
+            $leadIdsWithinDistance = [];
+            $leads = LeadRequest::select('id', 'postcode')
+                ->where('customer_id', '!=', $user_id)
+                ->get();
+    
+            foreach ($leads as $lead) {
+                if ($lead->postcode) {
+                    $distance = $this->getDistance($requestPostcode, $lead->postcode);
+                    if ($distance && ($distance <= ($requestMiles * 1.60934))) {
+                        $leadIdsWithinDistance[] = $lead->id;
+                    }
+                }
+            }
+    
+            $baseQuery->whereIn('id', $leadIdsWithinDistance);
+        }
+    
+        return $baseQuery;
+    }
+    
+
+    public function getLeadRequest_with_single_question_match(Request $request)
     {
         $aVals = $request->all();
         // $user_id = 207;
@@ -277,130 +522,6 @@ class LeadPreferenceController extends Controller
         $leadrequest = $baseQuery->orderBy('id', 'DESC')->get();
         return $this->sendResponse(__('Lead Request Data'), $leadrequest);
     }
-
-    public function sortByCredit(Request $request)
-    {
-        $aVals = $request->all();
-        $sortCredit = strtolower($aVals['sort_credit'] ?? '');  // Get the 'sort_credit' parameter
-
-        // Validate the 'sort_credit' parameter (it should be 'high', 'medium', or 'low')
-        if (!in_array($sortCredit, ['high', 'medium', 'low'])) {
-            return $this->sendResponse(__('Invalid credit category'), [], 400);
-        }
-
-        // Use basequery to get the leads (same as in your original code)
-        $baseQuery = $this->basequery($request->user_id);
-
-        // Retrieve the leads from the database
-        $leadRequests = $baseQuery->get();
-
-        // Initialize arrays to hold leads based on customer total_credit categories
-        $highCreditLeads = [];
-        $mediumCreditLeads = [];
-        $lowCreditLeads = [];
-
-        // Loop through the leads and classify them based on customer_id's total_credit
-        foreach ($leadRequests as $lead) {
-            // Get the total_credit of the customer associated with this lead
-            $customerTotalCredit = DB::table('users')->where('id', $lead->customer_id)->value('total_credit');
-
-            // Classify the customer based on total_credit
-            if ($customerTotalCredit >= 800) {
-                $creditCategory = 'high';
-            } elseif ($customerTotalCredit >= 500 && $customerTotalCredit < 800) {
-                $creditCategory = 'medium';
-            } else {
-                $creditCategory = 'low';
-            }
-
-            // Categorize the lead based on the customer's credit category
-            if ($creditCategory == 'high') {
-                $highCreditLeads[] = $lead;
-            } elseif ($creditCategory == 'medium') {
-                $mediumCreditLeads[] = $lead;
-            } else {
-                $lowCreditLeads[] = $lead;
-            }
-        }
-
-        // Based on the 'sort_credit' parameter, return the corresponding leads
-        switch ($sortCredit) {
-            case 'high':
-                $sortedLeads = $highCreditLeads;
-                break;
-
-            case 'medium':
-                $sortedLeads = $mediumCreditLeads;
-                break;
-
-            case 'low':
-                $sortedLeads = $lowCreditLeads;
-                break;
-        }
-
-        // Return the sorted leads
-        return $this->sendResponse(__('Lead Request Data Sorted by Customer Total Credit'), $sortedLeads);
-    }
-
-    
-
-    public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
-    {
-        $userServices = DB::table('user_services')
-            ->where('user_id', $user_id)
-            ->pluck('service_id')
-            ->toArray();
-
-        $rawPreferences = DB::table('lead_prefrences')
-            ->where('user_id', $user_id)
-            ->get(['question_id', 'answers']);
-
-        $groupedPreferences = [];
-
-        foreach ($rawPreferences as $pref) {
-            $decodedAnswers = json_decode($pref->answers, true);
-            if (is_array($decodedAnswers)) {
-                $groupedPreferences[$pref->question_id] = $decodedAnswers;
-            }
-        }
-
-        $baseQuery = LeadRequest::with(['customer', 'category'])
-            ->where('customer_id', '!=', $user_id)
-            ->whereIn('service_id', $userServices)
-            ->where(function ($query) use ($groupedPreferences) {
-                foreach ($groupedPreferences as $questionId => $answers) {
-                    $query->where(function ($subQuery) use ($questionId, $answers) {
-                        foreach ($answers as $answer) {
-                            $subQuery->orWhereRaw(
-                                "JSON_CONTAINS(JSON_EXTRACT(questions, '$.\"$questionId\"'), '\"$answer\"')"
-                            );
-                        }
-                    });
-                }
-            });
-
-        if ($requestPostcode && $requestMiles) {
-            $leadIdsWithinDistance = [];
-            $leads = LeadRequest::select('id', 'postcode')
-                ->where('customer_id', '!=', $user_id)
-                ->get();
-
-            foreach ($leads as $lead) {
-                if ($lead->postcode) {
-                    $distance = $this->getDistance($requestPostcode, $lead->postcode);
-                    if ($distance && ($distance <= ($requestMiles * 1.60934))) {
-                        $leadIdsWithinDistance[] = $lead->id;
-                    }
-                }
-            }
-
-            $baseQuery->whereIn('id', $leadIdsWithinDistance);
-        }
-
-        return $baseQuery;
-    }
-
-    
 
     public function basequery_old($user_id, $requestPostcode = null, $requestMiles = null){
         $userServices = DB::table('user_services')
