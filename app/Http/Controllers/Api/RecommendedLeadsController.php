@@ -257,7 +257,7 @@ class RecommendedLeadsController extends Controller
             $services = Category::whereIn('id', $serviceIds)->pluck('name', 'id'); // id => name
 
             foreach ($bids as $bid) {
-                $seller = $users[$bid->seller_id] ?? null;
+                $seller = $users[$bid->buyer_id] ?? null;
                 if ($seller) {
                     $sellerData = $seller->toArray();
                     $sellerData['service_name'] = $services[$bid->service_id] ?? 'Unknown Service';
