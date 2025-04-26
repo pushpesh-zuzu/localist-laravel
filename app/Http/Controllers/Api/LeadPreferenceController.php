@@ -368,7 +368,10 @@ class LeadPreferenceController extends Controller
 
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->where('customer_id', '!=', $user_id)
-            ->whereIn('service_id', $userServices);
+            ->whereIn('service_id', $userServices)
+            ->whereHas('customer', function($query) {
+                $query->where('form_status', 1);
+            });
 
         if ($requestPostcode && $requestMiles) {
             $leadIdsWithinDistance = [];
@@ -1023,10 +1026,6 @@ class LeadPreferenceController extends Controller
         return $creditList;
     }
     
-
-
-
-
 
     // public function filterCount($spotlights, $user_id){
     //     $leadSpotlights = [];
