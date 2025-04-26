@@ -235,6 +235,57 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
 
+    public function getSellerRecommendedLeads(Request $request)
+    {
+        $seller_id = $request->user_id; 
+        $leadid = $request->lead_id; 
+        $result = [];
+
+        if (!empty($leadid)) {
+            // Fetch all matching bids
+            $bids = RecommendedLead::where('seller_id', $seller_id)
+                ->where('lead_id', $leadid)
+                ->orderBy('distance','ASC')
+                ->get();
+
+            // Get seller IDs and unique service IDs
+            $sellerIds = $bids->pluck('buyer_id')->toArray();
+            $serviceIds = $bids->pluck('service_id')->unique()->toArray();
+
+            // Get users and categories
+            $users = User::whereIn('id', $sellerIds)->get()->keyBy('id'); // index by seller_id
+            $services = Category::whereIn('id', $serviceIds)->pluck('name', 'id'); // id => name
+
+            foreach ($bids as $bid) {
+                $seller = $users[$bid->seller_id] ?? null;
+                if ($seller) {
+                    $sellerData = $seller->toArray();
+                    $sellerData['service_name'] = $services[$bid->service_id] ?? 'Unknown Service';
+                    $sellerData['bid'] = $bid->bid; // Optionally include bid amount
+                    $sellerData['distance'] = @$bid->distance;
+                    $result[] = $sellerData;
+                }
+            }
+            // $bids->groupBy('distance');
+        }
+        if(!empty($result)){
+            return $this->sendResponse(__('AutoBid Data'), [
+                [
+                    'leads' => $result
+                ]
+            ]);
+        }else{
+            return $this->sendResponse(__('AutoBid Data'), [
+                [
+                    'leads' => []
+                ]
+            ]);
+        }
+        
+        return $this->sendResponse(__('AutoBid Data'), $result);
+    }
+
+
     public function switchRecommendedLeads(Request $request): JsonResponse
     {
         $user_id = $request->user_id; 
