@@ -1172,10 +1172,20 @@ class LeadPreferenceController extends Controller
                                 ->get();
 
         if ($savedLeads->isEmpty()) {
-            return $this->sendError('No saved leads found');
+            return $this->sendResponse(__('Saved Leads'), [
+                [
+                    'savedLeads' => []
+                ]
+            ]);
+        }else{
+            return $this->sendResponse(__('Saved Leads'), [
+                [
+                    'savedLeads' => $savedLeads
+                ]
+            ]);
         }
 
-        return $this->sendResponse(__('Saved Leads'), $savedLeads);
+        // return $this->sendResponse(__('Saved Leads'), $savedLeads);
     }
 
     public function onlineRemoteSwitch(Request $request){ 
