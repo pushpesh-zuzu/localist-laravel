@@ -344,7 +344,62 @@ class LeadPreferenceController extends Controller
 
     
 
-    public function basequery($user_id, $requestPostcode = null, $requestMiles = null){
+    public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
+    {
+        $userServices = DB::table('user_services')
+            ->where('user_id', $user_id)
+            ->pluck('service_id')
+            ->toArray();
+
+        $rawPreferences = DB::table('lead_prefrences')
+            ->where('user_id', $user_id)
+            ->get(['question_id', 'answers']);
+
+        $groupedPreferences = [];
+
+        foreach ($rawPreferences as $pref) {
+            $decodedAnswers = json_decode($pref->answers, true);
+            if (is_array($decodedAnswers)) {
+                $groupedPreferences[$pref->question_id] = $decodedAnswers;
+            }
+        }
+
+        // Start base query
+        $baseQuery = LeadRequest::with(['customer', 'category'])
+            ->where('customer_id', '!=', $user_id)
+            ->whereIn('service_id', $userServices)
+            ->where(function ($query) use ($groupedPreferences) {
+                foreach ($groupedPreferences as $questionId => $answers) {
+                    $query->where(function ($subQuery) use ($answers) {
+                        foreach ($answers as $answer) {
+                            $subQuery->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$answer]);
+                        }
+                    });
+                }
+            });
+
+        if ($requestPostcode && $requestMiles) {
+            $leadIdsWithinDistance = [];
+            $leads = LeadRequest::select('id', 'postcode')
+                ->where('customer_id', '!=', $user_id)
+                ->get();
+
+            foreach ($leads as $lead) {
+                if ($lead->postcode) {
+                    $distance = $this->getDistance($requestPostcode, $lead->postcode);
+                    if ($distance && ($distance <= ($requestMiles * 1.60934))) {
+                        $leadIdsWithinDistance[] = $lead->id;
+                    }
+                }
+            }
+
+            $baseQuery->whereIn('id', $leadIdsWithinDistance);
+        }
+
+        return $baseQuery;
+    }
+
+    public function basequery_old($user_id, $requestPostcode = null, $requestMiles = null){
         $userServices = DB::table('user_services')
             ->where('user_id', $user_id)
             ->pluck('service_id')
