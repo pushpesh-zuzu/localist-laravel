@@ -243,7 +243,21 @@ class LeadPreferenceController extends Controller
 
         // Exclude saved leads
         $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
+        // $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
+
+        // Exclude leads from recommended table starts
+        $recommendedLeadIds = Recommended::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        // Merge both exclusion arrays
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+
+        if (!empty($excludedLeadIds)) {
+        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        }
+
+        // Exclude leads from recommended table ends
 
         if (!empty($unread) && $unread == 1) {
             $baseQuery = $baseQuery->where('is_read', 0);
