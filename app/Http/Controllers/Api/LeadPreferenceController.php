@@ -208,7 +208,6 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-
         $searchName = $aVals['name'] ?? null;
         $leadSubmitted = $aVals['lead_time'] ?? null;
         $unread = $aVals['unread'] ?? null;
@@ -218,13 +217,11 @@ class LeadPreferenceController extends Controller
 
         $requestMiles = null;
         $requestPostcode = null;
-
         if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
             $requestMiles = (int)$matches[1];
             $requestPostcode = strtoupper($matches[2]);
         }
 
-        // Credit Filter
         $creditRanges = [];
         if (!empty($creditFilter)) {
             $creditParts = array_map('trim', explode(',', $creditFilter));
@@ -237,7 +234,6 @@ class LeadPreferenceController extends Controller
             }
         }
 
-        // Spotlight filter
         $spotlightConditions = [];
         if (!empty($spotlightFilter)) {
             $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
@@ -253,13 +249,11 @@ class LeadPreferenceController extends Controller
             $baseQuery = $baseQuery->where('is_read', 0);
         }
 
-        // Service Filter
         if (!empty($aVals['service_id'])) {
             $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
             $baseQuery = $baseQuery->whereIn('service_id', $serviceIds);
         }
 
-        // Credit Range Filter
         if (!empty($creditRanges)) {
             $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
                 foreach ($creditRanges as $range) {
@@ -268,22 +262,35 @@ class LeadPreferenceController extends Controller
             });
         }
 
-        // Spotlight Conditions
-        foreach ($spotlightConditions as $condition) {
-            switch (strtolower($condition)) {
-                case 'urgent requests':
-                    $baseQuery = $baseQuery->where('is_urgent', 1);
-                    break;
-                case 'updated requests':
-                    $baseQuery = $baseQuery->where('is_updated', 1);
-                    break;
-                case 'has additional details':
-                    $baseQuery = $baseQuery->where('has_additional_details', 1);
-                    break;
+        if (!empty($spotlightConditions)) {
+            foreach ($spotlightConditions as $condition) {
+                switch (strtolower($condition)) {
+                    case 'urgent requests':
+                        $baseQuery = $baseQuery->where('is_urgent', 1);
+                        break;
+                    case 'updated requests':
+                        $baseQuery = $baseQuery->where('is_updated', 1);
+                        break;
+                    case 'has additional details':
+                        $baseQuery = $baseQuery->where('has_additional_details', 1);
+                        break;
+                }
             }
         }
 
-        // Lead Time Filter
+        if ($searchName) {
+            $namedLeadRequest = (clone $baseQuery)
+                ->whereHas('customer', function ($query) use ($searchName) {
+                    $query->where('name', 'LIKE', '%' . $searchName . '%');
+                })
+                ->orderBy('id', 'DESC')
+                ->get();
+
+            if ($namedLeadRequest->isNotEmpty()) {
+                return $this->sendResponse(__('Lead Request Data (Filtered by Name)'), $namedLeadRequest);
+            }
+        }
+
         if ($leadSubmitted && $leadSubmitted != 'Any time') {
             $baseQuery = $baseQuery->where(function ($query) use ($leadSubmitted) {
                 $now = Carbon::now();
@@ -307,39 +314,26 @@ class LeadPreferenceController extends Controller
             });
         }
 
-        // Final fetch and filter by answer match logic
+        // Strict matching on Questions & Answers
         $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
 
-        // Get lead preferences for current user
-        $rawAnswers = DB::table('lead_prefrences')
-            ->where('user_id', $user_id)
-            ->pluck('answers')
-            ->toArray();
-
-        $preferenceMap = [];
-        foreach ($rawAnswers as $answerSet) {
-            $decoded = json_decode($answerSet, true);
-            if (is_array($decoded)) {
-                foreach ($decoded as $item) {
-                    if (!empty($item['ques']) && !empty($item['ans'])) {
-                        $preferenceMap[$item['ques']][] = $item['ans'];
-                    }
-                }
-            }
-        }
+        $preferenceMap = $this->getUserPreferenceMap($user_id);
 
         $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
             $leadQuestions = json_decode($lead->questions, true);
             if (!is_array($leadQuestions)) return false;
 
-            $leadMap = [];
             foreach ($leadQuestions as $q) {
-                $leadMap[$q['ques']] = $q['ans'];
-            }
+                $buyerAnswers = (array) $q['ans'];
 
-            foreach ($preferenceMap as $question => $selectedAnswers) {
-                if (!isset($leadMap[$question])) return false;
-                if (!in_array($leadMap[$question], $selectedAnswers)) return false;
+                foreach ($buyerAnswers as $buyerAnswer) {
+                    $buyerAnswer = trim($buyerAnswer);
+
+                    // If buyer selected something that seller has NOT selected, reject
+                    if (!isset($preferenceMap[$buyerAnswer])) {
+                        return false;
+                    }
+                }
             }
 
             return true;
@@ -348,6 +342,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
     }
 
+    // ------------------------
 
     public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
     {
@@ -355,18 +350,17 @@ class LeadPreferenceController extends Controller
             ->where('user_id', $user_id)
             ->pluck('service_id')
             ->toArray();
-    
+
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->where('customer_id', '!=', $user_id)
             ->whereIn('service_id', $userServices);
-    
-        // Distance filter logic
+
         if ($requestPostcode && $requestMiles) {
             $leadIdsWithinDistance = [];
             $leads = LeadRequest::select('id', 'postcode')
                 ->where('customer_id', '!=', $user_id)
                 ->get();
-    
+
             foreach ($leads as $lead) {
                 if ($lead->postcode) {
                     $distance = $this->getDistance($requestPostcode, $lead->postcode);
@@ -375,12 +369,45 @@ class LeadPreferenceController extends Controller
                     }
                 }
             }
-    
             $baseQuery->whereIn('id', $leadIdsWithinDistance);
         }
-    
+
         return $baseQuery;
     }
+
+    // ------------------------
+
+    private function getUserPreferenceMap($user_id)
+    {
+        $rawAnswers = DB::table('lead_prefrences')
+            ->where('user_id', $user_id)
+            ->pluck('answers')
+            ->toArray();
+    
+        $preferenceMap = [];
+    
+        foreach ($rawAnswers as $answer) {
+            // Split the comma-separated string into array
+            $answerArray = array_map('trim', explode(',', $answer));
+    
+            // Fetch the associated questions from another table if needed
+            // For now, assuming all answers belong to one question
+            // If you have multiple questions, you need to adjust mapping properly.
+    
+            // Example: If you store question name separately, you should map here
+    
+            // For simplicity, assuming answers belong to known fixed questions
+            foreach ($answerArray as $ans) {
+                // Assume we already know which question this answer is related to
+                // For now mapping hard-coded (or you can enhance to dynamic)
+                $preferenceMap[$ans] = true;
+            }
+        }
+    
+        return $preferenceMap; // Example: [ 'Personal project' => true, 'Sole trader/self-employed' => true ]
+    }
+    
+
     
 
     public function getLeadRequest_with_single_question_match(Request $request)
