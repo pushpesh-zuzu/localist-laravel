@@ -432,9 +432,6 @@ class LeadPreferenceController extends Controller
         return $preferenceMap; // Example: [ 'Personal project' => true, 'Sole trader/self-employed' => true ]
     }
     
-
-    
-
     public function getLeadRequest_with_single_question_match(Request $request)
     {
         $aVals = $request->all();
@@ -1210,5 +1207,42 @@ class LeadPreferenceController extends Controller
     
         $isDataExists = User::where('id',$aVals['user_id'])->pluck('total_credit')->first();
         return $this->sendResponse('Switched update', $isDataExists);                                               
+    }
+
+    public function getSellerRecommendedLeads(Request $request)
+    {
+        $seller_id = $request->user_id; 
+        $result = [];
+
+        // if (!empty($leadid)) {
+            // Fetch all matching bids
+            $bids = RecommendedLead::where('seller_id', $seller_id)
+                ->orderBy('distance','ASC')
+                ->get();
+
+            // Get seller IDs and unique service IDs
+            $sellerIds = $bids->pluck('buyer_id')->toArray();
+            $serviceIds = $bids->pluck('service_id')->unique()->toArray();
+
+            // Get users and categories
+            $leads = LeadRequest::whereIn('customer_id', $sellerIds)
+                        ->whereIn('service_id', $serviceIds)
+                        ->with(['customer', 'category'])
+                        ->get();
+            if(!empty($leads)){
+                return $this->sendResponse(__('AutoBid Data'), [
+                    [
+                        'leads' => $leads
+                    ]
+                ]);
+            }else{
+                return $this->sendResponse(__('AutoBid Data'), [
+                    [
+                        'leads' => []
+                    ]
+                ]);
+            }
+        
+        return $this->sendResponse(__('AutoBid Data'), $result);
     }
 }

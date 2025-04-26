@@ -80,6 +80,7 @@ Route::prefix('users')->group(function () {
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
     
+        Route::post('/get-seller-recommended-leads', [LeadPreferenceController::class, 'getSellerRecommendedLeads']);
         Route::post('/get-service-wise-location', [LeadPreferenceController::class, 'getServiceWiseLocation']);
         Route::post('/get-lead-preferences', [LeadPreferenceController::class, 'getleadpreferences']);
         Route::post('/get_user_locations', [LeadPreferenceController::class, 'getUserLocations']);
@@ -119,7 +120,6 @@ Route::prefix('users')->group(function () {
         Route::post('/add-multiple-manual-bid', [RecommendedLeadsController::class, 'addMultipleManualBid']);
         Route::post('/switch-autobid', [RecommendedLeadsController::class, 'switchRecommendedLeads']);
         Route::post('/autobid-list', [RecommendedLeadsController::class, 'getRecommendedLeads']);
-        Route::post('/get-seller-recommended-leads', [RecommendedLeadsController::class, 'getSellerRecommendedLeads']);
         Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
