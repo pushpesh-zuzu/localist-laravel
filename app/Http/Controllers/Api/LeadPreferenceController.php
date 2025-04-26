@@ -378,15 +378,22 @@ class LeadPreferenceController extends Controller
             $leads = LeadRequest::select('id', 'postcode')
                 ->where('customer_id', '!=', $user_id)
                 ->get();
-
-            foreach ($leads as $lead) {
-                if ($lead->postcode) {
-                    $distance = $this->getDistance($requestPostcode, $lead->postcode);
-                    if ($distance && ($distance <= ($requestMiles * 1.60934))) {
-                        $leadIdsWithinDistance[] = $lead->id;
+                foreach ($leads as $lead) {
+                    if ($lead->postcode) {
+                        $distance = $this->getDistance($requestPostcode, $lead->postcode);
+                        if ($distance && ($distance <= $requestMiles)) { // <= DIRECT comparison
+                            $leadIdsWithinDistance[] = $lead->id;
+                        }
                     }
                 }
-            }
+            // foreach ($leads as $lead) {
+            //     if ($lead->postcode) {
+            //         $distance = $this->getDistance($requestPostcode, $lead->postcode);
+            //         if ($distance && ($distance <= ($requestMiles * 1.60934))) {
+            //             $leadIdsWithinDistance[] = $lead->id;
+            //         }
+            //     }
+            // }
             $baseQuery->whereIn('id', $leadIdsWithinDistance);
         }
 
