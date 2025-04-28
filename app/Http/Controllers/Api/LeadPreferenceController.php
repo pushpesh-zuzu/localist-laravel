@@ -689,6 +689,35 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Pending Leads', $leadcount);
     }
 
+    // public function addUserService(Request $request): JsonResponse
+    // {
+    //     $aVals = $request->all();
+    //     $userId = $request->user_id;
+    //     $validator = Validator::make($aVals, [
+    //         //'service_id' => 'required|exists:services,id',
+    //         'service_id' => [
+    //             'required',
+    //             'exists:categories,id',
+    //             Rule::unique('user_services', 'service_id')->where(function ($query) use ($userId ) {
+    //                 return $query->where('user_id', $userId );
+    //             })
+    //         ],
+    //         'user_id' => 'required|exists:users,id',
+    //       ],
+    //       [
+    //         'user_id.exists' => 'The selected user does not exist.',
+    //         'service_id.exists' => 'The selected service does not exist.',
+    //         'service_id.unique' => 'You have already added this service to your profile.',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return $this->sendError($validator->errors());
+    //     }
+        
+    //     $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
+    //     return $this->sendResponse(__('this service added to your profile successfully'));
+    // }
+
     public function addUserService(Request $request): JsonResponse
     {
         $aVals = $request->all();
@@ -713,9 +742,20 @@ class LeadPreferenceController extends Controller
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
+        $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+        if ($serviceIds) {
+            foreach ($serviceIds as $serviceId) {
+                //  $userService = UserService::where('user_id', $userId)
+                //                     ->where('service_id', $serviceId)
+                //                     ->first();
 
-        $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
-        return $this->sendResponse(__('this service added to your profile successfully'));
+                UserService::createUserService($aVals['user_id'],$serviceId,0);
+            }
+        // $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
+            return $this->sendResponse(__('Service added to your profile successfully'));
+        }else{
+            return $this->sendResponse(__('Select Service to proceed'));
+        }
     }
 
     public function getUserServices(Request $request): JsonResponse
@@ -1150,7 +1190,7 @@ class LeadPreferenceController extends Controller
                                     ->first();
         if(empty($isDataExists)){
             $bids = SaveForLater::create([
-                'seller_id' => $aVals['user_id'], 
+                'seller_id' => $aVals['user_id'], //loggedin user id
                 'user_id' => $aVals['buyer_id'], //buyer
                 'lead_id' => $aVals['lead_id']
             ]); 

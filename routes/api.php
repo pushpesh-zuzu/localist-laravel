@@ -73,6 +73,7 @@ Route::prefix('users')->group(function () {
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::post('/search-services', [ApiController::class, 'searchServices']);
+    Route::post('/leads-search-services', [ApiController::class, 'leadsSearchServices']);
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
     Route::post('/registration', [UserController::class, 'registration']);
     Route::get('/all-services', [ApiController::class, 'allServices']);

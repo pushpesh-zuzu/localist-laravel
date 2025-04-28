@@ -73,7 +73,39 @@ class ApiController extends Controller
     
         return $this->sendResponse(__('Category Data'), $result);
     }
-
+    public function leadsSearchServices(Request $request)
+    {
+        $search = $request->search; // Get search keyword from request
+        $serviceid = $request->serviceid; // Get search keyword from request
+    
+        // Check if search keyword is provided; otherwise, return empty
+        if (empty($search)) {
+            $categories = [];
+            return $this->sendResponse(__('Category Data'), $categories);
+        }
+        if(!empty($serviceid)){
+            // Convert serviceid into an array
+            $serviceIds = explode(',', $serviceid);
+            $categories = Category::where('status', 1)
+                            ->whereNotIn('id', $serviceIds)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'LIKE', "%{$search}%")
+                                    ->orWhere('description', 'LIKE', "%{$search}%");
+                            })
+                            ->get();
+        }else{
+            $categories = Category::where('status', 1)
+                              ->where(function ($query) use ($search) {
+                                  $query->where('name', 'LIKE', "%{$search}%")
+                                        ->orWhere('description', 'LIKE', "%{$search}%");
+                              })
+                              ->get();
+        }
+        
+        
+    
+        return $this->sendResponse(__('Category Data'), $categories);
+    }
     public function searchServices(Request $request)
     {
         $search = $request->search; // Get search keyword from request
