@@ -82,6 +82,8 @@ Route::prefix('users')->group(function () {
     
         Route::post('/get-seller-recommended-leads', [LeadPreferenceController::class, 'getSellerRecommendedLeads']);
         Route::post('/get-service-wise-location', [LeadPreferenceController::class, 'getServiceWiseLocation']);
+        Route::post('/seven-days-autobid-pause', [LeadPreferenceController::class, 'sevenDaysAutobidPause']);
+        Route::post('/get-save-for-later-list', [LeadPreferenceController::class, 'getSaveForLaterList']);
         Route::post('/get-lead-preferences', [LeadPreferenceController::class, 'getleadpreferences']);
         Route::post('/get_user_locations', [LeadPreferenceController::class, 'getUserLocations']);
         Route::post('/get_user_services', [LeadPreferenceController::class, 'getUserServices']);
@@ -89,7 +91,6 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
-        Route::post('/get-save-for-later-list', [LeadPreferenceController::class, 'getSaveForLaterList']);
         
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);

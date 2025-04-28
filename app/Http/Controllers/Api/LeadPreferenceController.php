@@ -1195,7 +1195,7 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
     
         $isDataExists = User::where('id',$aVals['user_id'])->first();
-        if(empty($isDataExists)){
+        if(!empty($isDataExists)){
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             return $this->sendResponse('Switched update', []);   
         }      
@@ -1241,5 +1241,21 @@ class LeadPreferenceController extends Controller
                 ]);
             }
         
+    }
+
+    public function sevenDaysAutobidPause(Request $request){ 
+        $aVals = $request->all();
+    
+        $isDataExists = User::where('id',$aVals['user_id'])->first();
+        if(!empty($isDataExists)){
+            $switch =  $isDataExists->update(['autobid_pause' => $aVals['autobid_pause']]);
+            if($aVals['autobid_pause'] == 1){
+                $modes = 'Paused Autobid for 7 days';
+            }else{
+                $modes = 'Autobid is on now';
+            }
+            return $this->sendResponse($modes, []);   
+        }      
+        return $this->sendError('Something went wrong.');                                              
     }
 }

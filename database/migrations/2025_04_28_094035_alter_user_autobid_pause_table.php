@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('country')->after('state')->nullable();
-            $table->string('postcode_new')->after('country')->nullable();
-            $table->timestamp('last_login')->after('postcode_new')->nullable();
-            $table->boolean('is_online')->after('postcode_new')->default(0)->comment('0 = off, 1 = on');
+            $table->boolean('autobid_pause')->after('form_status')->default(0)->comment('0 = off, 1 = on');
         });
     }
 
