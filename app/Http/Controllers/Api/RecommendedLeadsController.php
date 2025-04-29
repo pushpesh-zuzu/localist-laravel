@@ -927,13 +927,7 @@ class RecommendedLeadsController extends Controller
             if (in_array($userId, $existingBids)) {
                 return null; // skip sellers already bid by buyer
             }
-            // $user = User::find($userId);
-            $user = User::where('id', $userId)
-            ->whereHas('details', function ($query) {
-                $query->where('is_autobid', 1)->where('autobid_pause', 0);
-            })->first();
-
-            if (!$user) return null; // Skip if autobid not allowed
+            $user = User::find($userId);
             $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
         
             $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
