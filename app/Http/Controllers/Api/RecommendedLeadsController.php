@@ -1252,13 +1252,13 @@ class RecommendedLeadsController extends Controller
             $leadPostcode, $existingBids, $serviceId
         ) {
             if (in_array($userId, $existingBids)) return null;
+            $user = User::find($userId);
+        //     $user = User::where('id', $userId)
+        //     ->whereHas('details', function ($query) {
+        //         $query->where('is_autobid', 1)->where('autobid_pause', 0);
+        //     })->first();
 
-            $user = User::where('id', $userId)
-                ->whereHas('details', function ($query) {
-                    $query->where('is_autobid', 1)->where('autobid_pause', 0);
-                })->first();
-
-            if (!$user) return null; // Skip if autobid not allowed
+        // if (!$user) return null; // Skip if autobid not allowed
 
             $userLocation = $locations->first();
             $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
