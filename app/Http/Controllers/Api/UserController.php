@@ -69,7 +69,8 @@ class UserController extends Controller
             if(empty($userdetails))
             {
                 UserDetail::create([
-                    'user_id'  => $user->id
+                    'user_id'  => $user->id,
+                    'is_autobid'  =>$auto_bid,
                 ]);
             }
               // Check if service_id is an array or convert it to one
