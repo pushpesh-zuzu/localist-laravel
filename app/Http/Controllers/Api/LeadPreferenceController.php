@@ -12,6 +12,7 @@ use App\Models\LeadPrefrence;
 use App\Models\LeadRequest;
 use App\Models\SaveForLater;
 use App\Models\UserService;
+use App\Models\UserDetail;
 use App\Models\CreditList;
 use App\Models\Category;
 use App\Models\User;
@@ -369,6 +370,7 @@ class LeadPreferenceController extends Controller
         $baseQuery = LeadRequest::with(['customer', 'category'])
             // ->where('customer_id', '!=', $user_id)
             ->whereIn('service_id', $userServices)
+            ->where('closed_status',0) //added new condition to fetched only open leads
             ->whereHas('customer', function($query) {
                 $query->where('form_status', 1);
             });
@@ -377,6 +379,7 @@ class LeadPreferenceController extends Controller
             $leadIdsWithinDistance = [];
             $leads = LeadRequest::select('id', 'postcode')
                 ->where('customer_id', '!=', $user_id)
+                ->where('closed_status',0) //added new condition to fetched only open leads
                 ->get();
                 foreach ($leads as $lead) {
                     if ($lead->postcode) {
@@ -414,14 +417,6 @@ class LeadPreferenceController extends Controller
         foreach ($rawAnswers as $answer) {
             // Split the comma-separated string into array
             $answerArray = array_map('trim', explode(',', $answer));
-    
-            // Fetch the associated questions from another table if needed
-            // For now, assuming all answers belong to one question
-            // If you have multiple questions, you need to adjust mapping properly.
-    
-            // Example: If you store question name separately, you should map here
-    
-            // For simplicity, assuming answers belong to known fixed questions
             foreach ($answerArray as $ans) {
                 // Assume we already know which question this answer is related to
                 // For now mapping hard-coded (or you can enhance to dynamic)
@@ -429,7 +424,7 @@ class LeadPreferenceController extends Controller
             }
         }
     
-        return $preferenceMap; // Example: [ 'Personal project' => true, 'Sole trader/self-employed' => true ]
+        return $preferenceMap; 
     }
     
     public function getLeadRequest_with_single_question_match(Request $request)
@@ -1285,17 +1280,32 @@ class LeadPreferenceController extends Controller
 
     public function sevenDaysAutobidPause(Request $request){ 
         $aVals = $request->all();
-    
-        $isDataExists = User::where('id',$aVals['user_id'])->first();
-        if(!empty($isDataExists)){
-            $switch =  $isDataExists->update(['autobid_pause' => $aVals['autobid_pause']]);
-            if($aVals['autobid_pause'] == 1){
-                $modes = 'Paused Autobid for 7 days';
-            }else{
-                $modes = 'Now Autobid is in active state';
-            }
-            return $this->sendResponse($modes, []);   
-        }      
-        return $this->sendError('Something went wrong.');                                              
+        $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
+        if(isset($userdetails) && $userdetails != ''){
+            $userdetails->update(['autobid_pause' => $aVals['autobid_pause']]);
+        }else{
+            $userdetails = UserDetail::create([
+                'user_id'  => $aVals['user_id'],
+                'autobid_pause' => $aVals['autobid_pause']
+            ]);
+        }
+        
+        if($aVals['autobid_pause'] == 1){
+            $modes = 'Paused Autobid for 7 days';
+        }else{
+            $modes = 'Now Autobid is in active state';
+        }
+        return $this->sendResponse($modes, []);   
+        // $isDataExists = User::where('id',$aVals['user_id'])->first();
+        // if(!empty($isDataExists)){
+        //     $switch =  $isDataExists->update(['autobid_pause' => $aVals['autobid_pause']]);
+        //     if($aVals['autobid_pause'] == 1){
+        //         $modes = 'Paused Autobid for 7 days';
+        //     }else{
+        //         $modes = 'Now Autobid is in active state';
+        //     }
+        //     return $this->sendResponse($modes, []);   
+        // }      
+        // return $this->sendError('Something went wrong.');                                              
     }
 }

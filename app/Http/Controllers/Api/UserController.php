@@ -7,6 +7,7 @@ use App\Models\UserServiceLocation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\UserDetail;
 use App\Models\Category;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
@@ -64,6 +65,13 @@ class UserController extends Controller
 
         if(!empty($user))
         {
+            $userdetails = UserDetail::where('user_id',$user->id)->first();
+            if(empty($userdetails))
+            {
+                UserDetail::create([
+                    'user_id'  => $user->id
+                ]);
+            }
               // Check if service_id is an array or convert it to one
             $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
             foreach ($serviceIds as $serviceId) {

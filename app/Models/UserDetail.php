@@ -8,6 +8,7 @@ class UserDetail extends Model
 {
     protected $fillable = [
                             'is_autobid',
+                            'autobid_pause',
                             'user_id',
                             'company_photos',
                             'user_emails_reviews',

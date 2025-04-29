@@ -58,7 +58,6 @@ class User extends Authenticatable
         'user_type',
         'active_status',
         'form_status',
-        'autobid_pause',
         'remember_token'
     ];
     

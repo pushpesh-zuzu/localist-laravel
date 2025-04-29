@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
 use Illuminate\Support\Facades\Storage;
+use \Carbon\Carbon;
 
 class RecommendedLeadsController extends Controller
 {
@@ -213,6 +214,19 @@ class RecommendedLeadsController extends Controller
                 ->orderBy('distance','ASC')
                 ->get();
 
+                // Check count
+            if ($bids->count() < 5) {
+                // Fetch other seller bids on the same lead_id (exclude already recommended sellers)
+                $otherBids = RecommendedLead::where('lead_id', $leadid)
+                    ->whereNotIn('seller_id', $bids->pluck('seller_id')->toArray())
+                    ->where('distance', '!=', 0)
+                    ->orderBy('distance', 'ASC')
+                    ->get();
+
+                // Merge both
+                $bids = $bids->merge($otherBids);
+            }
+
             // Get seller IDs and unique service IDs
             $sellerIds = $bids->pluck('seller_id')->toArray();
             $serviceIds = $bids->pluck('service_id')->unique()->toArray();
@@ -236,6 +250,45 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
+
+    // public function getRecommendedLeads(Request $request)
+    // {
+    //     $seller_id = $request->user_id; 
+    //     $leadid = $request->lead_id; 
+    //     $result = [];
+
+    //     if (!empty($leadid)) {
+    //         // Fetch all matching bids
+    //         $bids = RecommendedLead::where('buyer_id', $seller_id)
+    //             ->where('lead_id', $leadid)
+    //             ->where('distance','!=' ,0)
+    //             ->orderBy('distance','ASC')
+    //             ->get();
+
+    //         // Get seller IDs and unique service IDs
+    //         $sellerIds = $bids->pluck('seller_id')->toArray();
+    //         $serviceIds = $bids->pluck('service_id')->unique()->toArray();
+
+    //         // Get users and categories
+    //         $users = User::whereIn('id', $sellerIds)->get()->keyBy('id'); // index by seller_id
+    //         $services = Category::whereIn('id', $serviceIds)->pluck('name', 'id'); // id => name
+
+    //         foreach ($bids as $bid) {
+    //             $seller = $users[$bid->seller_id] ?? null;
+    //             if ($seller) {
+    //                 $sellerData = $seller->toArray();
+    //                 $sellerData['service_name'] = $services[$bid->service_id] ?? 'Unknown Service';
+    //                 $sellerData['bid'] = $bid->bid; // Optionally include bid amount
+    //                 $sellerData['distance'] = @$bid->distance;
+    //                 $result[] = $sellerData;
+    //             }
+    //         }
+    //         // $bids->groupBy('distance');
+    //     }
+
+    //     return $this->sendResponse(__('AutoBid Data'), $result);
+    // }
+
 
 
     public function switchRecommendedLeads(Request $request): JsonResponse
@@ -874,7 +927,13 @@ class RecommendedLeadsController extends Controller
             if (in_array($userId, $existingBids)) {
                 return null; // skip sellers already bid by buyer
             }
-            $user = User::find($userId);
+            // $user = User::find($userId);
+            $user = User::where('id', $userId)
+            ->whereHas('details', function ($query) {
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            })->first();
+
+            if (!$user) return null; // Skip if autobid not allowed
             $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
         
             $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
@@ -1069,8 +1128,77 @@ class RecommendedLeadsController extends Controller
 
     public function closeLeads()
     {
-        $twoWeeksAgo = Carbon::now()->subWeeks(2);
+        $now = Carbon::now();
+        $fiveMinutesAgo = $now->copy()->subMinutes(1);
+        $twoWeeksAgo = $now->copy()->subWeeks(2);
+        // $twoWeeksAgo = Carbon::now()->subWeeks(2);
+        // $fiveMinutesAgo = $now->subMinutes(5);
+        // --------- Auto-Close Logic (after 2 weeks) ---------
+        $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
+        if($twoWeeks){
+            return response()->json(['message' => 'Leads closed successfully.']);
+        }
+        // --------- Auto-Bid Logic (after 5 minutes) ---------
+        $fiveMinutes = self::autoBidLeadsAfter5Min($fiveMinutesAgo);
+        if($fiveMinutes){
+            return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
+        }
+        // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
 
+        
+    }
+
+    public function autoBidLeadsAfter5Min($fiveMinutesAgo)
+    {
+        $leads = LeadRequest::where('closed_status', 0)
+        ->where('created_at', '<=', $fiveMinutesAgo)
+        ->get();
+
+        $autoBidLeads = [];
+
+        foreach ($leads as $lead) {
+            $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
+    
+            if ($existingBids >= 5) {
+                continue; // Skip if already has 5 bids
+            }
+    
+            // Use your custom function to get top sellers
+            $manualLeads = $this->getTop5SellersWithDistance($lead->id);
+    
+            // If response is structured as data[0]->sellers, extract sellers
+            $sellers = collect($manualLeads)->take(5 - $existingBids);
+
+    
+            foreach ($sellers as $seller) {
+                $alreadyBid = RecommendedLead::where([
+                    ['lead_id', $lead->id],
+                    ['buyer_id', $lead->customer_id],
+                    ['seller_id', $seller['user']->id],
+                ])->exists();
+    
+                if (!$alreadyBid) {
+                    RecommendedLead::create([
+                        'lead_id'     => $lead->id,
+                        'buyer_id'    => $lead->customer_id,
+                        'seller_id'   => $seller['user']->id,
+                        'service_id'  => $seller['service_id'],
+                        'bid'         => $lead->credit_score, // Or default auto-bid value
+                        'distance'    => $seller['distance'] ?? null
+                    ]);
+    
+                    $autoBidLeads[] = [
+                        'lead_id'   => $lead->id,
+                        'seller_id' => $seller['user']->id,
+                    ];
+                }
+            }
+        }
+            return $autoBidLeads;
+        // 
+    }
+
+    public function leadCloseAfter2Weeks($twoWeeksAgo){
         $leadsToClose = LeadRequest::where('status', 0)
             ->where('created_at', '<', $twoWeeksAgo)
             ->get();
@@ -1087,11 +1215,74 @@ class RecommendedLeadsController extends Controller
                 $lead->save();
             }
         }
-        
-        
-        // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
-
-        return response()->json(['message' => 'Leads closed successfully.']);
     }
 
-}
+    public function getTop5SellersWithDistance($leadId)
+    {
+        $lead = LeadRequest::find($leadId);
+        if (!$lead) return [];
+
+        $serviceId = $lead->service_id;
+        $leadPostcode = $lead->postcode;
+        $customerId = $lead->customer_id;
+
+        // Step 1: Get sellers (exclude buyer)
+        $userServices = UserService::where('service_id', $serviceId)
+            ->where('user_id', '!=', $customerId)
+            ->join('users', 'user_services.user_id', '=', 'users.id')
+            ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
+            ->select('user_services.user_id', 'users.total_credit')
+            ->get();
+
+        $sortedUserIds = $userServices->pluck('user_id')->toArray();
+
+        // Step 2: Get nearby postcodes
+        $nearbyPostcodes = $this->getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds);
+
+        // Step 3: Filter by location
+        $locationMatchedUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->whereIn('postcode', $nearbyPostcodes)
+            ->get()
+            ->groupBy('user_id');
+
+        if ($locationMatchedUsers->isEmpty()) return [];
+
+        // Step 4: Get distance + seller info
+        $existingBids = RecommendedLead::where('buyer_id', $customerId)
+            ->where('lead_id', $lead->id)
+            ->pluck('seller_id')
+            ->toArray();
+
+        $finalSellers = collect($locationMatchedUsers)->map(function ($locations, $userId) use (
+            $leadPostcode, $existingBids, $serviceId
+        ) {
+            if (in_array($userId, $existingBids)) return null;
+
+            $user = User::where('id', $userId)
+                ->whereHas('details', function ($query) {
+                    $query->where('is_autobid', 1)->where('autobid_pause', 0);
+                })->first();
+
+            if (!$user) return null; // Skip if autobid not allowed
+
+            $userLocation = $locations->first();
+            $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
+            $miles = $distance !== "Distance not found"
+                ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
+                : null;
+
+            if ($miles === 0 || is_null($miles)) return null;
+
+            return [
+                'user' => $user,
+                'distance' => $miles,
+                'service_id' => $serviceId,
+            ];
+        })->filter()->sortBy('distance')->take(5)->values();
+
+        return $finalSellers;
+    }
+
+
+}   

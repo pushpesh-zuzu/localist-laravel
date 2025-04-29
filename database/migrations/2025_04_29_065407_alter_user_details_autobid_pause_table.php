@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('autobid_pause')->after('form_status')->default(0)->comment('0 = off, 1 = on');
+        Schema::table('user_details', function (Blueprint $table) {
+            $table->boolean('autobid_pause')->after('is_autobid')->default(0)->comment('0 = off, 1 = on');
         });
     }
 
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('user_details', function (Blueprint $table) {
             //
         });
     }
