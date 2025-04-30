@@ -145,6 +145,7 @@ class MyRequestController extends Controller
 
             $data['customer_id'] = $euId;
             $data['service_id'] = $request->service_id;
+            $data['city'] = $request->city;
             $data['postcode'] = $request->postcode;
             $data['questions'] = $request->questions;
             $data['phone'] = $request->phone;
@@ -168,7 +169,7 @@ class MyRequestController extends Controller
             $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
             //end evaluate Lead Badges
 
-            $predict['Location'] = $request->postcode;
+            $predict['Location'] = $request->city .', ' . strtoupper($request->postcode);
             $predict['Urgent'] = $data['is_urgent'];
             $predict['High'] = $data['is_high_hiring'];
             $predict['Verified'] = $data['is_phone_verified'];
