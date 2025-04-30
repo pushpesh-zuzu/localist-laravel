@@ -420,6 +420,50 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
     }
 
+    public function sortByLeadsEntries(Request $request)
+    {
+        $user_id = $request->user_id;
+        $sortType = $request->sort_type; // 'newest' or 'oldest'
+        $requestPostcode = $request->postcode ?? null;
+        $requestMiles = $request->miles ?? null;
+
+        $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
+
+        // Exclude saved and recommended leads
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+
+        if (!empty($excludedLeadIds)) {
+            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        }
+
+        // Fetch all leads (default order newest first)
+        $orderDirection = ($sortType === 'oldest') ? 'ASC' : 'DESC';
+        $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
+
+        $preferenceMap = $this->getUserPreferenceMap($user_id);
+
+        // Match preferences strictly
+        $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
+            $leadQuestions = json_decode($lead->questions, true);
+            if (!is_array($leadQuestions)) return false;
+
+            foreach ($leadQuestions as $q) {
+                $buyerAnswers = (array) $q['ans'];
+                foreach ($buyerAnswers as $buyerAnswer) {
+                    if (!isset($preferenceMap[trim($buyerAnswer)])) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+
+        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
+    }
+
+
     // ------------------------
 
     public function basequery($user_id, $requestPostcode = null, $requestMiles = null)

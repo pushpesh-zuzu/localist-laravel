@@ -90,7 +90,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
         Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
-        Route::post('/sort-by-leads-entries', [LeadPreferenceController::class, 'sortByLeadsEntries']);
+        Route::post('/sort-by-leads-date', [LeadPreferenceController::class, 'sortByLeadsEntries']);
         
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
