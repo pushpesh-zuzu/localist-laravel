@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Helpers\CustomHelper;
-
+use App\Helpers\CreditScorePredictor as CreditScore;
 use App\Models\User;
 use App\Models\UserService;
 use App\Models\UserServiceLocation;
@@ -150,7 +150,8 @@ class MyRequestController extends Controller
             $data['phone'] = $request->phone;
 
             $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
-            $data['credit_score'] = rand(15, 30);
+            
+            
             $data['created_at'] = date('y-m-d H:i:s');
             $data['updated_at'] = date('y-m-d H:i:s');
 
@@ -167,6 +168,17 @@ class MyRequestController extends Controller
             $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
             //end evaluate Lead Badges
 
+            $predict['Location'] = $request->postcode;
+            $predict['Urgent'] = $data['is_urgent'];
+            $predict['High'] = $data['is_high_hiring'];
+            $predict['Verified'] = $data['is_phone_verified'];
+            $predict['Frequent'] = $data['is_frequent_user'];
+
+            $questions = json_decode($request->questions, true);
+            foreach($questions as $q){
+                $predict[$q['ques']] = preg_replace(['/^,/', '/\?$/'], '', $q['ans']);
+            }            
+            $data['credit_score'] = CreditScore::predict($data['service_id'],$predict);
 
             $sId = LeadRequest::insertGetId($data);
 
