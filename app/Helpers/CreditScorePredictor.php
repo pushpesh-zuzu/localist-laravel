@@ -15,9 +15,13 @@ class CreditScorePredictor{
                 $url = ""; 
         }
         $output = self::getPrediction($url, $data);
-        if($output['success'] == 1){
-            $tRel = number_format($output['prediction'], 5);
-            $rel = ceil($tRel);
+        if(!empty($output['success'])){
+            if($output['success'] == 1){
+                $tRel = number_format($output['prediction'], 5);
+                $rel = ceil($tRel);
+            }else{
+                print_r($output);
+            }            
         }else{
             print_r($output);
         }
