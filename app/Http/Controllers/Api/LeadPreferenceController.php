@@ -380,9 +380,10 @@ class LeadPreferenceController extends Controller
         $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
         }
 
-
+        // Sort by ID direction based on sort_type
+        $orderDirection = ($sortType === 'oldest') ? 'ASC' : 'DESC';
         // Strict matching on Questions & Answers
-        $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
+        $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
         $preferenceMap = $this->getUserPreferenceMap($user_id);
 
         $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
@@ -1338,7 +1339,8 @@ class LeadPreferenceController extends Controller
         $isDataExists = User::where('id',$aVals['user_id'])->first();
         if(!empty($isDataExists)){
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
-            return $this->sendResponse('Switched update', []);   
+            $isonline  = $aVals['is_online'];
+            return $this->sendResponse('Switched update', $isonline);   
         }      
         return $this->sendError('Something went wrong.');                                              
     }
@@ -1401,7 +1403,8 @@ class LeadPreferenceController extends Controller
         }else{
             $modes = 'Now Autobid is in active state';
         }
-        return $this->sendResponse($modes, []);   
+        $autobidpause = $aVals['autobid_pause'];
+        return $this->sendResponse($modes, $autobidpause);   
         // $isDataExists = User::where('id',$aVals['user_id'])->first();
         // if(!empty($isDataExists)){
         //     $switch =  $isDataExists->update(['autobid_pause' => $aVals['autobid_pause']]);

@@ -1221,11 +1221,11 @@ class RecommendedLeadsController extends Controller
         // $twoWeeksAgo = Carbon::now()->subWeeks(2);
         // $fiveMinutesAgo = $now->subMinutes(5);
         // --------- Auto-Close Logic (after 2 weeks) ---------
-        // $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
-        // if($twoWeeks){
-        //     return response()->json(['message' => 'Leads closed successfully.']);
-        // }
-        // // --------- Auto-Bid Logic (after 5 minutes) ---------
+        $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
+        if($twoWeeks){
+            return response()->json(['message' => 'Leads closed successfully.']);
+        }
+        // --------- Auto-Bid Logic (after 5 minutes) ---------
         $fiveMinutes = self::autoBidLeadsAfter5Min($fiveMinutesAgo);
         if($fiveMinutes){
             return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
@@ -1237,7 +1237,6 @@ class RecommendedLeadsController extends Controller
     
     public function autoBidLeadsAfter5Min($fiveMinutesAgo)
     {
-    
         $leads = LeadRequest::where('closed_status', 0)
             ->where('should_autobid', 0)
             ->where('created_at', '<=', $fiveMinutesAgo)
@@ -1307,7 +1306,6 @@ class RecommendedLeadsController extends Controller
     
         return $autoBidLeads;
     }
-
 
     public function autoBidLeadsAfter5Min_old($fiveMinutesAgo)
     {
