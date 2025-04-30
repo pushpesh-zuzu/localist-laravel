@@ -219,7 +219,7 @@ class RecommendedLeadsController extends Controller
                 // Fetch other seller bids on the same lead_id (exclude already recommended sellers)
                 $otherBids = RecommendedLead::where('lead_id', $leadid)
                     ->whereNotIn('seller_id', $bids->pluck('seller_id')->toArray())
-                    ->where('distance', '!=', 0)
+                    // ->where('distance', '!=', 0)
                     ->orderBy('distance', 'ASC')
                     ->get();
 
@@ -763,7 +763,7 @@ class RecommendedLeadsController extends Controller
 
         // Step 2: Get auto-bid user_services excluding the lead's customer
         $userServices = UserService::where('service_id', $serviceId)
-            // ->where('auto_bid', 1)
+            ->where('auto_bid', 1)
             ->where('user_id', '!=', $customerId)
             ->join('users', 'user_services.user_id', '=', 'users.id')
             ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
@@ -1050,7 +1050,7 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
-            // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
+            DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
             $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
@@ -1074,9 +1074,9 @@ class RecommendedLeadsController extends Controller
                         ->where('user_id',$aVals['buyer_id'])  
                         ->where('lead_id',$aVals['lead_id'])
                         ->delete();
-            // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
+            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
-        DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
+        // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
 
@@ -1118,7 +1118,7 @@ class RecommendedLeadsController extends Controller
                 'distance' => $distance,
             ]);
     
-            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $bid);
+            DB::table('users')->where('id', $sellerId)->decrement('total_credit', $bid);
 
             $anyInserted = true; //  Mark that at least one entry was inserted
         }
@@ -1132,170 +1132,86 @@ class RecommendedLeadsController extends Controller
     public function addMultipleManualBid(Request $request)
     {
         $aVals = $request->all();
-
-        $sellerIds = $aVals['seller_id']; // manually selected seller_ids
-        $serviceIds = $aVals['service_id']; 
-        $bids = $aVals['bid']; 
-        $distances = $aVals['distance']; 
-        $userId = $aVals['user_id'];
+        $buyerId = $aVals['user_id'];
         $leadId = $aVals['lead_id'];
-        $manualCount = count($sellerIds);
-
-        LeadRequest::where('id', $leadId)->update(['should_autobid' => 1]);
-
-        $insertedSellers = []; // Keep track of inserted seller_ids
-        $anyInserted = false;
-
-        // STEP 1: Insert manual bids
-        foreach ($sellerIds as $index => $sellerId) {
-            $serviceId = $serviceIds[$index];
-            $bid = $bids[$index];
-            $distance = $distances[$index];
-
-            $existingBid = RecommendedLead::where('lead_id', $leadId)
-                ->where('service_id', $serviceId)
-                ->where('buyer_id', $userId)
-                ->where('seller_id', $sellerId)
-                ->first();
-
-            if ($existingBid) continue;
-
-            RecommendedLead::create([
-                'service_id' => $serviceId,
-                'seller_id' => $sellerId,
-                'buyer_id' => $userId,
-                'lead_id' => $leadId,
-                'bid' => $bid,
-                'distance' => $distance,
-            ]);
-
-            DB::table('users')->where('id', $userId)->decrement('total_credit', $bid);
-            $insertedSellers[] = $sellerId;
-            $anyInserted = true;
-        }
-
-        // STEP 2: Fill remaining bids with auto-bid (up to 5 total per service)
-        foreach ($serviceIds as $index => $serviceId) {
-            $currentBidCount = RecommendedLead::where('lead_id', $leadId)
-                ->where('service_id', $serviceId)
-                ->where('buyer_id', $userId)
-                ->count();
-
-            $remainingSlots = 5 - $currentBidCount;
-
-            if ($remainingSlots <= 0) continue;
-
-            // Fetch top 5 eligible sellers (sorted by your logic — e.g., credit, distance)
-            $topSellers = $this->getTopSellersForAutoBid($leadId);
-
-            foreach ($topSellers as $autoSeller) {
-                if ($remainingSlots <= 0) break;
-
-                if (in_array($autoSeller->id, $insertedSellers)) continue;
-
-                $alreadyExists = RecommendedLead::where('lead_id', $leadId)
-                    ->where('service_id', $serviceId)
-                    ->where('buyer_id', $userId)
-                    ->where('seller_id', $autoSeller->id)
-                    ->exists();
-
-                if ($alreadyExists) continue;
-
-                RecommendedLead::create([
-                    'service_id' => $serviceId,
-                    'seller_id' => $autoSeller->id,
-                    'buyer_id' => $userId,
-                    'lead_id' => $leadId,
-                    'bid' => $autoSeller->auto_bid_amount,
-                    'distance' => $autoSeller->distance,
-                ]);
-
-                DB::table('users')->where('id', $userId)->decrement('total_credit', $autoSeller->auto_bid_amount);
-                $insertedSellers[] = $autoSeller->id;
-                $remainingSlots--;
-            }
-        }
-
-        if ($anyInserted) {
-            return $this->sendResponse(__('Bids inserted successfully'), []);
-        } else {
-            return $this->sendError(__('Bids already placed for all selected sellers'), 404);
-        }
-    }
-
-    private function getTopSellersForAutoBid($leadId)
-    {
-        $leadRequest = DB::table('lead_requests')->where('id', $leadId)->first();
-        if (!$leadRequest) return [];
-
-        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_sellers");
-
-        DB::statement("CREATE TEMPORARY TABLE temp_sellers (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT,
-            postcode VARCHAR(10),
-            total_credit INT,
-            distance FLOAT,
-            service_id INT,
-            buyer_id INT,
-            lead_id INT,
-            credit_scores INT,
-            nation_wide TINYINT(1) DEFAULT 0
-        )");
-
-        $creditCounts = DB::table('users')
-            ->select('total_credit', DB::raw('COUNT(*) as credit_count'))
-            ->groupBy('total_credit');
-
-        DB::table('temp_sellers')->insertUsing(
-            ['user_id', 'postcode', 'total_credit', 'service_id', 'buyer_id', 'lead_id', 'credit_scores', 'nation_wide'],
-            DB::table('user_services as us')
-                ->join('users as u', 'us.user_id', '=', 'u.id')
-                ->join('user_service_locations as usl', function ($join) {
-                    $join->on('us.user_id', '=', 'usl.user_id')
-                        ->on('us.service_id', '=', 'usl.service_id');
-                })
-                ->joinSub($creditCounts, 'cc', function ($join) {
-                    $join->on('u.total_credit', '=', 'cc.total_credit');
-                })
-                ->where('us.service_id', $leadRequest->service_id)
-                ->where('us.auto_bid', 1)
-                ->orderByRaw('cc.credit_count = 1 DESC')
-                ->orderByDesc('u.total_credit')
-                ->limit(10)
-                ->select(
-                    'u.id as user_id',
-                    'usl.postcode',
-                    'u.total_credit',
-                    'us.service_id',
-                    DB::raw($leadRequest->customer_id . ' as buyer_id'),
-                    DB::raw($leadId . ' as lead_id'),
-                    DB::raw($leadRequest->credit_score . ' as credit_scores'),
-                    'usl.nation_wide'
-                )
-        );
-
-        // Calculate distance
-        foreach (DB::table('temp_sellers')->get() as $seller) {
-            $distance = $seller->nation_wide
-                ? 0
-                : $this->getDistance($leadRequest->postcode, $seller->postcode);
-
-            if ($distance !== "Distance not found") {
-                $miles = round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2);
-                DB::table('temp_sellers')->where('user_id', $seller->user_id)->update(['distance' => $miles]);
-            }
-        }
-
-        // Return sorted list
-        return DB::table('temp_sellers')
-            ->orderByRaw('CASE WHEN distance IS NULL THEN 1 ELSE 0 END, distance ASC')
-            ->orderByDesc('total_credit')
-            ->get();
-    }
-
-
+        $inserted = 0;
     
+        LeadRequest::where('id',$aVals['lead_id'])->update(['should_autobid'=>1]);
+        // Step 1: Insert manual bids
+        foreach ($aVals['seller_id'] as $index => $sellerId) {
+            $alreadyExists = RecommendedLead::where('buyer_id', $buyerId)
+                ->where('lead_id', $leadId)
+                ->where('seller_id', $sellerId)
+                ->exists();
+    
+            if (!$alreadyExists) {
+                $bidAmount = $aVals['bid'][$index];
+    
+                $user = DB::table('users')->where('id', $buyerId)->first();
+                if ($user && $user->total_credit >= $bidAmount) {
+                    // Deduct credit
+                    DB::table('users')->where('id', $sellerId)->decrement('total_credit', $bidAmount);
+    
+                    // Insert bid
+                    RecommendedLead::create([
+                        'buyer_id' => $buyerId,
+                        'lead_id' => $leadId,
+                        'seller_id' => $sellerId,
+                        'service_id' => $aVals['service_id'][$index],
+                        'bid' => $bidAmount,
+                        'distance' => $aVals['distance'][$index],
+                        'source' => 'manual'
+                    ]);
+                    $inserted++;
+                }
+            }
+        }
+    
+        // Step 2: Get current count after manual inserts
+        $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
+    
+        if ($currentCount < 5) {
+            // Step 3: Fetch remaining sellers using getManualLeads
+            // $manualLeadRequest = new Request(['lead_id' => $leadId]);
+            $response = $this->getManualLeads($request)->getData();
+    
+            if (!empty($response->data[0]->sellers)) {
+                $remainingSellers = collect($response->data[0]->sellers)
+                    ->reject(function ($seller) use ($buyerId, $leadId) {
+                        return RecommendedLead::where('buyer_id', $buyerId)
+                            ->where('lead_id', $leadId)
+                            ->where('seller_id', $seller->id)
+                            ->exists();
+                    })
+                    ->take(5 - $currentCount);
+    
+                foreach ($remainingSellers as $seller) {
+                    $bidAmount = $seller->bid ?? 0;
+    
+                    $user = DB::table('users')->where('id', $buyerId)->first();
+                    if ($user && $user->total_credit >= $bidAmount) {
+                        // Deduct credit
+                        DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
+    
+                        RecommendedLead::create([
+                            'buyer_id' => $buyerId,
+                            'lead_id' => $leadId,
+                            'seller_id' => $seller->id,
+                            'service_id' => $seller->service_id,
+                            'bid' => $bidAmount,
+                            'distance' => $seller->distance ?? 0,
+                        ]);
+                        $inserted++;
+                    }
+                }
+            }
+        }
+    
+        return $this->sendResponse(__('Bids inserted successfully'), [
+            'inserted_count' => $inserted,
+            'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
+        ]);
+    }
 
     public function closeLeads()
     {
@@ -1305,11 +1221,11 @@ class RecommendedLeadsController extends Controller
         // $twoWeeksAgo = Carbon::now()->subWeeks(2);
         // $fiveMinutesAgo = $now->subMinutes(5);
         // --------- Auto-Close Logic (after 2 weeks) ---------
-        $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
-        if($twoWeeks){
-            return response()->json(['message' => 'Leads closed successfully.']);
-        }
-        // --------- Auto-Bid Logic (after 5 minutes) ---------
+        // $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
+        // if($twoWeeks){
+        //     return response()->json(['message' => 'Leads closed successfully.']);
+        // }
+        // // --------- Auto-Bid Logic (after 5 minutes) ---------
         $fiveMinutes = self::autoBidLeadsAfter5Min($fiveMinutesAgo);
         if($fiveMinutes){
             return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
@@ -1318,8 +1234,82 @@ class RecommendedLeadsController extends Controller
 
         
     }
-
+    
     public function autoBidLeadsAfter5Min($fiveMinutesAgo)
+    {
+    
+        $leads = LeadRequest::where('closed_status', 0)
+            ->where('should_autobid', 0)
+            ->where('created_at', '<=', $fiveMinutesAgo)
+            ->get();
+    
+        $autoBidLeads = [];
+    
+        foreach ($leads as $lead) {
+             
+            $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
+    
+            if ($existingBids >= 5) {
+                continue; // Skip if already has 5 bids
+            }
+    
+            // Call getManualLeads with a request object
+            $manualLeadRequest = new Request(['lead_id' => $lead->id]);
+            $manualLeadsResponse = $this->getManualLeads($manualLeadRequest)->getData();
+            //  $manualLeadsResponse = $this->getManualLeads($lead->id)->getData();
+    
+            if (empty($manualLeadsResponse->data[0]->sellers)) {
+                LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
+                continue;
+            }
+    
+            $sellers = collect($manualLeadsResponse->data[0]->sellers)->take(5 - $existingBids);
+            $bidsPlaced = 0;
+            foreach ($sellers as $seller) {
+                $alreadyBid = RecommendedLead::where([
+                    ['lead_id', $lead->id],
+                    ['buyer_id', $lead->customer_id],
+                    ['seller_id', $seller->id],
+                ])->exists();
+    
+                if (!$alreadyBid) {
+                    // Deduct credit (only if buyer has enough)
+                    $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
+    
+                    // $user = DB::table('users')->where('id', $lead->customer_id)->first();
+                    // if ($user && $user->total_credit >= $bidAmount) {
+                        DB::table('users')->where('id', $lead->customer_id)->decrement('total_credit', $bidAmount);
+    
+                        RecommendedLead::create([
+                            'lead_id'     => $lead->id,
+                            'buyer_id'    => $lead->customer_id,
+                            'seller_id'   => $seller->id,
+                            'service_id'  => $seller->service_id,
+                            'bid'         => $bidAmount,
+                            'distance'    => $seller->distance ?? 0
+                        ]);
+                        
+    
+                        $autoBidLeads[] = [
+                            'lead_id'   => $lead->id,
+                            'seller_id' => $seller->id,
+                        ];
+                        
+                        $bidsPlaced++;
+                    // }
+                }
+            }
+             // Mark autobid processed if any bid was placed or no sellers found
+                if ($bidsPlaced > 0) {
+                    LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
+                }
+        }
+    
+        return $autoBidLeads;
+    }
+
+
+    public function autoBidLeadsAfter5Min_old($fiveMinutesAgo)
     {
         $leads = LeadRequest::where('closed_status', 0)
         ->where('created_at', '<=', $fiveMinutesAgo)

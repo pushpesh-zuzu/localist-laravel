@@ -103,4 +103,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(LeadRequest::class, 'customer_id', 'id');
     }
+    
+    public function details()
+    {
+        return $this->hasOne(UserDetail::class, 'user_id', 'id');
+    }
 }
