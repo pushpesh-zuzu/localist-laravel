@@ -10,6 +10,7 @@ use App\Models\UserHiringHistory;
 use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
+use App\Models\ActivityLog;
 use App\Models\LeadRequest;
 use App\Models\SaveForLater;
 use App\Models\LeadStatus;
@@ -447,8 +448,18 @@ class LeadPreferenceController extends Controller
         // Strict matching on Questions & Answers
         $allLeads = $baseQuery->where('status','pending')->orderBy('id', 'DESC')->get();
         foreach ($allLeads as $key => $value) {
-            $value['profile_view'] = $value['customer']->name." viewed your profile";
-            $value['profile_view_time'] = $value['customer']->name." viewed your profile";
+            $isActivity = ActivityLog::where('to_user_id', $user_id) 
+                                 ->where('from_user_id', $value->customer_id)
+                                 ->where('activity_name','Viewed your profile') 
+                                 ->first(); 
+            if(!empty($isActivity)){
+                $value['profile_view'] = $value['customer']->name." viewed your profile";
+                $value['profile_view_time'] = $isActivity->created_at->diffForHumans;
+            }else{
+                $value['profile_view'] = [];
+                $value['profile_view_time'] = [];
+            }                     
+           
         }
         $preferenceMap = $this->getUserPreferenceMap($user_id);
 
