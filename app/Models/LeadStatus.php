@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class LeadStatus extends Model
 {
-    protected $fillable = ['lead_id','status'];
+    protected $fillable = ['lead_id','status','user_id','clicked_from'];
 }

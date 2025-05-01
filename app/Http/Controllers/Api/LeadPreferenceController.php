@@ -519,7 +519,13 @@ class LeadPreferenceController extends Controller
     public function addHiredLeads(Request $request)
     {
         $aVals = $request->all();
-        // $
+        $leads = LeadRequest::where('id',$aVals['lead_id'])->first();
+        $users = User::where('id',$leads->customer_id)->pluck('name')->first();
+        if(!empty($leads)){
+            $leads->update(['status' => $aVals['status_type']]);
+        }
+        $sendmessage = 'You hired '.$users;
+        return $this->sendResponse($sendmessage, []);
     }
 
     // public function sortByLeadsEntries(Request $request)

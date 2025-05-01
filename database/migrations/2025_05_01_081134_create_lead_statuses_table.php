@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('lead_statuses', function (Blueprint $table) {
             $table->id();
             $table->integer('lead_id')->nullable();
+            $table->integer('user_id')->nullable();
+            $table->integer('clicked_from')->nullable()->comment('1 = seller, 2 = buyer');
             $table->string('status')->nullable();
             $table->timestamps();
         });

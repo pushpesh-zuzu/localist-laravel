@@ -1053,7 +1053,14 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
-            
+            if(empty($isDataExists)){
+                LeadStatus::create([
+                   'lead_id' => $aVals['lead_id'],
+                    'user_id' => $aVals['user_id'],
+                    'status' => 'pending',
+                    'clicked_from' => 2,
+                ]);  
+            }   
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
@@ -1078,15 +1085,18 @@ class RecommendedLeadsController extends Controller
                         ->where('user_id',$aVals['buyer_id'])  
                         ->where('lead_id',$aVals['lead_id'])
                         ->delete();
-                         
+                        
+            if(empty($isDataExists)){
+                LeadStatus::create([
+                    'lead_id' => $aVals['lead_id'],
+                    'user_id' => $aVals['user_id'],
+                    'status' => 'pending',
+                    'clicked_from' => 1,
+                ]);  
+            }               
             DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
-        if(empty($isDataExists)){
-            LeadStatus::create([
-                'lead_id' => $aVals['lead_id'],
-                'status' => 'pending'
-            ]);  
-        }   
+       
         // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
@@ -1221,7 +1231,9 @@ class RecommendedLeadsController extends Controller
         if(empty($isDataExists)){
             LeadStatus::create([
                 'lead_id' => $leadId,
-                'status' => 'pending'
+                'user_id' => $buyerId,
+                'status' => 'pending',
+                'clicked_from' => 2,
             ]);  
         }   
         return $this->sendResponse(__('Bids inserted successfully'), [
@@ -1310,10 +1322,21 @@ class RecommendedLeadsController extends Controller
                             'lead_id'   => $lead->id,
                             'seller_id' => $seller->id,
                         ];
+
+                        if(empty($isDataExists)){
+                            LeadStatus::create([
+                                'lead_id' => $lead->id,
+                                'user_id' => $lead->customer_id,
+                                'status' => 'pending',
+                                'clicked_from' => 2,
+                            ]);  
+                        }
                         
                         $bidsPlaced++;
                     // }
                 }
+
+                
             }
              // Mark autobid processed if any bid was placed or no sellers found
                 if ($bidsPlaced > 0) {
@@ -1321,12 +1344,7 @@ class RecommendedLeadsController extends Controller
                 }
                   
         }
-        if(empty($isDataExists)){
-            LeadStatus::create([
-                'lead_id' => $aVals['lead_id'],
-                'status' => 'pending'
-            ]);  
-        }
+       
         return $autoBidLeads;
     }
 
