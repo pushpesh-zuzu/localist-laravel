@@ -1405,7 +1405,11 @@ class LeadPreferenceController extends Controller
             $modes = 'Now Autobid is in active state';
         }
         $autobidpause = $aVals['autobid_pause'];
-        return $this->sendResponse($modes, $autobidpause);   
+        // return $this->sendResponse($modes, $autobidpause); 
+        return $this->sendResponse(__('Bids inserted successfully'), [
+            'message' => $modes,
+            'autobidpause' => $autobidpause
+        ]);  
         // $isDataExists = User::where('id',$aVals['user_id'])->first();
         // if(!empty($isDataExists)){
         //     $switch =  $isDataExists->update(['autobid_pause' => $aVals['autobid_pause']]);
