@@ -91,7 +91,8 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
         Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
-        Route::post('/sort-by-leads-date', [LeadPreferenceController::class, 'sortByLeadsEntries']);
+        // Route::post('/sort-by-leads-date', [LeadPreferenceController::class, 'sortByLeadsEntries']);
+        Route::post('/get-pending-leads', [LeadPreferenceController::class, 'getPendingLeads']);
         
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
@@ -123,6 +124,7 @@ Route::prefix('users')->group(function () {
         Route::post('/add-multiple-manual-bid', [RecommendedLeadsController::class, 'addMultipleManualBid']);
         Route::post('/switch-autobid', [RecommendedLeadsController::class, 'switchRecommendedLeads']);
         Route::post('/autobid-list', [RecommendedLeadsController::class, 'getRecommendedLeads']);
+        // Route::post('/location-filter', [RecommendedLeadsController::class, 'locationFilter']);
         Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
