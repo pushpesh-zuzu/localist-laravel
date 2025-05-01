@@ -527,23 +527,23 @@ class LeadPreferenceController extends Controller
         if(!empty($leads)){
             if($leads->status != 'hired'){
                 $leads->update(['status' => $aVals['status_type']]);
+                $sendmessage = 'You hired '.$users;
+                if(empty($isDataExists)){
+                    LeadStatus::create([
+                        'lead_id' => $aVals['lead_id'],
+                        'user_id' => $aVals['user_id'],
+                        'status' => $aVals['status_type'],
+                        'clicked_from' => 1,
+                    ]);  
+                }
             }else{
                 return $this->sendError(__("You already hired this buyer, now you can't change this status"), 404);
             }
         }else{
+            $sendmessage = 'No Leads found';
             return $this->sendResponse(__("No Leads found"), []);
         }
         
-        
-        if(empty($isDataExists)){
-            LeadStatus::create([
-                'lead_id' => $aVals['lead_id'],
-                'user_id' => $aVals['user_id'],
-                'status' => $aVals['status_type'],
-                'clicked_from' => 1,
-            ]);  
-        }
-        $sendmessage = 'You hired '.$users;
         return $this->sendResponse($sendmessage, []);
     }
 
