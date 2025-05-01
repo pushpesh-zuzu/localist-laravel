@@ -1342,11 +1342,20 @@ class LeadPreferenceController extends Controller
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             $isonline  = $aVals['is_online'];
             // return $this->sendResponse('Switched update', $isonline);   
-            return $this->sendResponse(__('Switched update'), [
-                'isonline' => $isonline
+            return $this->sendResponse(__('Switched update'), []);
+        }      
+        return $this->sendError('User not found');                                              
+    }
+
+    public function getOnlineRemoteSwitch(Request $request){ 
+        $aVals = $request->all();
+        $isDataExists = User::where('id',$aVals['user_id'])->first();
+        if(!empty($isDataExists)){
+            return $this->sendResponse(__('Online Switch Data'), [
+                'isonline' => $isDataExists->is_online
             ]);
         }      
-        return $this->sendError('Something went wrong.');                                              
+        return $this->sendError('User not found');                                              
     }
 
     public function totalCredit(Request $request){ 
@@ -1411,17 +1420,17 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse($modes, $autobidpause); 
         return $this->sendResponse($modes, [
             'autobidpause' => $autobidpause
-        ]);  
-        // $isDataExists = User::where('id',$aVals['user_id'])->first();
-        // if(!empty($isDataExists)){
-        //     $switch =  $isDataExists->update(['autobid_pause' => $aVals['autobid_pause']]);
-        //     if($aVals['autobid_pause'] == 1){
-        //         $modes = 'Paused Autobid for 7 days';
-        //     }else{
-        //         $modes = 'Now Autobid is in active state';
-        //     }
-        //     return $this->sendResponse($modes, []);   
-        // }      
-        // return $this->sendError('Something went wrong.');                                              
+        ]);                                          
+    }
+
+    public function getSevenDaysAutobidPause(Request $request){ 
+        $aVals = $request->all();
+        $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
+        if(isset($userdetails) && $userdetails != ''){
+            return $this->sendResponse('Seven Days autobid pause data', [
+                'autobidpause' => $userdetails->autobid_pause
+            ]);  
+        }
+            return $this->sendResponse('Data not found', []);                                  
     }
 }

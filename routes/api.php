@@ -81,6 +81,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-seller-recommended-leads', [LeadPreferenceController::class, 'getSellerRecommendedLeads']);
         Route::post('/get-service-wise-location', [LeadPreferenceController::class, 'getServiceWiseLocation']);
         Route::post('/seven-days-autobid-pause', [LeadPreferenceController::class, 'sevenDaysAutobidPause']);
+        Route::post('get-seven-days-autobid-pause', [LeadPreferenceController::class, 'getSevenDaysAutobidPause']);
         Route::post('/get-save-for-later-list', [LeadPreferenceController::class, 'getSaveForLaterList']);
         Route::post('/get-lead-preferences', [LeadPreferenceController::class, 'getleadpreferences']);
         Route::post('/get_user_locations', [LeadPreferenceController::class, 'getUserLocations']);
@@ -103,6 +104,7 @@ Route::prefix('users')->group(function () {
         // Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);
         Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
         Route::post('/online-remote-switch', [LeadPreferenceController::class, 'onlineRemoteSwitch']);
+        Route::post('/get-online-remote-switch', [LeadPreferenceController::class, 'getOnlineRemoteSwitch']);
         Route::post('/total-credit', [LeadPreferenceController::class, 'totalCredit']);
         
         Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
