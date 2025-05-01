@@ -106,18 +106,18 @@ class MyRequestController extends Controller
                     $dataUser['password'] = $password;
                     
                     //send registration mail
-                    Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
-                        $message->from('info@localists.com');
-                        $message->to($dataUser['email']);
-                        $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
-                    });
+                    // Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
+                    //     $message->from('info@localists.com');
+                    //     $message->to($dataUser['email']);
+                    //     $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
+                    // });
 
-                    //send otp mail
-                    Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
-                        $message->from('info@localists.com');
-                        $message->to($dataUser['email']);
-                        $message->subject("Verify your phone number");
-                    });
+                    // //send otp mail
+                    // Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
+                    //     $message->from('info@localists.com');
+                    //     $message->to($dataUser['email']);
+                    //     $message->subject("Verify your phone number");
+                    // });
                 }
                 $user = User::where('id',$euId)->first();
                 $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
