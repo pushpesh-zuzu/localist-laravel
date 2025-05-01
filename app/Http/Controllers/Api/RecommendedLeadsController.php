@@ -1085,7 +1085,7 @@ class RecommendedLeadsController extends Controller
                         ->where('user_id',$aVals['buyer_id'])  
                         ->where('lead_id',$aVals['lead_id'])
                         ->delete();
-                        
+
             if(empty($isDataExists)){
                 LeadStatus::create([
                     'lead_id' => $aVals['lead_id'],
@@ -1266,85 +1266,87 @@ class RecommendedLeadsController extends Controller
     
     public function autoBidLeadsAfter5Min($fiveMinutesAgo)
     {
-        $leads = LeadRequest::where('closed_status', 0)
-            ->where('should_autobid', 0)
-            ->where('created_at', '<=', $fiveMinutesAgo)
-            ->get();
-    
-        $autoBidLeads = [];
-        
-        foreach ($leads as $lead) {
-             $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
-            $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
-    
-            if ($existingBids >= 5) {
-                continue; // Skip if already has 5 bids
-            }
-    
-            // Call getManualLeads with a request object
-            $manualLeadRequest = new Request(['lead_id' => $lead->id]);
-            $manualLeadsResponse = $this->getManualLeads($manualLeadRequest)->getData();
-            //  $manualLeadsResponse = $this->getManualLeads($lead->id)->getData();
-    
-            if (empty($manualLeadsResponse->data[0]->sellers)) {
-                LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
-                continue;
-            }
-    
-            $sellers = collect($manualLeadsResponse->data[0]->sellers)->take(5 - $existingBids);
-            $bidsPlaced = 0;
-            foreach ($sellers as $seller) {
-                $alreadyBid = RecommendedLead::where([
-                    ['lead_id', $lead->id],
-                    ['buyer_id', $lead->customer_id],
-                    ['seller_id', $seller->id],
-                ])->exists();
-    
-                if (!$alreadyBid) {
-                    // Deduct credit (only if buyer has enough)
-                    $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
-    
-                    // $user = DB::table('users')->where('id', $lead->customer_id)->first();
-                    // if ($user && $user->total_credit >= $bidAmount) {
-                        DB::table('users')->where('id', $lead->customer_id)->decrement('total_credit', $bidAmount);
-    
-                        RecommendedLead::create([
-                            'lead_id'     => $lead->id,
-                            'buyer_id'    => $lead->customer_id,
-                            'seller_id'   => $seller->id,
-                            'service_id'  => $seller->service_id,
-                            'bid'         => $bidAmount,
-                            'distance'    => $seller->distance ?? 0
-                        ]);
-                        
-    
-                        $autoBidLeads[] = [
-                            'lead_id'   => $lead->id,
-                            'seller_id' => $seller->id,
-                        ];
-
-                        if(empty($isDataExists)){
-                            LeadStatus::create([
-                                'lead_id' => $lead->id,
-                                'user_id' => $lead->customer_id,
-                                'status' => 'pending',
-                                'clicked_from' => 2,
-                            ]);  
-                        }
-                        
-                        $bidsPlaced++;
-                    // }
-                }
-
-                
-            }
-             // Mark autobid processed if any bid was placed or no sellers found
-                if ($bidsPlaced > 0) {
-                    LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
-                }
-                  
-        }
        
+        $leads = LeadRequest::where('closed_status', 0)
+                ->where('should_autobid', 0)
+                ->where('created_at', '<=', $fiveMinutesAgo)
+                ->get();
+        
+            $autoBidLeads = [];
+            
+            foreach ($leads as $lead) {
+                $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
+                $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
+        
+                if ($existingBids >= 5) {
+                    continue; // Skip if already has 5 bids
+                }
+        
+                // Call getManualLeads with a request object
+                $manualLeadRequest = new Request(['lead_id' => $lead->id]);
+                $manualLeadsResponse = $this->getManualLeads($manualLeadRequest)->getData();
+                //  $manualLeadsResponse = $this->getManualLeads($lead->id)->getData();
+        
+                if (empty($manualLeadsResponse->data[0]->sellers)) {
+                    LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
+                    continue;
+                }
+        
+                $sellers = collect($manualLeadsResponse->data[0]->sellers)->take(5 - $existingBids);
+                $bidsPlaced = 0;
+                foreach ($sellers as $seller) {
+                    $userdetails = UserDetail::where('user_id',$seller->id)->first();
+                    if(!empty($userdetails) && $userdetails->autobid_pause == 0){
+                        $alreadyBid = RecommendedLead::where([
+                            ['lead_id', $lead->id],
+                            ['buyer_id', $lead->customer_id],
+                            ['seller_id', $seller->id],
+                        ])->exists();
+            
+                        if (!$alreadyBid) {
+                            // Deduct credit (only if buyer has enough)
+                            $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
+            
+                            // $user = DB::table('users')->where('id', $lead->customer_id)->first();
+                            // if ($user && $user->total_credit >= $bidAmount) {
+                                DB::table('users')->where('id', $lead->customer_id)->decrement('total_credit', $bidAmount);
+            
+                                RecommendedLead::create([
+                                    'lead_id'     => $lead->id,
+                                    'buyer_id'    => $lead->customer_id,
+                                    'seller_id'   => $seller->id,
+                                    'service_id'  => $seller->service_id,
+                                    'bid'         => $bidAmount,
+                                    'distance'    => $seller->distance ?? 0
+                                ]);
+                                
+            
+                                $autoBidLeads[] = [
+                                    'lead_id'   => $lead->id,
+                                    'seller_id' => $seller->id,
+                                ];
+
+                                if(empty($isDataExists)){
+                                    LeadStatus::create([
+                                        'lead_id' => $lead->id,
+                                        'user_id' => $lead->customer_id,
+                                        'status' => 'pending',
+                                        'clicked_from' => 2,
+                                    ]);  
+                                }
+                                
+                                $bidsPlaced++;
+                            // }
+                        }
+                    }
+                }
+                // Mark autobid processed if any bid was placed or no sellers found
+                    if ($bidsPlaced > 0) {
+                        LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
+                    }
+                    
+            }
+        
         return $autoBidLeads;
     }
 
