@@ -126,6 +126,8 @@ Route::prefix('users')->group(function () {
 
         Route::post('/add-multiple-manual-bid', [RecommendedLeadsController::class, 'addMultipleManualBid']);
         Route::post('/switch-autobid', [RecommendedLeadsController::class, 'switchRecommendedLeads']);
+        Route::post('/buyer-view-profile', [RecommendedLeadsController::class, 'buyerViewProfile']);
+        Route::post('/buyer-activities', [RecommendedLeadsController::class, 'buyerActivities']);
         Route::post('/autobid-list', [RecommendedLeadsController::class, 'getRecommendedLeads']);
         // Route::post('/location-filter', [RecommendedLeadsController::class, 'locationFilter']);
         Route::post('/manual-leads', [RecommendedLeadsController::class, 'getManualLeads']);

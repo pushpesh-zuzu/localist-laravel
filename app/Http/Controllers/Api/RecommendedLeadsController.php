@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Models\UserServiceLocation;
+use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\SaveForLater;
-use App\Models\ServiceQuestion;
 use App\Models\LeadRequest;
+use App\Models\ActivityLog;
 use App\Models\UserService;
 use App\Models\UserDetail;
 use App\Models\LeadStatus;
@@ -1026,7 +1027,6 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-
     public function addManualBid(Request $request){
         $aVals = $request->all();
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
@@ -1034,11 +1034,15 @@ class RecommendedLeadsController extends Controller
         }
         $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
-            
+           
         if($aVals['bidtype'] == 'reply'){
             $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
             $bidCheck = $bidsUser->where('seller_id',$aVals['seller_id'])->first();
+            $isActivityExists = ActivityLog::where('lead_id',$aVals['lead_id'])
+                                           ->where('from_user_id',$aVals['user_id']) 
+                                           ->where('to_user_id',$aVals['seller_id']) 
+                                           ->first(); 
             if($bidCount==5){
                 return $this->sendError(__('Bid Limit exceed'), 404);
             }
@@ -1061,6 +1065,14 @@ class RecommendedLeadsController extends Controller
                     'clicked_from' => 2,
                 ]);  
             }   
+            if(empty($isActivityExists)){
+                ActivityLog::create([
+                     'lead_id' => $aVals['lead_id'],
+                     'from_user_id' => $aVals['user_id'],
+                     'to_user_id' => $aVals['seller_id'],
+                     'activity_name' => "Requested a callback",
+                 ]);  
+            }
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
@@ -1373,7 +1385,6 @@ class RecommendedLeadsController extends Controller
     
     public function autoBidLeadsAfter5Min($fiveMinutesAgo)
     {
-       
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
@@ -1593,5 +1604,38 @@ class RecommendedLeadsController extends Controller
         return $finalSellers;
     }
 
+    public function buyerViewProfile(Request $request)
+    {
+        $aVals = $request->all();
+        $isActivity = ActivityLog::where('lead_id',$aVals['lead_id'])
+                                 ->where('to_user_id',$aVals['seller_id']) 
+                                 ->where('from_user_id',$aVals['user_id'])
+                                 ->where('activity_name','Viewed your profile')
+                                 ->first(); 
+        if(empty($isActivity)){
+            ActivityLog::create([
+                'lead_id' => $aVals['lead_id'],
+                'from_user_id' => $aVals['user_id'],
+                'to_user_id' => $aVals['seller_id'],
+                'activity_name' => "Viewed your profile",
+            ]); 
+            
+        }
+        return $this->sendResponse(__('Viewed your Profile'),[]);
+        // else{
+        //     return $this->sendResponse(__('Already viewed your Profile'),[]);
+        // }                         
+    }
+
+    public function buyerActivities(Request $request)
+    {
+        $aVals = $request->all();
+        $isActivity = ActivityLog::where('to_user_id', $aVals['user_id']) 
+                                 ->whereIn('from_user_id', [$aVals['buyer_id']]) 
+                                 ->get(); 
+        return $this->sendResponse(__('Activity log'),$isActivity);     
+    }
+
+    
 
 }   
