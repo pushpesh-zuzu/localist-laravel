@@ -1406,7 +1406,7 @@ class LeadPreferenceController extends Controller
         }
         $autobidpause = $aVals['autobid_pause'];
         // return $this->sendResponse($modes, $autobidpause); 
-        return $this->sendResponse(__$modes, [
+        return $this->sendResponse($modes, [
             'autobidpause' => $autobidpause
         ]);  
         // $isDataExists = User::where('id',$aVals['user_id'])->first();
