@@ -931,7 +931,7 @@ class RecommendedLeadsController extends Controller
             // $user = User::find($userId);
             $user = User::where('id', $userId)
             ->whereHas('details', function ($query) {
-                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+                $query->where('is_autobid', 1);
             })->first();
 
             if (!$user) return null; // Skip if autobid not allowed
