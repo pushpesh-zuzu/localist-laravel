@@ -1341,7 +1341,10 @@ class LeadPreferenceController extends Controller
         if(!empty($isDataExists)){
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             $isonline  = $aVals['is_online'];
-            return $this->sendResponse('Switched update', $isonline);   
+            // return $this->sendResponse('Switched update', $isonline);   
+            return $this->sendResponse(__('Switched update'), [
+                'isonline' => $isonline
+            ]);
         }      
         return $this->sendError('Something went wrong.');                                              
     }
