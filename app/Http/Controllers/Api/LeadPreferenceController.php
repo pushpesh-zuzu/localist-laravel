@@ -426,8 +426,6 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $requestPostcode = $request->postcode ?? null;
-        $requestMiles = $request->miles ?? null;
         $baseQuery = $this->basequery($user_id);
 
         // Exclude saved leads
@@ -469,6 +467,59 @@ class LeadPreferenceController extends Controller
         });
 
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
+    }
+
+    public function getHiredLeads(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $baseQuery = $this->basequery($user_id);
+
+        // Exclude saved leads
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        // Merge both exclusion arrays
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+
+        if (!empty($excludedLeadIds)) {
+        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        }
+
+        
+        // Strict matching on Questions & Answers
+        $allLeads = $baseQuery->where('status','hired')->orderBy('id', 'DESC')->get();
+        $preferenceMap = $this->getUserPreferenceMap($user_id);
+
+        $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
+            $leadQuestions = json_decode($lead->questions, true);
+            if (!is_array($leadQuestions)) return false;
+
+            foreach ($leadQuestions as $q) {
+                $buyerAnswers = (array) $q['ans'];
+
+                foreach ($buyerAnswers as $buyerAnswer) {
+                    $buyerAnswer = trim($buyerAnswer);
+
+                    // If buyer selected something that seller has NOT selected, reject
+                    if (!isset($preferenceMap[$buyerAnswer])) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        });
+
+        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
+    }
+
+    public function addHiredLeads(Request $request)
+    {
+        $aVals = $request->all();
+        // $
     }
 
     // public function sortByLeadsEntries(Request $request)

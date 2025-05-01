@@ -13,6 +13,7 @@ use App\Models\ServiceQuestion;
 use App\Models\LeadRequest;
 use App\Models\UserService;
 use App\Models\UserDetail;
+use App\Models\LeadStatus;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\RecommendedLead;
@@ -1032,6 +1033,8 @@ class RecommendedLeadsController extends Controller
             return $this->sendError(__('Lead request not found'), 404);
         }
         $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
+        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
+            
         if($aVals['bidtype'] == 'reply'){
             $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
@@ -1050,6 +1053,7 @@ class RecommendedLeadsController extends Controller
                 'bid' => $aVals['bid'], 
                 'distance' => $aVals['distance'], 
             ]); 
+            
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
@@ -1074,8 +1078,15 @@ class RecommendedLeadsController extends Controller
                         ->where('user_id',$aVals['buyer_id'])  
                         ->where('lead_id',$aVals['lead_id'])
                         ->delete();
+                         
             DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
+        if(empty($isDataExists)){
+            LeadStatus::create([
+                'lead_id' => $aVals['lead_id'],
+                'status' => 'pending'
+            ]);  
+        }   
         // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
@@ -1135,8 +1146,8 @@ class RecommendedLeadsController extends Controller
         $buyerId = $aVals['user_id'];
         $leadId = $aVals['lead_id'];
         $inserted = 0;
-    
-        LeadRequest::where('id',$aVals['lead_id'])->update(['should_autobid'=>1]);
+        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
+        
         // Step 1: Insert manual bids
         foreach ($aVals['seller_id'] as $index => $sellerId) {
             $alreadyExists = RecommendedLead::where('buyer_id', $buyerId)
@@ -1206,7 +1217,13 @@ class RecommendedLeadsController extends Controller
                 }
             }
         }
-    
+        LeadRequest::where('id',$aVals['lead_id'])->update(['should_autobid'=>1]);
+        if(empty($isDataExists)){
+            LeadStatus::create([
+                'lead_id' => $leadId,
+                'status' => 'pending'
+            ]);  
+        }   
         return $this->sendResponse(__('Bids inserted successfully'), [
             'inserted_count' => $inserted,
             'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
@@ -1243,7 +1260,7 @@ class RecommendedLeadsController extends Controller
             ->get();
     
         $autoBidLeads = [];
-    
+        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
         foreach ($leads as $lead) {
              
             $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
@@ -1302,8 +1319,14 @@ class RecommendedLeadsController extends Controller
                 if ($bidsPlaced > 0) {
                     LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
                 }
+                  
         }
-    
+        if(empty($isDataExists)){
+            LeadStatus::create([
+                'lead_id' => $aVals['lead_id'],
+                'status' => 'pending'
+            ]);  
+        }
         return $autoBidLeads;
     }
 

@@ -93,6 +93,8 @@ Route::prefix('users')->group(function () {
         Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
         // Route::post('/sort-by-leads-date', [LeadPreferenceController::class, 'sortByLeadsEntries']);
         Route::post('/get-pending-leads', [LeadPreferenceController::class, 'getPendingLeads']);
+        Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
+        Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
         
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
