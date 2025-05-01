@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\UserServiceLocation;
+use App\Models\UserHiringHistory;
 use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
@@ -412,9 +413,9 @@ class LeadPreferenceController extends Controller
         if ($creditFilter) {
             $filteredLeads = $filteredLeads->filter(function ($lead) use ($creditFilter) {
                 return match ($creditFilter) {
-                    'High' => $lead->credit_score >= 75,
-                    'Medium' => $lead->credit_score >= 50 && $lead->credit_score < 75,
-                    'Low' => $lead->credit_score < 50,
+                    'High' => $lead->credit_score >= 40,
+                    'Medium' => $lead->credit_score >= 20 && $lead->credit_score < 30,
+                    'Low' => $lead->credit_score < 10,
                     default => true,
                 };
             });
@@ -546,6 +547,26 @@ class LeadPreferenceController extends Controller
             $sendmessage = 'No Leads found';
         }
         
+        return $this->sendResponse($sendmessage, []);
+    }
+
+    public function submitLeads(Request $request)
+    {
+        $aVals = $request->all();
+        $leads = UserHiringHistory::where('lead_id',$aVals['lead_id'])
+                                  ->where('user_id',$aVals['seller_id'])
+                                  ->where('name',$aVals['name'])
+                                  ->first();
+        if (empty($leads)) {
+            UserHiringHistory::create([
+                'lead_id' => $aVals['lead_id'],
+                'user_id' => $aVals['seller_id'],
+                'name' => $aVals['name']
+            ]);
+            $sendmessage = 'Request submited sucessfully';
+        } else {
+            $sendmessage = 'Already you hired this user';
+        }
         return $this->sendResponse($sendmessage, []);
     }
 
