@@ -11,6 +11,7 @@ use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\LeadRequest;
 use App\Models\SaveForLater;
+use App\Models\LeadStatus;
 use App\Models\UserService;
 use App\Models\UserDetail;
 use App\Models\CreditList;
@@ -521,8 +522,17 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $leads = LeadRequest::where('id',$aVals['lead_id'])->first();
         $users = User::where('id',$leads->customer_id)->pluck('name')->first();
+        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status',$aVals['status_type'])->first();
         if(!empty($leads)){
             $leads->update(['status' => $aVals['status_type']]);
+        }
+        if(empty($isDataExists)){
+            LeadStatus::create([
+                'lead_id' => $aVals['lead_id'],
+                'user_id' => $aVals['user_id'],
+                'status' => $aVals['status_type'],
+                'clicked_from' => 1,
+            ]);  
         }
         $sendmessage = 'You hired '.$users;
         return $this->sendResponse($sendmessage, []);
