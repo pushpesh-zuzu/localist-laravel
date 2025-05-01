@@ -446,6 +446,10 @@ class LeadPreferenceController extends Controller
         
         // Strict matching on Questions & Answers
         $allLeads = $baseQuery->where('status','pending')->orderBy('id', 'DESC')->get();
+        foreach ($allLeads as $key => $value) {
+            $value['profile_view'] = $value['customer']->name." viewed your profile";
+            $value['profile_view_time'] = $value['customer']->name." viewed your profile";
+        }
         $preferenceMap = $this->getUserPreferenceMap($user_id);
 
         $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {

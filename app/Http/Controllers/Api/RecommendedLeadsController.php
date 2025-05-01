@@ -931,7 +931,7 @@ class RecommendedLeadsController extends Controller
             // $user = User::find($userId);
             $user = User::where('id', $userId)
             ->whereHas('details', function ($query) {
-                $query->where('is_autobid', 1);
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
             })->first();
 
             if (!$user) return null; // Skip if autobid not allowed
@@ -1150,7 +1150,7 @@ class RecommendedLeadsController extends Controller
         }  
     } 
 
-    public function addMultipleManualBid111(Request $request)
+    public function addMultipleManualBid(Request $request)
     {
         $aVals = $request->all();
         $buyerId = $aVals['user_id'];
@@ -1241,7 +1241,7 @@ class RecommendedLeadsController extends Controller
         ]);
     }
 
-    public function addMultipleManualBid(Request $request)
+    public function addMultipleManualBid111(Request $request)
     {
         $aVals = $request->all();
         $buyerId = $aVals['user_id'];
