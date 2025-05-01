@@ -523,9 +523,18 @@ class LeadPreferenceController extends Controller
         $leads = LeadRequest::where('id',$aVals['lead_id'])->first();
         $users = User::where('id',$leads->customer_id)->pluck('name')->first();
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status',$aVals['status_type'])->first();
+
         if(!empty($leads)){
-            $leads->update(['status' => $aVals['status_type']]);
+            if($leads->status != 'hired'){
+                $leads->update(['status' => $aVals['status_type']]);
+            }else{
+                return $this->sendError(__("You already hired this buyer, now you can't change this status"), 404);
+            }
+        }else{
+            return $this->sendResponse(__("No Leads found"), []);
         }
+        
+        
         if(empty($isDataExists)){
             LeadStatus::create([
                 'lead_id' => $aVals['lead_id'],
