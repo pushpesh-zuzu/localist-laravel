@@ -523,25 +523,27 @@ class LeadPreferenceController extends Controller
         $leads = LeadRequest::where('id',$aVals['lead_id'])->first();
         $users = User::where('id',$leads->customer_id)->pluck('name')->first();
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status',$aVals['status_type'])->first();
-
-        if(!empty($leads)){
-            if($leads->status != 'hired'){
-                $leads->update(['status' => $aVals['status_type']]);
-                $sendmessage = 'You hired '.$users;
-                if(empty($isDataExists)){
-                    LeadStatus::create([
-                        'lead_id' => $aVals['lead_id'],
-                        'user_id' => $aVals['user_id'],
-                        'status' => $aVals['status_type'],
-                        'clicked_from' => 1,
-                    ]);  
-                }
-            }else{
+        $statustype = $aVals['status_type'];
+        if (!empty($leads)) {
+            if ($leads->status == "hired" && $aVals['status_type'] == "hired") {
                 return $this->sendError(__("You already hired this buyer, now you can't change this status"), 404);
             }
-        }else{
+        
+            // Allow updating to 'hired' or re-assigning the same status
+            LeadRequest::where('id',$aVals['lead_id'])->update(['status' => $statustype]);
+        
+            $sendmessage = 'You hired ' . $users;
+        
+            if (empty($isDataExists)) {
+                LeadStatus::create([
+                    'lead_id' => $aVals['lead_id'],
+                    'user_id' => $aVals['user_id'],
+                    'status' => $aVals['status_type'],
+                    'clicked_from' => 1,
+                ]);
+            }
+        } else {
             $sendmessage = 'No Leads found';
-            return $this->sendResponse(__("No Leads found"), []);
         }
         
         return $this->sendResponse($sendmessage, []);
