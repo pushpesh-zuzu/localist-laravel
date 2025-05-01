@@ -1272,9 +1272,9 @@ class RecommendedLeadsController extends Controller
             ->get();
     
         $autoBidLeads = [];
-        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
+        
         foreach ($leads as $lead) {
-             
+             $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
             $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
     
             if ($existingBids >= 5) {
