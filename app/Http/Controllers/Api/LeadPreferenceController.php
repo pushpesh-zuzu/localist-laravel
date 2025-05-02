@@ -507,7 +507,7 @@ class LeadPreferenceController extends Controller
     public function getHiredLeads(Request $request)
     {
         $aVals = $request->all();
-        $user_id = $request->user_id;
+        $user_id = $aVals['user_id'];
         $baseQuery = $this->basequery($user_id);
 
         // Exclude saved leads
