@@ -503,8 +503,47 @@ class LeadPreferenceController extends Controller
 
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
     }
-
+    
     public function getHiredLeads(Request $request)
+    {
+        $user_id = $request->user_id;
+    
+        // Get leads marked as "hired" by this seller
+        $hiredLeadIds = LeadStatus::where('user_id', $user_id)
+            ->where('status', 'hired')
+            ->pluck('lead_id')
+            ->toArray();
+    
+        if (empty($hiredLeadIds)) {
+            return $this->sendResponse(__('No Hired Leads'), []);
+        }
+    
+        $baseQuery = $this->basequery($user_id);
+        $allLeads = $baseQuery->whereIn('id', $hiredLeadIds)
+            ->orderBy('id', 'DESC')
+            ->get();
+    
+        // Apply question-answer strict matching
+        $preferenceMap = $this->getUserPreferenceMap($user_id);
+        $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
+            $leadQuestions = json_decode($lead->questions, true);
+            if (!is_array($leadQuestions)) return false;
+    
+            foreach ($leadQuestions as $q) {
+                $buyerAnswers = (array) $q['ans'];
+                foreach ($buyerAnswers as $buyerAnswer) {
+                    if (!isset($preferenceMap[trim($buyerAnswer)])) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    
+        return $this->sendResponse(__('Hired Lead Request Data'), $filteredLeads->values());
+    }
+
+    public function getHiredLeads11(Request $request)
     {
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
@@ -584,7 +623,7 @@ class LeadPreferenceController extends Controller
                 LeadStatus::create([
                     'lead_id' => $aVals['lead_id'],
                     'user_id' => $aVals['user_id'],
-                    'status' => $aVals['status_type'],
+                    'status' => $statustype,
                     'clicked_from' => 1,
                 ]);
             }
