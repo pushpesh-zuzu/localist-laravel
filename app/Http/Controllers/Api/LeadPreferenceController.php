@@ -387,14 +387,17 @@ class LeadPreferenceController extends Controller
         // Apply credit score filter using WHERE conditions
         if ($creditFilter) {
             $baseQuery = match ($creditFilter) {
-                'High'   => $baseQuery->where('credit_score', '>=', 40),
-                'Medium' => $baseQuery->whereBetween('credit_score', [20, 39]),
-                'Low'    => $baseQuery->where('credit_score', '<', 20),
+                'High'   => $baseQuery->where('credit_score', '>=', 21),
+                'Medium' => $baseQuery->whereBetween('credit_score', [5, 20]),
+                'Low'    => $baseQuery->where('credit_score', '<', 5),
+                // 'High'   => $baseQuery->where('credit_score', '>=', 40),
+                // 'Medium' => $baseQuery->whereBetween('credit_score', [20, 39]),
+                // 'Low'    => $baseQuery->where('credit_score', '<', 20),
                 default  => $baseQuery,
             };
         }
         // Sort by ID direction based on sort_type
-        $orderDirection = ($sortType === 'oldest') ? 'ASC' : 'DESC';
+        $orderDirection = ($sortType === 'Oldest') ? 'ASC' : 'DESC';
         // Strict matching on Questions & Answers
         $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
         $preferenceMap = $this->getUserPreferenceMap($user_id);
@@ -441,29 +444,35 @@ class LeadPreferenceController extends Controller
         $baseQuery = $this->basequery($user_id);
 
         // Exclude saved leads
-        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
+        // $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        // $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        // ->pluck('lead_id')
+        // ->toArray();
 
         // Merge both exclusion arrays
-        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+        // $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
 
-        if (!empty($excludedLeadIds)) {
-        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
-        }
+        // if (!empty($savedLeadIds)) {
+        // $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
+        // }
 
         
         // Strict matching on Questions & Answers
         $allLeads = $baseQuery->where('status','pending')->orderBy('id', 'DESC')->get();
         foreach ($allLeads as $key => $value) {
-            $isActivity = ActivityLog::where('to_user_id', $user_id) 
-                                 ->where('from_user_id', $value->customer_id)
-                                 ->where('activity_name','Viewed your profile') 
+            $isActivity = ActivityLog::where('to_user_id',$user_id) 
+                                 ->where('from_user_id',$value->customer_id)
+                                 ->latest() 
                                  ->first(); 
             if(!empty($isActivity)){
-                $value['profile_view'] = $value['customer']->name." viewed your profile";
-                $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                if($isActivity->activity_name == 'Requested a callback'){
+                    $value['profile_view'] = "Requested a callback";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }else{
+                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }
+                
             }else{
                 $value['profile_view'] = [];
                 $value['profile_view_time'] = [];
@@ -502,17 +511,17 @@ class LeadPreferenceController extends Controller
         $baseQuery = $this->basequery($user_id);
 
         // Exclude saved leads
-        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
+        // $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        // $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        // ->pluck('lead_id')
+        // ->toArray();
 
-        // Merge both exclusion arrays
-        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+        // // Merge both exclusion arrays
+        // $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
 
-        if (!empty($excludedLeadIds)) {
-        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
-        }
+        // if (!empty($excludedLeadIds)) {
+        // $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        // }
 
         
         // Strict matching on Questions & Answers
