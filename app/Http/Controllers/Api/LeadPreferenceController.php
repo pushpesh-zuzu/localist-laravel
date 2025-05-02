@@ -586,6 +586,7 @@ class LeadPreferenceController extends Controller
     public function submitLeads(Request $request)
     {
         $aVals = $request->all();
+        $leadsreq = LeadRequest::where('id',$aVals['lead_id'])->first();
         $leads = UserHiringHistory::where('lead_id',$aVals['lead_id'])
                                   ->where('user_id',$aVals['seller_id'])
                                   ->where('name',$aVals['name'])
@@ -596,6 +597,8 @@ class LeadPreferenceController extends Controller
                 'user_id' => $aVals['seller_id'],
                 'name' => $aVals['name']
             ]);
+            LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'hired']);
+            // $sendmessage = 'You hired this job';
             $sendmessage = 'Request submited sucessfully';
         } else {
             $sendmessage = 'Already you hired this user';
