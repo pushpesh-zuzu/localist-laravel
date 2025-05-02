@@ -454,7 +454,7 @@ class LeadPreferenceController extends Controller
                                  ->first(); 
             if(!empty($isActivity)){
                 $value['profile_view'] = $value['customer']->name." viewed your profile";
-                $value['profile_view_time'] = $isActivity->created_at->diffForHumans;
+                $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
             }else{
                 $value['profile_view'] = [];
                 $value['profile_view_time'] = [];
