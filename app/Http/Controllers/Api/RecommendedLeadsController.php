@@ -744,7 +744,175 @@ class RecommendedLeadsController extends Controller
         
         
     // }
+
     public function getManualLeads(Request $request)
+    {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) {
+            return $this->sendError(__('No Lead found'), 404);
+        }
+
+        $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
+
+        $serviceId = $lead->service_id;
+        $leadCreditScore = $lead->credit_score;
+        $leadPostcode = $lead->postcode;
+        $customerId = $lead->customer_id;
+        $questions = json_decode($lead->questions, true);
+        $serviceName = Category::find($serviceId)->name ?? '';
+
+        $userServices = UserService::where('service_id', $serviceId)
+            ->where('auto_bid', 1)
+            ->where('user_id', '!=', $customerId)
+            ->join('users', 'user_services.user_id', '=', 'users.id')
+            ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
+            ->select('user_services.user_id', 'users.total_credit')
+            ->get();
+
+        if ($userServices->isEmpty()) {
+            return $this->sendResponse(__('No Leads found'), [[
+                'service_name' => $serviceName,
+                'sellers' => []
+            ]]);
+        }
+
+        $sortedUserIds = $userServices->pluck('user_id')->toArray();
+        $nearbyPostcodes = $this->getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds);
+
+        $locationMatchedUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->whereIn('postcode', $nearbyPostcodes)
+            ->get()
+            ->groupBy('user_id');
+
+        if ($locationMatchedUsers->isEmpty()) {
+            return $this->sendResponse(__('No Leads found'), [[
+                'service_name' => $serviceName,
+                'sellers' => []
+            ]]);
+        }
+
+        $matchedUserIds = $locationMatchedUsers->keys()->toArray();
+
+        $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
+            ->pluck('id', 'questions')
+            ->toArray();
+
+        $questionFilters = collect($questions)
+            ->filter(function ($q) use ($questionTextToId) {
+                return is_array($q) && isset($q['ques']) && isset($questionTextToId[$q['ques']]);
+            })
+            ->map(function ($q) use ($questionTextToId) {
+                return [
+                    'question_id' => $questionTextToId[$q['ques']],
+                    'answer' => $q['ans'],
+                ];
+            });
+
+        $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+            ->where('service_id', $serviceId)
+            ->where(function ($query) use ($questionFilters) {
+                foreach ($questionFilters as $filter) {
+                    $answers = array_map('trim', explode(',', $filter['answer']));
+                    foreach ($answers as $ans) {
+                        $query->orWhere(function ($q2) use ($filter, $ans) {
+                            $q2->where('question_id', $filter['question_id'])
+                                ->where('answers', 'LIKE', '%' . $ans . '%');
+                        });
+                    }
+                }
+            })
+            ->with(['question' => function ($q) {
+                $q->select('id', 'questions as question_text');
+            }])
+            ->get();
+
+        $scoredUsers = $matchedPreferences->groupBy('user_id')->map(function ($prefs) {
+            return $prefs->count();
+        });
+
+        $existingBids = RecommendedLead::where('buyer_id', $customerId)
+            ->where('lead_id', $lead->id)
+            ->pluck('seller_id')
+            ->toArray();
+
+        // ✅ Get sellers who already got bids from 3 different buyers this week
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        $sellersWith3Bids = RecommendedLead::whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->select('seller_id')
+            ->groupBy('seller_id')
+            ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+            ->pluck('seller_id')
+            ->toArray();
+
+        $finalUsers = $scoredUsers->filter(function ($score) {
+            return $score > 0;
+        })->keys()->map(function ($userId) use (
+            $locationMatchedUsers,
+            $leadPostcode,
+            $leadCreditScore,
+            $scoredUsers,
+            $serviceName,
+            $serviceId,
+            $existingBids,
+            $sellersWith3Bids
+        ) {
+            if (in_array($userId, $existingBids)) {
+                return null;
+            }
+
+            if (in_array($userId, $sellersWith3Bids)) {
+                return null;
+            }
+
+            $user = User::where('id', $userId)
+                ->whereHas('details', function ($query) {
+                    $query->where('is_autobid', 1)->where('autobid_pause', 0);
+                })->first();
+
+            if (!$user) return null;
+
+            $userLocation = $locationMatchedUsers[$userId]->first();
+
+            $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
+            $miles = $distance !== "Distance not found"
+                ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
+                : null;
+
+            if ($miles === 0) return null;
+
+            return array_merge(
+                $user->toArray(),
+                [
+                    'credit_score' => $leadCreditScore,
+                    'service_name' => $serviceName,
+                    'service_id' => $serviceId,
+                    'distance' => $miles,
+                    'score' => $scoredUsers[$userId] ?? 0,
+                ]
+            );
+        })->filter()->sortBy('distance')->values();
+
+        if (count($finalUsers) > 0) {
+            return $this->sendResponse(__('AutoBid Data'), [[
+                'service_name' => $serviceName,
+                'baseurl' => url('/') . Storage::url('app/public/images/users'),
+                'sellers' => $finalUsers,
+                'bidcount' => $bidCount
+            ]]);
+        } else {
+            return $this->sendResponse(__('No Leads found'), [[
+                'service_name' => $serviceName,
+                'baseurl' => url('/') . Storage::url('app/public/images/users'),
+                'sellers' => [],
+                'bidcount' => $bidCount
+            ]]);
+        }
+    }
+
+    public function getManualLeads_without_3_Seller_condition(Request $request)
     {
         // Step 1: Get lead info
         $lead = LeadRequest::find($request->lead_id);
