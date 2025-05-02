@@ -35,6 +35,21 @@ Route::get('/install-api', function() {
     return 'DONE'; //Return anything
 });
 
+Route::get('/check-mail', function() {
+    $dataUser['email'] = 'pushpesh47@gmail.com';
+    $dataUser['name'] = 'Pushpesh';
+    $dataUser['service'] = 'Web Development';
+    $dataUser['password'] = '12345678';
+    $dataUser['otp'] = '1234';
+    Mail::send('emails.buyer_registration', $dataUser, function ($message) use ($dataUser) {
+            $message->to($dataUser['email']);
+            $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
+        });
+
+    return 'DONE'; //Return anything
+});
+
+
 // Route::get('/', function () {
 //     return view('dashboard');
 // })->middleware(['auth:admin', 'verified'])->name('dashboard');
