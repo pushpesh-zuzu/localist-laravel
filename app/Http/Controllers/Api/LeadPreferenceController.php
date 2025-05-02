@@ -508,6 +508,16 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
+
+          // Get only those leads where this seller was hired
+         $hiredLeadIds = RecommendedLead::where('seller_id', $user_id)
+                                        ->where('status', 'hired') // assuming this column tracks hiring
+                                        ->pluck('lead_id')
+                                        ->toArray();
+
+        if (empty($hiredLeadIds)) {
+            return $this->sendResponse(__('No Hired Leads'), []);
+        }
         $baseQuery = $this->basequery($user_id);
 
         // Exclude saved leads
@@ -525,7 +535,9 @@ class LeadPreferenceController extends Controller
 
         
         // Strict matching on Questions & Answers
-        $allLeads = $baseQuery->where('status','hired')->orderBy('id', 'DESC')->get();
+        $allLeads = $baseQuery->whereIn('id', $hiredLeadIds)
+        ->orderBy('id', 'DESC')
+        ->get();
         $preferenceMap = $this->getUserPreferenceMap($user_id);
 
         $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
