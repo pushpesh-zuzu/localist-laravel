@@ -1718,6 +1718,7 @@ class RecommendedLeadsController extends Controller
         $now = Carbon::now();
         $fiveMinutesAgo = $now->copy()->subMinutes(1);
         $twoWeeksAgo = $now->copy()->subWeeks(2);
+        $sevenDaysAgo = $now->copy()->subDays(7);
         // $twoWeeksAgo = Carbon::now()->subWeeks(2);
         // $fiveMinutesAgo = $now->subMinutes(5);
         // --------- Auto-Close Logic (after 2 weeks) ---------
@@ -1730,8 +1731,12 @@ class RecommendedLeadsController extends Controller
         if($fiveMinutes){
             return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
         }
+        // --------- 7 days after reactivate Logic  ---------
+        $sevenDays = self::reactivateAutoBidAfter7Days($sevenDaysAgo);
         // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
-
+        if($sevenDays){
+            return response()->json(['message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.']);
+        }
         
     }
     
@@ -1818,6 +1823,27 @@ class RecommendedLeadsController extends Controller
             }
         
         return $autoBidLeads;
+    }
+
+    public function reactivateAutoBidAfter7Days($sevenDaysAgo)
+    {
+        
+        // Get all sellers whose auto-bid is paused and last updated more than 7 days ago
+        $sellersToUnpause = UserDetail::where('autobid_pause', 1)
+            ->where('updated_at', '<=', $sevenDaysAgo)
+            ->get();
+
+        foreach ($sellersToUnpause as $seller) {
+            $seller->update([
+                'autobid_pause' => 0
+            ]);
+        }
+
+        return $sellersToUnpause;
+        // return response()->json([
+        //     'message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.',
+        //     'total_updated' => count($sellersToUnpause)
+        // ]);
     }
 
     public function autoBidLeadsAfter5Min_old($fiveMinutesAgo)

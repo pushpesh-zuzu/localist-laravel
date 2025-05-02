@@ -365,7 +365,7 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $creditFilter = $request->credit_filter;
+        $creditFilter = $request->credit_filter;//High, Medium, Low
         $sortType = $request->sort_type; 
         $requestPostcode = $request->postcode ?? null;
         $requestMiles = $request->miles ?? null;
@@ -384,6 +384,15 @@ class LeadPreferenceController extends Controller
         $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
         }
 
+        // Apply credit score filter using WHERE conditions
+        if ($creditFilter) {
+            $baseQuery = match ($creditFilter) {
+                'High'   => $baseQuery->where('credit_score', '>=', 40),
+                'Medium' => $baseQuery->whereBetween('credit_score', [20, 39]),
+                'Low'    => $baseQuery->where('credit_score', '<', 20),
+                default  => $baseQuery,
+            };
+        }
         // Sort by ID direction based on sort_type
         $orderDirection = ($sortType === 'oldest') ? 'ASC' : 'DESC';
         // Strict matching on Questions & Answers
@@ -411,16 +420,16 @@ class LeadPreferenceController extends Controller
         });
 
           // Filter by credit level
-        if ($creditFilter) {
-            $filteredLeads = $filteredLeads->filter(function ($lead) use ($creditFilter) {
-                return match ($creditFilter) {
-                    'High' => $lead->credit_score >= 40,
-                    'Medium' => $lead->credit_score >= 20 && $lead->credit_score < 30,
-                    'Low' => $lead->credit_score < 10,
-                    default => true,
-                };
-            });
-        }
+        // if ($creditFilter) {
+        //     $filteredLeads = $filteredLeads->filter(function ($lead) use ($creditFilter) {
+        //         return match ($creditFilter) {
+        //             'High' => $lead->credit_score >= 40,
+        //             'Medium' => $lead->credit_score >= 20 && $lead->credit_score < 30,
+        //             'Low' => $lead->credit_score < 10,
+        //             default => true,
+        //         };
+        //     });
+        // }
 
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
     }
