@@ -366,7 +366,7 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $request->user_id;
         $creditFilter = $request->credit_filter;//High, Medium, Low
-        $sortType = $request->sort_type; 
+        $sortType = $request->sort_type; //newest,oldest
         $requestPostcode = $request->postcode ?? null;
         $requestMiles = $request->miles ?? null;
         $baseQuery = $this->basequery($user_id);
