@@ -1512,8 +1512,9 @@ class LeadPreferenceController extends Controller
         
             // Fetch updated lead request with relationships
             $leads = LeadRequest::with(['customer', 'category'])
-                        ->where('customer_id', $users->id)
-                        ->first();
+                                ->where('id', $aVals['lead_id'])
+                                ->where('customer_id', $users->id)
+                                ->first();
         
             $users->leads = $leads;
         }
