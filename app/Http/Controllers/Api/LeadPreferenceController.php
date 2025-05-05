@@ -452,7 +452,6 @@ class LeadPreferenceController extends Controller
         $allLeads = LeadRequest::with(['customer', 'category'])
         // ->where('customer_id', '!=', $user_id)
         ->whereIn('id',$recommendedLeadIds)
-        ->whereIn('service_id', $userServices)
         ->where('closed_status',0) //added new condition to fetched only open leads
         ->whereHas('customer', function($query) {
             $query->where('form_status', 1);
