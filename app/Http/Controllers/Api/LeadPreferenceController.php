@@ -441,13 +441,24 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $baseQuery = $this->basequery($user_id);
+        // $baseQuery = $this->basequery($user_id);
 
         // Exclude saved leads
         // $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        // $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        // ->pluck('lead_id')
-        // ->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        $allLeads = LeadRequest::with(['customer', 'category'])
+        // ->where('customer_id', '!=', $user_id)
+        ->whereIn('id',$recommendedLeadIds)
+        ->whereIn('service_id', $userServices)
+        ->where('closed_status',0) //added new condition to fetched only open leads
+        ->whereHas('customer', function($query) {
+            $query->where('form_status', 1);
+        })->where('status','pending')
+        ->orderBy('id', 'DESC')
+        ->get();
 
         // Merge both exclusion arrays
         // $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
@@ -458,7 +469,7 @@ class LeadPreferenceController extends Controller
 
         
         // Strict matching on Questions & Answers
-        $allLeads = $baseQuery->where('status','pending')->orderBy('id', 'DESC')->get();
+        // $allLeads = $baseQuery->where('status','pending')->orderBy('id', 'DESC')->get();
         foreach ($allLeads as $key => $value) {
             $isActivity = ActivityLog::where('to_user_id',$user_id) 
                                  ->where('from_user_id',$value->customer_id)
