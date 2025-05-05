@@ -106,10 +106,11 @@ Route::prefix('users')->group(function () {
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
         // Route::post('/sort-by-credit', [LeadPreferenceController::class, 'sortByCredit']);
         // Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);
-        Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
-        Route::post('/online-remote-switch', [LeadPreferenceController::class, 'onlineRemoteSwitch']);
         Route::post('/get-online-remote-switch', [LeadPreferenceController::class, 'getOnlineRemoteSwitch']);
+        Route::post('/online-remote-switch', [LeadPreferenceController::class, 'onlineRemoteSwitch']);
+        Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
         Route::post('/total-credit', [LeadPreferenceController::class, 'totalCredit']);
+        Route::post('/response-status', [LeadPreferenceController::class, 'responseStatus']);
         
         Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
         Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);

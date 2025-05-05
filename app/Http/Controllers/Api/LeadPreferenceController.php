@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\UserServiceLocation;
 use App\Models\UserHiringHistory;
+use App\Models\UserResponseTime;
 use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
@@ -476,6 +477,25 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Request Data'), $allLeads);
     }
 
+    public function getHiredLeads(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        $allLeads = LeadRequest::with(['customer', 'category'])
+        ->whereIn('id',$recommendedLeadIds)
+        ->whereHas('customer', function($query) {
+            $query->where('form_status', 1);
+        })->where('status','hired')
+        ->orderBy('id', 'DESC')
+        ->get();
+        
+        return $this->sendResponse(__('Lead Request Data'), $allLeads);
+    }
+
     public function getPendingLeads_old_05_05(Request $request)
     {
         $aVals = $request->all();
@@ -553,24 +573,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
     }
     
-    public function getHiredLeads(Request $request)
-    {
-        $aVals = $request->all();
-        $user_id = $request->user_id;
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
-
-        $allLeads = LeadRequest::with(['customer', 'category'])
-        ->whereIn('id',$recommendedLeadIds)
-        ->whereHas('customer', function($query) {
-            $query->where('form_status', 1);
-        })->where('status','hired')
-        ->orderBy('id', 'DESC')
-        ->get();
-        
-        return $this->sendResponse(__('Lead Request Data'), $allLeads);
-    }
+    
     public function getHiredLeads_old_05_05(Request $request)
     {
         $user_id = $request->user_id;
@@ -1735,5 +1738,27 @@ class LeadPreferenceController extends Controller
             ]);  
         }
             return $this->sendResponse('Data not found', []);                                  
+    }
+
+    public function responseStatus(Request $request){ 
+        $aVals = $request->all();
+        $responsetime = UserResponseTime::where('seller_id',$aVals['user_id'])
+                                       ->where('buyer_id',$aVals['buyer_id'])
+                                       ->where('lead_id',$aVals['lead_id'])
+                                       ->where('clicked_name',$aVals['clicked_name'])
+                                       ->first();
+        if(empty($responsetime)){
+            // $responsetime->update(['clicked_name' => $aVals['clicked_name']]);
+        // }else{
+            $responsetime = UserResponseTime::create([
+                'seller_id'  => $aVals['user_id'],
+                'buyer_id'  => $aVals['buyer_id'],
+                'lead_id'  => $aVals['lead_id'],
+                'clicked_name' => $aVals['clicked_name'],
+                'status' => $aVals['status'],
+            ]);
+        }
+     
+        return $this->sendResponse(__('Status Updated'), []);                                          
     }
 }
