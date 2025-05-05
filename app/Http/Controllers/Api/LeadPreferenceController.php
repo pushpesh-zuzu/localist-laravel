@@ -441,10 +441,6 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        // $baseQuery = $this->basequery($user_id);
-
-        // Exclude saved leads
-        // $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
         ->pluck('lead_id')
         ->toArray();
@@ -456,7 +452,6 @@ class LeadPreferenceController extends Controller
         })->where('status','pending')
         ->orderBy('id', 'DESC')
         ->get();
-
         
         foreach ($allLeads as $key => $value) {
             $isActivity = ActivityLog::where('to_user_id',$user_id) 
@@ -559,6 +554,24 @@ class LeadPreferenceController extends Controller
     }
     
     public function getHiredLeads(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        $allLeads = LeadRequest::with(['customer', 'category'])
+        ->whereIn('id',$recommendedLeadIds)
+        ->whereHas('customer', function($query) {
+            $query->where('form_status', 1);
+        })->where('status','hired')
+        ->orderBy('id', 'DESC')
+        ->get();
+        
+        return $this->sendResponse(__('Lead Request Data'), $allLeads);
+    }
+    public function getHiredLeads_old_05_05(Request $request)
     {
         $user_id = $request->user_id;
     
