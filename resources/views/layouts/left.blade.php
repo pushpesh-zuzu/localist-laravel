@@ -50,12 +50,31 @@
                 </li>
               </ul>
         </li>
-        <li class="nav-item">
+        <li class="nav-group" aria-expanded="false">
+            <a class="nav-link nav-group-toggle" href="#">
+            <i class="fa-solid fa-users nav-icon"></i> {{ __('Quote Customers') }}</a>
+              <ul class="nav-group-items compact" style="height: 100px;">
+               
+                <li class="nav-item">
+                  <a href="{{ route('buyer.incompletelist') }}" class="nav-link {{ request()->routeIs('buyer.incompletelist') ? 'active' : '' }}">
+                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      {{ __('Incomplete') }}
+                  </a>   
+                </li>
+                <li class="nav-item">
+                  <a href="{{ route('buyer.index') }}" class="nav-link {{ request()->routeIs('buyer.index') ? 'active' : '' }}">
+                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      {{ __('Complete') }}
+                  </a>   
+                </li>
+              </ul>
+        </li>
+        <!-- <li class="nav-item">
             <a href="{{ route('buyer.index') }}" class="nav-link {{ request()->routeIs('buyer.index') ? 'active' : '' }}">
             <i class="fa-solid fa-users nav-icon"></i>
                 {{ __('Quote Customers') }}
             </a>   
-        </li>
+        </li> -->
         <li class="nav-item">
             <a href="{{ route('servicequestion.index') }}" class="nav-link {{ request()->routeIs('servicequestion.index') ? 'active' : '' }}">
             <i class="bi bi-question-circle nav-icon"></i> {{ __('Service Questions') }} 

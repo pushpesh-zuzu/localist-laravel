@@ -135,6 +135,7 @@ Route::prefix('users')->group(function () {
         Route::post('/add-manual-bid', [RecommendedLeadsController::class, 'addManualBid']);
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
         Route::post('/sort-by-location', [RecommendedLeadsController::class, 'sortByLocation']);
+        // Route::post('/sort-by-responsetime', [RecommendedLeadsController::class, 'sortByResponsetime']);
         
 
         Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);

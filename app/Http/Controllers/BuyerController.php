@@ -16,8 +16,14 @@ class BuyerController extends Controller
      */
     public function index()
     {
-        $aRows = User::whereIn('user_type', [2, 3])->orderBy('id','DESC')->get(); 
+        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',1)->orderBy('id','DESC')->get(); 
         return view('buyer.index', compact('aRows'));
+    }
+
+    public function incompletelist()
+    {
+        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',0)->orderBy('id','DESC')->get(); 
+        return view('buyer.incomplete', compact('aRows'));
     }
 
     /**

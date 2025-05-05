@@ -469,8 +469,8 @@ class LeadPreferenceController extends Controller
                 }
                 
             }else{
-                $value['profile_view'] = [];
-                $value['profile_view_time'] = [];
+                $value['profile_view'] = "";
+                $value['profile_view_time'] = "";
             }                     
            
         }
