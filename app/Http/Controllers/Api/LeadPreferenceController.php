@@ -450,6 +450,50 @@ class LeadPreferenceController extends Controller
         ->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
+        ->whereIn('id',$recommendedLeadIds)
+        ->whereHas('customer', function($query) {
+            $query->where('form_status', 1);
+        })->where('status','pending')
+        ->orderBy('id', 'DESC')
+        ->get();
+
+        
+        foreach ($allLeads as $key => $value) {
+            $isActivity = ActivityLog::where('to_user_id',$user_id) 
+                                 ->where('from_user_id',$value->customer_id)
+                                 ->latest() 
+                                 ->first(); 
+            if(!empty($isActivity)){
+                if($isActivity->activity_name == 'Requested a callback'){
+                    $value['profile_view'] = "Requested a callback";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }else{
+                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }
+                
+            }else{
+                $value['profile_view'] = [];
+                $value['profile_view_time'] = [];
+            }                     
+           
+        }
+        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
+    }
+
+    public function getPendingLeads_old_05_05(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        // $baseQuery = $this->basequery($user_id);
+
+        // Exclude saved leads
+        // $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        $allLeads = LeadRequest::with(['customer', 'category'])
         // ->where('customer_id', '!=', $user_id)
         ->whereIn('id',$recommendedLeadIds)
         ->where('closed_status',0) //added new condition to fetched only open leads
