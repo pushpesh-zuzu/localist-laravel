@@ -106,6 +106,12 @@
             </a>   
         </li>
         <li class="nav-item">
+            <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.index') ? 'active' : '' }}">
+                <i class="bi bi-gear nav-icon"></i>
+                {{ __('Settings') }}
+            </a>   
+        </li>
+        <li class="nav-item">
             <a href="{{ route('coupon.index') }}" class="nav-link {{ request()->routeIs('coupon.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-gift nav-icon"></i>
                 {{ __('Coupons') }}

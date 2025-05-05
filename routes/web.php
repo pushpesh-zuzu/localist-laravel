@@ -2,18 +2,19 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ServiceQuestionsController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\ProfileQuesController;
+use App\Http\Controllers\RequestListController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SellerController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\PlansController;
 use App\Http\Controllers\BuyerController;
-use App\Http\Controllers\SellerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ServiceQuestionsController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ProfileQuesController;
-use App\Http\Controllers\CouponController;
-use App\Http\Controllers\RequestListController;
 
 
 
@@ -66,6 +67,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('subcategories', SubCategoryController::class);
     Route::resource('blogs', BlogsController::class);
     Route::resource('plans', PlansController::class);
+    Route::resource('settings', SettingController::class);
     Route::resource('buyer', BuyerController::class);
     Route::get('buyer-lead-details/{leadid}', [BuyerController::class, 'leadDetails'])->name('buyer.leadDetails');
     Route::get('buyer-incomplete-list', [BuyerController::class, 'incompletelist'])->name('buyer.incompletelist');
