@@ -478,7 +478,7 @@ class LeadPreferenceController extends Controller
             }                     
            
         }
-        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
+        return $this->sendResponse(__('Lead Request Data'), $allLeads);
     }
 
     public function getPendingLeads_old_05_05(Request $request)
