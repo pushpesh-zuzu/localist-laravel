@@ -21,11 +21,21 @@
         <link href="{{ asset('coreui/node_modules/@coreui/chartjs/dist/css/coreui-chartjs.css') }}" rel="stylesheet">  
         <link href="{{ asset('coreui/node_modules/@coreui/icons/css/free.min.css') }}" rel="stylesheet"> 
         <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-        <link href="//cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"  />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+        <!-- DataTables with Bootstrap 5 styling -->
+        <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+        <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+        <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+
+        <style>
+          th.dtr-control:before {
+              content: "-";
+              background-color: #d33333;
+          }
+        </style>
         
-        <script src="//cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
   </head>
   <body>
   @include('layouts.left')  
@@ -45,6 +55,7 @@
 
       </footer>
     </div>
+    <input type="hidden" id="_url" value="{{url('/')}}">
     <!-- CoreUI and necessary plugins-->
     <script src="{{ asset('coreui/node_modules/@coreui/coreui/dist/js/coreui.bundle.min.js') }}"></script>
     <script src="{{ asset('coreui/node_modules/simplebar/dist/simplebar.min.js') }}"></script>
@@ -62,10 +73,8 @@
     <script src="{{ asset('coreui/node_modules/chart.js/dist/chart.umd.js') }}"></script>
     <script src="{{ asset('coreui/node_modules/@coreui/chartjs/dist/js/coreui-chartjs.js') }}"></script>
     <script src="{{ asset('coreui/node_modules/@coreui/utils/dist/umd/index.js') }}"></script>
-   {{-- <script src="{{ asset('coreui/js/main.js') }}"></script> --}}
-    <script> 
-      let table = new DataTable('#dataTable');
-    </script>
+   
+    
     <style>
       .dt-input
       {
@@ -85,5 +94,27 @@
         const tooltipTriggerList = document.querySelectorAll('[data-coreui-toggle="tooltip"]')
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new coreui.Tooltip(tooltipTriggerEl))
       </script>
+
+      <!-- DataTables core -->
+      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+      <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+      <!-- DataTables Responsive -->
+      <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+      <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+      <!-- DataTables Buttons -->
+      <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+      <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+      <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+      <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+      <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+      <!-- JSZip and pdfmake for Excel/PDF buttons -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+      <script> 
+        let table = new DataTable('#dataTable');
+      </script>
+
+  @stack('scripts')
   </body>
 </html>

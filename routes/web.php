@@ -36,14 +36,14 @@ Route::get('/install-api', function() {
 });
 
 Route::get('/check-mail', function() {
-    $dataUser['email'] = 'pushpesh47@gmail.com';
+    $dataUser['email'] = 'pushpesh@zuzucodes.com';
     $dataUser['name'] = 'Pushpesh';
     $dataUser['service'] = 'Web Development';
     $dataUser['password'] = '12345678';
     $dataUser['otp'] = '1234';
     Mail::send('emails.buyer_registration', $dataUser, function ($message) use ($dataUser) {
             $message->to($dataUser['email']);
-            $message->subject("Welcome to Localist " .$dataUser['name'] ."!");
+            $message->subject("local-Welcome to Localist " .$dataUser['name'] ."!");
         });
 
     return 'DONE'; //Return anything
@@ -85,6 +85,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('coupon', CouponController::class);
 
     Route::resource('request-list', RequestListController::class);
+    Route::get('request-list2', [RequestListController::class,'index2']);
 
 });
 
