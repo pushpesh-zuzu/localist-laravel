@@ -29,13 +29,13 @@
             <td>{{ $aRows->total_bid }}</td>
             <td>
                 <a href="{{ route('settings.edit',$aRows->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></i></a>
-                <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>
+                <!-- <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>
                 </a>
                 <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('settings.destroy',$aRows->id) }}" method="post" style="display: none;">
                    {{ method_field('DELETE') }}
                    {{ csrf_field() }}
                        
-                </form>
+                </form> -->
 
             </td>
           </tr>

@@ -16,6 +16,7 @@ use App\Models\UserService;
 use App\Models\UserDetail;
 use App\Models\LeadStatus;
 use App\Models\Category;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\{
@@ -1386,7 +1387,7 @@ class RecommendedLeadsController extends Controller
         }
         $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
-           
+        $settings = Setting::first();  
         if($aVals['bidtype'] == 'reply'){
             $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
@@ -1395,7 +1396,7 @@ class RecommendedLeadsController extends Controller
                                            ->where('from_user_id',$aVals['user_id']) 
                                            ->where('to_user_id',$aVals['seller_id']) 
                                            ->first(); 
-            if($bidCount==5){
+            if($bidCount==$settings->total_bid){
                 return $this->sendError(__('Bid Limit exceed'), 404);
             }
             if(!empty($bidCheck)){
@@ -1431,8 +1432,8 @@ class RecommendedLeadsController extends Controller
             $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
             $bidCheck = $bidsUser->where('buyer_id',$aVals['buyer_id'])->first();
-            if($bidCount==5){
-            return $this->sendError(__('Bid Limit exceed'), 404);
+            if($bidCount==$settings->total_bid){
+                return $this->sendError(__('Bid Limit exceed'), 404);
             }
             if(!empty($bidCheck)){
                 return $this->sendError(__('Bid already placed for this seller'), 404);
@@ -1521,7 +1522,7 @@ class RecommendedLeadsController extends Controller
         $leadId = $aVals['lead_id'];
         $inserted = 0;
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
-        
+        $settings = Setting::first();  
         // Step 1: Insert manual bids
         foreach ($aVals['seller_id'] as $index => $sellerId) {
             $alreadyExists = RecommendedLead::where('buyer_id', $buyerId)
@@ -1554,7 +1555,7 @@ class RecommendedLeadsController extends Controller
         // Step 2: Get current count after manual inserts
         $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
     
-        if ($currentCount < 5) {
+        if ($currentCount < $settings->total_bid) {
             // Step 3: Fetch remaining sellers using getManualLeads
             // $manualLeadRequest = new Request(['lead_id' => $leadId]);
             $response = $this->getManualLeads($request)->getData();
@@ -1567,7 +1568,7 @@ class RecommendedLeadsController extends Controller
                             ->where('seller_id', $seller->id)
                             ->exists();
                     })
-                    ->take(5 - $currentCount);
+                    ->take($settings->total_bid - $currentCount);
     
                 foreach ($remainingSellers as $seller) {
                     $bidAmount = $seller->bid ?? 0;
@@ -1746,14 +1747,14 @@ class RecommendedLeadsController extends Controller
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
                 ->get();
-        
-            $autoBidLeads = [];
+        $settings = Setting::first();  
+        $autoBidLeads = [];
             
             foreach ($leads as $lead) {
                 $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
                 $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
         
-                if ($existingBids >= 5) {
+                if ($existingBids >= $settings->total_bid) {
                     continue; // Skip if already has 5 bids
                 }
         
@@ -1767,7 +1768,7 @@ class RecommendedLeadsController extends Controller
                     continue;
                 }
         
-                $sellers = collect($manualLeadsResponse->data[0]->sellers)->take(5 - $existingBids);
+                $sellers = collect($manualLeadsResponse->data[0]->sellers)->take($settings->total_bid - $existingBids);
                 $bidsPlaced = 0;
                 foreach ($sellers as $seller) {
                     $userdetails = UserDetail::where('user_id',$seller->id)->first();
@@ -1900,7 +1901,7 @@ class RecommendedLeadsController extends Controller
         $leadsToClose = LeadRequest::where('status', 0)
             ->where('created_at', '<', $twoWeeksAgo)
             ->get();
-
+        $settings = Setting::first();  
         foreach ($leadsToClose as $lead) {
             // Count only unique sellers the buyer has bid on
             $selectedSellerCount = RecommendedLead::where('lead_id', $lead->id)
@@ -1908,7 +1909,7 @@ class RecommendedLeadsController extends Controller
                 ->distinct('seller_id') // ensure unique seller count
                 ->count('seller_id');
 
-            if ($selectedSellerCount < 5) {
+            if ($selectedSellerCount < $settings->total_bid) {
                 $lead->closed_status = 1; // Mark as closed
                 $lead->save();
             }

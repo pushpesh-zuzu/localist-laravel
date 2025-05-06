@@ -1745,18 +1745,30 @@ class LeadPreferenceController extends Controller
         $responsetime = UserResponseTime::where('seller_id',$aVals['user_id'])
                                        ->where('buyer_id',$aVals['buyer_id'])
                                        ->where('lead_id',$aVals['lead_id'])
-                                       ->where('clicked_name',$aVals['clicked_name'])
                                        ->first();
         if(empty($responsetime)){
-            // $responsetime->update(['clicked_name' => $aVals['clicked_name']]);
-        // }else{
+            if($aVals['is_clicked_whatsapp'] == 1 || $aVals['is_clicked_email'] || $aVals['is_clicked_mobile']){
+                $button_clicked_time = now();
+            }else{
+                $button_clicked_time = "";
+            }
             $responsetime = UserResponseTime::create([
                 'seller_id'  => $aVals['user_id'],
                 'buyer_id'  => $aVals['buyer_id'],
                 'lead_id'  => $aVals['lead_id'],
-                'clicked_name' => $aVals['clicked_name'],
-                'status' => $aVals['status'],
+                'is_clicked_whatsapp' => $aVals['is_clicked_whatsapp'],
+                'is_clicked_email' => $aVals['is_clicked_email'],
+                'is_clicked_mobile' => $aVals['is_clicked_mobile'],
+                'last_seen' => now(),
+                'button_clicked_time' => $button_clicked_time
             ]);
+        }else{
+            $responsetime->update([
+                                    'is_clicked_whatsapp' => $aVals['is_clicked_whatsapp'],
+                                    'is_clicked_email' => $aVals['is_clicked_email'],
+                                    'is_clicked_mobile' => $aVals['is_clicked_mobile'],
+                                    'button_clicked_time' => now(),
+                                ]);
         }
      
         return $this->sendResponse(__('Status Updated'), []);                                          

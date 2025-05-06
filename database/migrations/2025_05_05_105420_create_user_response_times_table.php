@@ -16,8 +16,13 @@ return new class extends Migration
             $table->integer('lead_id')->nullable();
             $table->integer('seller_id')->nullable();//loggedin user
             $table->integer('buyer_id')->nullable();//buyer clicked on seller
-            $table->string('clicked_name')->nullable();
-            $table->string('status')->nullable();
+            $table->string('is_clicked_whatsapp')->nullable();
+            $table->string('is_clicked_email')->nullable();
+            $table->string('is_clicked_mobile')->nullable();
+            $table->string('is_clicked_sms')->nullable();
+            // $table->string('status')->nullable();
+            $table->dateTime('last_seen')->nullable();
+            $table->dateTime('button_clicked_time')->nullable();
             $table->timestamps();
         });
     }
