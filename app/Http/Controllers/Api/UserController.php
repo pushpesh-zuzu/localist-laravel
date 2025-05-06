@@ -140,32 +140,29 @@ class UserController extends Controller
 
         foreach ($leadPreferences as $question) {
             $existingAnswer = LeadPrefrence::where('question_id', $question->id)
-                ->where('user_id', $user->id)
-                ->pluck('answers')
-                ->first();
+                            ->where('user_id', $user->id)
+                            ->pluck('answers')
+                            ->first();
+                        
+                        // Use default if not found
+                        $cleanedAnswer = $existingAnswer ?? '';
+                        
+                        // Clean the format (removes extra spaces around commas, and trailing comma)
+                        $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $cleanedAnswer);
+                        $cleanedAnswer = rtrim($cleanedAnswer, ',');
+                        
+                        // Now insert or update the answer
+                        LeadPrefrence::updateOrCreate(
+                            [
+                                'user_id' => $user->id,
+                                'service_id' => $serviceId,
+                                'question_id' => $question->id,
+                            ],
+                            [
+                                'answers' => $cleanedAnswer,
+                            ]
+                        );
 
-            if (empty($existingAnswer)) {
-                continue;
-            }
-
-            $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $existingAnswer);
-            $cleanedAnswer = rtrim($cleanedAnswer, ',');
-
-            $existing = LeadPrefrence::where('service_id', $serviceId)
-                ->where('user_id', $user->id)
-                ->where('question_id', $question->id)
-                ->first();
-
-            if ($existing) {
-                $existing->update(['answers' => $cleanedAnswer]);
-            } else {
-                LeadPrefrence::create([
-                    'service_id'  => $serviceId,
-                    'question_id' => $question->id,
-                    'user_id'     => $user->id,
-                    'answers'     => $cleanedAnswer,
-                ]);
-            }
         }
     }
     // public function registration(Request $request): JsonResponse
