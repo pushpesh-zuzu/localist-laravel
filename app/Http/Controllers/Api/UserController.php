@@ -76,8 +76,12 @@ class UserController extends Controller
                 ]);
             }
               // Check if service_id is an array or convert it to one
-            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+            $cleanedServiceId = str_replace(' ', '', $aVals['service_id']);
+            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $cleanedServiceId);
+
+            // $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
             foreach ($serviceIds as $serviceId) {
+                $aLocations = []; // Reset for each iteration
                 // Create a separate row for each service_id
                 $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
 
@@ -105,7 +109,40 @@ class UserController extends Controller
                     }
                     UserServiceLocation::createUserServiceLocation($aLocations);
                 }
-                self::autoInsertPreferencesQues($serviceId,$user);
+                //save answer to preferences
+                    $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
+
+                    foreach ($leadPreferences as $question) {
+                        // Get default options from 'answer' column of ServiceQuestion table
+                        $defaultOptions = $question->answer ?? '';
+                    
+                        // Check if user already has a saved answer for this question
+                        $existingAnswer = LeadPrefrence::where('question_id', $question->id)
+                            ->where('user_id', $user->id)
+                            ->pluck('answers')
+                            ->first();
+                    
+                        // Use existing answer or fall back to all options from ServiceQuestion.answer
+                        $answerToUse = $existingAnswer ?? $defaultOptions;
+                    
+                        // Clean the format: remove extra spaces around commas and trailing commas
+                        $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $answerToUse);
+                        $cleanedAnswer = rtrim($cleanedAnswer, ',');
+                    
+                        // Insert or update the lead preference
+                        LeadPrefrence::updateOrCreate(
+                            [
+                                'user_id' => $user->id,
+                                'service_id' => $serviceId,
+                                'question_id' => $question->id,
+                            ],
+                            [
+                                'answers' => $cleanedAnswer,
+                            ]
+                        );
+                    }
+
+                // self::autoInsertPreferencesQues($serviceId,$user);
 
             }
             //Mail send
@@ -134,37 +171,37 @@ class UserController extends Controller
 
     }
 
-    public function autoInsertPreferencesQues($serviceId,$user){
-        // Fetch lead preferences (questions + answers already saved for this service and user)
-        $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
+    // public function autoInsertPreferencesQues($serviceId,$user){
+    //     // Fetch lead preferences (questions + answers already saved for this service and user)
+    //     $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
 
-        foreach ($leadPreferences as $question) {
-            $existingAnswer = LeadPrefrence::where('question_id', $question->id)
-                            ->where('user_id', $user->id)
-                            ->pluck('answers')
-                            ->first();
+    //     foreach ($leadPreferences as $question) {
+    //         $existingAnswer = LeadPrefrence::where('question_id', $question->id)
+    //                         ->where('user_id', $user->id)
+    //                         ->pluck('answers')
+    //                         ->first();
                         
-                        // Use default if not found
-                        $cleanedAnswer = $existingAnswer ?? '';
+    //                     // Use default if not found
+    //                     $cleanedAnswer = $existingAnswer ?? '';
                         
-                        // Clean the format (removes extra spaces around commas, and trailing comma)
-                        $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $cleanedAnswer);
-                        $cleanedAnswer = rtrim($cleanedAnswer, ',');
+    //                     // Clean the format (removes extra spaces around commas, and trailing comma)
+    //                     $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $cleanedAnswer);
+    //                     $cleanedAnswer = rtrim($cleanedAnswer, ',');
                         
-                        // Now insert or update the answer
-                        LeadPrefrence::updateOrCreate(
-                            [
-                                'user_id' => $user->id,
-                                'service_id' => $serviceId,
-                                'question_id' => $question->id,
-                            ],
-                            [
-                                'answers' => $cleanedAnswer,
-                            ]
-                        );
+    //                     // Now insert or update the answer
+    //                     LeadPrefrence::updateOrCreate(
+    //                         [
+    //                             'user_id' => $user->id,
+    //                             'service_id' => $serviceId,
+    //                             'question_id' => $question->id,
+    //                         ],
+    //                         [
+    //                             'answers' => $cleanedAnswer,
+    //                         ]
+    //                     );
 
-        }
-    }
+    //     }
+    // }
     // public function registration(Request $request): JsonResponse
     // {
     //     $aVals = $request->all();

@@ -1585,7 +1585,7 @@ class LeadPreferenceController extends Controller
                                 ->where('id', $aVals['lead_id'])
                                 ->where('customer_id', $users->id)
                                 ->first();
-        
+            $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
             $users->leads = $leads;
         }
         return $this->sendResponse('Profile Data', $users);                    
@@ -1747,11 +1747,15 @@ class LeadPreferenceController extends Controller
                                        ->where('lead_id',$aVals['lead_id'])
                                        ->first();
         if(empty($responsetime)){
-            if($aVals['is_clicked_whatsapp'] == 1 || $aVals['is_clicked_email'] || $aVals['is_clicked_mobile']){
+            if ((int)$aVals['is_clicked_whatsapp'] !== 0 ||
+                (int)$aVals['is_clicked_email'] !== 0 ||
+                (int)$aVals['is_clicked_mobile'] !== 0 ||
+                (int)$aVals['is_clicked_sms'] !== 0) {
                 $button_clicked_time = now();
-            }else{
-                $button_clicked_time = "";
+            } else {
+                $button_clicked_time = null;
             }
+
             $responsetime = UserResponseTime::create([
                 'seller_id'  => $aVals['user_id'],
                 'buyer_id'  => $aVals['buyer_id'],
@@ -1759,6 +1763,7 @@ class LeadPreferenceController extends Controller
                 'is_clicked_whatsapp' => $aVals['is_clicked_whatsapp'],
                 'is_clicked_email' => $aVals['is_clicked_email'],
                 'is_clicked_mobile' => $aVals['is_clicked_mobile'],
+                'is_clicked_sms' => $aVals['is_clicked_sms'],
                 'last_seen' => now(),
                 'button_clicked_time' => $button_clicked_time
             ]);
@@ -1767,6 +1772,7 @@ class LeadPreferenceController extends Controller
                                     'is_clicked_whatsapp' => $aVals['is_clicked_whatsapp'],
                                     'is_clicked_email' => $aVals['is_clicked_email'],
                                     'is_clicked_mobile' => $aVals['is_clicked_mobile'],
+                                    'is_clicked_sms' => $aVals['is_clicked_sms'],
                                     'button_clicked_time' => now(),
                                 ]);
         }

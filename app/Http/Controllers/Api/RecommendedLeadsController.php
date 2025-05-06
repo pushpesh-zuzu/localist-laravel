@@ -1394,10 +1394,12 @@ class RecommendedLeadsController extends Controller
             $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
             $bidCheck = $bidsUser->where('seller_id',$aVals['seller_id'])->first();
-            $isActivityExists = ActivityLog::where('lead_id',$aVals['lead_id'])
-                                           ->where('from_user_id',$aVals['user_id']) 
-                                           ->where('to_user_id',$aVals['seller_id']) 
-                                           ->first(); 
+            $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
+            // ActivityLog::where('lead_id',$aVals['lead_id'])
+            //                               ->where('from_user_id',$aVals['user_id']) 
+            //                               ->where('to_user_id',$aVals['seller_id']) 
+            //                               ->where('activity_name',"Requested a callback") 
+            //                               ->first(); 
             if($bidCount==$settings->total_bid){
                 return $this->sendError(__('Bid Limit exceed'), 404);
             }
@@ -1421,12 +1423,13 @@ class RecommendedLeadsController extends Controller
                 ]);  
             }   
             if(empty($isActivityExists)){
-                ActivityLog::create([
-                     'lead_id' => $aVals['lead_id'],
-                     'from_user_id' => $aVals['user_id'],
-                     'to_user_id' => $aVals['seller_id'],
-                     'activity_name' => "Requested a callback",
-                 ]);  
+                self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
+                // ActivityLog::create([
+                //      'lead_id' => $aVals['lead_id'],
+                //      'from_user_id' => $aVals['user_id'],
+                //      'to_user_id' => $aVals['seller_id'],
+                //      'activity_name' => "Requested a callback",
+                //  ]);  
             }
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
@@ -1434,6 +1437,12 @@ class RecommendedLeadsController extends Controller
             $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
             $bidCheck = $bidsUser->where('buyer_id',$aVals['buyer_id'])->first();
+            $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],"Seller Contacted Buyer");
+            // ActivityLog::where('lead_id',$aVals['lead_id'])
+            //                               ->where('from_user_id',$aVals['user_id']) 
+            //                               ->where('to_user_id',$aVals['buyer_id']) 
+            //                               ->where('activity_name',"Seller Contacted Buyer") 
+            //                               ->first(); 
             if($bidCount==$settings->total_bid){
                 return $this->sendError(__('Bid Limit exceed'), 404);
             }
@@ -1460,12 +1469,40 @@ class RecommendedLeadsController extends Controller
                     'status' => 'pending',
                     'clicked_from' => 1,
                 ]);  
-            }               
+            }          
+            if(empty($isActivityExists)){
+                self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],"Seller Contacted Buyer");
+                // ActivityLog::create([
+                //      'lead_id' => $aVals['lead_id'],
+                //      'from_user_id' => $aVals['user_id'],
+                //      'to_user_id' => $aVals['buyer_id'],
+                //      'activity_name' => "Contacted Buyer",
+                //  ]);  
+            }
             DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         }
        
         // DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
         return $this->sendResponse(__('Bids inserted successfully'),[]);
+    }
+    
+    public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
+         $activities = ActivityLog::where('lead_id',$lead_id)
+                                           ->where('from_user_id',$from_user_id) 
+                                           ->where('to_user_id',$to_user_id) 
+                                           ->where('activity_name',"Requested a callback") 
+                                           ->first(); 
+          return $activities;                                 
+    }
+    
+    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
+         $activities = ActivityLog::create([
+                     'lead_id' => $lead_id,
+                     'from_user_id' => $from_user_id,
+                     'to_user_id' => $to_user_id,
+                     'activity_name' => $activity_name,
+                 ]);  
+          return $activities;                                 
     }
 
     public function addMultipleManualBid_old(Request $request){
@@ -1988,18 +2025,20 @@ class RecommendedLeadsController extends Controller
     public function buyerViewProfile(Request $request)
     {
         $aVals = $request->all();
-        $isActivity = ActivityLog::where('lead_id',$aVals['lead_id'])
-                                 ->where('to_user_id',$aVals['seller_id']) 
-                                 ->where('from_user_id',$aVals['user_id'])
-                                 ->where('activity_name','Viewed your profile')
-                                 ->first(); 
+        $isActivity = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Viewed your profile");
+        // ActivityLog::where('lead_id',$aVals['lead_id'])
+        //                          ->where('to_user_id',$aVals['seller_id']) 
+        //                          ->where('from_user_id',$aVals['user_id'])
+        //                          ->where('activity_name','Viewed your profile')
+        //                          ->first(); 
         if(empty($isActivity)){
-            ActivityLog::create([
-                'lead_id' => $aVals['lead_id'],
-                'from_user_id' => $aVals['user_id'],
-                'to_user_id' => $aVals['seller_id'],
-                'activity_name' => "Viewed your profile",
-            ]); 
+            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Viewed your profile");
+            // ActivityLog::create([
+            //     'lead_id' => $aVals['lead_id'],
+            //     'from_user_id' => $aVals['user_id'],
+            //     'to_user_id' => $aVals['seller_id'],
+            //     'activity_name' => "Viewed your profile",
+            // ]); 
             
         }
         return $this->sendResponse(__('Viewed your Profile'),[]);
