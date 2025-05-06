@@ -457,6 +457,7 @@ class LeadPreferenceController extends Controller
         foreach ($allLeads as $key => $value) {
             $isActivity = ActivityLog::where('to_user_id',$user_id) 
                                  ->where('from_user_id',$value->customer_id)
+                                 ->where('lead_id',$value->id)
                                  ->latest() 
                                  ->first(); 
             if(!empty($isActivity)){
