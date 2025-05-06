@@ -754,7 +754,7 @@ class RecommendedLeadsController extends Controller
         }
 
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
-
+        $settings = Setting::first();  
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
         $leadPostcode = $lead->postcode;
@@ -901,14 +901,14 @@ class RecommendedLeadsController extends Controller
                 'service_name' => $serviceName,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'sellers' => $finalUsers,
-                'bidcount' => $bidCount
+                'bidcount' => $settings->total_bid
             ]]);
         } else {
             return $this->sendResponse(__('No Leads found'), [[
                 'service_name' => $serviceName,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'sellers' => [],
-                'bidcount' => $bidCount
+                'bidcount' => $settings->total_bid
             ]]);
         }
     }
