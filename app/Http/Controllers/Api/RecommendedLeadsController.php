@@ -901,14 +901,16 @@ class RecommendedLeadsController extends Controller
                 'service_name' => $serviceName,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'sellers' => $finalUsers,
-                'bidcount' => $settings->total_bid
+                'bidcount' => $bidCount,
+                'totalbid' => $settings->total_bid
             ]]);
         } else {
             return $this->sendResponse(__('No Leads found'), [[
                 'service_name' => $serviceName,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'sellers' => [],
-                'bidcount' => $settings->total_bid
+                'bidcount' => $bidCount,
+                'totalbid' => $settings->total_bid
             ]]);
         }
     }
