@@ -311,6 +311,17 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Autobid switched successfully'),$data );   
     }
 
+    public function getSwitchAutobid(Request $request){ 
+        $aVals = $request->all();
+        $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
+        if(!empty($isDataExists)){
+            return $this->sendResponse(__('Autobid Switch Data'), [
+                'isautobid' => $isDataExists->is_autobid
+            ]);
+        }      
+        return $this->sendError('User not found');                                              
+    }
+
     public function autobid123(Request $request)
     {
         $leadId = $request->lead_id;
