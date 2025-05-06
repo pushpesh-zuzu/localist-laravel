@@ -7,6 +7,8 @@ use App\Models\UserServiceLocation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\ServiceQuestion;
+use App\Models\LeadPrefrence;
 use App\Models\UserDetail;
 use App\Models\Category;
 use Illuminate\Support\Facades\{
@@ -103,6 +105,8 @@ class UserController extends Controller
                     }
                     UserServiceLocation::createUserServiceLocation($aLocations);
                 }
+                self::autoInsertPreferencesQues($serviceId,$user);
+
             }
             //Mail send
             $data = $user->toArray();
@@ -128,6 +132,41 @@ class UserController extends Controller
        
         return $this->sendResponse('Registration Sucessful.', $user);
 
+    }
+
+    public function autoInsertPreferencesQues($serviceId,$user){
+        // Fetch lead preferences (questions + answers already saved for this service and user)
+        $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
+
+        foreach ($leadPreferences as $question) {
+            $existingAnswer = LeadPrefrence::where('question_id', $question->id)
+                ->where('user_id', $user->id)
+                ->pluck('answers')
+                ->first();
+
+            if (empty($existingAnswer)) {
+                continue;
+            }
+
+            $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $existingAnswer);
+            $cleanedAnswer = rtrim($cleanedAnswer, ',');
+
+            $existing = LeadPrefrence::where('service_id', $serviceId)
+                ->where('user_id', $user->id)
+                ->where('question_id', $question->id)
+                ->first();
+
+            if ($existing) {
+                $existing->update(['answers' => $cleanedAnswer]);
+            } else {
+                LeadPrefrence::create([
+                    'service_id'  => $serviceId,
+                    'question_id' => $question->id,
+                    'user_id'     => $user->id,
+                    'answers'     => $cleanedAnswer,
+                ]);
+            }
+        }
     }
     // public function registration(Request $request): JsonResponse
     // {
