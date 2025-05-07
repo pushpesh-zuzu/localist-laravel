@@ -1237,17 +1237,32 @@ class LeadPreferenceController extends Controller
                     $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
 
            
-                $aLocations['service_id'] = $serviceId;
-                $aLocations['user_service_id'] = $userServiceId;
-                $aLocations['user_id'] = $aVals['user_id'];
-                $aLocations['postcode'] =$aVals['postcode'];
-                $aLocations['miles'] = $aVals['miles'];
-                $aLocations['nation_wide'] = $nationWide;
-                $aLocations['city'] = $aVals['city'];
-                $aLocations['travel_time'] = $travel_time;
-                $aLocations['travel_by'] = $travel_by;
-                $aLocations['type'] = $aVals['type'];
-                UserServiceLocation::createUserServiceLocation($aLocations);
+                // $aLocations['service_id'] = $serviceId;
+                // $aLocations['user_service_id'] = $userServiceId;
+                // $aLocations['user_id'] = $aVals['user_id'];
+                // $aLocations['postcode'] =$aVals['postcode'];
+                // $aLocations['miles'] = $aVals['miles'];
+                // $aLocations['nation_wide'] = $nationWide;
+                // $aLocations['city'] = $aVals['city'];
+                // $aLocations['travel_time'] = $travel_time;
+                // $aLocations['travel_by'] = $travel_by;
+                // $aLocations['type'] = $aVals['type'];
+
+                $aLocation = UserServiceLocation::create(
+                    ['user_id' => $aVals['user_id'], 
+                    'service_id' => $serviceId,
+                    'user_service_id' => $userServiceId, 
+                    'postcode' => $aVals['postcode'],
+                    'type'=>$aVals['type'],
+                    'miles' => $aVals['miles'],
+                    'nation_wide' => $nationWide,
+                    'city'=>$aVals['city'],
+                    'travel_time'=>$travel_time,
+                    'travel_by'=>$travel_by
+                    ] // Fields to insert
+                );
+    
+                // UserServiceLocation::createUserServiceLocation($aLocations);
             }
             return $this->sendResponse(__('Location updated successfully'));
         }else{
