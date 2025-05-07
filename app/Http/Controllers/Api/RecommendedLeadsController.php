@@ -621,7 +621,7 @@ class RecommendedLeadsController extends Controller
         $distanceOrderRaw = $request->distance_order;
         $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
 
-        $result = $this->FullManualLeadsCode($lead, $distanceOrder, false);
+        $result = $this->FullManualLeadsCode($lead, $distanceOrder, true);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
