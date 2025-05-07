@@ -615,186 +615,19 @@ class RecommendedLeadsController extends Controller
 
     public function sortByLocation(Request $request)
     {
-        $distanceOrderRaw  = $request->distance_order; 
-        $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
-        // Step 1: Get lead info
         $lead = LeadRequest::find($request->lead_id);
-        if (!$lead) {
-            return $this->sendError(__('No Lead found'), 404);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+
+        $distanceOrderRaw = $request->distance_order;
+        $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
+
+        $result = $this->FullManualLeadsCode($lead, $distanceOrder, false);
+
+        if ($result['empty']) {
+            return $this->sendResponse(__('No Leads found'), [$result['response']]);
         }
 
-        $bidCount = RecommendedLead::where('lead_id', $lead->id)->get()->count();
-    
-        $serviceId = $lead->service_id;
-        $leadCreditScore = $lead->credit_score;
-        $leadPostcode = $lead->postcode;
-        $customerId = $lead->customer_id;
-        $questions = json_decode($lead->questions, true); // e.g. [{"ques":"...","ans":"..."}]
-        $serviceName = Category::find($serviceId)->name ?? '';
-
-        // Step 2: Get auto-bid user_services excluding the lead's customer
-        $userServices = UserService::where('service_id', $serviceId)
-            ->where('auto_bid', 1)
-            ->where('user_id', '!=', $customerId)
-            ->join('users', 'user_services.user_id', '=', 'users.id')
-            ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
-            ->select('user_services.user_id', 'users.total_credit')
-            ->get();
-            
-        if ($userServices->isEmpty()) {
-            return $this->sendResponse(__('No Leads found'), [
-                [
-                    'service_name' => $serviceName,
-                    'sellers' => []
-                ]
-            ]);
-        }
-       
-    
-        $sortedUserIds = $userServices->pluck('user_id')->toArray();
-    
-        // Step 3: Get nearby postcodes
-        $nearbyPostcodes = $this->getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds);
-    
-        // Step 4: Get users with matching service locations
-        $locationMatchedUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
-            ->where('service_id', $serviceId)
-            ->whereIn('postcode', $nearbyPostcodes)
-            ->get()
-            ->groupBy('user_id');
-    
-        if ($locationMatchedUsers->isEmpty()) {
-            return $this->sendResponse(__('No Leads found'), [
-                [
-                    'service_name' => $serviceName,
-                    'sellers' => []
-                ]
-            ]);
-        }
-    
-        $matchedUserIds = $locationMatchedUsers->keys()->toArray();
-
-        // Step 5: Get question text → ID map
-        $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
-        ->pluck('id', 'questions')
-        ->toArray();
-
-        // Step 6: Replace question text in $questions array with their IDs
-        $questionFilters = collect($questions)
-        ->filter(function ($q) use ($questionTextToId) {
-            return is_array($q) && isset($q['ques']) && isset($questionTextToId[$q['ques']]);
-        })
-        ->map(function ($q) use ($questionTextToId) {
-            return [
-                'question_id' => $questionTextToId[$q['ques']],
-                'answer' => $q['ans'],
-            ];
-        });
-        
-    
-        // Step 7: Match preferences and include question_text
-        $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
-            ->where('service_id', $serviceId)
-            ->where(function ($query) use ($questionFilters) {
-                foreach ($questionFilters as $filter) {
-                    $answers = array_map('trim', explode(',', $filter['answer']));
-                    
-                    foreach ($answers as $ans) {
-                        $query->orWhere(function ($q2) use ($filter, $ans) {
-                            $q2->where('question_id', $filter['question_id'])
-                                ->where('answers', 'LIKE', '%' . $ans . '%');
-                            });
-                    }
-                }
-            })
-            ->with(['question' => function ($q) {
-                $q->select('id', 'questions as question_text');
-            }])
-            ->get();
-    
-        // Step 8: Score users
-        $scoredUsers = $matchedPreferences->groupBy('user_id')->map(function ($prefs) {
-            return $prefs->count();
-        });
-    
-        $existingBids = RecommendedLead::where('buyer_id', $customerId)
-                                        ->where('lead_id', $lead->id)
-                                        ->pluck('seller_id')
-                                        ->toArray();
-
-       $finalUsers = $scoredUsers->filter(function ($score) {
-            return $score > 0;
-        })->keys()->map(function ($userId) use (
-            $locationMatchedUsers,
-            $leadPostcode,
-            $leadCreditScore,
-            $scoredUsers,
-            $serviceName,
-            $serviceId,
-            $existingBids
-        ) {
-            if (in_array($userId, $existingBids)) {
-                return null; // skip sellers already bid by buyer
-            }
-            // $user = User::find($userId);
-            $user = User::where('id', $userId)
-            ->whereHas('details', function ($query) {
-                $query->where('is_autobid', 1)->where('autobid_pause', 0);
-            })->first();
-
-            if (!$user) return null; // Skip if autobid not allowed
-
-        
-            $userLocation = $locationMatchedUsers[$userId]->first(); // Pick first location
-        
-            $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
-            $miles = $distance !== "Distance not found"
-                ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2)
-                : null;
-        
-            // *** Skip if miles is 0 ***
-            if ($miles === 0) {
-                return null;
-            }
-        
-            return array_merge(
-                $user->toArray(),
-                [
-                    'credit_score' => $leadCreditScore,
-                    'service_name' => $serviceName,
-                    'service_id' => $serviceId,
-                    'distance' => $miles,
-                    'score' => $scoredUsers[$userId] ?? 0,
-                ]
-            );
-        })->filter()->when($distanceOrder === 'desc', function ($collection) {
-                    return $collection->sortByDesc('distance');
-                }, function ($collection) {
-                    return $collection->sortBy('distance');
-                })->values();
-       
-        if(count($finalUsers)>0){
-             return $this->sendResponse(__('AutoBid Data'), [
-                [
-                    'service_name' => $serviceName,
-                    'baseurl' => url('/').Storage::url('app/public/images/users'),
-                    'sellers' => $finalUsers,
-                    'bidcount' => $bidCount
-                ]
-            ]);
-            return $this->sendResponse(__('Location Data'), $finalUsers);
-        }else{
-            return $this->sendResponse(__('No Leads found'), [
-                [
-                    'service_name' => $serviceName,
-                    'baseurl' => url('/').Storage::url('app/public/images/users'),
-                    'sellers' => [],
-                    'bidcount' => $bidCount
-                ]
-            ]);
-        }
-        
-        
+        return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
     }
 
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false)
