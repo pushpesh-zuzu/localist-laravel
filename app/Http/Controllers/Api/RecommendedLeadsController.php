@@ -643,15 +643,18 @@ class RecommendedLeadsController extends Controller
 
         // Step 2: Get users with is_autobid = 1 from user_details, excluding lead's customer
         $userServices = User::where('id', '!=', $customerId)
-        ->whereHas('details', function ($query) {
-            $query->where('is_autobid', 1)->where('autobid_pause', 0);
-        })
-        ->whereHas('services', function ($q) use ($serviceId) {
-            $q->where('service_id', $serviceId);
-        })
-        ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
-        ->select('id as user_id', 'total_credit')
-        ->get();
+                        ->whereHas('details', function ($query) {
+                            $query->where('is_autobid', 1)->where('autobid_pause', 0);
+                        })
+                        ->whereIn('id', function ($query) use ($serviceId) {
+                            $query->select('user_id')
+                                ->from('user_services')
+                                ->where('service_id', $serviceId)
+                                ->where('auto_bid', 1);
+                        })
+                        ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
+                        ->select('id as user_id', 'total_credit')
+                        ->get();
 
 
         // $userServices = UserService::where('service_id', $serviceId)
