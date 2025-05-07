@@ -641,13 +641,26 @@ class RecommendedLeadsController extends Controller
         $questions = json_decode($lead->questions, true);
         $serviceName = Category::find($serviceId)->name ?? '';
 
-        $userServices = UserService::where('service_id', $serviceId)
-            ->where('auto_bid', 1)
-            ->where('user_id', '!=', $customerId)
-            ->join('users', 'user_services.user_id', '=', 'users.id')
-            ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
-            ->select('user_services.user_id', 'users.total_credit')
-            ->get();
+        // Step 2: Get users with is_autobid = 1 from user_details, excluding lead's customer
+        $userServices = User::where('id', '!=', $customerId)
+        ->whereHas('details', function ($query) {
+            $query->where('is_autobid', 1)->where('autobid_pause', 0);
+        })
+        ->whereHas('services', function ($q) use ($serviceId) {
+            $q->where('service_id', $serviceId);
+        })
+        ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
+        ->select('id as user_id', 'total_credit')
+        ->get();
+
+
+        // $userServices = UserService::where('service_id', $serviceId)
+        //     ->where('auto_bid', 1)
+        //     ->where('user_id', '!=', $customerId)
+        //     ->join('users', 'user_services.user_id', '=', 'users.id')
+        //     ->orderByRaw('CAST(users.total_credit AS UNSIGNED) DESC')
+        //     ->select('user_services.user_id', 'users.total_credit')
+        //     ->get();
 
         if ($userServices->isEmpty()) {
             return [
