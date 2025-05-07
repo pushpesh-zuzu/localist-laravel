@@ -612,6 +612,24 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
     }
+
+    public function sortByLocation(Request $request)
+    {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+
+        $distanceOrderRaw = $request->distance_order;
+        $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
+
+        $result = $this->FullManualLeadsCode($lead, $distanceOrder, false);
+
+        if ($result['empty']) {
+            return $this->sendResponse(__('No Leads found'), [$result['response']]);
+        }
+
+        return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
+    }
+
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false)
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
@@ -633,6 +651,7 @@ class RecommendedLeadsController extends Controller
 
         if ($userServices->isEmpty()) {
             return [
+                'empty' => true,
                 'response' => [
                     'service_name' => $serviceName,
                     'sellers' => [],
@@ -654,6 +673,7 @@ class RecommendedLeadsController extends Controller
 
         if ($locationMatchedUsers->isEmpty()) {
             return [
+                'empty' => true,
                 'response' => [
                     'service_name' => $serviceName,
                     'sellers' => [],
@@ -743,6 +763,7 @@ class RecommendedLeadsController extends Controller
             : $finalUsers->sortBy('distance')->values();
 
         return [
+            'empty' => false,
             'response' => [
                 'service_name' => $serviceName,
                 'sellers' => $finalUsers,
@@ -1037,7 +1058,7 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    public function sortByLocation(Request $request)
+    public function sortByLocation345(Request $request)
     {
         $distanceOrderRaw  = $request->distance_order; 
         $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
