@@ -2057,7 +2057,7 @@ class RecommendedLeadsController extends Controller
         $aVals = $request->all();
         $isActivity = ActivityLog::where('to_user_id', $aVals['user_id']) 
                                  ->whereIn('from_user_id', [$aVals['buyer_id']]) 
-                                 ->where('lead_id', [$aVals['lead_id']]) 
+                                 ->where('lead_id', $aVals['lead_id']) 
                                  ->get(); 
         return $this->sendResponse(__('Activity log'),$isActivity);     
     }
