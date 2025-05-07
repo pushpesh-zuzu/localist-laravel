@@ -207,6 +207,7 @@ class RecommendedLeadsController extends Controller
     {
         $seller_id = $request->user_id; 
         $leadid = $request->lead_id; 
+        $settings = Setting::first();  
         $result = [];
 
         if (!empty($leadid)) {
@@ -218,7 +219,7 @@ class RecommendedLeadsController extends Controller
                 ->get();
 
                 // Check count
-            if ($bids->count() < 5) {
+            if ($bids->count() < $settings->total_bid) {
                 // Fetch other seller bids on the same lead_id (exclude already recommended sellers)
                 $otherBids = RecommendedLead::where('lead_id', $leadid)
                     ->whereNotIn('seller_id', $bids->pluck('seller_id')->toArray())
@@ -1497,14 +1498,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Bids inserted successfully'),[]);
     }
     
-    public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
-         $activities = ActivityLog::where('lead_id',$lead_id)
-                                           ->where('from_user_id',$from_user_id) 
-                                           ->where('to_user_id',$to_user_id) 
-                                           ->where('activity_name',"Requested a callback") 
-                                           ->first(); 
-          return $activities;                                 
-    }
+    
     
     public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
          $activities = ActivityLog::create([
@@ -2063,10 +2057,19 @@ class RecommendedLeadsController extends Controller
         $aVals = $request->all();
         $isActivity = ActivityLog::where('to_user_id', $aVals['user_id']) 
                                  ->whereIn('from_user_id', [$aVals['buyer_id']]) 
+                                 ->where('lead_id', [$aVals['lead_id']]) 
                                  ->get(); 
         return $this->sendResponse(__('Activity log'),$isActivity);     
     }
 
-    
+    public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
+        $activities = ActivityLog::where('lead_id',$lead_id)
+                                          ->where('from_user_id',$from_user_id) 
+                                          ->where('to_user_id',$to_user_id) 
+                                          ->where('lead_id',$lead_id) 
+                                          ->where('activity_name',$activity_name) 
+                                          ->first(); 
+         return $activities;                                 
+   }
 
 }   
