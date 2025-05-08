@@ -1292,8 +1292,82 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('User Service Data'), $uniqueRows);
     }
 
-    
     public function editUserLocation(Request $request): JsonResponse
+    {
+        $aVals = $request->all();
+        $userId = $aVals['user_id'];
+
+        $validator = Validator::make($aVals, [
+            'service_id' => [
+                'required',
+                'exists:categories,id',
+            ],
+            'user_id' => 'required|exists:users,id',
+            'postcode' => 'required|string',
+            'miles' => 'required|numeric',
+            'type' => 'required|in:manual,auto', // assuming 'type' is either 'manual' or 'auto'
+            'postcode_old' => 'required|string',
+            'miles_old' => 'required|numeric',
+        ], [
+            'user_id.exists' => 'The selected user does not exist.',
+            'service_id.exists' => 'The selected service does not exist.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+        $travel_time = !empty($aVals['travel_time']) ? $aVals['travel_time'] : "";
+        $travel_by = !empty($aVals['travel_by']) ? $aVals['travel_by'] : "";
+        $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
+
+        foreach ($serviceIds as $serviceId) {
+            $userService = UserService::where('user_id', $userId)
+                ->where('service_id', $serviceId)
+                ->first();
+
+            if (!$userService) {
+                continue; // Skip if user_service does not exist
+            }
+
+            // Check for duplicate postcode + miles for the same user/service/type (excluding the current record)
+            $duplicate = UserServiceLocation::where('user_id', $userId)
+                ->where('service_id', $serviceId)
+                ->where('type', $aVals['type'])
+                ->where('postcode', $aVals['postcode'])
+                ->where('miles', $aVals['miles'])
+                ->where(function ($query) use ($aVals) {
+                    $query->where('postcode', '!=', $aVals['postcode_old'])
+                        ->orWhere('miles', '!=', $aVals['miles_old']);
+                })
+                ->exists();
+
+            if ($duplicate) {
+                return $this->sendError('This postcode and miles combination already exists for this service and type.');
+            }
+
+            // Perform the update
+            UserServiceLocation::where('user_id', $userId)
+                ->where('service_id', $serviceId)
+                ->where('postcode', $aVals['postcode_old'])
+                ->where('miles', $aVals['miles_old'])
+                ->where('type', $aVals['type'])
+                ->update([
+                    'postcode' => $aVals['postcode'],
+                    'miles' => $aVals['miles'],
+                    'city' => $aVals['city'] ?? '',
+                    'travel_time' => $travel_time,
+                    'travel_by' => $travel_by,
+                    'nation_wide' => $nationWide,
+                ]);
+        }
+
+        return $this->sendResponse(__('Location updated successfully'));
+    }
+
+    
+    public function editUserLocation_08_05(Request $request): JsonResponse
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
