@@ -1305,7 +1305,7 @@ class LeadPreferenceController extends Controller
             'user_id' => 'required|exists:users,id',
             'postcode' => 'required|string',
             'miles' => 'required|numeric',
-            'type' => 'required|in:manual,auto', // assuming 'type' is either 'manual' or 'auto'
+            'type' => 'required', // assuming 'type' is either 'manual' or 'auto'
             'postcode_old' => 'required|string',
             'miles_old' => 'required|numeric',
         ], [
