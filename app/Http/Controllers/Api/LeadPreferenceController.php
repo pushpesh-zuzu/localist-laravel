@@ -1364,6 +1364,7 @@ class LeadPreferenceController extends Controller
                 $location->travel_time = $travel_time;
                 $location->travel_by = $travel_by;
                 $location->nation_wide = $nationWide;
+                $location->service_id = $serviceId;
                 $location->save();
             }
         }
