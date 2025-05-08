@@ -91,11 +91,12 @@ class UserController extends Controller
                     $aLocations['user_id'] = $user->id;
                     $aLocations['type'] = "Distance";
                     $aLocations['city'] = $aVals['cities'];
-                    if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
-                        $aLocations['nation_wide'] = 1;
-                    }else{
-                        $aLocations['nation_wide'] = 0;
-                    }
+                    $aLocations['nation_wide'] = $aVals['nation_wide'];
+                    // if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
+                    //     $aLocations['nation_wide'] = 1;
+                    // }else{
+                    //     $aLocations['nation_wide'] = 0;
+                    // }
                     if (isset($aVals['miles1']) && isset($aVals['miles2']) && !empty($aVals['miles1']) && !empty($aVals['miles2'])) {
                         $aLocations['miles'] = $aVals['miles1'] + $aVals['miles2'];
                     } elseif (!empty($aVals['miles1'])) {
