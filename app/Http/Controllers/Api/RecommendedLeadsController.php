@@ -687,18 +687,29 @@ class RecommendedLeadsController extends Controller
             ->get()
             ->groupBy('user_id');
 
-        if ($locationMatchedUsers->isEmpty()) {
-            return [
-                'empty' => true,
-                'response' => [
-                    'service_name' => $serviceName,
-                    'sellers' => [],
-                    'bidcount' => $bidCount,
-                    'totalbid' => $settings->total_bid ?? 0,
-                    'baseurl' => url('/') . Storage::url('app/public/images/users')
-                ]
-            ];
-        }
+            if ($locationMatchedUsers->isEmpty()) {
+                // Fallback to nation_wide = 1 sellers
+                $nationWideLocations = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+                    ->where('service_id', $serviceId)
+                    ->where('nation_wide', 1)
+                    ->get()
+                    ->groupBy('user_id');
+            
+                if ($nationWideLocations->isEmpty()) {
+                    return [
+                        'empty' => true,
+                        'response' => [
+                            'service_name' => $serviceName,
+                            'sellers' => [],
+                            'bidcount' => $bidCount,
+                            'totalbid' => $settings->total_bid ?? 0,
+                            'baseurl' => url('/') . Storage::url('app/public/images/users')
+                        ]
+                    ];
+                }
+            
+                $locationMatchedUsers = $nationWideLocations;
+            }
 
         $matchedUserIds = $locationMatchedUsers->keys()->toArray();
 
@@ -774,55 +785,9 @@ class RecommendedLeadsController extends Controller
             ]);
         })->filter();
 
-        // Fetch users with nation_wide = 1 who were not already selected
-        $nationwideUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
-        ->where('service_id', $serviceId)
-        ->where('nation_wide', 1)
-        ->whereNotIn('user_id', $finalUsers->pluck('id')->toArray())
-        ->get()
-        ->groupBy('user_id');
-
-        // Filter these based on preference and constraints
-        $nationwideFinalUsers = $nationwideUsers->keys()->map(function ($userId) use (
-        $nationwideUsers,
-        $leadPostcode,
-        $leadCreditScore,
-        $scoredUsers,
-        $serviceName,
-        $serviceId,
-        $existingBids,
-        $sellersWith3Bids,
-        $applySellerLimit
-        ) {
-        if (in_array($userId, $existingBids)) return null;
-        if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
-
-        $user = User::where('id', $userId)->whereHas('details', function ($query) {
-            $query->where('is_autobid', 1)->where('autobid_pause', 0);
-        })->first();
-
-        if (!$user) return null;
-
-        $userLocation = $nationwideUsers[$userId]->first();
-        $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
-        $miles = $distance !== "Distance not found" ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2) : null;
-
-        return array_merge($user->toArray(), [
-            'credit_score' => $leadCreditScore,
-            'service_name' => $serviceName,
-            'service_id' => $serviceId,
-            'distance' => $miles,
-            'score' => $scoredUsers[$userId] ?? 0,
-        ]);
-        })->filter();
-
-
         $finalUsers = $distanceOrder === 'desc'
             ? $finalUsers->sortByDesc('distance')->values()
             : $finalUsers->sortBy('distance')->values();
-
-         // Append nationwide sellers after local ones
-         $finalUsers = $finalUsers->merge($nationwideFinalUsers);    
 
         return [
             'empty' => false,
@@ -835,6 +800,7 @@ class RecommendedLeadsController extends Controller
             ]
         ];
     }
+
 
     public function getManualLeads_without_3_Seller_condition(Request $request)
     {
