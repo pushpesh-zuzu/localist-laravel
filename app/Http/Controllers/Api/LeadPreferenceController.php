@@ -1688,15 +1688,15 @@ class LeadPreferenceController extends Controller
         $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
 
         // Group by postcode to remove duplicates (only first entry per postcode)
-        $uniqueRows = $aRows->unique('postcode')->values();
+        // $uniqueRows = $aRows->unique('postcode')->values();
 
         // Add total services per postcode
-        foreach ($uniqueRows as $value) {
+        foreach ($aRows as $value) {
             $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
             $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
         }
 
-        return $uniqueRows;
+        return $aRows;
     }
 
     // public function getFilterCreditList()
