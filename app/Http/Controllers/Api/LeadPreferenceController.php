@@ -1688,24 +1688,31 @@ class LeadPreferenceController extends Controller
         $aRows = UserServiceLocation::where('user_id', $user_id)
             ->orderBy('postcode')
             ->get();
-    
+
         // Group by postcode and miles
         $grouped = $aRows->groupBy(function ($item) {
             return $item->postcode . '_' . $item->miles;
         });
-    
+
         $finalRows = collect();
-    
+
         foreach ($grouped as $items) {
-            foreach ($items as $item) {
-                $item['total_services'] = $items->count(); // Total in this postcode+miles group
-                $item['leadcount'] = LeadRequest::where('postcode', $item->postcode)->count();
-                $finalRows->push($item);
-            }
+            $first = $items->first(); // representative row
+
+            // Clone the first row's attributes
+            $value = $first->toArray();
+
+            // Add custom fields
+            $value['total_services'] = $items->count();
+            $value['leadcount'] = LeadRequest::where('postcode', $first->postcode)->count();
+            $value['service_ids'] = $items->pluck('service_id')->unique()->values();
+
+            $finalRows->push($value);
         }
-    
+
         return $finalRows;
     }
+
     
 
 
