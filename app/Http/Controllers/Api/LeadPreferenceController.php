@@ -1326,7 +1326,7 @@ class LeadPreferenceController extends Controller
                 continue;
             }
             $userServiceId = $userService->id;
-            // 🛑 Prevent duplicates
+            // Prevent duplicates
             $duplicateExists = UserServiceLocation::where('user_id', $userId)
                 ->where('service_id', $serviceId)
                 ->where('type', $aVals['type'])
@@ -1341,13 +1341,12 @@ class LeadPreferenceController extends Controller
                 return $this->sendError("This postcode already exists for this service and type.");
             }
 
-            // 🗑️ Delete previous entry based on old values
+            // Delete previous entry based on old values
             UserServiceLocation::where('user_id', $userId)
-                ->where('service_id', $serviceId)
-                ->where('postcode', $aVals['postcode_old'] ?? '')
+                ->whereIn('postcode', [$aVals['postcode_old']])
                 ->where('type', $aVals['type'])
-                ->where('miles', $aVals['miles_old'] ?? '')
                 ->delete();
+                
 
             // ✅ Insert new location
             UserServiceLocation::create([
@@ -1366,9 +1365,6 @@ class LeadPreferenceController extends Controller
 
         return $this->sendResponse(__('Location updated successfully'));
     }
-
-
-
     
     public function editUserLocation_08_05(Request $request): JsonResponse
     {
