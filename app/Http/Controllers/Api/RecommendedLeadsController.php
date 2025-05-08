@@ -686,19 +686,43 @@ class RecommendedLeadsController extends Controller
             ->whereIn('postcode', $nearbyPostcodes)
             ->get()
             ->groupBy('user_id');
+        
+            if ($locationMatchedUsers->isEmpty()) {
+                // Fallback to nation_wide = 1 sellers
+                $nationWideLocations = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+                    ->where('service_id', $serviceId)
+                    ->where('nation_wide', 1)
+                    ->get()
+                    ->groupBy('user_id');
 
-        if ($locationMatchedUsers->isEmpty()) {
-            return [
-                'empty' => true,
-                'response' => [
-                    'service_name' => $serviceName,
-                    'sellers' => [],
-                    'bidcount' => $bidCount,
-                    'totalbid' => $settings->total_bid ?? 0,
-                    'baseurl' => url('/') . Storage::url('app/public/images/users')
-                ]
-            ];
-        }
+                if ($nationWideLocations->isEmpty()) {
+                    return [
+                        'empty' => true,
+                        'response' => [
+                            'service_name' => $serviceName,
+                            'sellers' => [],
+                            'bidcount' => $bidCount,
+                            'totalbid' => $settings->total_bid ?? 0,
+                            'baseurl' => url('/') . Storage::url('app/public/images/users')
+                        ]
+                    ];
+                }
+
+                $locationMatchedUsers = $nationWideLocations;
+            }
+
+        // if ($locationMatchedUsers->isEmpty()) {
+        //     return [
+        //         'empty' => true,
+        //         'response' => [
+        //             'service_name' => $serviceName,
+        //             'sellers' => [],
+        //             'bidcount' => $bidCount,
+        //             'totalbid' => $settings->total_bid ?? 0,
+        //             'baseurl' => url('/') . Storage::url('app/public/images/users')
+        //         ]
+        //     ];
+        // }
 
         $matchedUserIds = $locationMatchedUsers->keys()->toArray();
 
@@ -789,7 +813,6 @@ class RecommendedLeadsController extends Controller
             ]
         ];
     }
-
 
     public function getManualLeads_without_3_Seller_condition(Request $request)
     {

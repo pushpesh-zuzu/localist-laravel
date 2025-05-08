@@ -1713,9 +1713,6 @@ class LeadPreferenceController extends Controller
         return $finalRows;
     }
 
-    
-
-
     public function getFilterLocations_08_05($user_id)
     {
         $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
