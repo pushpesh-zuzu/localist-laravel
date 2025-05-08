@@ -1684,33 +1684,29 @@ class LeadPreferenceController extends Controller
     }
 
     public function getFilterLocations($user_id)
-{
-    $aRows = UserServiceLocation::where('user_id', $user_id)
-        ->orderBy('postcode')
-        ->get();
-
-    // Group by both postcode and miles
-    $grouped = $aRows->groupBy(function ($item) {
-        return $item->postcode . '_' . $item->miles;
-    });
-
-    $result = collect();
-
-    foreach ($grouped as $groupKey => $items) {
-        $first = $items->first(); // base data from first item
-        $items['total_services'] = $items->count();
-        $items['leadcount'] =  LeadRequest::where('postcode', $first->postcode)->count();
-        // $row = [
-        //     'total_services' => $items->count(),
-        //     'leadcount' => LeadRequest::where('postcode', $first->postcode)->count(),
-        //     'service_ids' => $items->pluck('service_id')->unique()->values(),
-        // ];
-
-        // $result->push($row);
+    {
+        $aRows = UserServiceLocation::where('user_id', $user_id)
+            ->orderBy('postcode')
+            ->get();
+    
+        // Group by postcode and miles
+        $grouped = $aRows->groupBy(function ($item) {
+            return $item->postcode . '_' . $item->miles;
+        });
+    
+        $finalRows = collect();
+    
+        foreach ($grouped as $items) {
+            foreach ($items as $item) {
+                $item['total_services'] = $items->count(); // Total in this postcode+miles group
+                $item['leadcount'] = LeadRequest::where('postcode', $item->postcode)->count();
+                $finalRows->push($item);
+            }
+        }
+    
+        return $finalRows;
     }
-
-    return $grouped;
-}
+    
 
 
     public function getFilterLocations_08_05($user_id)
