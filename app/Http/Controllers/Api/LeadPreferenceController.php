@@ -1684,6 +1684,37 @@ class LeadPreferenceController extends Controller
     }
 
     public function getFilterLocations($user_id)
+{
+    $aRows = UserServiceLocation::where('user_id', $user_id)
+        ->orderBy('postcode')
+        ->get();
+
+    // Group by both postcode and miles
+    $grouped = $aRows->groupBy(function ($item) {
+        return $item->postcode . '_' . $item->miles;
+    });
+
+    $result = collect();
+
+    foreach ($grouped as $groupKey => $items) {
+        $first = $items->first(); // base data from first item
+
+        $row = [
+            'postcode' => $first->postcode,
+            'miles' => $first->miles,
+            'total_services' => $items->count(),
+            'leadcount' => LeadRequest::where('postcode', $first->postcode)->count(),
+            'service_ids' => $items->pluck('service_id')->unique()->values(),
+        ];
+
+        $result->push($row);
+    }
+
+    return $result;
+}
+
+
+    public function getFilterLocations_08_05($user_id)
     {
         $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
 
