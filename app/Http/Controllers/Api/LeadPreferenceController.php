@@ -1323,10 +1323,10 @@ class LeadPreferenceController extends Controller
                 ->first();
 
             if (!$userService) {
-                continue; // Skip if user_service does not exist
+                continue;
             }
 
-            // ❌ Check if any other record with this postcode and type exists
+            // 🛑 Prevent duplicates
             $duplicateExists = UserServiceLocation::where('user_id', $userId)
                 ->where('service_id', $serviceId)
                 ->where('type', $aVals['type'])
@@ -1341,36 +1341,31 @@ class LeadPreferenceController extends Controller
                 return $this->sendError("This postcode already exists for this service and type.");
             }
 
-            // 🔄 Try to find by old postcode/miles/type first
-            $location = UserServiceLocation::where('user_id', $userId)
+            // 🗑️ Delete previous entry based on old values
+            UserServiceLocation::where('user_id', $userId)
                 ->where('service_id', $serviceId)
                 ->where('postcode', $aVals['postcode_old'] ?? '')
-                ->where('miles', $aVals['miles_old'] ?? '')
                 ->where('type', $aVals['type'])
-                ->first();
+                ->where('miles', $aVals['miles_old'] ?? '')
+                ->delete();
 
-            // 🔁 If not found, just update first available by type
-            if (!$location) {
-                $location = UserServiceLocation::where('user_id', $userId)
-                    ->where('service_id', $serviceId)
-                    ->where('type', $aVals['type'])
-                    ->first();
-            }
-
-            if ($location) {
-                $location->postcode = $aVals['postcode'];
-                $location->miles = $aVals['miles'];
-                $location->city = $aVals['city'] ?? '';
-                $location->travel_time = $travel_time;
-                $location->travel_by = $travel_by;
-                $location->nation_wide = $nationWide;
-                $location->service_id = $serviceId;
-                $location->save();
-            }
+            // ✅ Insert new location
+            UserServiceLocation::create([
+                'user_id' => $userId,
+                'service_id' => $serviceId,
+                'postcode' => $aVals['postcode'],
+                'city' => $aVals['city'] ?? '',
+                'miles' => $aVals['miles'],
+                'type' => $aVals['type'],
+                'nation_wide' => $nationWide,
+                'travel_time' => $travel_time,
+                'travel_by' => $travel_by,
+            ]);
         }
 
         return $this->sendResponse(__('Location updated successfully'));
     }
+
 
 
     
