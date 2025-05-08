@@ -1698,19 +1698,18 @@ class LeadPreferenceController extends Controller
 
     foreach ($grouped as $groupKey => $items) {
         $first = $items->first(); // base data from first item
+        $value['total_services'] = $items->count(),
+        $value['leadcount'] =  LeadRequest::where('postcode', $first->postcode)->count(),
+        // $row = [
+        //     'total_services' => $items->count(),
+        //     'leadcount' => LeadRequest::where('postcode', $first->postcode)->count(),
+        //     'service_ids' => $items->pluck('service_id')->unique()->values(),
+        // ];
 
-        $row = [
-            'postcode' => $first->postcode,
-            'miles' => $first->miles,
-            'total_services' => $items->count(),
-            'leadcount' => LeadRequest::where('postcode', $first->postcode)->count(),
-            'service_ids' => $items->pluck('service_id')->unique()->values(),
-        ];
-
-        $result->push($row);
+        // $result->push($row);
     }
 
-    return $result;
+    return $grouped;
 }
 
 
