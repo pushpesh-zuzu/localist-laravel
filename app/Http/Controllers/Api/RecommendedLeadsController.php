@@ -671,6 +671,199 @@ class RecommendedLeadsController extends Controller
         $sortedUserIds = $userServices->pluck('user_id')->toArray();
         $nearbyPostcodes = $this->getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds);
 
+        // Get only local sellers (nation_wide = 0)
+        $locationMatchedUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->where('nation_wide', 0)
+            ->whereIn('postcode', $nearbyPostcodes)
+            ->get()
+            ->groupBy('user_id');
+
+        $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
+            ->pluck('id', 'questions')->toArray();
+
+        $questionFilters = collect($questions)
+            ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
+            ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
+
+        $matchedPreferences = LeadPrefrence::whereIn('user_id', $locationMatchedUsers->keys())
+            ->where('service_id', $serviceId)
+            ->where(function ($query) use ($questionFilters) {
+                foreach ($questionFilters as $filter) {
+                    foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
+                        $query->orWhere(fn($q2) =>
+                            $q2->where('question_id', $filter['question_id'])
+                                ->where('answers', 'LIKE', '%' . $ans . '%')
+                        );
+                    }
+                }
+            })->with(['question:id,questions as question_text'])->get();
+
+        $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
+
+        $existingBids = RecommendedLead::where('buyer_id', $customerId)
+            ->where('lead_id', $lead->id)
+            ->pluck('seller_id')
+            ->toArray();
+
+        $sellersWith3Bids = [];
+        if ($applySellerLimit) {
+            $sellersWith3Bids = RecommendedLead::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->select('seller_id')
+                ->groupBy('seller_id')
+                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+                ->pluck('seller_id')
+                ->toArray();
+        }
+
+        $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
+            $locationMatchedUsers,
+            $leadPostcode,
+            $leadCreditScore,
+            $scoredUsers,
+            $serviceName,
+            $serviceId,
+            $existingBids,
+            $sellersWith3Bids,
+            $applySellerLimit
+        ) {
+            if (in_array($userId, $existingBids)) return null;
+            if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+
+            $user = User::where('id', $userId)->whereHas('details', function ($query) {
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            })->first();
+
+            if (!$user) return null;
+
+            $userLocation = $locationMatchedUsers[$userId]->first();
+            $distance = $this->getDistance($leadPostcode, $userLocation->postcode);
+            $miles = $distance !== "Distance not found" ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2) : null;
+
+            if ($miles === 0) return null;
+
+            return array_merge($user->toArray(), [
+                'credit_score' => $leadCreditScore,
+                'service_name' => $serviceName,
+                'service_id' => $serviceId,
+                'distance' => $miles,
+                'score' => $scoredUsers[$userId] ?? 0,
+                'fallback' => false
+            ]);
+        })->filter();
+
+        // Sort local users by distance
+        $finalUsers = $distanceOrder === 'desc'
+            ? $finalUsers->sortByDesc('distance')->values()
+            : $finalUsers->sortBy('distance')->values();
+
+        // Now handle nation_wide = 1 users
+        $nationWideUserLocations = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->where('nation_wide', 1)
+            ->whereNotIn('user_id', $finalUsers->pluck('id')->toArray())
+            ->get()
+            ->groupBy('user_id');
+
+        $nationWideScoredUsers = LeadPrefrence::whereIn('user_id', $nationWideUserLocations->keys())
+            ->where('service_id', $serviceId)
+            ->where(function ($query) use ($questionFilters) {
+                foreach ($questionFilters as $filter) {
+                    foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
+                        $query->orWhere(fn($q2) =>
+                            $q2->where('question_id', $filter['question_id'])
+                                ->where('answers', 'LIKE', '%' . $ans . '%')
+                        );
+                    }
+                }
+            })->get()->groupBy('user_id')->map->count();
+
+        $nationWideFinalUsers = $nationWideScoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
+            $nationWideUserLocations,
+            $leadCreditScore,
+            $nationWideScoredUsers,
+            $serviceName,
+            $serviceId,
+            $existingBids,
+            $sellersWith3Bids,
+            $applySellerLimit
+        ) {
+            if (in_array($userId, $existingBids)) return null;
+            if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+
+            $user = User::where('id', $userId)->whereHas('details', function ($query) {
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            })->first();
+
+            if (!$user) return null;
+
+            return array_merge($user->toArray(), [
+                'credit_score' => $leadCreditScore,
+                'service_name' => $serviceName,
+                'service_id' => $serviceId,
+                'distance' => null,
+                'score' => $nationWideScoredUsers[$userId] ?? 0,
+                'fallback' => true
+            ]);
+        })->filter();
+
+        // Merge final list with nationwide users (local first)
+        $finalUsers = $finalUsers->merge($nationWideFinalUsers)->values();
+
+        return [
+            'empty' => $finalUsers->isEmpty(),
+            'response' => [
+                'service_name' => $serviceName,
+                'sellers' => $finalUsers,
+                'bidcount' => $bidCount,
+                'totalbid' => $settings->total_bid ?? 0,
+                'baseurl' => url('/') . Storage::url('app/public/images/users')
+            ]
+        ];
+    }
+
+
+    private function FullManualLeadsCode_08_051($lead, $distanceOrder = 'asc', $applySellerLimit = false) 
+    {
+        $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
+        $settings = Setting::first();  
+        $serviceId = $lead->service_id;
+        $leadCreditScore = $lead->credit_score;
+        $leadPostcode = $lead->postcode;
+        $customerId = $lead->customer_id;
+        $questions = json_decode($lead->questions, true);
+        $serviceName = Category::find($serviceId)->name ?? '';
+
+        $userServices = User::where('id', '!=', $customerId)
+            ->whereHas('details', function ($query) {
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            })
+            ->whereIn('id', function ($query) use ($serviceId) {
+                $query->select('user_id')
+                    ->from('user_services')
+                    ->where('service_id', $serviceId)
+                    ->where('auto_bid', 1);
+            })
+            ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
+            ->select('id as user_id', 'total_credit')
+            ->get();
+
+        if ($userServices->isEmpty()) {
+            return [
+                'empty' => true,
+                'response' => [
+                    'service_name' => $serviceName,
+                    'sellers' => [],
+                    'bidcount' => $bidCount,
+                    'totalbid' => $settings->total_bid ?? 0,
+                    'baseurl' => url('/') . Storage::url('app/public/images/users')
+                ]
+            ];
+        }
+
+        $sortedUserIds = $userServices->pluck('user_id')->toArray();
+        $nearbyPostcodes = $this->getNearbyPostcodes($leadPostcode, $serviceId, $sortedUserIds);
+
         $locationMatchedUsers = UserServiceLocation::whereIn('user_id', $sortedUserIds)
             ->where('service_id', $serviceId)
             ->whereIn('postcode', $nearbyPostcodes)
