@@ -1325,7 +1325,7 @@ class LeadPreferenceController extends Controller
             if (!$userService) {
                 continue;
             }
-
+            $userServiceId = $userService->id;
             // 🛑 Prevent duplicates
             $duplicateExists = UserServiceLocation::where('user_id', $userId)
                 ->where('service_id', $serviceId)
@@ -1353,6 +1353,7 @@ class LeadPreferenceController extends Controller
             UserServiceLocation::create([
                 'user_id' => $userId,
                 'service_id' => $serviceId,
+                'user_service_id' => $userServiceId,
                 'postcode' => $aVals['postcode'],
                 'city' => $aVals['city'] ?? '',
                 'miles' => $aVals['miles'],
