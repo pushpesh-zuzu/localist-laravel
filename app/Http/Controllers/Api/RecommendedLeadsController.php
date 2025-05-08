@@ -816,13 +816,13 @@ class RecommendedLeadsController extends Controller
         ]);
         })->filter();
 
-        // Append nationwide sellers after local ones
-        $finalUsers = $finalUsers->merge($nationwideFinalUsers);
-
 
         $finalUsers = $distanceOrder === 'desc'
             ? $finalUsers->sortByDesc('distance')->values()
             : $finalUsers->sortBy('distance')->values();
+
+         // Append nationwide sellers after local ones
+         $finalUsers = $finalUsers->merge($nationwideFinalUsers);    
 
         return [
             'empty' => false,
