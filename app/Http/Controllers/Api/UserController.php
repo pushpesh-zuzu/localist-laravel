@@ -90,6 +90,7 @@ class UserController extends Controller
                     $aLocations['user_service_id'] = $service->id;
                     $aLocations['user_id'] = $user->id;
                     $aLocations['type'] = "Distance";
+                    $aLocations['city'] = $aVals['cities'];
                     if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
                         $aLocations['nation_wide'] = 1;
                     }else{
