@@ -1258,7 +1258,8 @@ class LeadPreferenceController extends Controller
                     'nation_wide' => $nationWide,
                     'city'=>$aVals['city'],
                     'travel_time'=>$travel_time,
-                    'travel_by'=>$travel_by
+                    'travel_by'=>$travel_by,
+                    'coordinates' => $aVals['coordinates']
                     ] // Fields to insert
                 );
     
@@ -1366,6 +1367,7 @@ class LeadPreferenceController extends Controller
                 'nation_wide' => $nationWide,
                 'travel_time' => $travel_time,
                 'travel_by' => $travel_by,
+                'coordinates' => $aVals['coordinates']
             ]);
         }
     
