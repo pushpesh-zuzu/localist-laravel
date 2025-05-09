@@ -1332,7 +1332,7 @@ class LeadPreferenceController extends Controller
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
     
             // Only check for duplicates if postcode or miles are changed
-            if ($aVals['type'] !== 'nationwide') {
+            if ($aVals['type'] !== 'Nationwide') {
                 if ($isPostcodeChanged || $isMilesChanged) {
                     $duplicateExists = UserServiceLocation::where('user_id', $userId)
                         ->where('service_id', $serviceId)
