@@ -1332,16 +1332,18 @@ class LeadPreferenceController extends Controller
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
     
             // Only check for duplicates if postcode or miles are changed
-            if ($isPostcodeChanged || $isMilesChanged) {
-                $duplicateExists = UserServiceLocation::where('user_id', $userId)
-                    ->where('service_id', $serviceId)
-                    ->where('type', $aVals['type'])
-                    ->where('postcode', $aVals['postcode'])
-                    ->where('miles', $aVals['miles'])
-                    ->exists();
-    
-                if ($duplicateExists) {
-                    return $this->sendError("This postcode already exists for this service and type.");
+            if ($aVals['type'] !== 'nationwide') {
+                if ($isPostcodeChanged || $isMilesChanged) {
+                    $duplicateExists = UserServiceLocation::where('user_id', $userId)
+                        ->where('service_id', $serviceId)
+                        ->where('type', $aVals['type'])
+                        ->where('postcode', $aVals['postcode'])
+                        ->where('miles', $aVals['miles'])
+                        ->exists();
+        
+                    if ($duplicateExists) {
+                        return $this->sendError("This postcode already exists for this service and type.");
+                    }
                 }
             }
     
