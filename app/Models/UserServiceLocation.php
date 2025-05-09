@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserServiceLocation extends Model
 {
-    protected $fillable = ['user_id', 'service_id','user_service_id','miles','postcode','nation_wide','city','travel_time','travel_by','type','is_default','status'];
+    protected $fillable = ['user_id', 'service_id','user_service_id','miles','postcode','nation_wide','city','travel_time','travel_by','type','is_default','status','coordinates'];
 
 
     public static function createUserServiceLocation($aLocations)
