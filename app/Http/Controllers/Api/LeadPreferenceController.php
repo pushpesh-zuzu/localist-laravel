@@ -1329,7 +1329,7 @@ class LeadPreferenceController extends Controller
     
             $userServiceId = $userService->id;
     
-            $isPostcodeChanged = ($aVals['postcode_old'] ?? '') !== $aVals['postcode'];
+            $isPostcodeChanged = ($aVals['postcode_old'] ?? '') != $aVals['postcode'];
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
     
             // Only check for duplicates if postcode or miles are changed
@@ -1339,9 +1339,15 @@ class LeadPreferenceController extends Controller
                         ->where('service_id', $serviceId)
                         ->where('type', $aVals['type'])
                         ->where('postcode', $aVals['postcode'])
-                        ->where('miles', $aVals['miles'])
-                        ->exists();
+                        ->where('miles', $aVals['miles']);
+                        
+                // If this is an edit (not new insert), exclude the current location
+                if (!empty($aVals['location_id'])) {
+                    $duplicateExists->where('id', '!=', $aVals['location_id']);
+                }
         
+                    $duplicateExists = $duplicateExists->exists();
+
                     if ($duplicateExists) {
                         return $this->sendError("This postcode already exists.");
                     }
