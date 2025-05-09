@@ -1473,7 +1473,7 @@ class RecommendedLeadsController extends Controller
         // Step 2: Get current count after manual inserts
         $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
     
-        if ($currentCount < 5) {
+        if ($currentCount <= $settings->total_bid) {
             // Step 3: Fetch remaining sellers using getManualLeads
             // $manualLeadRequest = new Request(['lead_id' => $leadId]);
             $response = $this->getManualLeads($request)->getData();
