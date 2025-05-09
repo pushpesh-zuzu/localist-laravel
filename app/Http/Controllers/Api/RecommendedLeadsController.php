@@ -1433,7 +1433,7 @@ class RecommendedLeadsController extends Controller
         }  
     } 
 
-    public function addMultipleManualBid_09_05_25(Request $request)
+    public function addMultipleManualBid(Request $request)
     {
         $aVals = $request->all();
         $buyerId = $aVals['user_id'];
@@ -1523,115 +1523,6 @@ class RecommendedLeadsController extends Controller
             'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
         ]);
     }
-
-    public function addMultipleManualBid(Request $request)
-    {
-        $aVals = $request->all();
-        $buyerId = $aVals['user_id'];
-        $leadId = $aVals['lead_id'];
-        $inserted = 0;
-        $manualInserted = 0;
-
-        $isDataExists = LeadStatus::where('lead_id', $leadId)->where('status', 'pending')->first();
-        $settings = Setting::first();  
-
-        // Step 1: Check current bid count
-        $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
-        $maxToInsert = $settings->total_bid - $currentCount;
-
-        if ($maxToInsert <= 0) {
-            return $this->sendError(__('Maximum number of bids reached for this lead.'), 404);
-          
-        }
-
-        // Step 2: Insert manual bids up to allowed limit
-        foreach ($aVals['seller_id'] as $index => $sellerId) {
-            if ($manualInserted >= $maxToInsert) break;
-
-            $alreadyExists = RecommendedLead::where('buyer_id', $buyerId)
-                ->where('lead_id', $leadId)
-                ->where('seller_id', $sellerId)
-                ->exists();
-
-            if (!$alreadyExists) {
-                $bidAmount = $aVals['bid'][$index];
-
-                $user = DB::table('users')->where('id', $buyerId)->first();
-                if ($user && $user->total_credit >= $bidAmount) {
-                    // Deduct credit
-                    DB::table('users')->where('id', $sellerId)->decrement('total_credit', $bidAmount);
-
-                    // Insert bid
-                    RecommendedLead::create([
-                        'buyer_id' => $buyerId,
-                        'lead_id' => $leadId,
-                        'seller_id' => $sellerId,
-                        'service_id' => $aVals['service_id'][$index],
-                        'bid' => $bidAmount,
-                        'distance' => $aVals['distance'][$index],
-                    ]);
-                    $manualInserted++;
-                    $inserted++;
-                }
-            }
-        }
-
-        // Step 3: Insert auto bids only if still under the limit
-        $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
-        if ($currentCount < $settings->total_bid) {
-            $remainingToInsert = $settings->total_bid - $currentCount;
-
-            $response = $this->getManualLeads($request)->getData();
-
-            if (!empty($response->data[0]->sellers)) {
-                $remainingSellers = collect($response->data[0]->sellers)
-                    ->reject(function ($seller) use ($buyerId, $leadId) {
-                        return RecommendedLead::where('buyer_id', $buyerId)
-                            ->where('lead_id', $leadId)
-                            ->where('seller_id', $seller->id)
-                            ->exists();
-                    })
-                    ->take($remainingToInsert);
-
-                foreach ($remainingSellers as $seller) {
-                    $bidAmount = $seller->bid ?? 0;
-
-                    $user = DB::table('users')->where('id', $buyerId)->first();
-                    if ($user && $user->total_credit >= $bidAmount) {
-                        DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
-
-                        RecommendedLead::create([
-                            'buyer_id' => $buyerId,
-                            'lead_id' => $leadId,
-                            'seller_id' => $seller->id,
-                            'service_id' => $seller->service_id,
-                            'bid' => $bidAmount,
-                            'distance' => $seller->distance ?? 0,
-                        ]);
-                        $inserted++;
-                    }
-                }
-            }
-        }
-
-        // Step 4: Mark for autobid and status tracking
-        LeadRequest::where('id', $leadId)->update(['should_autobid' => 1]);
-
-        if (empty($isDataExists)) {
-            LeadStatus::create([
-                'lead_id' => $leadId,
-                'user_id' => $buyerId,
-                'status' => 'pending',
-                'clicked_from' => 2,
-            ]);  
-        }
-
-        return $this->sendResponse(__('Bids inserted successfully'), [
-            'inserted_count' => $inserted,
-            'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
-        ]);
-    }
-
 
     public function addMultipleManualBid111(Request $request)
     {
