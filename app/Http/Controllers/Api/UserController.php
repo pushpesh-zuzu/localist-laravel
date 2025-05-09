@@ -64,7 +64,7 @@ class UserController extends Controller
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
         $user->remember_tokens = $token;
-
+        $user->nationwide = $aVals['nation_wide'];
         if(!empty($user))
         {
             $userdetails = UserDetail::where('user_id',$user->id)->first();
