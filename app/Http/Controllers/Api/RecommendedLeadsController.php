@@ -1403,7 +1403,7 @@ class RecommendedLeadsController extends Controller
             if (!$alreadyExists) {
                 $bidAmount = $aVals['bid'][$index];
 
-                $user = DB::table('users')->where('id', $$sellerId)->first();
+                $user = DB::table('users')->where('id', $sellerId)->first();
                 if ($user && $user->total_credit >= $bidAmount) {
                     DB::table('users')->where('id', $sellerId)->decrement('total_credit', $bidAmount);
 
