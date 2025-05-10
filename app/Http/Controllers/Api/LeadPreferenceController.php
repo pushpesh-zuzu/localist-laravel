@@ -1331,7 +1331,14 @@ class LeadPreferenceController extends Controller
     
             $isPostcodeChanged = ($aVals['postcode_old'] ?? '') != $aVals['postcode'];
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
-    
+            
+             // Delete old entry
+             UserServiceLocation::where('user_id', $userId)
+             ->where('service_id', $serviceId)
+             ->where('id',$aVals['location_id'])
+             ->where('postcode', $aVals['postcode_old'])
+             ->where('type', $aVals['type'])
+             ->delete();
             // Only check for duplicates if postcode or miles are changed
             if ($aVals['type'] !== 'Nationwide' && $aVals['type'] !== 'Draw on Map') {
                 if ($isPostcodeChanged || $isMilesChanged) {
@@ -1354,12 +1361,7 @@ class LeadPreferenceController extends Controller
                 }
             }
     
-            // Delete old entry
-            UserServiceLocation::where('user_id', $userId)
-                ->where('service_id', $serviceId)
-                ->where('postcode', $aVals['postcode_old'])
-                ->where('type', $aVals['type'])
-                ->delete();
+           
     
             // Insert updated location
             UserServiceLocation::create([
