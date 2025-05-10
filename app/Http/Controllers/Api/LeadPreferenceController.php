@@ -1334,9 +1334,9 @@ class LeadPreferenceController extends Controller
             
              // Delete old entry
              UserServiceLocation::where('user_id', $userId)
-             ->where('service_id', $serviceId)
              ->where('postcode', $aVals['postcode_old'])
              ->where('type', $aVals['type'])
+             ->where('miles', $aVals['miles'])
              ->delete();
             // Only check for duplicates if postcode or miles are changed
             if ($aVals['type'] !== 'Nationwide' && $aVals['type'] !== 'Draw on Map') {
