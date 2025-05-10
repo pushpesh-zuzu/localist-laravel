@@ -1340,26 +1340,26 @@ class LeadPreferenceController extends Controller
 
             
             // Only check for duplicates if postcode or miles are changed
-            if ($aVals['type'] !== 'Nationwide' && $aVals['type'] !== 'Draw on Map') {
-                if ($isPostcodeChanged || $isMilesChanged) {
-                    $duplicateExists = UserServiceLocation::where('user_id', $userId)
-                        ->where('service_id', $serviceId)
-                        ->where('type', $aVals['type'])
-                        ->where('postcode', $aVals['postcode'])
-                        ->where('miles', $aVals['miles']);
+            // if ($aVals['type'] !== 'Nationwide' && $aVals['type'] !== 'Draw on Map') {
+            //     if ($isPostcodeChanged || $isMilesChanged) {
+            //         $duplicateExists = UserServiceLocation::where('user_id', $userId)
+            //             ->where('service_id', $serviceId)
+            //             ->where('type', $aVals['type'])
+            //             ->where('postcode', $aVals['postcode'])
+            //             ->where('miles', $aVals['miles']);
                         
-                // If this is an edit (not new insert), exclude the current location
-                if (!empty($aVals['location_id'])) {
-                    $duplicateExists->where('id', '!=', $aVals['location_id']);
-                }
+            //     // If this is an edit (not new insert), exclude the current location
+            //     if (!empty($aVals['location_id'])) {
+            //         $duplicateExists->where('id', '!=', $aVals['location_id']);
+            //     }
         
-                    $duplicateExists = $duplicateExists->exists();
+            //         $duplicateExists = $duplicateExists->exists();
 
-                    if ($duplicateExists) {
-                        return $this->sendError("This postcode already exists.");
-                    }
-                }
-            }
+            //         if ($duplicateExists) {
+            //             return $this->sendError("This postcode already exists.");
+            //         }
+            //     }
+            // }
     
            
     
