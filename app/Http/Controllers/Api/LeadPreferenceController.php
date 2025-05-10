@@ -1317,7 +1317,11 @@ class LeadPreferenceController extends Controller
         $travel_time = $aVals['travel_time'] ?? '';
         $travel_by = $aVals['travel_by'] ?? '';
         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
-    
+        // Delete old entry
+        UserServiceLocation::where('user_id', $userId)
+        ->whereIn('postcode', [$aVals['postcode_old']])
+        ->where('type', $aVals['type'])
+        ->delete();
         foreach ($serviceIds as $serviceId) {
             $userService = UserService::where('user_id', $userId)
                 ->where('service_id', $serviceId)
@@ -1332,11 +1336,7 @@ class LeadPreferenceController extends Controller
             $isPostcodeChanged = ($aVals['postcode_old'] ?? '') != $aVals['postcode'];
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
             
-             // Delete old entry
-             UserServiceLocation::where('user_id', $userId)
-             ->whereIn('postcode', [$aVals['postcode_old']])
-             ->where('type', $aVals['type'])
-             ->delete();
+             
 
             
             // Only check for duplicates if postcode or miles are changed
