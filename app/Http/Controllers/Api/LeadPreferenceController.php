@@ -1335,7 +1335,6 @@ class LeadPreferenceController extends Controller
              // Delete old entry
              UserServiceLocation::where('user_id', $userId)
              ->where('service_id', $serviceId)
-             ->where('id',$aVals['location_id'])
              ->where('postcode', $aVals['postcode_old'])
              ->where('type', $aVals['type'])
              ->delete();
