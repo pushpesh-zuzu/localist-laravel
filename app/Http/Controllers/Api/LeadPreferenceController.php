@@ -11,13 +11,14 @@ use App\Models\UserResponseTime;
 use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
+use App\Models\SaveForLater;
 use App\Models\ActivityLog;
 use App\Models\LeadRequest;
-use App\Models\SaveForLater;
-use App\Models\LeadStatus;
 use App\Models\UserService;
+use App\Models\LeadStatus;
 use App\Models\UserDetail;
 use App\Models\CreditList;
+use App\Models\SellerNote;
 use App\Models\Category;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -2005,43 +2006,100 @@ class LeadPreferenceController extends Controller
             return $this->sendResponse('Data not found', []);                                  
     }
 
-    public function responseStatus(Request $request){ 
+    public function responseStatus(Request $request)
+    { 
         $aVals = $request->all();
-        $responsetime = UserResponseTime::where('seller_id',$aVals['user_id'])
-                                       ->where('buyer_id',$aVals['buyer_id'])
-                                       ->where('lead_id',$aVals['lead_id'])
-                                       ->first();
-        if(empty($responsetime)){
-            if ((int)$aVals['is_clicked_whatsapp'] !== 0 ||
-                (int)$aVals['is_clicked_email'] !== 0 ||
-                (int)$aVals['is_clicked_mobile'] !== 0 ||
-                (int)$aVals['is_clicked_sms'] !== 0) {
-                $button_clicked_time = now();
-            } else {
-                $button_clicked_time = null;
-            }
+        $type = $aVals['type'];
+        $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
+        $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
+        $activityname = "";
+        if($type == 'Whatsapp'){
+            // $activityname = $sellers .' viewed '. $buyer .' profile';
+            $activityname = 'You contacted '. $buyer .' through Whatsapp';
+        }
+        if($type == 'email'){
+           $activityname = 'You contacted '. $buyer .' through email'; 
+        }
+        if($type == 'mobile'){
+            $activityname = 'You contacted '. $buyer .' through mobile';
+        }
+        if($type == 'sms'){
+            $activityname = 'You contacted '. $buyer .' through SMS';
+        }
+        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+        $isActivity = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
+        if(empty($isActivity)){
+            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname, 'Buttons', $leadtime);
+        }
+        return $this->sendResponse(__('Status Updated'), []);                                          
+    }
 
-            $responsetime = UserResponseTime::create([
+    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime)
+    {
+        $activity = ActivityLog::create([
+                     'lead_id' => $lead_id,
+                     'from_user_id' => $from_user_id,
+                     'to_user_id' => $to_user_id,
+                     'activity_name' => $activity_name,
+                     'contact_type' => $contact_type,
+                 ]);  
+       
+        $leadtime = Carbon::parse($leadtime);
+
+        $createdAt = $activity->created_at;
+        $durationInHours = round($createdAt->diffInMinutes($leadtime) / 60, 2);
+        // Update the activity with duration
+        $activity->duration = $durationInHours;
+        $activity->save();    
+          
+        return $activity;                                 
+    }
+
+    public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name)
+    {
+        $activities = ActivityLog::where('lead_id',$lead_id)
+                                          ->where('from_user_id',$from_user_id) 
+                                          ->where('to_user_id',$to_user_id) 
+                                          ->where('lead_id',$lead_id) 
+                                          ->where('activity_name',$activity_name) 
+                                          ->first(); 
+         return $activities;                                 
+    }
+
+    public function sellerNotes(Request $request)
+    { 
+        $aVals = $request->all();
+        $isNotes = SellerNote::where('id',$aVals['note_id'])->first();
+        
+        if(!empty($isNotes)){
+            $isNotes->where('id',$aVals['note_id'])->update(['notes'=>$aVals['notes']]);
+        }else{
+            $isNotes = SellerNote::create([
                 'seller_id'  => $aVals['user_id'],
                 'buyer_id'  => $aVals['buyer_id'],
                 'lead_id'  => $aVals['lead_id'],
-                'is_clicked_whatsapp' => $aVals['is_clicked_whatsapp'],
-                'is_clicked_email' => $aVals['is_clicked_email'],
-                'is_clicked_mobile' => $aVals['is_clicked_mobile'],
-                'is_clicked_sms' => $aVals['is_clicked_sms'],
-                'last_seen' => now(),
-                'button_clicked_time' => $button_clicked_time
+                'notes' => $aVals['notes'],
             ]);
-        }else{
-            $responsetime->update([
-                                    'is_clicked_whatsapp' => $aVals['is_clicked_whatsapp'],
-                                    'is_clicked_email' => $aVals['is_clicked_email'],
-                                    'is_clicked_mobile' => $aVals['is_clicked_mobile'],
-                                    'is_clicked_sms' => $aVals['is_clicked_sms'],
-                                    'button_clicked_time' => now(),
-                                ]);
         }
-     
-        return $this->sendResponse(__('Status Updated'), []);                                          
+        return $this->sendResponse(__('Notes Updated Sucessfully'), []);                                          
     }
+
+     public function getSellerNotes(Request $request)
+    { 
+        $aVals = $request->all();
+        $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
+                             ->where('buyer_id',$aVals['buyer_id'])
+                             ->where('lead_id',$aVals['lead_id'])
+                             ->first();
+        if(!empty($isNotes)){
+            $isNotes = $isNotes;
+        }else{
+            $isNotes = "";
+        }
+        
+        return $this->sendResponse(__('No Notes added'), [
+                'notes' => $isNotes
+            ]);                                  
+    }
+   
 }

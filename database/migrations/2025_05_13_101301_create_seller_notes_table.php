@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('activity_logs', function (Blueprint $table) {
+        Schema::create('seller_notes', function (Blueprint $table) {
             $table->id();
             $table->integer('lead_id')->nullable();
-            $table->integer('from_user_id')->nullable();//loggedin user
-            $table->integer('to_user_id')->nullable();//buyer clicked on seller
-            $table->string('activity_name')->nullable();
-            $table->string('contact_type')->nullable();
-            $table->string('duration')->nullable()->comment('in hour');
+            $table->integer('seller_id')->nullable();//loggedin user
+            $table->integer('buyer_id')->nullable();//buyer id
+            $table->string('notes')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('activity_logs');
+        Schema::dropIfExists('seller_notes');
     }
 };

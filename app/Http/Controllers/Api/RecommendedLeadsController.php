@@ -1276,6 +1276,8 @@ class RecommendedLeadsController extends Controller
         }
         $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
+        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+       
         $settings = Setting::first();  
         if($aVals['bidtype'] == 'reply'){
             $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
@@ -1310,7 +1312,7 @@ class RecommendedLeadsController extends Controller
                 ]);  
             }   
             if(empty($isActivityExists)){
-                self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
+                self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback", "Request Reply", $leadtime);
                 // ActivityLog::create([
                 //      'lead_id' => $aVals['lead_id'],
                 //      'from_user_id' => $aVals['user_id'],
@@ -1321,10 +1323,13 @@ class RecommendedLeadsController extends Controller
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
+            $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
+            $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
+            $activityname = $sellers .' Contacted '. $buyer;
             $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
             $bidCount = $bidsUser->get()->count();
             $bidCheck = $bidsUser->where('buyer_id',$aVals['buyer_id'])->first();
-            $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],"Seller Contacted Buyer");
+            $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
             // ActivityLog::where('lead_id',$aVals['lead_id'])
             //                               ->where('from_user_id',$aVals['user_id']) 
             //                               ->where('to_user_id',$aVals['buyer_id']) 
@@ -1358,7 +1363,7 @@ class RecommendedLeadsController extends Controller
                 ]);  
             }          
             if(empty($isActivityExists)){
-                self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],"Seller Contacted Buyer");
+                self::addActivityLog($aVals['user_id'], $aVals['buyer_id'], $aVals['lead_id'], $activityname, "Manual Bid", $leadtime);
                 // ActivityLog::create([
                 //      'lead_id' => $aVals['lead_id'],
                 //      'from_user_id' => $aVals['user_id'],
@@ -1374,14 +1379,23 @@ class RecommendedLeadsController extends Controller
     }
     
     
-    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
-         $activities = ActivityLog::create([
+    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
+        $activity = ActivityLog::create([
                      'lead_id' => $lead_id,
                      'from_user_id' => $from_user_id,
                      'to_user_id' => $to_user_id,
                      'activity_name' => $activity_name,
+                     'contact_type' => $contact_type,
                  ]);  
-          return $activities;                                 
+        // Calculate duration in hours (minimum 1 hour)
+        $createdAt = $activity->created_at;
+        $durationInHours = round(max(1, $createdAt->diffInMinutes($leadtime) / 60), 2);
+
+        // Update the activity with duration
+        $activity->duration = $durationInHours;
+        $activity->save();    
+          
+        return $activity;                                 
     }
 
     public function addMultipleManualBid(Request $request)
@@ -1997,9 +2011,13 @@ class RecommendedLeadsController extends Controller
     public function buyerViewProfile(Request $request)
     {
         $aVals = $request->all();
-        $isActivity = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Viewed your profile");
+        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+        $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
+        $buyer = User::where('id',$aVals['user_id'])->pluck('name')->first();
+        $activityname = $buyer .' viewed '. $sellers .' profile';
+        $isActivity = self::getActivityLog($aVals['user_id'], $aVals['seller_id'], $aVals['lead_id'], $activityname);
         if(empty($isActivity)){
-            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Viewed your profile");
+            self::addActivityLog($aVals['user_id'], $aVals['seller_id'], $aVals['lead_id'], $activityname, "Buyer viewed Seller Profile", $leadtime);
         }
         return $this->sendResponse(__('Viewed your Profile'),[]);                      
     }
