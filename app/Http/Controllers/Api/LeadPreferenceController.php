@@ -2029,7 +2029,7 @@ class LeadPreferenceController extends Controller
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $isActivity = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
         if(empty($isActivity)){
-            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname, 'Buttons', $leadtime);
+            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname, $type, $leadtime);
         }
         return $this->sendResponse(__('Status Updated'), []);                                          
     }
