@@ -1274,15 +1274,20 @@ class RecommendedLeadsController extends Controller
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
         }
-        $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])->where('service_id', $aVals['service_id']);
+        
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
        
         $settings = Setting::first();  
         if($aVals['bidtype'] == 'reply'){
-            $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
-            $bidCount = $bidsdata->get()->count();
-            $bidCheck = $bidsUser->where('seller_id',$aVals['seller_id'])->first();
+            $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                                       ->where('service_id', $aVals['service_id'])
+                                       ->where('buyer_id', $aVals['user_id'])
+                                       ->where('seller_id',$aVals['seller_id'])
+                                       ->first();
+            $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                           ->where('service_id', $aVals['service_id'])
+                           ->count();
             $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
             // ActivityLog::where('lead_id',$aVals['lead_id'])
             //                               ->where('from_user_id',$aVals['user_id']) 
@@ -1324,12 +1329,17 @@ class RecommendedLeadsController extends Controller
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
         }
         if($aVals['bidtype'] == 'purchase_leads'){
+            $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                                       ->where('service_id', $aVals['service_id'])
+                                       ->where('seller_id', $aVals['user_id'])
+                                       ->where('buyer_id',$aVals['buyer_id'])
+                                       ->first();
             $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
             $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
             $activityname = $sellers .' Contacted '. $buyer;
-            $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
-            $bidCount = $bidsdata->get()->count();
-            $bidCheck = $bidsUser->where('buyer_id',$aVals['buyer_id'])->first();
+            $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                           ->where('service_id', $aVals['service_id'])
+                           ->count();
             $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
             // ActivityLog::where('lead_id',$aVals['lead_id'])
             //                               ->where('from_user_id',$aVals['user_id']) 
@@ -1782,8 +1792,8 @@ class RecommendedLeadsController extends Controller
     public function buyerActivities(Request $request)
     {
         $aVals = $request->all();
-        $isActivity = ActivityLog::where('to_user_id', $aVals['user_id']) 
-                                 ->whereIn('from_user_id', [$aVals['buyer_id']]) 
+        $isActivity = ActivityLog::where('from_user_id', $aVals['user_id']) 
+                                 ->whereIn('to_user_id', [$aVals['buyer_id']]) 
                                  ->where('lead_id', $aVals['lead_id']) 
                                  ->get(); 
         return $this->sendResponse(__('Activity log'),$isActivity);     
