@@ -2084,7 +2084,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Notes Updated Sucessfully'), []);                                          
     }
 
-     public function getSellerNotes(Request $request)
+    public function getSellerNotes(Request $request)
     { 
         $aVals = $request->all();
         $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
@@ -2100,6 +2100,65 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('No Notes added'), [
                 'notes' => $isNotes
             ]);                                  
+    }
+
+    public function pendingPurchaseTypeFilter(Request $request){
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+                                             ->where('purchase_type',$aVals['purchase_type'])
+                                             ->pluck('lead_id')
+                                             ->toArray();
+      
+        $allLeads = LeadRequest::with(['customer', 'category'])
+        ->whereIn('id',$recommendedLeadIds)
+        ->whereHas('customer', function($query) {
+            $query->where('form_status', 1);
+        })->where('status','pending')
+        ->orderBy('id', 'DESC')
+        ->get();
+        
+        foreach ($allLeads as $key => $value) {
+            $isActivity = ActivityLog::where('to_user_id',$user_id) 
+                                 ->where('from_user_id',$value->customer_id)
+                                 ->where('lead_id',$value->id)
+                                 ->latest() 
+                                 ->first(); 
+            if(!empty($isActivity)){
+                if($isActivity->activity_name == 'Requested a callback'){
+                    $value['profile_view'] = "Requested a callback";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }else{
+                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }
+                
+            }else{
+                $value['profile_view'] = "";
+                $value['profile_view_time'] = "";
+            }  
+        }
+        return $this->sendResponse(__('Pending Lead'), $allLeads);
+    }
+
+    public function hiredPurchaseTypeFilter(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+                                             ->where('purchase_type',$aVals['purchase_type'])
+                                             ->pluck('lead_id')
+                                             ->toArray();
+
+        $allLeads = LeadRequest::with(['customer', 'category'])
+        ->whereIn('id',$recommendedLeadIds)
+        ->whereHas('customer', function($query) {
+            $query->where('form_status', 1);
+        })->where('status','hired')
+        ->orderBy('id', 'DESC')
+        ->get();
+        
+        return $this->sendResponse(__('Hired Lead'), $allLeads);
     }
    
 }

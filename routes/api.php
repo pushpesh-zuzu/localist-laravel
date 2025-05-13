@@ -113,6 +113,8 @@ Route::prefix('users')->group(function () {
         Route::post('/response-status', [LeadPreferenceController::class, 'responseStatus']);
         Route::post('/seller-notes', [LeadPreferenceController::class, 'sellerNotes']);
         Route::post('/get-seller-notes', [LeadPreferenceController::class, 'getSellerNotes']);
+        Route::post('/pending-purchase-type-filter', [LeadPreferenceController::class, 'pendingPurchaseTypeFilter']);
+        Route::post('/hired-purchase-type-filter', [LeadPreferenceController::class, 'hiredPurchaseTypeFilter']);
         
         Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
         Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('lead_id')->nullable();
             $table->string('bid')->nullable();
             $table->string('distance')->nullable();
+            $table->string('purchase_type')->nullable();
             $table->timestamps();
         });
     }

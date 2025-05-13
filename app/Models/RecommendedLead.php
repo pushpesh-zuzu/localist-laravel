@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RecommendedLead extends Model
 {
-    protected $fillable = ['service_id', 'seller_id','buyer_id','lead_id','bid','distance'];
+    protected $fillable = ['service_id', 'seller_id','buyer_id','lead_id','bid','distance','purchase_type'];
 
     public function sellers()
     {
