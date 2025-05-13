@@ -2047,7 +2047,7 @@ class LeadPreferenceController extends Controller
         $leadtime = Carbon::parse($leadtime);
 
         $createdAt = $activity->created_at;
-        $durationInHours = round($createdAt->diffInMinutes($leadtime) / 60, 2);
+        $durationInHours = round($createdAt->diffInMinutes($leadtime) / 60);
         // Update the activity with duration
         $activity->duration = $durationInHours;
         $activity->save();    

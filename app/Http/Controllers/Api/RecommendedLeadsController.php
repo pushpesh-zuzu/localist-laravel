@@ -1280,8 +1280,8 @@ class RecommendedLeadsController extends Controller
        
         $settings = Setting::first();  
         if($aVals['bidtype'] == 'reply'){
-            $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
-            $bidCount = $bidsUser->get()->count();
+            // $bidsUser = $bidsdata->where('buyer_id', $aVals['user_id']);
+            $bidCount = $bidsdata->get()->count();
             $bidCheck = $bidsUser->where('seller_id',$aVals['seller_id'])->first();
             $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
             // ActivityLog::where('lead_id',$aVals['lead_id'])
@@ -1327,8 +1327,8 @@ class RecommendedLeadsController extends Controller
             $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
             $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
             $activityname = $sellers .' Contacted '. $buyer;
-            $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
-            $bidCount = $bidsUser->get()->count();
+            // $bidsUser = $bidsdata->where('seller_id', $aVals['user_id']);
+            $bidCount = $bidsdata->get()->count();
             $bidCheck = $bidsUser->where('buyer_id',$aVals['buyer_id'])->first();
             $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
             // ActivityLog::where('lead_id',$aVals['lead_id'])
@@ -1340,7 +1340,7 @@ class RecommendedLeadsController extends Controller
                 return $this->sendError(__('Bid Limit exceed'), 404);
             }
             if(!empty($bidCheck)){
-                return $this->sendError(__('Bid already placed for this seller'), 404);
+                return $this->sendError(__('Bid already placed for this Buyer'), 404);
             }
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
