@@ -645,6 +645,7 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
     }
+
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [])
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
@@ -666,10 +667,10 @@ class RecommendedLeadsController extends Controller
         $filteredUserIds = null;
         if (!empty($responseTimeFilter)) {
             $timeThresholds = [
-                'respond within 10 mins' => 10,
-                'respond within 1 hour' => 60,
-                'respond within 6 hour' => 360,
-                'respond within 24 hour' => 1440,
+                'Responds within 10 mins' => 10,
+                'Responds within 1 hour' => 60,
+                'Responds within 6 hours' => 360,
+                'Responds within 24 hours' => 1440,
             ];
 
             $maxThresholds = array_map(function ($filter) use ($timeThresholds) {
