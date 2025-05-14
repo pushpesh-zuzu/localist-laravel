@@ -1852,7 +1852,7 @@ class LeadPreferenceController extends Controller
                                 ->where('customer_id', $users->id)
                                 ->first();
             $leads->purchase_type = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                                       ->where('buyer_id', $aVals['user_id'])
+                                       ->where('buyer_id', $aVals['customer_id'])
                                        ->pluck('purchase_type')
                                        ->first();                   
             // $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
