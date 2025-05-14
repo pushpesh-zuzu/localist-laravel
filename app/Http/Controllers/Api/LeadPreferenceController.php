@@ -2081,7 +2081,7 @@ class LeadPreferenceController extends Controller
             // Convert to percentage — 0 mins = 100%, 1440 mins (24 hrs) = 0%
             $maxDuration = 1440;
             $percentage = max(0, 100 - (($averageMinutes / $maxDuration) * 100));
-            $percentage = round($percentage, 2);
+            $percentage = round($percentage);
 
             // Step 5: Save to UserResponseTime (per seller + contact_type)
             UserResponseTime::updateOrCreate(
