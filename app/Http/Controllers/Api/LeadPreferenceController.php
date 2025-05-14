@@ -1851,7 +1851,7 @@ class LeadPreferenceController extends Controller
                                 ->where('id', $aVals['lead_id'])
                                 ->where('customer_id', $users->id)
                                 ->first();
-            $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
+            // $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
             $users->leads = $leads;
         }
         return $this->sendResponse('Profile Data', $users);                    
