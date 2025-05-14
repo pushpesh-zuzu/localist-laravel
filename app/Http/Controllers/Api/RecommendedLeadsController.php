@@ -603,8 +603,8 @@ class RecommendedLeadsController extends Controller
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
-
-        $result = $this->FullManualLeadsCode($lead, 'asc', true);
+        $responseTimeFilter = $request->responseTimeFilter ?? [];
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
@@ -620,8 +620,8 @@ class RecommendedLeadsController extends Controller
 
         $distanceOrderRaw = $request->distance_order;
         $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
-
-        $result = $this->FullManualLeadsCode($lead, $distanceOrder, true);
+        $responseTimeFilter = $request->responseTimeFilter ?? [];
+        $result = $this->FullManualLeadsCode($lead, $distanceOrder, true, $responseTimeFilter);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
@@ -630,7 +630,22 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
     }
 
-    private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false)
+    public function responseTimeFilter(Request $request)
+    {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+
+        $responseTimeFilter = $request->response_time; // Expected: '10_min', '1_hour', '6_hour', '24_hour'
+
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter);
+
+        if ($result['empty']) {
+            return $this->sendResponse(__('No Leads found'), [$result['response']]);
+        }
+
+        return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
+    }
+    private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [])
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
         $settings = Setting::first();  
@@ -641,11 +656,51 @@ class RecommendedLeadsController extends Controller
         $questions = json_decode($lead->questions, true);
         $serviceName = Category::find($serviceId)->name ?? '';
 
+        // $timeThresholds = [
+        //     '10_min' => 10,
+        //     '1_hour' => 60,
+        //     '6_hour' => 360,
+        //     '24_hour' => 1440,
+        // ];
+
+        $filteredUserIds = null;
+        if (!empty($responseTimeFilter)) {
+            $timeThresholds = [
+                'respond within 10 mins' => 10,
+                'respond within 1 hour' => 60,
+                'respond within 6 hour' => 360,
+                'respond within 24 hour' => 1440,
+            ];
+
+            $maxThresholds = array_map(function ($filter) use ($timeThresholds) {
+                return $timeThresholds[$filter] ?? null;
+            }, $responseTimeFilter);
+
+            $maxAllowed = max(array_filter($maxThresholds));
+
+            // Get all users with average <= largest threshold (e.g., 1440 if all selected)
+            $filteredUserIds = DB::table('userresponsetime')
+                ->where('average', '<=', $maxAllowed)
+                ->pluck('user_id')
+                ->toArray();
+        }
+        // if ($responseTimeFilter && isset($timeThresholds[$responseTimeFilter])) {
+        //     $maxMinutes = $timeThresholds[$responseTimeFilter];
+
+        //     $filteredUserIds = \DB::table('userresponsetime')
+        //         ->where('average', '<=', $maxMinutes)
+        //         ->pluck('user_id')
+        //         ->toArray();
+        // }
+
         // Step 2: Get users with is_autobid = 1 from user_details, excluding lead's customer
         $userServices = User::where('id', '!=', $customerId)
                         ->whereHas('details', function ($query) {
                             $query->where('is_autobid', 1)->where('autobid_pause', 0);
                         })
+                         ->when($filteredUserIds, function ($query) use ($filteredUserIds) {
+                                    $query->whereIn('id', $filteredUserIds);
+                                })
                         ->whereIn('id', function ($query) use ($serviceId) {
                             $query->select('user_id')
                                 ->from('user_services')

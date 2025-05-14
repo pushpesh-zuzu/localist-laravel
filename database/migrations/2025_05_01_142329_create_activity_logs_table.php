@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('activity_name')->nullable();
             $table->string('contact_type')->nullable();
             $table->string('duration')->nullable()->comment('in hour');
+            $table->string('duration_minutes')->nullable()->comment('in minute');
             $table->timestamps();
         });
     }

@@ -2036,24 +2036,149 @@ class LeadPreferenceController extends Controller
 
     public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime)
     {
+        // Step 1: Log the activity
         $activity = ActivityLog::create([
-                     'lead_id' => $lead_id,
-                     'from_user_id' => $from_user_id,
-                     'to_user_id' => $to_user_id,
-                     'activity_name' => $activity_name,
-                     'contact_type' => $contact_type,
-                 ]);  
-       
-        $leadtime = Carbon::parse($leadtime);
+            'lead_id' => $lead_id,
+            'from_user_id' => $from_user_id, // seller
+            'to_user_id' => $to_user_id,     // buyer
+            'activity_name' => $activity_name,
+            'contact_type' => $contact_type,
+        ]);
 
+        // Step 2: Calculate the time difference
+        $leadtime = Carbon::parse($leadtime);
         $createdAt = $activity->created_at;
-        $durationInHours = round($createdAt->diffInMinutes($leadtime) / 60);
-        // Update the activity with duration
-        $activity->duration = $durationInHours;
-        $activity->save();    
-          
-        return $activity;                                 
+        $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
+        if ($diffInMinutes < 60) {
+            $duration = $diffInMinutes;
+        } else {
+            $hours = round($diffInMinutes / 60);
+            $duration = $hours;
+        }
+
+        // Step 3: Save duration and raw minutes
+        $activity->duration = $duration;
+        $activity->duration_minutes = $diffInMinutes; // You must add this column if not present
+        $activity->save();
+
+        // Step 4: Fetch all activity logs for the same seller (from_user_id), contact_type, across different lead_ids
+        $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+        $entries = ActivityLog::where('from_user_id', $from_user_id)
+            ->whereIn('contact_type', $contactTypes)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->groupBy('lead_id')
+            ->map(function ($logs) {
+                return $logs->first(); // Get the earliest log per lead
+            });
+
+        $totalMinutes = $entries->sum('duration');
+        $entryCount = $entries->count();
+
+        if ($entryCount > 0) {
+            $averageMinutes = $totalMinutes / $entryCount;
+
+            // Convert to percentage — 0 mins = 100%, 1440 mins (24 hrs) = 0%
+            $maxDuration = 1440;
+            $percentage = max(0, 100 - (($averageMinutes / $maxDuration) * 100));
+            $percentage = round($percentage, 2);
+
+            // Step 5: Save to UserResponseTime (per seller + contact_type)
+            UserResponseTime::updateOrCreate(
+                [
+                    'seller_id' => $from_user_id,
+                ],
+                [
+                    'average' => $percentage
+                ]
+            );
+        }
+
+        return $activity;
     }
+
+    // public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime)
+    // {
+    //     $activity = ActivityLog::create([
+    //                  'lead_id' => $lead_id,
+    //                  'from_user_id' => $from_user_id,
+    //                  'to_user_id' => $to_user_id,
+    //                  'activity_name' => $activity_name,
+    //                  'contact_type' => $contact_type,
+    //              ]);  
+       
+    //     $leadtime = Carbon::parse($leadtime);
+
+    //     $createdAt = $activity->created_at;
+    //     $diffInMinutes = $leadtime->diffInMinutes($createdAt);
+
+    //     if ($diffInMinutes < 60) {
+    //         $duration = "$diffInMinutes minute" . ($diffInMinutes != 1 ? "s" : "");
+    //     } else {
+    //         $hours = round($diffInMinutes / 60);
+    //         $duration = "$hours hour" . ($hours != 1 ? "s" : "");
+    //     }
+
+    //     // Update the activity with duration
+    //     $activity->duration = $duration;
+    //     $activity->save();    
+
+    //     // STEP 1: Get all first-contact activity logs of this seller via allowed contact types
+    //     $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+
+    //     $firstActivities = ActivityLog::where('from_user_id', $from_user_id)
+    //         ->whereIn('contact_type', $contactTypes)
+    //         ->orderBy('created_at')
+    //         ->get()
+    //         ->groupBy('lead_id')
+    //         ->map(function ($items) {
+    //             return $items->first(); // First contact per lead
+    //         });
+
+    //     // STEP 2: Calculate scores based on minimum duration per lead
+    //     $scores = [];
+
+    //     foreach ($firstActivities as $entry) {
+    //         $duration = $entry->duration;
+    //         if (strpos($duration, 'minute') !== false) {
+    //             preg_match('/\d+/', $duration, $matches);
+    //             $minutes = (int)$matches[0];
+    //         } else {
+    //             preg_match('/\d+/', $duration, $matches);
+    //             $minutes = (int)$matches[0] * 60;
+    //         }
+
+    //         // Scoring out of 100
+    //         if ($minutes <= 30) {
+    //             $score = 100;
+    //         } elseif ($minutes <= 60) {
+    //             $score = 90;
+    //         } elseif ($minutes <= 120) {
+    //             $score = 80;
+    //         } elseif ($minutes <= 180) {
+    //             $score = 70;
+    //         } elseif ($minutes <= 240) {
+    //             $score = 60;
+    //         } else {
+    //             $score = 50;
+    //         }
+
+    //         $scores[] = $score;
+    //     }
+
+    //     $averageScore = count($scores) > 0 ? round(array_sum($scores) / count($scores)) : 0;
+
+    //     // STEP 3: Save or update into userresponsetime
+    //     UserResponseTime::updateOrCreate(
+    //         ['seller_id' => $from_user_id],
+    //         [
+    //             'average' => $averageScore,
+    //             'minimum_duration' => $duration, // optionally update last min duration string
+    //         ]
+    //     );
+          
+    //     return $activity;                                 
+    // }
 
     public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name)
     {
