@@ -681,7 +681,7 @@ class LeadPreferenceController extends Controller
         $users = User::where('id',$leads->customer_id)->pluck('name')->first();
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status',$aVals['status_type'])->first();
         $statustype = $aVals['status_type'];
-        $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
+        $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
         $buyer = User::where('id',$leads->customer_id)->pluck('name')->first(); 
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
         $activityname = 'You updated ' .$buyer. ' status to hired';
