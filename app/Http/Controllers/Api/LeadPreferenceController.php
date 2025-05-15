@@ -685,7 +685,7 @@ class LeadPreferenceController extends Controller
         $buyer = User::where('id',$leads->customer_id)->pluck('name')->first(); 
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
         $activityname = 'You updated ' .$buyer. ' status to hired';
-        $isActivity = self::getActivityLog($leads->customer_id,$aVals['user_id'],$aVals['lead_id'],$activityname);
+        $isActivity = self::getActivityLog($aVals['user_id'],$leads->customer_id,$aVals['lead_id'],$activityname);
 
         if (!empty($leads)) {
             if ($leads->status == "hired" && $aVals['status_type'] == "hired") {
@@ -707,7 +707,7 @@ class LeadPreferenceController extends Controller
             }
 
             if(empty($isActivity)){
-                self::addActivityLog($leads->customer_id,$aVals['user_id'],$aVals['lead_id'],$activityname, "hired", $leadtime);
+                self::addActivityLog($aVals['user_id'],$leads->customer_id,$aVals['lead_id'],$activityname, "hired", $leadtime);
             }
         } else {
             $sendmessage = 'No Leads found';
