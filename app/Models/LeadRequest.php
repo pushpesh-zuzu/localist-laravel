@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 class LeadRequest extends Model
 {
@@ -21,5 +22,10 @@ class LeadRequest extends Model
     public function category()
     {
         return $this->belongsTo(Category::class, 'service_id','id')->select('id','name');
+    }
+
+    public function serializeDate(\DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d H:i:s');
     }
 }

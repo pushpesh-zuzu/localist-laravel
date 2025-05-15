@@ -8,8 +8,10 @@ use Illuminate\Support\Carbon;
 class UserResponseTime extends Model
 {
     protected $fillable = ['seller_id','minimum_duration','average'];
-}
-public function serializeDate(\DateTimeInterface $date)
+
+    public function serializeDate(\DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }
+}
+
