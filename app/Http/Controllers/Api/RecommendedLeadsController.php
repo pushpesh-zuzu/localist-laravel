@@ -681,7 +681,7 @@ class RecommendedLeadsController extends Controller
 
             // Get all users with average <= largest threshold (e.g., 1440 if all selected)
             if ($maxAllowed !== null) {
-                $filteredUserIds = DB::table('userresponsetime')
+                $filteredUserIds = DB::table('user_response_times')
                     ->where('average', '<=', $maxAllowed)
                     ->pluck('user_id')
                     ->toArray();
