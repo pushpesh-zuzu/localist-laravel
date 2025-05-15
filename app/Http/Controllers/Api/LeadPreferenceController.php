@@ -706,12 +706,13 @@ class LeadPreferenceController extends Controller
                 ]);
             }
 
-            if(empty($isActivity)){
-                self::addActivityLog($aVals['user_id'],$leads->customer_id,$aVals['lead_id'],$activityname, "hired", $leadtime);
-            }
+            
         } else {
             $sendmessage = 'No Leads found';
         }
+        if(empty($isActivity)){
+                self::addActivityLog($aVals['user_id'],$leads->customer_id,$aVals['lead_id'],$activityname, "hired", $leadtime);
+            }
         
         return $this->sendResponse($sendmessage, []);
     }
