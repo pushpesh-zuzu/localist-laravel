@@ -687,6 +687,18 @@ class RecommendedLeadsController extends Controller
                     ->pluck('seller_id')
                     ->toArray();
             }
+            if (is_array($filteredUserIds) && count($filteredUserIds) === 0) {
+                 return [
+                    'empty' => true,
+                    'response' => [
+                        'service_name' => $serviceName,
+                        'sellers' => [],
+                        'bidcount' => $bidCount,
+                        'totalbid' => $settings->total_bid ?? 0,
+                        'baseurl' => url('/') . Storage::url('app/public/images/users')
+                    ]
+                ];
+            }
         }
         // if ($responseTimeFilter && isset($timeThresholds[$responseTimeFilter])) {
         //     $maxMinutes = $timeThresholds[$responseTimeFilter];
