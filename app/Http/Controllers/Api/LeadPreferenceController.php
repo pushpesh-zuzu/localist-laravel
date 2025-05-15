@@ -2110,27 +2110,40 @@ class LeadPreferenceController extends Controller
                 return $logs->first(); // Get the earliest log per lead
             });
 
-        $totalMinutes = $entries->sum('duration');
+        $totalMinutes = $entries->sum('duration_minutes');
         $entryCount = $entries->count();
 
         if ($entryCount > 0) {
-            $averageMinutes = $totalMinutes / $entryCount;
+            $averageMinutes = round($totalMinutes / $entryCount); // rounded to nearest minute
 
-            // Convert to percentage — 0 mins = 100%, 1440 mins (24 hrs) = 0%
-            $maxDuration = 1440;
-            $percentage = max(0, 100 - (($averageMinutes / $maxDuration) * 100));
-            $percentage = round($percentage);
-
-            // Step 5: Save to UserResponseTime (per seller + contact_type)
             UserResponseTime::updateOrCreate(
                 [
                     'seller_id' => $from_user_id,
                 ],
                 [
-                    'average' => $percentage
+                    'average' => $averageMinutes
                 ]
             );
         }
+
+        // if ($entryCount > 0) {
+        //     $averageMinutes = $totalMinutes / $entryCount;
+
+        //     // Convert to percentage — 0 mins = 100%, 1440 mins (24 hrs) = 0%
+        //     $maxDuration = 1440;
+        //     $percentage = max(0, 100 - (($averageMinutes / $maxDuration) * 100));
+        //     $percentage = round($percentage);
+
+        //     // Step 5: Save to UserResponseTime (per seller + contact_type)
+        //     UserResponseTime::updateOrCreate(
+        //         [
+        //             'seller_id' => $from_user_id,
+        //         ],
+        //         [
+        //             'average' => $percentage
+        //         ]
+        //     );
+        // }
 
         return $activity;
     }
