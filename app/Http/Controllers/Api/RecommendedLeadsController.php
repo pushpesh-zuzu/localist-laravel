@@ -1902,10 +1902,21 @@ class RecommendedLeadsController extends Controller
     public function buyerActivities(Request $request)
     {
         $aVals = $request->all();
-        $isActivity = ActivityLog::where('from_user_id', $aVals['user_id']) 
-                                //  ->whereIn('to_user_id', [$aVals['buyer_id']]) 
-                                 ->where('lead_id', $aVals['lead_id']) 
-                                 ->get(); 
+        $isActivity = ActivityLog::where('lead_id', $aVals['lead_id'])
+        ->where(function ($query) use ($aVals) {
+            $query->where(function ($q) use ($aVals) {
+                $q->where('from_user_id', $aVals['user_id']) // seller viewed buyer
+                  ->where('to_user_id', $aVals['buyer_id']);
+            })->orWhere(function ($q) use ($aVals) {
+                $q->where('from_user_id', $aVals['buyer_id']) // buyer viewed seller
+                  ->where('to_user_id', $aVals['user_id']);
+            });
+        })
+        ->get();
+        // $isActivity = ActivityLog::where('from_user_id', $aVals['user_id']) 
+        //                          ->whereIn('to_user_id', [$aVals['buyer_id']]) 
+        //                          ->where('lead_id', $aVals['lead_id']) 
+        //                          ->get(); 
         return $this->sendResponse(__('Activity log'),$isActivity);     
     }
 
