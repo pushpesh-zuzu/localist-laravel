@@ -1396,7 +1396,7 @@ class RecommendedLeadsController extends Controller
                                        ->first();
             $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
             $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
-            $activityname = $sellers .' Contacted '. $buyer;
+            $activityname = 'You Contacted '. $buyer;
             $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
                            ->where('service_id', $aVals['service_id'])
                            ->count();
@@ -1891,7 +1891,8 @@ class RecommendedLeadsController extends Controller
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
         $buyer = User::where('id',$aVals['user_id'])->pluck('name')->first();
-        $activityname = $buyer .' viewed '. $sellers .' profile';
+        $activityname = $buyer .' viewed your profile';
+        // $activityname = $buyer .' viewed '. $sellers .' profile';
         $isActivity = self::getActivityLog($aVals['user_id'], $aVals['seller_id'], $aVals['lead_id'], $activityname);
         if(empty($isActivity)){
             self::addActivityLog($aVals['user_id'], $aVals['seller_id'], $aVals['lead_id'], $activityname, "Buyer viewed Seller Profile", $leadtime);
