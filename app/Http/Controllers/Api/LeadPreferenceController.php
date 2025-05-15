@@ -1552,9 +1552,16 @@ class LeadPreferenceController extends Controller
     public function removeLocation(Request $request)
     {
         $aValues = $request->all();
-        UserServiceLocation::whereIn('postcode', [$aValues['postcode']])
+        if($aValues['nation_wide'] == 1){
+                UserServiceLocation::where('nation_wide', 1)
                             ->where('user_id', $aValues['user_id'])
                             ->delete();
+        }else{
+                UserServiceLocation::whereIn('postcode', [$aValues['postcode']])
+                            ->where('user_id', $aValues['user_id'])
+                            ->delete();
+        }
+        
         return $this->sendResponse('Location deleted sucessfully', []);
     }
 
