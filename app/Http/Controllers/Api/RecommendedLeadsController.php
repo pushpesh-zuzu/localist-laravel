@@ -683,7 +683,7 @@ class RecommendedLeadsController extends Controller
             if ($maxAllowed !== null) {
                 $filteredUserIds = DB::table('user_response_times')
                     ->where('average', '<=', $maxAllowed)
-                    ->pluck('user_id')
+                    ->pluck('seller_id')
                     ->toArray();
             }
         }
