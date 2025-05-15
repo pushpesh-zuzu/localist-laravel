@@ -673,17 +673,19 @@ class RecommendedLeadsController extends Controller
                 'Responds within 24 hours' => 1440,
             ];
 
-            $maxThresholds = array_map(function ($filter) use ($timeThresholds) {
-                return $timeThresholds[$filter] ?? null;
-            }, $responseTimeFilter);
-
-            $maxAllowed = max(array_filter($maxThresholds));
+            // $maxThresholds = array_map(function ($filter) use ($timeThresholds) {
+            //     return $timeThresholds[$filter] ?? null;
+            // }, $responseTimeFilter);
+            $maxAllowed = $timeThresholds[$responseTimeFilter] ?? null;
+            // $maxAllowed = max(array_filter($maxThresholds));
 
             // Get all users with average <= largest threshold (e.g., 1440 if all selected)
-            $filteredUserIds = DB::table('userresponsetime')
-                ->where('average', '<=', $maxAllowed)
-                ->pluck('user_id')
-                ->toArray();
+            if ($maxAllowed !== null) {
+                $filteredUserIds = DB::table('userresponsetime')
+                    ->where('average', '<=', $maxAllowed)
+                    ->pluck('user_id')
+                    ->toArray();
+            }
         }
         // if ($responseTimeFilter && isset($timeThresholds[$responseTimeFilter])) {
         //     $maxMinutes = $timeThresholds[$responseTimeFilter];
