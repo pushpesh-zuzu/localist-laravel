@@ -2080,8 +2080,12 @@ class LeadPreferenceController extends Controller
         ]);
 
         // Step 2: Calculate the time difference
-        $leadtime = Carbon::parse($leadtime);
-        $createdAt = $activity->created_at;
+        // $leadtime = Carbon::parse($leadtime);
+        // $createdAt = $activity->created_at;
+
+        $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
+        $createdAt = $activity->created_at->copy()->setTimezone('Asia/Kolkata');
+
         $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
         if ($diffInMinutes < 60) {
             $duration = $diffInMinutes;
