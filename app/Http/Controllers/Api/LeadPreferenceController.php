@@ -681,6 +681,12 @@ class LeadPreferenceController extends Controller
         $users = User::where('id',$leads->customer_id)->pluck('name')->first();
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status',$aVals['status_type'])->first();
         $statustype = $aVals['status_type'];
+        $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
+        $buyer = User::where('id',$leads->customer_id)->pluck('name')->first(); 
+        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
+        $activityname = 'You updated ' .$buyer. ' status to hired';
+        $isActivity = self::getActivityLog($leads->customer_id,$aVals['user_id'],$aVals['lead_id'],$activityname);
+
         if (!empty($leads)) {
             if ($leads->status == "hired" && $aVals['status_type'] == "hired") {
                 return $this->sendError(__("You already hired this buyer, now you can't change this status"), 404);
@@ -699,6 +705,10 @@ class LeadPreferenceController extends Controller
                     'clicked_from' => 1,
                 ]);
             }
+
+            if(empty($isActivity)){
+                self::addActivityLog($leads->customer_id,$aVals['user_id'],$aVals['lead_id'],$activityname, "hired", $leadtime);
+            }
         } else {
             $sendmessage = 'No Leads found';
         }
@@ -714,6 +724,12 @@ class LeadPreferenceController extends Controller
                                   ->where('user_id',$aVals['seller_id'])
                                   ->where('name',$aVals['name'])
                                   ->first();
+        $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
+        $buyer = User::where('id',$leadsreq->customer_id)->pluck('name')->first(); 
+        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
+        $activityname = $buyer . ' updated your status to hired';
+        $isActivity = self::getActivityLog($leadsreq->customer_id,$aVals['seller_id'],$aVals['lead_id'],$activityname);
+
         if (empty($leads)) {
             UserHiringHistory::create([
                 'lead_id' => $aVals['lead_id'],
@@ -721,6 +737,11 @@ class LeadPreferenceController extends Controller
                 'name' => $aVals['name']
             ]);
             LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'hired']);
+            
+            if(empty($isActivity)){
+                self::addActivityLog($leadsreq->customer_id,$aVals['seller_id'],$aVals['lead_id'],$activityname, "hired", $leadtime);
+            }
+            
             // $sendmessage = 'You hired this job';
             $sendmessage = 'Request submited sucessfully';
         } else {
