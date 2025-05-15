@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use App\Models\UserServiceLocation;
+use App\Models\UserResponseTime;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\SaveForLater;
@@ -1458,12 +1459,61 @@ class RecommendedLeadsController extends Controller
                      'contact_type' => $contact_type,
                  ]);  
         // Calculate duration in hours (minimum 1 hour)
-        $createdAt = $activity->created_at;
-        $durationInHours = round(max(1, $createdAt->diffInMinutes($leadtime) / 60), 2);
+        // $createdAt = $activity->created_at;
+        // $durationInHours = round(max(1, $createdAt->diffInMinutes($leadtime) / 60), 2);
 
-        // Update the activity with duration
-        $activity->duration = $durationInHours;
-        $activity->save();    
+        // // Update the activity with duration
+        // $activity->duration = $durationInHours;
+        // $activity->save();    
+
+         // Step 2: Calculate the time difference
+        $leadtime = Carbon::parse($leadtime);
+        $createdAt = $activity->created_at;
+        $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
+        if ($diffInMinutes < 60) {
+            $duration = $diffInMinutes;
+        } else {
+            $hours = round($diffInMinutes / 60);
+            $duration = $hours;
+        }
+
+        // Step 3: Save duration and raw minutes
+        $activity->duration = $duration;
+        $activity->duration_minutes = $diffInMinutes; // You must add this column if not present
+        $activity->save();
+
+        // Step 4: Fetch all activity logs for the same seller (from_user_id), contact_type, across different lead_ids
+        $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+        $entries = ActivityLog::where('from_user_id', $from_user_id)
+            ->whereIn('contact_type', $contactTypes)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->groupBy('lead_id')
+            ->map(function ($logs) {
+                return $logs->first(); // Get the earliest log per lead
+            });
+
+        $totalMinutes = $entries->sum('duration');
+        $entryCount = $entries->count();
+
+        if ($entryCount > 0) {
+            $averageMinutes = $totalMinutes / $entryCount;
+
+            // Convert to percentage — 0 mins = 100%, 1440 mins (24 hrs) = 0%
+            $maxDuration = 1440;
+            $percentage = max(0, 100 - (($averageMinutes / $maxDuration) * 100));
+            $percentage = round($percentage);
+
+            // Step 5: Save to UserResponseTime (per seller + contact_type)
+            UserResponseTime::updateOrCreate(
+                [
+                    'seller_id' => $from_user_id,
+                ],
+                [
+                    'average' => $percentage
+                ]
+            );
+        }
           
         return $activity;                                 
     }
