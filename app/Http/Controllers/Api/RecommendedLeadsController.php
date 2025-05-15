@@ -1368,6 +1368,7 @@ class RecommendedLeadsController extends Controller
                 'distance' => $aVals['distance'], 
                 'purchase_type' => "Request Reply"
             ]); 
+            LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
             if(empty($isDataExists)){
                 LeadStatus::create([
                    'lead_id' => $aVals['lead_id'],
@@ -1420,6 +1421,7 @@ class RecommendedLeadsController extends Controller
                 'distance' => $aVals['distance'],
                 'purchase_type' => "Manual Bid" 
             ]); 
+            LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
             SaveForLater::where('seller_id',$aVals['user_id'])
                         ->where('user_id',$aVals['buyer_id'])  
                         ->where('lead_id',$aVals['lead_id'])
@@ -1596,7 +1598,7 @@ class RecommendedLeadsController extends Controller
             }
         }
 
-        LeadRequest::where('id', $leadId)->update(['should_autobid' => 1]);
+        LeadRequest::where('id', $leadId)->update(['should_autobid' => 1, 'status' => "pending"]);
 
         if (empty($isDataExists)) {
             LeadStatus::create([
