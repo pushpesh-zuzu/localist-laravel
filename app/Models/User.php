@@ -108,4 +108,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserDetail::class, 'user_id', 'id');
     }
+
+    public function responseTime()
+    {
+        return $this->hasOne(UserResponseTime::class, 'seller_id', 'id');
+    }
+
 }

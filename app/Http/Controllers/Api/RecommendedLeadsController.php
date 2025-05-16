@@ -896,7 +896,11 @@ class RecommendedLeadsController extends Controller
                 ->pluck('seller_id')
                 ->toArray();
         }
-
+        // Fetch response time map for quicktorespond logic
+        $responseTimesMap = DB::table('user_response_times')
+                            ->whereIn('seller_id', $scoredUsers->keys()->toArray())
+                            ->pluck('average', 'seller_id')
+                            ->toArray();
         $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
             $locationMatchedUsers,
             $leadPostcode,
@@ -907,7 +911,8 @@ class RecommendedLeadsController extends Controller
             $existingBids,
             $sellersWith3Bids,
             $applySellerLimit,
-            $lead
+            $lead,
+            $responseTimesMap
         ) {
             if (in_array($userId, $existingBids)) return null;
             if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
@@ -924,39 +929,39 @@ class RecommendedLeadsController extends Controller
 
             if ($miles === 0) return null;
                 // 🕒 Check if responded within 12 hours (720 minutes)
-            $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
-            $firstResponse = ActivityLog::where('lead_id', $lead->id)
-                ->where('from_user_id', $userId)
-                ->whereIn('contact_type', $contactTypes)
-                ->orderBy('created_at', 'asc')
-                ->first();
+            // $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+            // $firstResponse = ActivityLog::where('lead_id', $lead->id)
+            //     ->where('from_user_id', $userId)
+            //     ->whereIn('contact_type', $contactTypes)
+            //     ->orderBy('created_at', 'asc')
+            //     ->first();
 
-            $quickToRespond = 0;
-            if ($firstResponse) {
-                 $leadtime = Carbon::parse($lead->created_at)->setTimezone('Asia/Kolkata');
-                 $createdAt = $firstResponse->created_at->copy()->setTimezone('Asia/Kolkata');
+            // $quickToRespond = 0;
+            // if ($firstResponse) {
+            //      $leadtime = Carbon::parse($lead->created_at)->setTimezone('Asia/Kolkata');
+            //      $createdAt = $firstResponse->created_at->copy()->setTimezone('Asia/Kolkata');
 
-                $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
-                // if ($diffInMinutes < 60) {
-                //     $duration = $diffInMinutes;
-                // } else {
-                //     $hours = round($diffInMinutes / 60);
-                //     $duration = $hours;
-                // }
+            //     $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
+            //     // if ($diffInMinutes < 60) {
+            //     //     $duration = $diffInMinutes;
+            //     // } else {
+            //     //     $hours = round($diffInMinutes / 60);
+            //     //     $duration = $hours;
+            //     // }
 
 
-                // $diffInMinutes = Carbon::parse($firstResponse->created_at)->diffInMinutes(Carbon::parse($lead->created_at));
-                if ($diffInMinutes <= 720) {
-                    $quickToRespond = 1;
-                }
-            }
+            //     // $diffInMinutes = Carbon::parse($firstResponse->created_at)->diffInMinutes(Carbon::parse($lead->created_at));
+            //     if ($diffInMinutes <= 720) {
+            //         $quickToRespond = 1;
+            //     }
+            // }
             return array_merge($user->toArray(), [
                 'credit_score' => $leadCreditScore,
                 'service_name' => $serviceName,
                 'service_id' => $serviceId,
                 'distance' => $miles,
                 'score' => $scoredUsers[$userId] ?? 0,
-                'quicktorespond' => $quickToRespond,
+                'quicktorespond' => isset($responseTimesMap[$userId]) && $responseTimesMap[$userId] <= 720 ? 1 : 0,
             ]);
         })->filter();
 
