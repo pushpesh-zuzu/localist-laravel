@@ -857,7 +857,19 @@ class RecommendedLeadsController extends Controller
 
             $quickToRespond = 0;
             if ($firstResponse) {
-                $diffInMinutes = Carbon::parse($firstResponse->created_at)->diffInMinutes(Carbon::parse($lead->created_at));
+                 $leadtime = Carbon::parse($lead->created_at)->setTimezone('Asia/Kolkata');
+                 $createdAt = $firstResponse->created_at->copy()->setTimezone('Asia/Kolkata');
+
+                $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
+                // if ($diffInMinutes < 60) {
+                //     $duration = $diffInMinutes;
+                // } else {
+                //     $hours = round($diffInMinutes / 60);
+                //     $duration = $hours;
+                // }
+
+
+                // $diffInMinutes = Carbon::parse($firstResponse->created_at)->diffInMinutes(Carbon::parse($lead->created_at));
                 if ($diffInMinutes <= 720) {
                     $quickToRespond = 1;
                 }
