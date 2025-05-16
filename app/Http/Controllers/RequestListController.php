@@ -12,46 +12,63 @@ class RequestListController extends Controller
 
     public function index(Request $request, Builder $builder){
         if ($request->ajax()) {
-            $matched_leads = LeadRequest::with(['customer', 'category'])
-                ->orderBy('id','desc');
-            return Datatables::of($matched_leads)
-                ->addIndexColumn()
-                ->editColumn('customer_id', function($item){
-                    return $item->customer ? $item->customer->name : 'N/A';
-                })
-                ->editColumn('service_id', function($item){
-                    return $item->category ? $item->category->name : 'N/A';
-                })
-                ->editColumn('questions', function($item){
-                    $rel = "";
-                    $quesArr = json_decode($item->questions,true);
-                    $i =1;
-                    foreach($quesArr as $q){
-                        $rel .= "<b>Q$i.</b>" .$q['ques'] ."<br>";
-                        $rel .="<b>Ans: &nbsp;</b>" .$q['ans'] ."<br><br>";
-                        $i++;
+            $matched_leads = \DB::table('lead_requests')
+            ->select(
+                'lead_requests.*',
+                'users.name as customer_name',
+                'categories.name as category_name'
+            )
+            ->leftJoin('users', 'users.id', '=', 'lead_requests.customer_id')
+            ->leftJoin('categories', 'categories.id', '=', 'lead_requests.service_id')
+            ->orderBy('lead_requests.id', 'desc');
+
+        return Datatables::of($matched_leads)
+            ->addIndexColumn()
+
+            ->editColumn('city', function ($item) {
+                $city = $item->city;
+                $city .= !empty($city)? ', ' . $item->postcode : $item->postcode;
+                return $city ?: 'N/A';
+            })
+            ->editColumn('customer_name', function ($item) {
+                return $item->customer_name ?: 'N/A';
+            })
+            ->editColumn('category_name', function ($item) {
+                return $item->category_name ?: 'N/A';
+            })
+            ->editColumn('questions', function ($item) {
+                $output = "";
+                $quesArr = json_decode($item->questions, true);
+                if (is_array($quesArr)) {
+                    foreach ($quesArr as $index => $q) {
+                        $output .= "<b>Q" . ($index + 1) . ".</b> " . e($q['ques']) . "<br>";
+                        $output .= "<b>Ans: </b>" . e($q['ans']) . "<br><br>";
                     }
-                    return $rel;
-                })
-                ->editColumn('created_at', function($item){
-                    return date('m/d/Y h:i a', strtotime($item->created_at));
-                })
-                ->rawColumns(['action','customer_id','service_id','questions','created_at'])
-                ->make(true);
+                }
+                return $output;
+            })
+
+            ->filter(function ($query) use ($request) {
+                if ($request->has('search') && $search = $request->get('search')['value']) {
+                    $query->where(function ($q) use ($search) {
+                        $q->orWhere('lead_requests.postcode', 'like', "%{$search}%")
+                        ->orWhere('lead_requests.city', 'like', "%{$search}%")
+                        ->orWhere('lead_requests.status', 'like', "%{$search}%")
+                        ->orWhere('lead_requests.details', 'like', "%{$search}%")
+                        ->orWhere('lead_requests.questions', 'like', "%{$search}%")
+                        ->orWhere('lead_requests.phone', 'like', "%{$search}%")
+                        ->orWhere('users.name', 'like', "%{$search}%")
+                        ->orWhere('categories.name', 'like', "%{$search}%");
+                    });
+                }
+            })
+            
+            ->rawColumns(['questions', 'customer_name', 'category_name', 'created_at','city'])
+            ->make(true);
         }
 
         return view('request-list.index');
     }
 
-
-
-    public function index2()
-    {
-        $aRows = LeadRequest::with(['customer','category'])->orderBy('id','DESC')->limit(10000)->get(); 
-        // echo "<pre>";
-        // print_r($aRows);
-        // exit;
-        return view('request-list.index2',get_defined_vars());
-    }
     
 }

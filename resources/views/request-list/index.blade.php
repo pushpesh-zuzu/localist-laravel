@@ -60,10 +60,10 @@
               
               columns: [
                   { data: 'DT_RowIndex', name: 'DT_RowIndex',orderable: false,  searchable: false},
-                  { data: 'customer_id', name: 'customer_id' },
+                  { data: 'customer_name', name: 'customer_name' },
                   { data: 'city', name: 'city' },
                   { data: 'created_at', name: 'created_at' },
-                  { data: 'service_id', name: 'service_id' },
+                  { data: 'category_name', name: 'category_name' },
                   { data: 'credit_score', name: 'credit_score' },
                   { data: 'is_urgent', name: 'is_urgent' },
                   { data: 'is_high_hiring', name: 'is_high_hiring' },
