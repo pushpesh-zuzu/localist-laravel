@@ -24,7 +24,6 @@
               <th>Status</th>
               <th>Que/Ans</th>
               <th>Additional Dtails</th>
-              <th>Phone</th>
             </thead>
             <tbody>            
              
