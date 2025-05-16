@@ -830,7 +830,8 @@ class RecommendedLeadsController extends Controller
             $serviceId,
             $existingBids,
             $sellersWith3Bids,
-            $applySellerLimit
+            $applySellerLimit,
+            $lead
         ) {
             if (in_array($userId, $existingBids)) return null;
             if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
@@ -846,13 +847,28 @@ class RecommendedLeadsController extends Controller
             $miles = $distance !== "Distance not found" ? round(((float) str_replace([' km', ','], '', $distance)) * 0.621371, 2) : null;
 
             if ($miles === 0) return null;
+                // 🕒 Check if responded within 12 hours (720 minutes)
+            $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+            $firstResponse = ActivityLog::where('lead_id', $lead->id)
+                ->where('from_user_id', $userId)
+                ->whereIn('contact_type', $contactTypes)
+                ->orderBy('created_at', 'asc')
+                ->first();
 
+            $quickToRespond = 0;
+            if ($firstResponse) {
+                $diffInMinutes = Carbon::parse($firstResponse->created_at)->diffInMinutes(Carbon::parse($lead->created_at));
+                if ($diffInMinutes <= 720) {
+                    $quickToRespond = 1;
+                }
+            }
             return array_merge($user->toArray(), [
                 'credit_score' => $leadCreditScore,
                 'service_name' => $serviceName,
                 'service_id' => $serviceId,
                 'distance' => $miles,
                 'score' => $scoredUsers[$userId] ?? 0,
+                'quicktorespond' => $quickToRespond,
             ]);
         })->filter();
 
@@ -1481,8 +1497,9 @@ class RecommendedLeadsController extends Controller
         // $activity->save();    
 
          // Step 2: Calculate the time difference
-        $leadtime = Carbon::parse($leadtime);
-        $createdAt = $activity->created_at;
+        $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
+        $createdAt = $activity->created_at->copy()->setTimezone('Asia/Kolkata');
+
         $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
         if ($diffInMinutes < 60) {
             $duration = $diffInMinutes;
@@ -1522,7 +1539,6 @@ class RecommendedLeadsController extends Controller
                 ]
             );
         }
-          
         return $activity;                                 
     }
 
