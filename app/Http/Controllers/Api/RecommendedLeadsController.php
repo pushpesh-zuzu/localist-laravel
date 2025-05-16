@@ -204,7 +204,83 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    public function getRecommendedLeads(Request $request)
+    public function getRecommendedLeads(Request $request) 
+    {
+        $seller_id = $request->user_id; 
+        $leadid = $request->lead_id; 
+        $settings = Setting::first();  
+        $result = [];
+
+        if (!empty($leadid)) {
+            $lead = LeadRequest::find($leadid); // get lead created_at
+            if (!$lead) {
+                return $this->sendResponse('Lead not found', []);
+            }
+
+            // Fetch all matching bids
+            $bids = RecommendedLead::where('buyer_id', $seller_id)
+                ->where('lead_id', $leadid)
+                ->where('distance','!=', 0)
+                ->orderBy('distance', 'ASC')
+                ->get();
+
+            // Check count
+            if ($bids->count() < $settings->total_bid) {
+                // Fetch other seller bids on the same lead_id (exclude already recommended sellers)
+                $otherBids = RecommendedLead::where('lead_id', $leadid)
+                    ->whereNotIn('seller_id', $bids->pluck('seller_id')->toArray())
+                    ->orderBy('distance', 'ASC')
+                    ->get();
+
+                // Merge both
+                $bids = $bids->merge($otherBids);
+            }
+
+            // Get seller IDs and unique service IDs
+            $sellerIds = $bids->pluck('seller_id')->toArray();
+            $serviceIds = $bids->pluck('service_id')->unique()->toArray();
+
+            // Get users and categories
+            $users = User::whereIn('id', $sellerIds)->get()->keyBy('id'); // index by seller_id
+            $services = Category::whereIn('id', $serviceIds)->pluck('name', 'id'); // id => name
+
+            foreach ($bids as $bid) {
+                $seller = $users[$bid->seller_id] ?? null;
+                if ($seller) {
+                    // 👇 Apply quicktorespond check
+                    $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+                    $firstResponse = ActivityLog::where('lead_id', $leadid)
+                        ->where('from_user_id', $bid->seller_id)
+                        ->whereIn('contact_type', $contactTypes)
+                        ->orderBy('created_at', 'asc')
+                        ->first();
+
+                    $quickToRespond = 0;
+                    if ($firstResponse) {
+                        $leadTime = Carbon::parse($lead->created_at)->setTimezone('Asia/Kolkata');
+                        $createdAt = $firstResponse->created_at->copy()->setTimezone('Asia/Kolkata');
+
+                        $diffInMinutes = round(abs($leadTime->diffInMinutes($createdAt)));
+                        if ($diffInMinutes <= 720) {
+                            $quickToRespond = 1;
+                        }
+                    }
+
+                    $sellerData = $seller->toArray();
+                    $sellerData['service_name'] = $services[$bid->service_id] ?? 'Unknown Service';
+                    $sellerData['bid'] = $bid->bid;
+                    $sellerData['distance'] = $bid->distance;
+                    $sellerData['quicktorespond'] = $quickToRespond;
+
+                    $result[] = $sellerData;
+                }
+            }
+        }
+
+        return $this->sendResponse(__('AutoBid Data'), $result);
+    }
+
+    public function getRecommendedLeads_16_5_25(Request $request)
     {
         $seller_id = $request->user_id; 
         $leadid = $request->lead_id; 
