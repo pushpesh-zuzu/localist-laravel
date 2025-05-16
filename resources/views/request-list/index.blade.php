@@ -73,7 +73,6 @@
                   { data: 'status', name: 'status' },
                   { data: 'questions', name: 'questions' },
                   { data: 'details', name: 'details' },
-                  { data: 'phone', name: 'phone', visible: false },
                   
               ],
               order: [[2, 'desc']] // Optional: default order

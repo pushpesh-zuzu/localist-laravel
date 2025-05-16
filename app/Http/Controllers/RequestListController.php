@@ -36,6 +36,9 @@ class RequestListController extends Controller
             ->editColumn('category_name', function ($item) {
                 return $item->category_name ?: 'N/A';
             })
+            ->editColumn('created_at', function ($item) {
+                return date('m/d/Y h:i A', strtotime($item->created_at));
+            })
             ->editColumn('questions', function ($item) {
                 $output = "";
                 $quesArr = json_decode($item->questions, true);
