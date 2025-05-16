@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\CreditPlanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Controllers\Api\ReviewController;
 
 
 Route::get('/user', function (Request $request) {
@@ -36,6 +37,17 @@ Route::prefix('notification')->group(function () {
         Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
         Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
     });
+    
+});
+
+Route::prefix('review')->group(function () {
+    Route::post('submit-review',[ReviewController::class,'submitReview']);
+
+    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+        Route::get('get-customer-link',[ReviewController::class,'getCustomerLink']);
+        Route::get('get-reviews',[ReviewController::class,'getReviews']);
+    });
+
     
 });
 
