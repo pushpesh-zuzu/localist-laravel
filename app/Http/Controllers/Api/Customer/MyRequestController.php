@@ -267,7 +267,6 @@ class MyRequestController extends Controller
 
         $validator = Validator::make($request->all(), [
             'request_id' => 'required|integer|exists:lead_requests,id',
-            'details' => 'required',
           ], [
             'image_file.required' => 'Location Postcode is required.'
         ]);

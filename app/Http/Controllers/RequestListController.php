@@ -16,22 +16,6 @@ class RequestListController extends Controller
                 ->orderBy('id','desc');
             return Datatables::of($matched_leads)
                 ->addIndexColumn()
-                ->addColumn('action', function($item){
-                    $html = '';
-                    // $html    = '<div class="edit_details_box">';
-                    // if(is_admin()){
-                    //     // $html   .= '<a href="'.url(sprintf('campaign-lead/%s/edit',encrypt($item->id))).'" data-toggle="tooltip" title="Edit"><i class="fa fa-edit"></i></a>';
-                    //     $html   .= ' <a href="javascript:void(0);" 
-                    //         data-url="'.url(sprintf('admin/campaign-field/status/?id=%s&status=trashed',encrypt($item->id))).'" 
-                    //         data-request="ajax-confirm"
-                    //         data-ask="Are you sure you want to delete '.$item->account_name .' ?" data-toggle="tooltip" title="Delete"><i class="fa fa-fw fa-trash"></i></a>';
-                        
-                    // }
-
-                    // $html   .= '</div>';
-                                        
-                    return $html;
-                })
                 ->editColumn('customer_id', function($item){
                     return $item->customer ? $item->customer->name : 'N/A';
                 })
@@ -63,7 +47,7 @@ class RequestListController extends Controller
 
     public function index2()
     {
-        $aRows = LeadRequest::with(['customer','category'])->orderBy('id','DESC')->limit(50000)->get(); 
+        $aRows = LeadRequest::with(['customer','category'])->orderBy('id','DESC')->limit(10000)->get(); 
         // echo "<pre>";
         // print_r($aRows);
         // exit;
