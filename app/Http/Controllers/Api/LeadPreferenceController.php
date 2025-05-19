@@ -363,16 +363,23 @@ class LeadPreferenceController extends Controller
          // ===== Add view_count to each lead =====
         $leadIds = $filteredLeads->pluck('id')->toArray();
         $customerIds = $filteredLeads->pluck('customer_id')->toArray();
-        $viewCounts = UniqueVisitor::whereIn('buyer_id',$customerIds)->whereIn('lead_id',$leadIds)->sum('visitors_count');
-        // $viewCounts = UniqueVisitor::whereIn('visitors_blog_id', $leadIds)
-        //     ->groupBy('visitors_blog_id')
-        //     ->selectRaw('visitors_blog_id, SUM(visitors_count) as total_views')
-        //     ->pluck('total_views', 'visitors_blog_id'); // [lead_id => total_views]
+        $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
+            ->whereIn('lead_id', $leadIds)
+            ->select('buyer_id', 'lead_id', DB::raw('SUM(visitors_count) as total_views'))
+            ->groupBy('buyer_id', 'lead_id')
+            ->get();
 
-        $filteredLeads = $filteredLeads->map(function ($lead) use ($viewCounts) {
+        // 2. Map them into a nested array like: [buyer_id][lead_id] => count
+        $viewCountMap = [];
+        foreach ($rawViewCounts as $row) {
+            $viewCountMap[$row->buyer_id][$row->lead_id] = $row->total_views;
+        }
+
+        // 3. Assign each lead its view_count from the map
+        $filteredLeads = $filteredLeads->map(function ($lead) use ($viewCountMap) {
             $buyerId = $lead->customer_id;
             $leadId = $lead->id;
-            $lead->view_count = $viewCounts[$buyerId][$leadId] ?? 0;
+            $lead->view_count = $viewCountMap[$buyerId][$leadId] ?? 0;
             return $lead;
         });
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
