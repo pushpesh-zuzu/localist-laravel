@@ -11,6 +11,7 @@ use App\Models\UserResponseTime;
 use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
+use App\Models\UniqueVisitor;
 use App\Models\SaveForLater;
 use App\Models\ActivityLog;
 use App\Models\LeadRequest;
@@ -359,7 +360,19 @@ class LeadPreferenceController extends Controller
 
             return true;
         });
+         // ===== Add view_count to each lead =====
+        $leadIds = $filteredLeads->pluck('id')->toArray();
+        $customerIds = $filteredLeads->pluck('id')->toArray();
+        $viewCounts = UniqueVisitor::whereIn('buyer_id',$customerIds)->whereIn('lead_id',$leadIds)->sum('visitors_count');
+        // $viewCounts = UniqueVisitor::whereIn('visitors_blog_id', $leadIds)
+        //     ->groupBy('visitors_blog_id')
+        //     ->selectRaw('visitors_blog_id, SUM(visitors_count) as total_views')
+        //     ->pluck('total_views', 'visitors_blog_id'); // [lead_id => total_views]
 
+        $filteredLeads = $filteredLeads->map(function ($lead) use ($viewCounts) {
+            $lead->view_count = $viewCounts[$lead->id] ?? 0;
+            return $lead;
+        });
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
     }
     
@@ -1871,6 +1884,27 @@ class LeadPreferenceController extends Controller
     public function getLeadProfile(Request $request){
         $aVals = $request->all();
         $users = User::where('id',$aVals['customer_id'])->first();  
+
+        $myip = $request->ip();
+        $visited_date = date("Y-m-d");
+        $visitor = UniqueVisitor::where('seller_id',$aVals['user_id'])
+                                ->where('buyer_id',$aVals['customer_id'])
+                                ->where('ip_address',$myip)
+                                ->where('date',$visited_date)->first();
+        if(isset($visitor) && $visitor!=''){
+                $visitor->visitors_count = $visitor->visitors_count +1;
+                $visitor->save();
+        }else{
+                $visitor = new UniqueVisitor;
+                $visitor->ip_address = $myip;
+                $visitor->date = $visited_date;
+                $visitor->seller_id = $aVals['user_id'];
+                $visitor->buyer_id = $aVals['customer_id'];
+                $visitor->visitors_count = 1;
+                $visitor->save();
+        }
+        
+
         if ($users) {
             // Update is_read = 1 for all lead requests of this user (or filter as needed)
             LeadRequest::where('customer_id', $users->id)->update(['is_read' => 1]);
