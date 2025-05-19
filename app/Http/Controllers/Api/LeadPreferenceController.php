@@ -1891,10 +1891,10 @@ class LeadPreferenceController extends Controller
                                 ->where('buyer_id',$aVals['customer_id'])
                                 ->where('ip_address',$myip)
                                 ->where('date',$visited_date)->first();
-        if(isset($visitor) && $visitor!=''){
+        if(empty($visitor)){
                 $visitor->visitors_count = $visitor->visitors_count +1;
                 $visitor->save();
-        }else{
+        // }else{
                 $visitor = new UniqueVisitor;
                 $visitor->ip_address = $myip;
                 $visitor->date = $visited_date;
