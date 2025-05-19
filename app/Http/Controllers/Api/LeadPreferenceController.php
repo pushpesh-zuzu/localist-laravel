@@ -369,8 +369,10 @@ class LeadPreferenceController extends Controller
         //     ->selectRaw('visitors_blog_id, SUM(visitors_count) as total_views')
         //     ->pluck('total_views', 'visitors_blog_id'); // [lead_id => total_views]
 
-        $filteredLeads = $filteredLeads->map(function ($lead) use ($viewCounts) {
-            $lead->view_count = $viewCounts[$lead->id] ?? 0;
+       $filteredLeads = $filteredLeads->map(function ($lead) use ($viewCountMap) {
+            $buyerId = $lead->customer_id;
+            $leadId = $lead->id;
+            $lead->view_count = $viewCountMap[$buyerId][$leadId] ?? 0;
             return $lead;
         });
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
