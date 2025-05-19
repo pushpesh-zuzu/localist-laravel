@@ -1900,6 +1900,7 @@ class LeadPreferenceController extends Controller
                 $visitor->date = $visited_date;
                 $visitor->seller_id = $aVals['user_id'];
                 $visitor->buyer_id = $aVals['customer_id'];
+                $visitor->lead_id = $aVals['lead_id'];
                 $visitor->visitors_count = 1;
                 $visitor->save();
         }
