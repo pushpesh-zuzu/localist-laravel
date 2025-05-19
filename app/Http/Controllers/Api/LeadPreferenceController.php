@@ -1892,8 +1892,8 @@ class LeadPreferenceController extends Controller
                                 ->where('ip_address',$myip)
                                 ->where('date',$visited_date)->first();
         if(empty($visitor)){
-                $visitor->visitors_count = $visitor->visitors_count +1;
-                $visitor->save();
+                // $visitor->visitors_count = $visitor->visitors_count +1;
+                // $visitor->save();
         // }else{
                 $visitor = new UniqueVisitor;
                 $visitor->ip_address = $myip;
