@@ -362,7 +362,7 @@ class LeadPreferenceController extends Controller
         });
          // ===== Add view_count to each lead =====
         $leadIds = $filteredLeads->pluck('id')->toArray();
-        $customerIds = $filteredLeads->pluck('id')->toArray();
+        $customerIds = $filteredLeads->pluck('customer_id')->toArray();
         $viewCounts = UniqueVisitor::whereIn('buyer_id',$customerIds)->whereIn('lead_id',$leadIds)->sum('visitors_count');
         // $viewCounts = UniqueVisitor::whereIn('visitors_blog_id', $leadIds)
         //     ->groupBy('visitors_blog_id')
