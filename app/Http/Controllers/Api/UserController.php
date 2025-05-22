@@ -92,6 +92,8 @@ class UserController extends Controller
                     $aLocations['type'] = "Nationwide";
                     $aLocations['city'] = $aVals['cities'];
                     $aLocations['nation_wide'] = $aVals['nation_wide'];
+                    $aLocations['coordinates'] = $aVals['coordinates'];
+                    
                     // if(isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1){
                     //     $aLocations['nation_wide'] = 1;
                     // }else{
