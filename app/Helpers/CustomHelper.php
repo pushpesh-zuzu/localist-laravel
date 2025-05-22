@@ -4,6 +4,7 @@ namespace App\Helpers;
 use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use App\Events\NewNotificationEvent;
 
 class CustomHelper
 {
@@ -124,6 +125,16 @@ class CustomHelper
         }
 
         return $response;
+    }
+
+    public function sendNotification(Request $request)
+    {
+        $userId = $request->user_id;
+        $message = $request->message;
+
+        event(new NewNotificationEvent($message, $userId));
+
+        return response()->json(['sent' => true]);
     }
 
     // public static function sendEmail($config = array())

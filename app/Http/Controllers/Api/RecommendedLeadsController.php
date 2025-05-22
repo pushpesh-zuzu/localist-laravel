@@ -726,6 +726,285 @@ class RecommendedLeadsController extends Controller
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [])
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
+        $settings = Setting::first();
+        $serviceId = $lead->service_id;
+        $leadCreditScore = $lead->credit_score;
+        $leadPostcode = $lead->postcode;
+        $customerId = $lead->customer_id;
+        $questions = json_decode($lead->questions, true);
+        $serviceName = Category::find($serviceId)->name ?? '';
+    
+        $filteredUserIds = null;
+        if (!empty($responseTimeFilter)) {
+            $timeThresholds = [
+                'Responds within 10 mins' => 10,
+                'Responds within 1 hour' => 60,
+                'Responds within 6 hours' => 360,
+                'Responds within 24 hours' => 1440,
+            ];
+            $maxAllowed = $timeThresholds[$responseTimeFilter] ?? null;
+    
+            if ($maxAllowed !== null) {
+                $filteredUserIds = DB::table('user_response_times')
+                    ->where('average', '<=', $maxAllowed)
+                    ->pluck('seller_id')
+                    ->toArray();
+            }
+            if (is_array($filteredUserIds) && count($filteredUserIds) === 0) {
+                return [
+                    'empty' => true,
+                    'response' => [
+                        'service_name' => $serviceName,
+                        'sellers' => [],
+                        'bidcount' => $bidCount,
+                        'totalbid' => $settings->total_bid ?? 0,
+                        'baseurl' => url('/') . Storage::url('app/public/images/users')
+                    ]
+                ];
+            }
+        }
+    
+        $userServices = User::where('id', '!=', $customerId)
+            ->whereHas('details', function ($query) {
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            })
+            ->when($filteredUserIds, function ($query) use ($filteredUserIds) {
+                $query->whereIn('id', $filteredUserIds);
+            })
+            ->whereIn('id', function ($query) use ($serviceId) {
+                $query->select('user_id')
+                    ->from('user_services')
+                    ->where('service_id', $serviceId)
+                    ->where('auto_bid', 1);
+            })
+            ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
+            ->select('id as user_id', 'total_credit')
+            ->get();
+    
+        if ($userServices->isEmpty()) {
+            return [
+                'empty' => true,
+                'response' => [
+                    'service_name' => $serviceName,
+                    'sellers' => [],
+                    'bidcount' => $bidCount,
+                    'totalbid' => $settings->total_bid ?? 0,
+                    'baseurl' => url('/') . Storage::url('app/public/images/users')
+                ]
+            ];
+        }
+    
+        $sortedUserIds = $userServices->pluck('user_id')->toArray();
+    
+        // Get lead coordinates
+        $leadCoordinates = $this->getCoordinatesFromPostcode($leadPostcode);
+        if (!isset($leadCoordinates['lat'], $leadCoordinates['lng'])) {
+            return [
+                'empty' => true,
+                'response' => [
+                    'service_name' => $serviceName,
+                    'sellers' => [],
+                    'bidcount' => $bidCount,
+                    'totalbid' => $settings->total_bid ?? 0,
+                    'baseurl' => url('/') . Storage::url('app/public/images/users')
+                ]
+            ];
+        }
+    
+        // Get all user service locations and calculate distance using Haversine
+        $userLocations = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->get()
+            ->groupBy('user_id');
+    
+        // Filter based on Haversine distance or nation_wide = 1
+        $locationMatchedUsers = collect();
+        foreach ($userLocations as $userId => $locations) {
+            foreach ($locations as $location) {
+                $sellerCoordinates = json_decode($location->coordinates, true);
+                if (isset($sellerCoordinates['lat'], $sellerCoordinates['lng'])) {
+                    $distance = $this->calculateHaversineDistance(
+                        $leadCoordinates['lat'],
+                        $leadCoordinates['lng'],
+                        $sellerCoordinates['lat'],
+                        $sellerCoordinates['lng']
+                    );
+                    if ($distance !== null && $distance > 0) {
+                        $location->distance = $distance;
+                        $locationMatchedUsers[$userId] = $location;
+                        break; // Take the first valid match
+                    }
+                }
+            }
+        }
+    
+        // If no nearby match, fallback to nation_wide
+        if ($locationMatchedUsers->isEmpty()) {
+            $nationWide = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+                ->where('service_id', $serviceId)
+                ->where('nation_wide', 1)
+                ->get()
+                ->groupBy('user_id');
+    
+            foreach ($nationWide as $userId => $locations) {
+                $location = $locations->first();
+                $location->distance = null;
+                $locationMatchedUsers[$userId] = $location;
+            }
+    
+            if ($locationMatchedUsers->isEmpty()) {
+                return [
+                    'empty' => true,
+                    'response' => [
+                        'service_name' => $serviceName,
+                        'sellers' => [],
+                        'bidcount' => $bidCount,
+                        'totalbid' => $settings->total_bid ?? 0,
+                        'baseurl' => url('/') . Storage::url('app/public/images/users')
+                    ]
+                ];
+            }
+        }
+    
+        $matchedUserIds = $locationMatchedUsers->keys()->toArray();
+    
+        $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
+            ->pluck('id', 'questions')->toArray();
+    
+        $questionFilters = collect($questions)
+            ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
+            ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
+    
+        $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+            ->where('service_id', $serviceId)
+            ->where(function ($query) use ($questionFilters) {
+                foreach ($questionFilters as $filter) {
+                    foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
+                        $query->orWhere(fn($q2) =>
+                            $q2->where('question_id', $filter['question_id'])
+                                ->where('answers', 'LIKE', '%' . $ans . '%')
+                        );
+                    }
+                }
+            })->get();
+    
+        $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
+    
+        $existingBids = RecommendedLead::where('buyer_id', $customerId)
+            ->where('lead_id', $lead->id)
+            ->pluck('seller_id')
+            ->toArray();
+    
+        $sellersWith3Bids = [];
+        if ($applySellerLimit) {
+            $sellersWith3Bids = RecommendedLead::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->select('seller_id')
+                ->groupBy('seller_id')
+                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+                ->pluck('seller_id')
+                ->toArray();
+        }
+    
+        $responseTimesMap = DB::table('user_response_times')
+            ->whereIn('seller_id', $scoredUsers->keys()->toArray())
+            ->pluck('average', 'seller_id')
+            ->toArray();
+    
+        $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
+            $locationMatchedUsers,
+            $leadCreditScore,
+            $scoredUsers,
+            $serviceName,
+            $serviceId,
+            $existingBids,
+            $sellersWith3Bids,
+            $applySellerLimit,
+            $lead,
+            $responseTimesMap
+        ) {
+            if (in_array($userId, $existingBids)) return null;
+            if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+    
+            $user = User::where('id', $userId)->whereHas('details', function ($query) {
+                $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            })->first();
+    
+            if (!$user) return null;
+    
+            $userLocation = $locationMatchedUsers[$userId];
+            $miles = $userLocation->distance ?? null;
+    
+            if ($miles === 0) return null;
+    
+            return array_merge($user->toArray(), [
+                'credit_score' => $leadCreditScore,
+                'service_name' => $serviceName,
+                'service_id' => $serviceId,
+                'distance' => $miles,
+                'score' => $scoredUsers[$userId] ?? 0,
+                'quicktorespond' => isset($responseTimesMap[$userId]) && $responseTimesMap[$userId] <= 720 ? 1 : 0,
+            ]);
+        })->filter();
+    
+        $finalUsers = $distanceOrder === 'desc'
+            ? $finalUsers->sortByDesc('distance')->values()
+            : $finalUsers->sortBy('distance')->values();
+    
+        return [
+            'empty' => false,
+            'response' => [
+                'service_name' => $serviceName,
+                'sellers' => $finalUsers,
+                'bidcount' => $bidCount,
+                'totalbid' => $settings->total_bid ?? 0,
+                'baseurl' => url('/') . Storage::url('app/public/images/users')
+            ]
+        ];
+    }
+    
+    
+    // Get coordinates for a given postcode using Google Geocoding API
+    public function getCoordinatesFromPostcode($postcode)
+    {
+        $encodedPostcode = urlencode($postcode);
+        $apiKey = "AIzaSyDwAeV7juA_VpzLHqmKXACBtcZxR52TwoE"; // Replace with your API key
+    
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address={$encodedPostcode}&key={$apiKey}";
+        $response = file_get_contents($url);
+        $data = json_decode($response, true);
+    
+        if ($data['status'] === 'OK' && isset($data['results'][0]['geometry']['location'])) {
+            return $data['results'][0]['geometry']['location']; // ['lat' => ..., 'lng' => ...]
+        }
+    
+        return null;
+    }
+    // Calculates distance between two lat/lng pairs using Haversine formula
+    private function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // Radius of the earth in km
+    
+        $lat1 = deg2rad($lat1);
+        $lon1 = deg2rad($lon1);
+        $lat2 = deg2rad($lat2);
+        $lon2 = deg2rad($lon2);
+    
+        $latDiff = $lat2 - $lat1;
+        $lonDiff = $lon2 - $lon1;
+    
+        $a = sin($latDiff / 2) * sin($latDiff / 2) +
+             cos($lat1) * cos($lat2) *
+             sin($lonDiff / 2) * sin($lonDiff / 2);
+    
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        $distanceKm = $earthRadius * $c;
+    
+        return round($distanceKm * 0.621371, 2); // convert to miles
+    }
+
+    private function FullManualLeadsCode_22_05_2025($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [])
+    {
+        $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
         $settings = Setting::first();  
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;

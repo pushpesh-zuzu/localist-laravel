@@ -18,6 +18,7 @@ use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Models\NotificationSetting;
+use App\Events\NewNotificationEvent;
 
 class NotificationController extends Controller
 {
@@ -131,4 +132,15 @@ class NotificationController extends Controller
         return $this->sendResponse('Notification Settings List',$notiSettingList);
 
     }
+
+    public function sendNotification(Request $request)
+    {
+        $userId = $request->user_id;
+        $message = $request->message;
+
+        event(new NewNotificationEvent($message, $userId));
+
+        return response()->json(['sent' => true]);
+    }
+    
 }

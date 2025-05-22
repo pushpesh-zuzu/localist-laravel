@@ -1,4 +1,11 @@
 <?php return array (
+  'laravel-notification-channels/webpush' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'NotificationChannels\\WebPush\\WebPushServiceProvider',
+    ),
+  ),
   'laravel/breeze' => 
   array (
     'providers' => 

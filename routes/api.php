@@ -128,16 +128,13 @@ Route::prefix('users')->group(function () {
         Route::post('/pending-purchase-type-filter', [LeadPreferenceController::class, 'pendingPurchaseTypeFilter']);
         Route::post('/hired-purchase-type-filter', [LeadPreferenceController::class, 'hiredPurchaseTypeFilter']);
         
-        Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
-        Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);
-        Route::post('/seller-myprofile-qa', [SettingController::class, 'sellerMyprofileqa']);
-        Route::get('/seller-profile-ques', [SettingController::class, 'sellerProfileQues']);
-        Route::post('/seller-myprofile', [SettingController::class, 'sellerMyprofile']);
 
+        //account details 
         Route::post('/update-profile-image', [UserController::class, 'updateProfileImage']);
         Route::post('/change-password', [UserController::class, 'changePassword']);
         Route::post('/update-profile', [UserController::class, 'updateProfile']);
         Route::post('/edit-profile', [UserController::class, 'editProfile']);
+
         Route::post('/switch_user', [UserController::class, 'switchUser']);
         Route::post('/logout', [UserController::class, 'logout']);
 
@@ -154,13 +151,26 @@ Route::prefix('users')->group(function () {
         Route::post('/sort-by-location', [RecommendedLeadsController::class, 'sortByLocation']);
         Route::post('/response-time-filter', [RecommendedLeadsController::class, 'responseTimeFilter']);
         
-
+        //My Credits
         Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);
         Route::post('/add-coupon', [CreditPlanController::class, 'addCoupon']);
         Route::get('/get-plans', [CreditPlanController::class, 'getPlans']);
 
+        //Invoice & Billing details
+        Route::post('/seller-billing-details', [SettingController::class, 'sellerBillingDetails']);
+
+        //My Payment details
+        Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);
+
+        //My Profile
+        Route::post('/seller-myprofile-qa', [SettingController::class, 'sellerMyprofileqa']);
+        Route::get('/seller-profile-ques', [SettingController::class, 'sellerProfileQues']);
+        Route::post('/seller-myprofile', [SettingController::class, 'sellerMyprofile']);
+
         Route::post('/add-suggested-que', [SuggestedQuestionController::class, 'addSuggestedQue']);
 
+        // routes/api.php
+        Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
 
     });
     // Route::get('/{id}', [UserController::class, 'show']);
