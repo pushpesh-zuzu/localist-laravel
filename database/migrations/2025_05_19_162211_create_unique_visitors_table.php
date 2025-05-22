@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('ip_address')->nullable();
             $table->string('date')->nullable();
             $table->integer('visitors_count')->nullable();
+            $table->integer('random_count')->nullable();
             $table->timestamps();
         });
     }

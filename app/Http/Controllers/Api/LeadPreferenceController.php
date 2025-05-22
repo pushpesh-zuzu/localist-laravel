@@ -1889,8 +1889,70 @@ class LeadPreferenceController extends Controller
     //     }
     //     return $aRows;
     // }
+    public function getLeadProfile(Request $request) 
+    {
+        $aVals = $request->all();
+        $users = User::find($aVals['customer_id']);  
 
-    public function getLeadProfile(Request $request){
+        $myip = $request->ip();
+        $visited_date = date("Y-m-d");
+
+        // Check if the current combination already exists
+        $visitor = UniqueVisitor::where('seller_id', $aVals['user_id'])
+                                ->where('buyer_id', $aVals['customer_id'])
+                                ->where('ip_address', $myip)
+                                ->where('date', $visited_date)
+                                ->first();
+
+        // Fetch total random_count for this buyer-lead
+        $totalRandomCount = UniqueVisitor::where('buyer_id', $aVals['customer_id'])
+                                        ->where('lead_id', $aVals['lead_id'])
+                                        ->sum('random_count');
+        // If this seller hasn't visited this lead today, add a new row
+        if (empty($visitor)) {
+            // If total random_count is less than 30, insert 5–30 (but not more than needed)
+            if ($totalRandomCount < 30) {
+                $remaining = 30 - $totalRandomCount;
+                $random_count = min(rand(5, 30), $remaining);
+            } else {
+                // Already reached 30, insert only 1 from now on
+                $random_count = 1;
+            }
+
+            $visitor = new UniqueVisitor;
+            $visitor->ip_address = $myip;
+            $visitor->date = $visited_date;
+            $visitor->seller_id = $aVals['user_id'];
+            $visitor->buyer_id = $aVals['customer_id'];
+            $visitor->lead_id = $aVals['lead_id'];
+            $visitor->visitors_count = 1;
+            $visitor->random_count = $random_count;
+            $visitor->save();
+        }
+
+        if ($users) {
+            // Mark all lead requests as read
+            LeadRequest::where('customer_id', $users->id)->update(['is_read' => 1]);
+
+            // Fetch lead and related details
+            $leads = LeadRequest::with(['customer', 'category'])
+                                ->where('id', $aVals['lead_id'])
+                                ->where('customer_id', $users->id)
+                                ->first();
+
+            $leads->purchase_type = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                                    ->where('buyer_id', $aVals['customer_id'])
+                                    ->where('seller_id', $aVals['user_id'])
+                                    ->pluck('purchase_type')
+                                    ->first();
+
+            $users->leads = $leads;
+        }
+
+        return $this->sendResponse('Profile Data', $users);
+    }
+
+    public function getLeadProfile_22_05_2025(Request $request){
         $aVals = $request->all();
         $users = User::where('id',$aVals['customer_id'])->first();  
 
