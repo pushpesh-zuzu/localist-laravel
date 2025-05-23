@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\RecommendedLead;
+use App\Models\UniqueVisitor;
 use App\Models\LeadRequest;
 use App\Models\LoginHistory;
 use App\Models\Category;
 use App\Models\User;
+use DB;
 
 class BuyerController extends Controller
 {
@@ -114,5 +116,20 @@ class BuyerController extends Controller
         $aRows =  LoginHistory::where('user_id',$userid)->orderBy('id','DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('buyer.login_history', get_defined_vars());
+    }
+
+    public function viewCount($userid){
+        $leadIds = LeadRequest::whereIn('customer_id', [$userid])->pluck('id')->toArray();
+        $aRows = UniqueVisitor::where('buyer_id', $userid)
+            ->whereIn('lead_id', $leadIds)
+            // ->select('buyer_id', 'lead_id', DB::raw('SUM(visitors_count) as total_views'))
+            // ->groupBy('buyer_id', 'lead_id')
+            ->get();
+        foreach ($aRows as $key => $value) {
+            $value['leadname'] = LeadRequest::where('id',$value->lead_id)->pluck('postcode')->first();
+            $value['seller'] = User::where('id',$userid)->pluck('name')->first();
+        }    
+        $user = User::where('id', $userid)->pluck('name')->first();
+        return view('buyer.view_count', get_defined_vars());
     }
 }
