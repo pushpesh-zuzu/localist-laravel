@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('postcode_new')->after('country')->nullable();
             $table->timestamp('last_login')->after('postcode_new')->nullable();
             $table->boolean('is_online')->after('postcode_new')->default(0)->comment('0 = off, 1 = on');
+            $table->string('sms_notification_no')->after('is_online')->nullable();
         });
     }
 

@@ -772,20 +772,22 @@ class UserController extends Controller
         $aVals = $request->all();
         $validator = $validator = Validator::make($aVals, [
             'name' => 'required',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users', 'email')->ignore($request->user_id), // Exclude current user's email
-            ],
-            'phone' => 'required'
+            // 'email' => [
+            //     'required',
+            //     'email',
+            //     Rule::unique('users', 'email')->ignore($request->user_id), // Exclude current user's email
+            // ],
+            'phone' => 'required',
+            'sms_notification_no' => 'required',
         ]);
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
         $user = User::where('id',$request->user_id)->update([
             'name'=>$request->name,
-            'email'=>$request->email,
+            // 'email'=>$request->email,
             'phone'=>$request->phone,
+            'sms_notification_no'=>$request->sms_notification_no,
         ]);
         return $this->sendResponse(__('User Profile updated'));
     }

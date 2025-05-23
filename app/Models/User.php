@@ -58,7 +58,8 @@ class User extends Authenticatable
         'user_type',
         'active_status',
         'form_status',
-        'remember_token'
+        'remember_token',
+        'sms_notification_no'
     ];
     
     /**
