@@ -127,7 +127,7 @@ class BuyerController extends Controller
             ->get();
         foreach ($aRows as $key => $value) {
             $value['leadname'] = LeadRequest::where('id',$value->lead_id)->pluck('postcode')->first();
-            $value['seller'] = User::where('id',$userid)->pluck('name')->first();
+            $value['seller'] = User::where('id',$value->seller_id)->pluck('name')->first();
         }    
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('buyer.view_count', get_defined_vars());
