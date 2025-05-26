@@ -25,7 +25,7 @@ class ReviewController extends Controller{
         $user_id = $request->user_id;
         $uuid = User::where('id',$user_id)->value('uuid');
         $url = url('review/'.$uuid);
-        return $this->sendResponse('Customer review link',$url);
+        return $this->sendResponse('Customer review link',str_replace('/admin','',$url));
     }
 
     public function submitReview(Request $request){
