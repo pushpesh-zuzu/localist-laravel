@@ -58,8 +58,7 @@ class User extends Authenticatable
         'user_type',
         'active_status',
         'form_status',
-        'remember_token',
-        'sms_notification_no'
+        'remember_token'
     ];
     
     /**
@@ -113,6 +112,11 @@ class User extends Authenticatable
     public function responseTime()
     {
         return $this->hasOne(UserResponseTime::class, 'seller_id', 'id');
+    }
+    
+    public function serviceLocations()
+    {
+        return $this->hasMany(UserServiceLocation::class, 'user_id', 'id');
     }
 
 }
