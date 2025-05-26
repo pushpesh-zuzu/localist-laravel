@@ -365,21 +365,36 @@ class LeadPreferenceController extends Controller
         $customerIds = $filteredLeads->pluck('customer_id')->toArray();
         $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
             ->whereIn('lead_id', $leadIds)
-            ->select('buyer_id', 'lead_id', DB::raw('SUM(visitors_count) as total_views'))
+            ->select('buyer_id', 
+                     'lead_id', 
+                     DB::raw('SUM(visitors_count) as total_views'),
+                     DB::raw('SUM(random_count) as total_randoms')
+                    )
             ->groupBy('buyer_id', 'lead_id')
             ->get();
 
         // 2. Map them into a nested array like: [buyer_id][lead_id] => count
-        $viewCountMap = [];
+         $leadMetricsMap = [];
         foreach ($rawViewCounts as $row) {
-            $viewCountMap[$row->buyer_id][$row->lead_id] = $row->total_views;
+            $leadMetricsMap[$row->buyer_id][$row->lead_id] = [
+                'views' => $row->total_views,
+                'randoms' => $row->total_randoms,
+            ];
         }
 
+        // $viewCountMap = [];
+        // foreach ($rawViewCounts as $row) {
+        //     $viewCountMap[$row->buyer_id][$row->lead_id] = $row->total_views;
+        // }
+
         // 3. Assign each lead its view_count from the map
-        $filteredLeads = $filteredLeads->map(function ($lead) use ($viewCountMap) {
+        $filteredLeads = $filteredLeads->map(function ($lead) use ($leadMetricsMap) {
             $buyerId = $lead->customer_id;
             $leadId = $lead->id;
-            $lead->view_count = $viewCountMap[$buyerId][$leadId] ?? 0;
+            $metrics = $leadMetricsMap[$buyerId][$leadId] ?? ['views' => 0, 'randoms' => 0];
+            $lead->view_count = $metrics['views'];
+            $lead->random_count = $metrics['randoms'];
+            // $lead->view_count = $viewCountMap[$buyerId][$leadId] ?? 0;
             return $lead;
         });
         return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
