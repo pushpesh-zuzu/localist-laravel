@@ -52,6 +52,8 @@ class User extends Authenticatable
         'country',
         'postcode_new',
         'is_online',
+        'sms_notification_no',
+        'primary_category',
         'apartment',
         'is_zipcode',
         'zipcode',

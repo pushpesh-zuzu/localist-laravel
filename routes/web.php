@@ -15,7 +15,7 @@ use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\PlansController;
 use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\PagesController;
 
 
 Route::get('/clear-cache', function() {
@@ -66,6 +66,7 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::resource('subcategories', SubCategoryController::class);
     Route::resource('blogs', BlogsController::class);
+    Route::resource('pages', PagesController::class);
     Route::resource('plans', PlansController::class);
     Route::resource('settings', SettingController::class);
     Route::resource('buyer', BuyerController::class);

@@ -63,8 +63,8 @@ class UserController extends Controller
         $user = User::create($aVals);
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
-        $user->remember_tokens = $token;
-        $user->nationwide = $aVals['nation_wide'];
+       
+        
         if(!empty($user))
         {
             $userdetails = UserDetail::where('user_id',$user->id)->first();
@@ -78,6 +78,12 @@ class UserController extends Controller
               // Check if service_id is an array or convert it to one
             $cleanedServiceId = str_replace(' ', '', $aVals['service_id']);
             $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $cleanedServiceId);
+
+            if (!empty($serviceIds)) 
+            {
+                $user->primary_category = $serviceIds[0];
+                $user->save();
+            }
 
             // $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
             foreach ($serviceIds as $serviceId) {
@@ -155,15 +161,16 @@ class UserController extends Controller
             $data['template'] = 'emails.seller_registration';
             $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
             $data['password'] = $randomString;
-
             CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => "Seller Registration", "body" => "Thankyou for registration",'receiver' => $aVals['name']));
             // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" =>  $modes, "body" => "Thankyou for registration",'receiver' => $aVals['name']));
             // Mail::send($data['template'], $data, function ($message) use ($user) {
-            //     $message->from('info@localists.com');
-            //     $message->to($user->email);
-            //     $message->subject("Welcome to Localist " .$user->name ."!");
-            // });
-        }
+                //     $message->from('info@localists.com');
+                //     $message->to($user->email);
+                //     $message->subject("Welcome to Localist " .$user->name ."!");
+                // });
+            }
+            $user->remember_token = $token;
+            $user->nationwide = $aVals['nation_wide'];
        
         // CustomHelper::sendEmail();
         // if($aVals['active_status'] == 1){

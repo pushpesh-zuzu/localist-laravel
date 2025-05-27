@@ -98,7 +98,12 @@
                 {{ __('Blogs') }}
             </a>   
         </li>
-
+        <!-- <li class="nav-item">
+            <a href="{{ route('pages.index') }}" class="nav-link {{ request()->routeIs('pages.index') ? 'active' : '' }}">
+                  <i class="fa-solid fa-blog nav-icon"></i>
+                {{ __('Pages') }}
+            </a>   
+        </li> -->
         <li class="nav-item">
             <a href="{{ route('plans.index') }}" class="nav-link {{ request()->routeIs('plans.index') ? 'active' : '' }}">
                 <i class="bi bi-list-task nav-icon"></i>
