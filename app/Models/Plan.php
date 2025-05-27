@@ -11,6 +11,12 @@ class Plan extends Model
     use SoftDeletes; // Enable soft deletes
     use HasSlug;
 
-    protected $fillable = ['name', 'slug','description','terms_months','price','no_of_leads','status'];
+    protected $fillable = ['category_id','name', 'slug','description','price','no_of_leads','plan_type','status'];
+    
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id','id')->select('id','name');
+    }
 
 }

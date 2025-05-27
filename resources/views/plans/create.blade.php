@@ -16,8 +16,17 @@
           @csrf
 
           <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label" for="name">{{ __('Name') }}</label>
+            <div class="col-md-4">
+              <label class="form-label" for="category_id">{{ __('Category') }}</label>
+              <select required id="category_id"  name="category_id" class="form-control select2{{ $errors->has('category_id') ? ' is-invalid' : '' }}" >
+                <option value="">Select Any</option>
+                @foreach($category as $c)
+                  <option value="{{$c->id}}" @if($aRow->category_id == $c->id) selected @endif>{{$c->name}}</option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label" for="name">{{ __('Plan Name') }}</label>
               <input type="text" id="name" class="form-control" name="name" class="form-control{{ $errors->has('name') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->name : old('name') }}" required placeholder="Name">
               @if ($errors->has('name'))
               <span class="invalid-feedback d-block" role="alert">
@@ -31,25 +40,19 @@
           <div class="row mb-3">
             <div class="col-md-12">
               <label class="form-label" for="description">{{ __('Description') }}</label>
-              <textarea class="form-control" id="description" rows="3" name="description" class="form-control{{ $errors->has('description') ? ' is-invalid' : '' }}" 
-              placeholder="Description">{{ $aRow ? $aRow->description : old('description') }}</textarea>
+              <input type="text" id="description" name="description" class="form-control{{ $errors->has('description') ? ' is-invalid' : '' }}"  value="{{ $aRow ? $aRow->description : old('description') }}" placeholder="plan info"/>
+             
+              @if ($errors->has('description'))
+              <span class="invalid-feedback d-block" role="alert">
+                <strong>{{ $errors->first('description') }}</strong>
+              </span>
+              @endif
             </div>
           </div>
 
 
           <div class="row mb-3">
-            <div class="col-md-4">
-              <label class="form-label" for="terms_months">{{ __('Terms') }}</label>
-              <select required id="terms_months"  name="terms_months" class="form-control{{ $errors->has('terms_months') ? ' is-invalid' : '' }}" >
-                <option value="">Select Any</option>
-                <option value="1" @if($aRow && $aRow->terms_months == 1) selected  @endif>Monthly</option>
-                <option value="3" @if($aRow && $aRow->terms_months == 3) selected  @endif>3 Months</option>
-                <option value="6" @if($aRow && $aRow->terms_months == 6) selected  @endif>6 Months</option>
-                <option value="12" @if($aRow && $aRow->terms_months == 12) selected  @endif>Yearly</option>
-              </select>
-             
-              
-            </div>
+            
             <div class="col-md-4">
               <label class="form-label" for="price">{{ __('Price') }}</label>
               <input  required type="text" id="price" name="price" class="form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"  value="{{ $aRow ? $aRow->price : old('price') }}"/>
@@ -71,7 +74,16 @@
               </span>
               @endif
             </div>
-
+            <div class="col-md-4">
+              <label class="form-label" for="plan_type">{{ __('Plan Type') }}</label>
+              <select required id="plan_type"  name="plan_type" class="form-control{{ $errors->has('plan_type') ? ' is-invalid' : '' }}" >
+                <option value="">Select Any</option>
+                <option value="normal" @if($aRow && $aRow->plan_type == 'normal') selected  @endif>Normal Plan</option>
+                <option value="starter" @if($aRow && $aRow->plan_type == 'starter') selected  @endif>Starter Pack</option>
+              </select>
+             
+              
+            </div>
 
           </div>
 
