@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Plan;
+use App\Models\Category;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\CustomHelper;
 
@@ -10,14 +11,15 @@ class PlansController extends Controller
 {
     public function index()
     {
-        $aRows = Plan::get(); 
+        $aRows = Plan::with(['category'])->get(); 
         return view('plans.index', compact('aRows'));
     }
 
     public function create()
     {
+        $category = Category::where('parent_id',0)->where('status',1)->get();
         $aRow = array();
-        return view('plans.create',compact('aRow'));
+        return view('plans.create',compact('aRow','category'));
     }
 
     public function store(Request $request)
@@ -33,8 +35,9 @@ class PlansController extends Controller
 
     public function edit(Plan $plan)
     {
+        $category = Category::where('parent_id',0)->get();
         $aRow = $plan;
-        return view('plans.create', compact('aRow'));
+        return view('plans.create', compact('aRow','category'));
     }
 
     public function update(Request $request, Plan $plan)
@@ -53,9 +56,10 @@ class PlansController extends Controller
 
     protected function validateSave(Request $request,$isEdit = "")
     {
-
+        $aValids['category_id'] = 'required|numeric';
         $aValids['name'] =  'required|unique:plans|max:255';
         $aValids['price'] =  'required|numeric';
+        $aValids['plan_type'] = 'required';
 
         if($isEdit)
         {

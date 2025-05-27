@@ -289,23 +289,47 @@ class SettingController extends Controller
     }
 
     public function sellerCardDetails(Request $request){
+        $validator = Validator::make($request->all(), [
+            'card_number' => 'required',
+            'expiry_date' => 'required',
+            'cvc' => 'required',
+          ], [
+            'card_number.required' => 'Card Number is required.',
+            'expiry_date.required' => 'Card Valid till date is required.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
         $user_id = $request->user_id; 
         $aValues = $request->all();
         $userdetails = UserCardDetail::where('user_id',$user_id)->first();
+        $type = "";
         if(isset($userdetails) && $userdetails != ''){
             $userdetails->update([
-                'card_number' => $aValues['card_number'],
+                'card_number' => encrypt($aValues['card_number']),
                 'expiry_date' => $aValues['expiry_date'],
-                'cvc' => Hash::make($aValues['cvc'])
-            ]);  
+                'cvc' => encrypt($aValues['cvc'])
+            ]);
+            $type = 'updated';  
         }else{
             $userdetails = UserCardDetail::create([
                 'user_id'  => $user_id,
-                'card_number' => $aValues['card_number'],
+                'card_number' => encrypt($aValues['card_number']),
                 'expiry_date' => $aValues['expiry_date'],
-                'cvc' => Hash::make($aValues['cvc'])
+                'cvc' => encrypt($aValues['cvc'])
             ]);
+            $type = 'added';
         }
-        return $this->sendResponse(__('Profile Questions Data'), $userdetails);
+        return $this->sendResponse("Card $type successfully!");
+    }
+
+    public function getSellerCard(Request $request){
+        $user_id = $request->user_id;
+        $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();
+        $data[0]['card_number'] = decrypt($data[0]['card_number']);
+        $data[0]['cvc'] = decrypt($data[0]['cvc']);
+        return $this->sendResponse("Card Details", $data);
     }
 }

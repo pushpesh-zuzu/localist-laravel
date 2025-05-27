@@ -12,7 +12,11 @@
           <thead>
           <tr>
             <th scope="col" width="20px;">#</th>
+            <th scope="col">Category</th>
             <th scope="col">Name</th>
+            <th scope="col">Price</th>
+            <th scope="col">No. of Leads</th>
+            <th scope="col">Plan Type</th>
             <th scope="col">Action</th>
           </tr>
           </thead>
@@ -20,7 +24,11 @@
           @foreach($aRows as $aKey => $aRow)
           <tr>
             <th scope="row">{{ $aKey+1 }}</th>
+            <td>{{ $aRow->category->name }}</td>
             <td>{{ $aRow->name }}</td>
+            <td>{{ $aRow->price }}</td>
+            <td>{{ $aRow->no_of_leads }}</td>
+            <td>{{ $aRow->plan_type }}</td>
             <td>
                 <a href="{{ route('plans.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></i></a>
                 <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>

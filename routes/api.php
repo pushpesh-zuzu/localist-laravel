@@ -161,6 +161,7 @@ Route::prefix('users')->group(function () {
 
         //My Payment details
         Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);
+        Route::get('/get-seller-card', [SettingController::class, 'getSellerCard']);
 
         //My Profile
         Route::post('/seller-myprofile-qa', [SettingController::class, 'sellerMyprofileqa']);
