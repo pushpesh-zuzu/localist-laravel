@@ -21,7 +21,7 @@
               <select required id="category_id"  name="category_id" class="form-control select2{{ $errors->has('category_id') ? ' is-invalid' : '' }}" >
                 <option value="">Select Any</option>
                 @foreach($category as $c)
-                  <option value="{{$c->id}}" @if($aRow->category_id == $c->id) selected @endif>{{$c->name}}</option>
+                  <option value="{{$c->id}}" @if($aRow) @if($aRow->category_id == $c->id) selected @endif @endif>{{$c->name}}</option>
                 @endforeach
               </select>
             </div>
