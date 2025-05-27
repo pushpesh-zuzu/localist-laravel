@@ -328,8 +328,11 @@ class SettingController extends Controller
     public function getSellerCard(Request $request){
         $user_id = $request->user_id;
         $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();
-        $data[0]['card_number'] = decrypt($data[0]['card_number']);
-        $data[0]['cvc'] = decrypt($data[0]['cvc']);
-        return $this->sendResponse("Card Details", $data);
+        if(!empty($data)){
+            $data[0]['card_number'] = decrypt($data[0]['card_number']);
+            $data[0]['cvc'] = decrypt($data[0]['cvc']);
+            return $this->sendResponse("Card Details", $data);
+        }
+        return $this->sendError("No Card found!");
     }
 }
