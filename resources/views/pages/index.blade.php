@@ -4,7 +4,7 @@
     <div class="card mb-4">
       <div class="card-header">
           <strong>{{ __('Pages') }}</strong>
-          <a href="{{ route('blogs.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Pages') }}</a>
+          <a href="{{ route('pages.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Pages') }}</a>
       </div>
       <div class="card-body">
         @if(count($aRows) > 0)

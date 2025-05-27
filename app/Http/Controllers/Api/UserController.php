@@ -168,9 +168,10 @@ class UserController extends Controller
                 //     $message->to($user->email);
                 //     $message->subject("Welcome to Localist " .$user->name ."!");
                 // });
+                $user->remember_tokens = $token;
+                $user->nationwide = $aVals['nation_wide'];
             }
-            $user->remember_token = $token;
-            $user->nationwide = $aVals['nation_wide'];
+            
        
         // CustomHelper::sendEmail();
         // if($aVals['active_status'] == 1){

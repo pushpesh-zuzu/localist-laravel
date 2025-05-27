@@ -25,7 +25,25 @@
               </span>
               @endif
             </div>
-
+            <div class="col-md-6>
+                <label class="form-label" for="name">{{ __('Category') }}</label>
+                <select name="category" class="form-control{{ $errors->has('category') ? ' is-invalid' : '' }}" required>
+                    <option value="">Select Category</option>
+                    @if(count($categories) > 0)
+                        @foreach($categories as $value)
+                            <option value="{{$value->id}}" 
+                                @if(isset($aRow->category) && $aRow->category == $value->id) selected @endif>
+                                {{$value->name}}
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+                @if ($errors->has('category'))
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $errors->first('category') }}</strong>
+                    </span>
+                @endif
+            </div>
           </div>
 
           <div class="row mb-3">

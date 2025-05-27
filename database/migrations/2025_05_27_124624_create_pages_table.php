@@ -18,11 +18,16 @@ return new class extends Migration
             $table->string('page_menu')->nullable();
             $table->string('category_id')->nullable();
             $table->string('slug')->unique();
-            $table->text('description')->nullable();
+            $table->text('title_desc')->nullable();
+            $table->text('page_details')->nullable();
             $table->string('banner_image')->nullable();
-            $table->string('banner_title')->nullable();
+            $table->string('og_image')->nullable();
             $table->string('seo_title')->nullable();
+            $table->string('seo_keyword')->nullable();
             $table->text('seo_description')->nullable();
+            $table->text('page_script')->nullable();
+            $table->string('lower_section_title')->nullable();
+            $table->text('lower_section_desc')->nullable();
             $table->integer('status')->default(1);
             $table->timestamps();
         });

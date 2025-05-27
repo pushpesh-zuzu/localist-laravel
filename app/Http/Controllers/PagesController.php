@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Page;
+use App\Models\Category;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\CustomHelper;
 
@@ -17,7 +18,8 @@ class PagesController extends Controller
     public function create()
     {
         $aRow = array();
-        return view('pages.create',compact('aRow'));
+        $categories = Category::where('status',1)->get();
+        return view('pages.create',get_defined_vars());
     }
 
     public function store(Request $request)
