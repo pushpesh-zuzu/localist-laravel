@@ -333,6 +333,6 @@ class SettingController extends Controller
             $data[0]['cvc'] = decrypt($data[0]['cvc']);
             return $this->sendResponse("Card Details", $data);
         }
-        return $this->sendError("No Card found!");
+        return $this->sendResponse("No Card found!",$data);
     }
 }
