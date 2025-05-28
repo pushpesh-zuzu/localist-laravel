@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CreditPlanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\PaymentController;
 
 
 Route::get('/user', function (Request $request) {
@@ -50,6 +51,16 @@ Route::prefix('review')->group(function () {
 
     
 });
+Route::prefix('payment')->group(function () {
+
+    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+        Route::post('verify-card',[PaymentController::class,'verifyCard']);
+        Route::get('get-reviews',[ReviewController::class,'getReviews']);
+    });
+
+    
+});
+
 
 Route::prefix('customer')->group(function () {
     Route::get('test',[CustomerController::class,'test']);

@@ -293,9 +293,11 @@ class SettingController extends Controller
             'card_number' => 'required',
             'expiry_date' => 'required',
             'cvc' => 'required',
+            'stripe_payment_method_id' => 'required',
           ], [
             'card_number.required' => 'Card Number is required.',
-            'expiry_date.required' => 'Card Valid till date is required.'
+            'expiry_date.required' => 'Card Valid till date is required.',
+            'stripe_payment_method_id.required' => 'Stripe Payment method Id is required.'
         ]);
 
         if($validator->fails()){
@@ -322,14 +324,22 @@ class SettingController extends Controller
             ]);
             $type = 'added';
         }
+
+        $dataN['stripe_payment_method_id'] = $request->stripe_payment_method_id;
+        $dataN['updated_at'] = date('y-m-d H:i:s');
+        User::where('id',$user_id)->update($dataN);
+        
         return $this->sendResponse("Card $type successfully!");
     }
 
     public function getSellerCard(Request $request){
         $user_id = $request->user_id;
         $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();
-        $data[0]['card_number'] = decrypt($data[0]['card_number']);
-        $data[0]['cvc'] = decrypt($data[0]['cvc']);
-        return $this->sendResponse("Card Details", $data);
+        if(!empty($data)){
+            $data[0]['card_number'] = decrypt($data[0]['card_number']);
+            $data[0]['cvc'] = decrypt($data[0]['cvc']);
+            return $this->sendResponse("Card Details", $data);
+        }
+        return $this->sendResponse("No Card found!",$data);
     }
 }
