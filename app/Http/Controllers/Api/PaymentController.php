@@ -26,6 +26,7 @@ class PaymentController extends Controller
 {
     public function buyCredits(Request $request){
         $validator = Validator::make($request->all(), [
+            'top_up' => 'required|numeric',
             'credits' => 'required|numeric',
             'amount' => 'required|numeric',
             'discount' => 'required|numeric',
