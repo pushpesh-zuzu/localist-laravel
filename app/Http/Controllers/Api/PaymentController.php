@@ -92,9 +92,9 @@ class PaymentController extends Controller
                 $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
                 $dataInv['details'] = $request->details;
                 $dataInv['period'] = 'One off charge';
-                $dataInv['amount'] = $amount;
-                
-                $dataInv['vat'] = number_format($request->vat, 2);;
+                $dataInv['amount'] = number_format($amount, 2);
+                $dataInv['discount'] = number_format($request->discount, 2);
+                $dataInv['vat'] = number_format($request->vat, 2);
                 $dataInv['total_amount'] = number_format($request->total_amount, 2);;
 
                 if(!empty($userDetails)){
