@@ -19,6 +19,7 @@ class PagesController extends Controller
     {
         $aRow = array();
         $categories = Category::where('status',1)->get();
+        $pagemenu = Page::where('status',1)->get();
         return view('pages.create',get_defined_vars());
     }
 
@@ -56,6 +57,7 @@ class PagesController extends Controller
     protected function validateSave(Request $request,$isEdit = "")
     {
 
+        $aValids['page_type'] =  'required|unique:pages|max:255';
         $aValids['name'] =  'required|unique:pages|max:255';
 
         if($isEdit)
@@ -64,7 +66,6 @@ class PagesController extends Controller
         }
 
         $request->validate($aValids);
-
  
         $aVals = $request->all();
 
