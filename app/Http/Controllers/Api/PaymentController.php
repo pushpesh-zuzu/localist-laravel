@@ -9,6 +9,8 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Plan;
 use App\Helpers\CustomHelper;
+use App\Models\UserDetail;
+use App\Models\Invoice;
 
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -44,9 +46,10 @@ class PaymentController extends Controller
         if(empty($paymentMethodId)){
             return $this->sendError("No saved card found!"); 
         }
-        $amount = $request->amount;
+        $amount = number_format($request->amount/100, 2);
         $credits = $request->credits;
         $details = $request->details ." credits purchased";
+
         $stipeCustomerId = $user->stripe_customer_id;
         $invoicePrefix = "";
         Stripe::setApiKey(config('services.stripe.secret'));
@@ -69,7 +72,7 @@ class PaymentController extends Controller
         try {
             // Create and confirm PaymentIntent using saved payment method
             $paymentIntent = PaymentIntent::create([
-                'amount' => $amount, // amount in cents (e.g., $49.99)
+                'amount' => $request->amount, // amount in cents (e.g., $49.99)
                 'currency' => 'GBP',
                 'customer' => $stipeCustomerId,
                 'payment_method' => $paymentMethodId,
@@ -77,8 +80,16 @@ class PaymentController extends Controller
                 'confirm' => true,
             ]);
             
+            
+
             if ($paymentIntent->status === 'succeeded') {
                 $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 0, 1);
+                $dataInv['user_id'] = $user_id;
+                $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
+                $dataInv['details'] = $request->details;
+                $dataInv['period'] = 'One off charge';
+                $dataInv['amount'] = $amount;
+                $this->createInvoice($dataInv);
                 return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 0, 2);
@@ -100,6 +111,29 @@ class PaymentController extends Controller
         
         
         
+    }
+
+    private function createInvoice($data){
+        $userDetails = UserDetail::where('user_id',$data['user_id'])->first();
+        $vat = 0;
+        $billing_vat_register = !empty($userDetails->billing_vat_register) ? $userDetails->billing_vat_register : 0;
+        if($billing_vat_register){
+            $vatRate = 20 / 100;
+            $vat = number_format($data['amount'] * $vatRate, 2);
+        }
+        $vat = number_format($vat, 2);
+        $totalAmount =  number_format($data['amount'] + $vat, 2);
+        $data['vat'] = $vat;
+        $data['total_amount'] = $totalAmount;
+
+        if(!empty($userDetails)){
+            $data['name'] =$userDetails->billing_contact_name;
+            $data['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
+            $data['address'] .= $userDetails->billing_postcode;
+            $data['phone'] = $userDetails->billing_phone;
+        }
+        $data['created_at'] = date('Y-m-d H:i:s');
+        Invoice::insertGetId($data);
     }
 
 
