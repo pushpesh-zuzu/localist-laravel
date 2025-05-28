@@ -57,7 +57,7 @@ Route::prefix('payment')->group(function () {
         Route::post('/buy-credits', [PaymentController::class, 'buyCredits']);
         Route::get('/get-transaction-logs', [PaymentController::class, 'getTransactionLogs']);
         Route::get('/get-invoices', [PaymentController::class, 'getInvoices']);
-        Route::get('/download-invoice', [PaymentController::class, 'downloadInvoice']);
+        Route::post('/download-invoice', [PaymentController::class, 'downloadInvoice']);
     });
 
     
