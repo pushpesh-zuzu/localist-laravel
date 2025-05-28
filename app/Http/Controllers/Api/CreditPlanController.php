@@ -74,6 +74,6 @@ class CreditPlanController extends Controller
     
         // Optionally decrement coupon_limit (if one-time use per request)
         $coupon->decrement('coupon_limit');
-        return $this->sendResponse('Coupon applied successfully', []);
+        return $this->sendResponse('Coupon applied successfully', $discount .'%');
     }
 }
