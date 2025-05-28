@@ -681,7 +681,9 @@ class RecommendedLeadsController extends Controller
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
         $responseTimeFilter = $request->responseTimeFilter ?? [];
-        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter);
+        $ratingFilter = $request->rating ?? [];
+
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
@@ -698,7 +700,8 @@ class RecommendedLeadsController extends Controller
         $distanceOrderRaw = $request->distance_order;
         $distanceOrder = strtolower($distanceOrderRaw) === 'farthest to nearest' ? 'desc' : 'asc';
         $responseTimeFilter = $request->responseTimeFilter ?? [];
-        $result = $this->FullManualLeadsCode($lead, $distanceOrder, true, $responseTimeFilter);
+        $ratingFilter = $request->rating ?? [];
+        $result = $this->FullManualLeadsCode($lead, $distanceOrder, true, $responseTimeFilter, $ratingFilter);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
@@ -713,8 +716,8 @@ class RecommendedLeadsController extends Controller
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
 
         $responseTimeFilter = $request->response_time; // Expected: '10_min', '1_hour', '6_hour', '24_hour'
-
-        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter);
+        $ratingFilter = $request->rating ?? [];
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
@@ -723,7 +726,28 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
     }
 
-    private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [])
+    public function ratingFilter(Request $request)
+    {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+
+        $selectedRating = (int) $request->rating; // Expected: 1 to 5
+
+        if ($selectedRating < 1 || $selectedRating > 5) {
+            return $this->sendError(__('Invalid rating value'), 400);
+        }
+
+        // Pass the selected rating to FullManualLeadsCode
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, [], $selectedRating);
+
+        if ($result['empty']) {
+            return $this->sendResponse(__('No Leads found'), [$result['response']]);
+        }
+
+        return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
+    }
+
+    private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null)
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
         $settings = Setting::first();
@@ -770,6 +794,14 @@ class RecommendedLeadsController extends Controller
             })
             ->when($filteredUserIds, function ($query) use ($filteredUserIds) {
                 $query->whereIn('id', $filteredUserIds);
+            })
+            //rating filter
+            ->when(!is_null($ratingFilter), function ($query) use ($ratingFilter) {
+                if ($ratingFilter == 5) {
+                    $query->where('avg_rating', '=', 5);
+                } else {
+                    $query->where('avg_rating', '>=', $ratingFilter);
+                }
             })
             ->whereIn('id', function ($query) use ($serviceId) {
                 $query->select('user_id')
@@ -960,6 +992,28 @@ class RecommendedLeadsController extends Controller
                 'baseurl' => url('/') . Storage::url('app/public/images/users')
             ]
         ];
+    }
+
+    public function getRatingFilter(Request $request)
+    {
+        $ratings = [];
+
+        for ($i = 1; $i <= 5; $i++) {
+            $query = User::query()->where('id', '!=', $request->user_id);
+
+            if ($i == 5) {
+                $query->where('avg_rating', '=', 5);
+            } else {
+                $query->where('avg_rating', '>=', $i);
+            }
+
+            $ratings[] = [
+                'label' => $i == 5 ? 'only' : '& up',
+                'value' => $i,
+                'count' => $query->count(),
+            ];
+        }
+        return $this->sendResponse(__('Filtered Data by Rating'), [$ratings]);
     }
     
     

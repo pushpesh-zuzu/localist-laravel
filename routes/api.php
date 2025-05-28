@@ -161,6 +161,8 @@ Route::prefix('users')->group(function () {
         Route::post('/autobid', [RecommendedLeadsController::class, 'addRecommendedLeads']);
         Route::post('/sort-by-location', [RecommendedLeadsController::class, 'sortByLocation']);
         Route::post('/response-time-filter', [RecommendedLeadsController::class, 'responseTimeFilter']);
+        Route::post('/rating-filter', [RecommendedLeadsController::class, 'ratingFilter']);
+        Route::post('/get-rating-filter', [RecommendedLeadsController::class, 'getRatingFilter']);
         
         //My Credits
         Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);
