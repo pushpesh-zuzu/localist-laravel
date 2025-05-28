@@ -76,4 +76,15 @@ class CreditPlanController extends Controller
         $coupon->decrement('coupon_limit');
         return $this->sendResponse('Coupon applied successfully', $discount .'%');
     }
+
+    public function getCoupon(Request $request)
+    {
+        $currentDate = Carbon::now()->format('Y-m-d');
+
+        $coupons = Coupon::whereDate('valid_from', '<=', $currentDate)
+            ->whereDate('valid_to', '>=', $currentDate)
+            ->select('coupon_code', 'percentage', 'valid_from', 'valid_to', 'coupon_limit')
+            ->get();
+        return $this->sendResponse('Coupon fetched', $coupons);
+    }
 }

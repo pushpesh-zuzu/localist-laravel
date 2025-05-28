@@ -167,6 +167,7 @@ Route::prefix('users')->group(function () {
         //My Credits
         Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);
         Route::post('/add-coupon', [CreditPlanController::class, 'addCoupon']);
+        Route::post('/get-coupon', [CreditPlanController::class, 'getCoupon']);
         Route::get('/get-plans', [CreditPlanController::class, 'getPlans']);
 
         //Invoice & Billing details
