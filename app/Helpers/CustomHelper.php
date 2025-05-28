@@ -9,13 +9,14 @@ use App\Models\PurchaseHistory;
 
 class CustomHelper
 {
-    public static function createTrasactionLog($userId, $amount, $credits, $detail, $type=0, $status=1){
+    public static function createTrasactionLog($userId, $amount, $credits, $detail, $status=1, $type=0, $error_response=''){
         $data['user_id'] = $userId;
         $data['purchase_date'] = date('Y-m-d');
         $data['price'] = $amount;
         $data['credits'] = $credits;
         $data['details'] = $detail;
         $data['payment_type'] = $type;
+        $data['error_response'] = $error_response;
         $data['status'] = $status;
         $data['created_at'] = date('Y-m-d H:i:s');
 
