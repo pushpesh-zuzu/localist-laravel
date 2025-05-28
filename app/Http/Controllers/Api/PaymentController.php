@@ -146,7 +146,7 @@ class PaymentController extends Controller
 
     public function downloadInvoice(Request $request){
         $validator = Validator::make($request->all(), [
-            'invoice_id' => 'required|numeric',
+            'invoice_id' => 'required|numeric|exists:invoices,id',
             ], [
             'postcode.required' => 'Location Postcode is required.',
         ]);
