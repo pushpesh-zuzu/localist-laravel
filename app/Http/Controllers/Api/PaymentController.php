@@ -18,6 +18,8 @@ use Stripe\Stripe;
 use Stripe\Customer;
 use Stripe\PaymentIntent;
 use Stripe\SetupIntent;
+use Stripe\StripeClient;
+use Laravel\Cashier\Billable;
 
 class PaymentController extends Controller
 {
@@ -34,10 +36,19 @@ class PaymentController extends Controller
             return $this->sendError($validator->errors());
         }
 
+        $payment_method_id = "pm_card_visa";
+
         Stripe::setApiKey(config('services.stripe.secret'));
         $intent = SetupIntent::create();
 
-        return $this->sendResponse('Abodned user!',$intent);
+        $customer = Customer::create([
+            'email' => 'pushpesh@zuzucodes.com',
+            'payment_method' => $payment_method_id,
+            'description' => 'example customer'
+        ]);
+        $d['intent'] = $intent;
+        $d['customer'] = $customer;
+        return $this->sendResponse('Abodned user!',$d);
     }
 
 }
