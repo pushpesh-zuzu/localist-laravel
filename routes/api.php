@@ -56,6 +56,8 @@ Route::prefix('payment')->group(function () {
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::post('/buy-credits', [PaymentController::class, 'buyCredits']);
         Route::get('/get-transaction-logs', [PaymentController::class, 'getTransactionLogs']);
+        Route::get('/get-invoices', [PaymentController::class, 'getInvoices']);
+        Route::get('/download-invoice', [PaymentController::class, 'downloadInvoice']);
     });
 
     
@@ -64,6 +66,8 @@ Route::prefix('payment')->group(function () {
 
 Route::prefix('customer')->group(function () {
     Route::get('test',[CustomerController::class,'test']);
+    Route::get('test',[InvoiceController::class,'test']);
+
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);

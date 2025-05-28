@@ -26,8 +26,11 @@ class PaymentController extends Controller
 {
     public function buyCredits(Request $request){
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric',
             'credits' => 'required|numeric',
+            'amount' => 'required|numeric',
+            'discount' => 'required|numeric',
+            'vat' => 'required|numeric',
+            'total_amount' => 'required|numeric',
             'details' => 'required',
             ], [
             'postcode.required' => 'Location Postcode is required.',
@@ -84,12 +87,24 @@ class PaymentController extends Controller
 
             if ($paymentIntent->status === 'succeeded') {
                 $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 0, 1);
+                $userDetails = UserDetail::where('user_id',$data['user_id'])->first();
                 $dataInv['user_id'] = $user_id;
                 $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
                 $dataInv['details'] = $request->details;
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = $amount;
-                $this->createInvoice($dataInv);
+                
+                $dataInv['vat'] = number_format($request->vat, 2);;
+                $dataInv['total_amount'] = number_format($request->total_amount, 2);;
+
+                if(!empty($userDetails)){
+                    $dataInv['name'] =$userDetails->billing_contact_name;
+                    $dataInv['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
+                    $dataInv['address'] .= $userDetails->billing_postcode;
+                    $dataInv['phone'] = $userDetails->billing_phone;
+                }
+                $dataInv['created_at'] = date('Y-m-d H:i:s');
+                Invoice::insertGetId($dataInv);
                 return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 0, 2);
@@ -113,34 +128,24 @@ class PaymentController extends Controller
         
     }
 
-    private function createInvoice($data){
-        $userDetails = UserDetail::where('user_id',$data['user_id'])->first();
-        $vat = 0;
-        $billing_vat_register = !empty($userDetails->billing_vat_register) ? $userDetails->billing_vat_register : 0;
-        if($billing_vat_register){
-            $vatRate = 20 / 100;
-            $vat = number_format($data['amount'] * $vatRate, 2);
-        }
-        $vat = number_format($vat, 2);
-        $totalAmount =  number_format($data['amount'] + $vat, 2);
-        $data['vat'] = $vat;
-        $data['total_amount'] = $totalAmount;
-
-        if(!empty($userDetails)){
-            $data['name'] =$userDetails->billing_contact_name;
-            $data['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
-            $data['address'] .= $userDetails->billing_postcode;
-            $data['phone'] = $userDetails->billing_phone;
-        }
-        $data['created_at'] = date('Y-m-d H:i:s');
-        Invoice::insertGetId($data);
-    }
-
-
     public function getTransactionLogs(Request $request){
         $user_id = $request->user_id;
         $logs = PurchaseHistory::where('user_id',$user_id)->get();
         return $this->sendResponse('Transaction logs', $logs);
+    }
+
+    public function getInvoices(Request $request){
+        $user_id = $request->user_id;
+
+        $invoices = Invoice::where('user_id', $user_id)->get();
+        return $this->sendResponse('Invoices', $invoices);
+    }
+
+    public function downloadInvoice(Request $request){
+        $user_id = $request->user_id;
+
+        $invoices = Invoice::where('user_id', $user_id)->get();
+        return $this->sendResponse('Invoices', $invoices);
     }
 
 }
