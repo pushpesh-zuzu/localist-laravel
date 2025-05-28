@@ -28,22 +28,7 @@ class CreditPlanController extends Controller
         return $this->sendResponse(__('Plans Data'), $plans);
     }
 
-    public function buyCredits(Request $request){
-        $aValues = $request->all();
-        $plans = Plan::where('id',$aValues['plan_id'])->first();
-            $userdetails = PurchaseHistory::create([
-                'user_id'  => $aValues['user_id'],
-                'plan_id' => $aValues['plan_id'],
-                'purchase_date' => Carbon::now(),
-                'price' => $plans['price'],
-                'credits' => $plans['no_of_leads']
-            ]);
-            User::where('id',$aValues['user_id'])
-                ->update([
-                            'total_credit'=>DB::raw("total_credit + " . (int)$plans['no_of_leads'])
-                        ]);
-        return $this->sendResponse(__('Plan has been sucessfully purchased ') );
-    }
+    
 
     public function addCoupon(Request $request)
     {
