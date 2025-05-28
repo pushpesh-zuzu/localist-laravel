@@ -29,6 +29,7 @@ class PaymentController extends Controller
             'credits' => 'required|numeric',
             'amount' => 'required|numeric',
             'discount' => 'required|numeric',
+            'sub_total' => 'required|numeric',
             'vat' => 'required|numeric',
             'total_amount' => 'required|numeric',
             'details' => 'required',
@@ -94,6 +95,7 @@ class PaymentController extends Controller
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($amount, 2);
                 $dataInv['discount'] = number_format($request->discount, 2);
+                $dataInv['sub_total'] = number_format($request->sub_total, 2);
                 $dataInv['vat'] = number_format($request->vat, 2);
                 $dataInv['total_amount'] = number_format($request->total_amount, 2);;
 
