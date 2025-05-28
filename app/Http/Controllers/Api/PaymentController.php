@@ -89,7 +89,7 @@ class PaymentController extends Controller
 
             if ($paymentIntent->status === 'succeeded') {
                 $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 0, 1);
-                $userDetails = UserDetail::where('user_id',$data['user_id'])->first();
+                $userDetails = UserDetail::where('user_id',$user_id)->first();
                 $dataInv['user_id'] = $user_id;
                 $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
                 $dataInv['details'] = $request->details;
