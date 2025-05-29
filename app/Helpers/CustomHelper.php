@@ -5,9 +5,26 @@ use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
+use App\Models\PurchaseHistory;
 
 class CustomHelper
 {
+    public static function createTrasactionLog($userId, $amount, $credits, $detail, $status=1, $type=0, $error_response=''){
+        $data['user_id'] = $userId;
+        $data['purchase_date'] = date('Y-m-d');
+        $data['price'] = $amount;
+        $data['credits'] = $credits;
+        $data['details'] = $detail;
+        $data['payment_type'] = $type;
+        $data['error_response'] = $error_response;
+        $data['status'] = $status;
+        $data['created_at'] = date('Y-m-d H:i:s');
+
+        $id = PurchaseHistory::insertGetId($data);
+
+        return $id;
+    }
+
     public static function getImagepath($type = 'dir')
     {
         $path = dirname(dirname(public_path()))."/public";

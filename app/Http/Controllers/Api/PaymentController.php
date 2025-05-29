@@ -8,6 +8,10 @@ use App\Models\PurchaseHistory;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Plan;
+use App\Helpers\CustomHelper;
+use App\Models\UserDetail;
+use App\Models\Invoice;
+
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -17,17 +21,19 @@ use Illuminate\Support\Facades\{
 use Stripe\Stripe;
 use Stripe\Customer;
 use Stripe\PaymentIntent;
-use Stripe\SetupIntent;
-use Stripe\StripeClient;
-use Laravel\Cashier\Billable;
 
 class PaymentController extends Controller
 {
-    public function verifyCard(Request $request){
+    public function buyCredits(Request $request){
         $validator = Validator::make($request->all(), [
-            'cardnumber' => 'required',
-            'exp-date' => 'required',
-            'cvc' => 'required',
+            'top_up' => 'required|numeric',
+            'credits' => 'required|numeric',
+            'amount' => 'required|numeric',
+            'discount' => 'required|numeric',
+            'sub_total' => 'required|numeric',
+            'vat' => 'required|numeric',
+            'total_amount' => 'required|numeric',
+            'details' => 'required',
             ], [
             'postcode.required' => 'Location Postcode is required.',
         ]);
@@ -36,19 +42,122 @@ class PaymentController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $payment_method_id = "pm_card_visa";
+        $user_id = $request->user_id;
+        $user = User::where('id',$user_id)->first();
 
+        
+
+        $paymentMethodId = $user->stripe_payment_method_id;
+        if(empty($paymentMethodId)){
+            return $this->sendError("No saved card found!"); 
+        }
+        $amount = number_format($request->amount/100, 2);
+        $credits = $request->credits;
+        $details = $request->details ." credits purchased";
+
+        $stipeCustomerId = $user->stripe_customer_id;
+        $invoicePrefix = "";
         Stripe::setApiKey(config('services.stripe.secret'));
-        $intent = SetupIntent::create();
+        if(empty($stipeCustomerId)){
+            $customer = Customer::create([
+                'name' => $user->name,
+                'email' => $user->email,
+                'payment_method' => $paymentMethodId,
+                
+            ]);
+            if(!empty($customer)){
+                $stipeCustomerId = $customer['id'];
+                $invoicePrefix = $customer['invoice_prefix'];
 
-        $customer = Customer::create([
-            'email' => 'pushpesh@zuzucodes.com',
-            'payment_method' => $payment_method_id,
-            'description' => 'example customer'
+                $dataU['stripe_customer_id'] = $stipeCustomerId;
+                $dataU['updated_at'] = date('Y-m-d H:i:s');
+                User::where('id',$user_id)->update($dataU);
+            }
+        }
+        try {
+            // Create and confirm PaymentIntent using saved payment method
+            $paymentIntent = PaymentIntent::create([
+                'amount' => $request->amount, // amount in cents (e.g., $49.99)
+                'currency' => 'GBP',
+                'customer' => $stipeCustomerId,
+                'payment_method' => $paymentMethodId,
+                'off_session' => true,
+                'confirm' => true,
+            ]);
+            
+            
+
+            if ($paymentIntent->status === 'succeeded') {
+                $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details);
+                $userDetails = UserDetail::where('user_id',$user_id)->first();
+                $dataInv['user_id'] = $user_id;
+                $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
+                $dataInv['details'] = $request->details;
+                $dataInv['period'] = 'One off charge';
+                $dataInv['amount'] = number_format($amount, 2);
+                $dataInv['discount'] = number_format($request->discount, 2);
+                $dataInv['sub_total'] = number_format($request->sub_total, 2);
+                $dataInv['vat'] = number_format($request->vat, 2);
+                $dataInv['total_amount'] = number_format($request->total_amount, 2);;
+
+                if(!empty($userDetails)){
+                    $dataInv['name'] =$userDetails->billing_contact_name;
+                    $dataInv['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
+                    $dataInv['address'] .= $userDetails->billing_postcode;
+                    $dataInv['phone'] = $userDetails->billing_phone;
+                }
+                $dataInv['created_at'] = date('Y-m-d H:i:s');
+                Invoice::insertGetId($dataInv);
+                return $this->sendResponse('Payment successful!');
+            }else{
+                $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, 'Payment did not succeed.');
+                return $this->sendError('Payment did not succeed.');
+            }
+            
+        } catch (\Stripe\Exception\CardException $e) {
+            $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, $e->getMessage());
+            return $this->sendError($e->getMessage()); 
+        }catch (InvalidRequestException $e) {
+            $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, $e->getMessage());
+            return $this->sendError("Invalid request: " .$e->getMessage());
+
+        } catch (\Exception $e) {
+            $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, $e->getMessage());
+            return $this->sendError("Something went wrong: " .$e->getMessage());
+        }
+
+        
+        
+        
+    }
+
+    public function getTransactionLogs(Request $request){
+        $user_id = $request->user_id;
+        $logs = PurchaseHistory::where('user_id',$user_id)->get();
+        return $this->sendResponse('Transaction logs', $logs);
+    }
+
+    public function getInvoices(Request $request){
+        $user_id = $request->user_id;
+
+        $invoices = Invoice::where('user_id', $user_id)->get();
+        return $this->sendResponse('Invoices', $invoices);
+    }
+
+    public function downloadInvoice(Request $request){
+        $validator = Validator::make($request->all(), [
+            'invoice_id' => 'required|numeric|exists:invoices,id',
+            ], [
+            'postcode.required' => 'Location Postcode is required.',
         ]);
-        $d['intent'] = $intent;
-        $d['customer'] = $customer;
-        return $this->sendResponse('Abodned user!',$d);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+        $user_id = $request->user_id;
+
+        $invoices = Invoice::where('user_id', $user_id)->get();
+        return $this->sendResponse('Invoices', $invoices);
     }
 
 }

@@ -8,6 +8,7 @@ use App\Models\PurchaseHistory;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Plan;
+use App\Models\UserDetail;
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -24,26 +25,13 @@ class CreditPlanController extends Controller
             } else {
                 $value['per_credit'] = 0; // or null, or handle however you want
             }
+            $isVat = UserDetail::where('user_id',$request->user_id)->value('billing_vat_register');
+            $value['billing_vat_register'] = $isVat ? 1 : 0 ;
         }
         return $this->sendResponse(__('Plans Data'), $plans);
     }
 
-    public function buyCredits(Request $request){
-        $aValues = $request->all();
-        $plans = Plan::where('id',$aValues['plan_id'])->first();
-            $userdetails = PurchaseHistory::create([
-                'user_id'  => $aValues['user_id'],
-                'plan_id' => $aValues['plan_id'],
-                'purchase_date' => Carbon::now(),
-                'price' => $plans['price'],
-                'credits' => $plans['no_of_leads']
-            ]);
-            User::where('id',$aValues['user_id'])
-                ->update([
-                            'total_credit'=>DB::raw("total_credit + " . (int)$plans['no_of_leads'])
-                        ]);
-        return $this->sendResponse(__('Plan has been sucessfully purchased ') );
-    }
+    
 
     public function addCoupon(Request $request)
     {

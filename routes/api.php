@@ -54,8 +54,10 @@ Route::prefix('review')->group(function () {
 Route::prefix('payment')->group(function () {
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-        Route::post('verify-card',[PaymentController::class,'verifyCard']);
-        Route::get('get-reviews',[ReviewController::class,'getReviews']);
+        Route::post('/buy-credits', [PaymentController::class, 'buyCredits']);
+        Route::get('/get-transaction-logs', [PaymentController::class, 'getTransactionLogs']);
+        Route::get('/get-invoices', [PaymentController::class, 'getInvoices']);
+        Route::post('/download-invoice', [PaymentController::class, 'downloadInvoice']);
     });
 
     
@@ -64,6 +66,8 @@ Route::prefix('payment')->group(function () {
 
 Route::prefix('customer')->group(function () {
     Route::get('test',[CustomerController::class,'test']);
+    Route::get('test',[InvoiceController::class,'test']);
+
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
@@ -165,7 +169,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-rating-filter', [RecommendedLeadsController::class, 'getRatingFilter']);
         
         //My Credits
-        Route::post('/buy-credits', [CreditPlanController::class, 'buyCredits']);
+        
         Route::post('/add-coupon', [CreditPlanController::class, 'addCoupon']);
         Route::post('/get-coupon', [CreditPlanController::class, 'getCoupon']);
         Route::get('/get-plans', [CreditPlanController::class, 'getPlans']);
