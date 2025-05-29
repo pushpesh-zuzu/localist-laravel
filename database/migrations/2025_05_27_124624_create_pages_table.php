@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('pages', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->default(DB::raw('(UUID())'));
+            $table->string('page_type')->nullable();
             $table->string('page_title')->nullable();
             $table->string('page_menu')->nullable();
             $table->string('category_id')->nullable();

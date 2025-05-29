@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Page extends Model
 {
-     protected $fillable = ['page_title',
+     protected $fillable = ['page_type',
+                            'page_title',
                             'page_menu',
                             'category_id',
                             'slug',
@@ -23,5 +24,16 @@ class Page extends Model
                             'status'
                         ];
 
+    public function faqs()
+    {
+        return $this->hasMany('App\Models\Faq','page_id');
+    }   
+    
+    public function category()
+    {
+        return $this->belongsTo('App\Models\Category','category_id');
+    } 
+
+   
     
 }

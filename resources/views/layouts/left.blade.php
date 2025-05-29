@@ -100,7 +100,7 @@
         </li>
         <li class="nav-item">
             <a href="{{ route('pages.index') }}" class="nav-link {{ request()->routeIs('pages.index') ? 'active' : '' }}">
-                  <i class="fa-solid fa-blog nav-icon"></i>
+                  <i class="bi bi-file-earmark-fill nav-icon"></i>
                 {{ __('Pages') }}
             </a>   
         </li>

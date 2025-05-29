@@ -92,11 +92,6 @@
               <td>Mobile</td>
               <td>{{ optional($aRows->userDetails)->billing_phone ?? '' }}</td>
             </tr>
-            <tr>
-              <td>VAT registered</td>
-              <td>{{ !is_null(optional($aRows->userDetails)->billing_vat_register) ? (optional($aRows->userDetails)->billing_vat_register == 1 ? 'Yes' : 'No') : '' }}
-              </td>
-            </tr>
             </tbody>
           </table>
         </div>
