@@ -392,9 +392,11 @@ class LeadPreferenceController extends Controller
         $filteredLeads = $filteredLeads->map(function ($lead) use ($leadMetricsMap) {
             $buyerId = $lead->customer_id;
             $leadId = $lead->id;
-            $metrics = $leadMetricsMap[$buyerId][$leadId] ?? ['views' => 0, 'randoms' => 0];
-            $lead->view_count = $metrics['views'];
-            $lead->random_count = $metrics['randoms'];
+            $views = $leadMetricsMap[$buyerId][$leadId]['views'] ?? 0;
+            $lead->view_count = $views >= 30 ? $views : rand(5, 30);
+            // $metrics = $leadMetricsMap[$buyerId][$leadId] ?? ['views' => 0, 'randoms' => 0];
+            // $lead->view_count = $metrics['views'];
+            // $lead->random_count = $metrics['randoms'];
             // $lead->view_count = $viewCountMap[$buyerId][$leadId] ?? 0;
             return $lead;
         });
