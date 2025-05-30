@@ -61,19 +61,17 @@ class MenuController extends Controller
     protected function validateSave(Request $request,$isEdit = "")
     {
         $aValids['menu_name'] =  'required';
-    
         if ($isEdit) {
             $aValids['menu_pageid'] = 'required|unique:menus,menu_pageid,' . $isEdit->id;
         } else {
             $aValids['menu_pageid'] = 'required|unique:menus,menu_pageid';
         }
-
-        if(!empty($request->menu_parent)){
-          
-            $request->merge(['menu_parent' => $request->menu_parent]);
-        }else{
-            $request->merge(['menu_parent' => 0]);
-        }
+        $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
+        // if(!empty($request->menu_parent)){
+        //     $request->merge(['menu_parent' => $request->menu_parent]);
+        // }else{
+        //     $request->merge(['menu_parent' => 0]);
+        // }
         // if(!empty($request->menu_customlink)){
         //     $request->merge(['menu_customlink' => $request->menu_customlink]);
         // }else{

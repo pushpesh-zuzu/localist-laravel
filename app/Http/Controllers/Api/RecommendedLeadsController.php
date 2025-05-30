@@ -996,25 +996,46 @@ class RecommendedLeadsController extends Controller
 
     public function getRatingFilter(Request $request)
     {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+
         $ratings = [];
 
         for ($i = 1; $i <= 5; $i++) {
-            $query = User::query()->where('id', '!=', $request->user_id);
-
-            if ($i == 5) {
-                $query->where('avg_rating', '=', 5);
-            } else {
-                $query->where('avg_rating', '>=', $i);
-            }
+            // Simulate rating filter exactly like the `ratingFilter` method
+            $result = $this->FullManualLeadsCode($lead, 'asc', true, [], $i);
 
             $ratings[] = [
                 'label' => $i == 5 ? 'only' : '& up',
                 'value' => $i,
-                'count' => $query->count(),
+                'count' => count($result['response']['sellers']),
             ];
         }
+
         return $this->sendResponse(__('Filtered Data by Rating'), [$ratings]);
     }
+
+    // public function getRatingFilter(Request $request)
+    // {
+    //     $ratings = [];
+
+    //     for ($i = 1; $i <= 5; $i++) {
+    //         $query = User::query()->where('id', '!=', $request->user_id);
+
+    //         if ($i == 5) {
+    //             $query->where('avg_rating', '=', 5);
+    //         } else {
+    //             $query->where('avg_rating', '>=', $i);
+    //         }
+
+    //         $ratings[] = [
+    //             'label' => $i == 5 ? 'only' : '& up',
+    //             'value' => $i,
+    //             'count' => $query->count(),
+    //         ];
+    //     }
+    //     return $this->sendResponse(__('Filtered Data by Rating'), [$ratings]);
+    // }
     
     
     // Get coordinates for a given postcode using Google Geocoding API
