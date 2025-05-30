@@ -128,7 +128,7 @@ class PaymentController extends Controller
 
     public function getTransactionLogs(Request $request){
         $user_id = $request->user_id;
-        $logs = PurchaseHistory::where('user_id',$user_id)->get();
+        $logs = PurchaseHistory::where('user_id',$user_id)->where('status',1)->get();
         return $this->sendResponse('Transaction logs', $logs);
     }
 
