@@ -86,7 +86,7 @@ class PaymentController extends Controller
             
 
             if ($paymentIntent->status === 'succeeded') {
-                $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details);
+                $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
                 $userDetails = UserDetail::where('user_id',$user_id)->first();
                 $dataInv['user_id'] = $user_id;
                 $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
@@ -106,19 +106,19 @@ class PaymentController extends Controller
                 Invoice::insertGetId($dataInv);
                 return $this->sendResponse('Payment successful!');
             }else{
-                $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, 'Payment did not succeed.');
+                $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');
             }
             
         } catch (\Stripe\Exception\CardException $e) {
-            $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, $e->getMessage());
+            $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
             return $this->sendError($e->getMessage()); 
         }catch (InvalidRequestException $e) {
-            $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, $e->getMessage());
+            $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
             return $this->sendError("Invalid request: " .$e->getMessage());
 
         } catch (\Exception $e) {
-            $tId = CustomHelper::createTrasactionLog($user_id, $amount, $credits, $details, 2, 0, $e->getMessage());
+            $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
             return $this->sendError("Something went wrong: " .$e->getMessage());
         }
 
