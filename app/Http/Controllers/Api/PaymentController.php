@@ -15,8 +15,9 @@ use App\Models\Invoice;
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator
+    Auth, Hash, DB , Mail, Validator, Response
 };
+
 use Barryvdh\DomPDF\Facade\Pdf;
 use Stripe\Stripe;
 use Stripe\Customer;
@@ -155,8 +156,11 @@ class PaymentController extends Controller
         $invoices['paid'] = 1;
         // return $invoices;
         $pdf = Pdf::loadView('invoices.invoice_template', $invoices);
-
-        return $pdf->download($invoices['invoice_number'] .'.pdf');
+        $file_name = $invoices['invoice_number'] .'.pdf';
+        return Response::make($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="{{$file_name}}"',
+        ]);
     }
 
 }
