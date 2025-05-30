@@ -49,7 +49,7 @@ class PaymentController extends Controller
         if(empty($paymentMethodId)){
             return $this->sendError("No saved card found!"); 
         }
-        $amount = number_format($request->amount/100, 2);
+        $total_amount = number_format($request->total_amount/100, 2);
         $credits = $request->credits;
         $details = $request->details ." credits purchased";
 
@@ -75,7 +75,7 @@ class PaymentController extends Controller
         try {
             // Create and confirm PaymentIntent using saved payment method
             $paymentIntent = PaymentIntent::create([
-                'amount' => $request->amount, // amount in cents (e.g., $49.99)
+                'amount' => $request->total_amount, // amount in cents (e.g., $49.99)
                 'currency' => 'GBP',
                 'customer' => $stipeCustomerId,
                 'payment_method' => $paymentMethodId,
@@ -94,7 +94,7 @@ class PaymentController extends Controller
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($amount, 2);
                 $dataInv['vat'] = number_format($request->vat, 2);
-                $dataInv['total_amount'] = number_format($request->total_amount, 2);;
+                $dataInv['total_amount'] = number_format($total_amount, 2);;
 
                 if(!empty($userDetails)){
                     $dataInv['name'] =$userDetails->billing_contact_name;
