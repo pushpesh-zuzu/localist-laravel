@@ -159,7 +159,7 @@ class PaymentController extends Controller
         $file_name = $invoices['invoice_number'] .'.pdf';
         return Response::make($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="{{$file_name}}"',
+            'Content-Disposition' => 'attachment; filename="invoice.pdf"',
         ]);
     }
 
