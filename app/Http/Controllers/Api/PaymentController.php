@@ -17,7 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
-
+use Barryvdh\DomPDF\Facade\Pdf;
 use Stripe\Stripe;
 use Stripe\Customer;
 use Stripe\PaymentIntent;
@@ -54,7 +54,7 @@ class PaymentController extends Controller
         $details = $request->details ." credits purchased";
 
         $stipeCustomerId = $user->stripe_customer_id;
-        $invoicePrefix = "";
+        $invoicePrefix = "4152SX7I";
         Stripe::setApiKey(config('services.stripe.secret'));
         if(empty($stipeCustomerId)){
             $customer = Customer::create([
@@ -65,8 +65,7 @@ class PaymentController extends Controller
             ]);
             if(!empty($customer)){
                 $stipeCustomerId = $customer['id'];
-                $invoicePrefix = $customer['invoice_prefix'];
-
+                
                 $dataU['stripe_customer_id'] = $stipeCustomerId;
                 $dataU['updated_at'] = date('Y-m-d H:i:s');
                 User::where('id',$user_id)->update($dataU);
@@ -152,8 +151,12 @@ class PaymentController extends Controller
         }
         $user_id = $request->user_id;
 
-        $invoices = Invoice::where('user_id', $user_id)->get();
-        return $this->sendResponse('Invoices', $invoices);
+        $invoices = Invoice::where('id', $request->invoice_id)->first()->toArray();
+        $invoices['paid'] = 1;
+        // return $invoices;
+        $pdf = Pdf::loadView('invoices.invoice_template', $invoices);
+
+        return $pdf->download($invoices['invoice_number'] .'.pdf');
     }
 
 }
