@@ -105,6 +105,12 @@
             </a>   
         </li>
         <li class="nav-item">
+            <a href="{{ route('menus.index') }}" class="nav-link {{ request()->routeIs('menus.index') ? 'active' : '' }}">
+                  <i class="bi bi-file-earmark-fill nav-icon"></i>
+                {{ __('Menus') }}
+            </a>   
+        </li>
+        <li class="nav-item">
             <a href="{{ route('plans.index') }}" class="nav-link {{ request()->routeIs('plans.index') ? 'active' : '' }}">
                 <i class="bi bi-list-task nav-icon"></i>
                 {{ __('Plans') }}

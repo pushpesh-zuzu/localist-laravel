@@ -70,7 +70,7 @@
 						@endif
 					</div>
 					<div class="col-md-6">
-						<label class="form-label" for="page_title">{{ __('Page Name') }}</label>
+						<label class="form-label" for="page_title">{{ __('Page Title') }}</label>
 						<input type="text" id="page_title" class="form-control" name="page_title" class="form-control{{ $errors->has('page_title') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->page_title : old('page_title') }}" required placeholder="Page Title">
 						@if ($errors->has('page_title'))
 						<span class="invalid-feedback d-block" role="alert">

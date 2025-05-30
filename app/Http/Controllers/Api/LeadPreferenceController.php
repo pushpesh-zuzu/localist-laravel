@@ -368,7 +368,7 @@ class LeadPreferenceController extends Controller
             ->select('buyer_id', 
                      'lead_id', 
                      DB::raw('SUM(visitors_count) as total_views'),
-                     DB::raw('SUM(random_count) as total_randoms')
+                    //  DB::raw('SUM(random_count) as total_randoms')
                     )
             ->groupBy('buyer_id', 'lead_id')
             ->get();
@@ -376,9 +376,10 @@ class LeadPreferenceController extends Controller
         // 2. Map them into a nested array like: [buyer_id][lead_id] => count
          $leadMetricsMap = [];
         foreach ($rawViewCounts as $row) {
+            $views = $row->total_views >= 30 ? $row->total_views : rand(5, 30);
             $leadMetricsMap[$row->buyer_id][$row->lead_id] = [
-                'views' => $row->total_views,
-                'randoms' => $row->total_randoms,
+                'view_count' => $views,
+                // 'randoms' => $row->total_randoms,
             ];
         }
 
@@ -1920,19 +1921,19 @@ class LeadPreferenceController extends Controller
                                 ->first();
 
         // Fetch total random_count for this buyer-lead
-        $totalRandomCount = UniqueVisitor::where('buyer_id', $aVals['customer_id'])
-                                        ->where('lead_id', $aVals['lead_id'])
-                                        ->sum('random_count');
+        // $totalRandomCount = UniqueVisitor::where('buyer_id', $aVals['customer_id'])
+        //                                 ->where('lead_id', $aVals['lead_id'])
+        //                                 ->sum('random_count');
         // If this seller hasn't visited this lead today, add a new row
         if (empty($visitor)) {
             // If total random_count is less than 30, insert 5–30 (but not more than needed)
-            if ($totalRandomCount < 30) {
-                $remaining = 30 - $totalRandomCount;
-                $random_count = min(rand(5, 30), $remaining);
-            } else {
-                // Already reached 30, insert only 1 from now on
-                $random_count = 1;
-            }
+            // if ($totalRandomCount < 30) {
+            //     $remaining = 30 - $totalRandomCount;
+            //     $random_count = min(rand(5, 30), $remaining);
+            // } else {
+            //     // Already reached 30, insert only 1 from now on
+            //     $random_count = 1;
+            // }
 
             $visitor = new UniqueVisitor;
             $visitor->ip_address = $myip;
@@ -1941,7 +1942,7 @@ class LeadPreferenceController extends Controller
             $visitor->buyer_id = $aVals['customer_id'];
             $visitor->lead_id = $aVals['lead_id'];
             $visitor->visitors_count = 1;
-            $visitor->random_count = $random_count;
+            // $visitor->random_count = $random_count;
             $visitor->save();
         }
 
