@@ -64,8 +64,7 @@ class ReviewController extends Controller{
         
     }
 
-    public function getReviews(Request $request){
-        $user_id = $request->user_id;
+    public function getReviews(Request $request, $user_id){
         $list = Review::where('user_id',$user_id)->get();
         return $this->sendResponse('Reviews list',$list);
     }

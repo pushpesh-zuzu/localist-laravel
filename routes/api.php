@@ -43,7 +43,7 @@ Route::prefix('notification')->group(function () {
 
 Route::prefix('review')->group(function () {
     Route::post('submit-review',[ReviewController::class,'submitReview']);
-    Route::get('get-reviews',[ReviewController::class,'getReviews']);
+    Route::get('get-reviews/{id}',[ReviewController::class,'getReviews']);
     
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::get('get-customer-link',[ReviewController::class,'getCustomerLink']);
