@@ -52,7 +52,7 @@ class PaymentController extends Controller
         }
         $total_amount = number_format($request->total_amount/100, 2);
         $credits = $request->credits;
-        $details = $request->details ." credits purchased";
+        $details = $request->details .' ' .$credits." credits purchased";
 
         $stipeCustomerId = $user->stripe_customer_id;
         $invoicePrefix = "4152SX7I";
@@ -112,7 +112,7 @@ class PaymentController extends Controller
                 $dataPh['user_id'] = $user_id;
                 $dataPh['is_topup'] = $request->top_up;
                 $dataPh['credits'] = $credits;
-                $dataPh['plan_name'] = $details;
+                $dataPh['plan_name'] = $request->details;
                 $dataPh['price'] = number_format($request->amount, 2);
                 $dataPh['vat'] = number_format($request->vat, 2);
                 $dataPh['total_amount'] = number_format($total_amount, 2);
