@@ -1083,7 +1083,7 @@ class RecommendedLeadsController extends Controller
             }
             $detail = $aVals['bid'] . " credit deducted for Request Reply";
             DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
-            CustomHelper::createTrasactionLog($aVals['user_id'], 0, $aVals['bid'], $detail, 0, 1, $error_response='');
+            CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $aVals['bid'], $detail, 0, 1, $error_response='');
         }
         if($aVals['bidtype'] == 'purchase_leads'){
             $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])
@@ -1235,7 +1235,7 @@ class RecommendedLeadsController extends Controller
                 if ($user && $user->total_credit >= $bidAmount) {
                     $detail = $bidAmount . " credit deducted for Your Matches";
                     DB::table('users')->where('id', $sellerId)->decrement('total_credit', $bidAmount);
-                    CustomHelper::createTrasactionLog($buyerId, 0, $bidAmount, $detail, 0, 1, $error_response='');
+                    CustomHelper::createTrasactionLog($sellerId, 0, $bidAmount, $detail, 0, 1, $error_response='');
                     RecommendedLead::create([
                         'buyer_id' => $buyerId,
                         'lead_id' => $leadId,
@@ -1272,11 +1272,11 @@ class RecommendedLeadsController extends Controller
                 foreach ($remainingSellers as $seller) {
                     $bidAmount = $seller->bid ?? 0;
 
-                    $user = DB::table('users')->where('id', $buyerId)->first();
+                    $user = DB::table('users')->where('id', $seller->id)->first();//changes on 2/6/25
                     if ($user && $user->total_credit >= $bidAmount) {
                         $detail = $bidAmount . " credit deducted for Your Matches";
                         DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
-                        CustomHelper::createTrasactionLog($buyerId, 0, $bidAmount, $detail, 0, 1, $error_response='');
+                        CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
                         RecommendedLead::create([
                             'buyer_id' => $buyerId,
                             'lead_id' => $leadId,
@@ -1378,10 +1378,10 @@ class RecommendedLeadsController extends Controller
                             // Deduct credit (only if buyer has enough)
                             $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
                             $detail = $bidAmount . " credit deducted for Autobid";
-                            // $user = DB::table('users')->where('id', $lead->customer_id)->first();
-                            // if ($user && $user->total_credit >= $bidAmount) {
-                                DB::table('users')->where('id', $lead->customer_id)->decrement('total_credit', $bidAmount);
-                                CustomHelper::createTrasactionLog($lead->customer_id, 0, $bidAmount, $detail, 0, 1, $error_response='');
+                            $user = DB::table('users')->where('id', $seller->id)->first();//changes on 2/6/25
+                            if ($user && $user->total_credit >= $bidAmount) {
+                                DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);//changes on 2/6/25
+                                CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');//changes on 2/6/25
             
                                 RecommendedLead::create([
                                     'lead_id'     => $lead->id,
@@ -1409,7 +1409,7 @@ class RecommendedLeadsController extends Controller
                                 }
                                 
                                 $bidsPlaced++;
-                            // }
+                            }
                         }
                     }
                 }
