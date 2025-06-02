@@ -8,8 +8,17 @@ class CreditScorePredictor{
         $rel = 0;
         $url = "";
         switch($servie_id){
+            case 27:
+                $url = 'https://localist.pythonanywhere.com/predict/logo_design';
+                break;
             case 33:
                 $url = 'https://localist.pythonanywhere.com/predict/landscaping';
+                break;
+            case 34:
+                $url = 'https://localist.pythonanywhere.com/predict/garage_conversion';
+                break;
+            case 35:
+                $url = 'https://localist.pythonanywhere.com/predict/business_consulting';
                 break;
             default:
                 $url = ""; 
