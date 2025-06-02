@@ -21,7 +21,7 @@ class CreditScorePredictor{
                 $url = 'https://localist.pythonanywhere.com/predict/business_consulting';
                 break;
             default:
-                $url = ""; 
+                $url = "";
         }
         $output = self::getPrediction($url, $data);
         if(!empty($output['success'])){
