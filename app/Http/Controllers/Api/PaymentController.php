@@ -11,7 +11,7 @@ use App\Models\Plan;
 use App\Helpers\CustomHelper;
 use App\Models\UserDetail;
 use App\Models\Invoice;
-
+use App\Models\PlanHistory;
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -86,16 +86,19 @@ class PaymentController extends Controller
             
 
             if ($paymentIntent->status === 'succeeded') {
+                //create transaction logs
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
-                $userDetails = UserDetail::where('user_id',$user_id)->first();
+                
+                //Create invoice
                 $dataInv['user_id'] = $user_id;
                 $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
                 $dataInv['details'] = $request->details;
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($request->amount, 2);
                 $dataInv['vat'] = number_format($request->vat, 2);
-                $dataInv['total_amount'] = number_format($total_amount, 2);;
-
+                $dataInv['total_amount'] = number_format($total_amount, 2);
+                
+                $userDetails = UserDetail::where('user_id',$user_id)->first();
                 if(!empty($userDetails)){
                     $dataInv['name'] =$userDetails->billing_contact_name;
                     $dataInv['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
@@ -104,6 +107,17 @@ class PaymentController extends Controller
                 }
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
                 Invoice::insertGetId($dataInv);
+
+                //add plan purchase
+                $dataPh['user_id'] = $user_id;
+                $dataPh['is_topup'] = $request->top_up;
+                $dataPh['credits'] = $credits;
+                $dataPh['plan_name'] = $details;
+                $dataPh['price'] = number_format($request->amount, 2);
+                $dataPh['vat'] = number_format($request->vat, 2);
+                $dataPh['total_amount'] = number_format($total_amount, 2);
+                $dataPh['created_at'] = date('Y-m-d H:i:s');
+                PlanHistory::insertGetId($dataPh);
                 return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');

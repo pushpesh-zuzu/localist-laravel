@@ -21,6 +21,7 @@ use App\Models\UserDetail;
 use App\Models\CreditList;
 use App\Models\SellerNote;
 use App\Models\Category;
+use App\Models\PlanHistory;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{
@@ -2092,7 +2093,8 @@ class LeadPreferenceController extends Controller
         $user_id = $request->user_id;
     
         $data['total_credit'] = User::where('id',$user_id)->value('total_credit');
-        $data['plan_purchased'] = 0;
+        $plan = PlanHistory::where('user_id',$user_id)->orderBy('id','desc')->first();
+        $data['plan_purchased'] = !empty($plan)? 1 : 0;
         return $this->sendResponse('Total credit', $data);                                               
     }
 
