@@ -62,11 +62,13 @@ class MenuController extends Controller
     {
         $aValids['menu_name'] =  'required';
         if ($isEdit) {
-            $aValids['menu_pageid'] = 'required|unique:menus,menu_pageid,' . $isEdit->id;
+            $aValids['menu_pageid'] = 'sometimes|unique:menus,menu_pageid,' . $isEdit->id;
+            $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
         } else {
             $aValids['menu_pageid'] = 'required|unique:menus,menu_pageid';
+            $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
         }
-        $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
+        
         // if(!empty($request->menu_parent)){
         //     $request->merge(['menu_parent' => $request->menu_parent]);
         // }else{

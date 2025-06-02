@@ -59,7 +59,7 @@ class UserController extends Controller
         $randomString = Str::random(10);
         $aVals['password'] = Hash::make($randomString);
         $randomNumber = rand(1000, 5000);
-        $aVals['total_credit'] = $randomNumber;
+        $aVals['total_credit'] = 0;
         $user = User::create($aVals);
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
