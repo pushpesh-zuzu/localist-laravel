@@ -2089,10 +2089,11 @@ class LeadPreferenceController extends Controller
     }
 
     public function totalCredit(Request $request){ 
-        $aVals = $request->all();
+        $user_id = $request->user_id;
     
-        $isDataExists = User::where('id',$aVals['user_id'])->pluck('total_credit')->first();
-        return $this->sendResponse('Switched update', $isDataExists);                                               
+        $data['total_credit'] = User::where('id',$user_id)->value('total_credit');
+        $data['plan_purchased'] = 0;
+        return $this->sendResponse('Total credit', $data);                                               
     }
 
     public function getSellerRecommendedLeads(Request $request)
