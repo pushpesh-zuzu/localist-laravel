@@ -7,6 +7,12 @@
           <a href="{{ route('menus.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Menu') }}</a>
       </div>
       <div class="card-body">
+        @if(session()->has('success'))
+        <div class="alert alert-success">{{ session()->get('success') }}</div>
+        @endif
+        @if(session()->has('error'))
+        <div class="alert alert-danger">{{ session()->get('error') }}</div>
+        @endif
         @if(count($aRows) > 0)
         <table class="table table-striped" id="dataTable">
           <thead>

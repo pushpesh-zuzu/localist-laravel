@@ -48,7 +48,7 @@
                     <div class="col-md-6" id="page_menu">
 						<label class="form-label" for="page_menu">
 						{{ __('Page') }}</label>
-						<select name="menu_pageid" class="form-control">
+						<select name="menu_pageid" class="form-control" required>
 							<option value="">Select Page</option>
 							@if(count($pagemenu) > 0)
 							@foreach($pagemenu as $value)
@@ -59,9 +59,9 @@
 							@endforeach
 							@endif
 						</select>
-						@if ($errors->has('page_menu'))
+						@if ($errors->has('menu_pageid'))
 						<span class="invalid-feedback d-block" role="alert">
-						<strong>{{ $errors->first('page_menu') }}</strong>
+						<strong>{{ $errors->first('menu_pageid') }}</strong>
 						</span>
 						@endif
 					</div>

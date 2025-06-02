@@ -12,7 +12,7 @@ class MenuController extends Controller
 {
     public function index()
     {
-        $aRows = Menu::with('parent')->get(); 
+        $aRows = Menu::with('parent')->orderBy('id','DESC')->get(); 
         return view('menus.index', compact('aRows'));
     }
 
@@ -39,14 +39,14 @@ class MenuController extends Controller
     {
         
         $aRow = $menu;
-        $parents = Menu::orderBy('id','DESC')->get();
+        $parents = Menu::where('menu_name','!=',$aRow->menu_name)->orderBy('id','DESC')->get();
         $pagemenu = Page::where('status',1)->get();
         return view('menus.create',get_defined_vars());
     }
 
-    public function update(Request $request, Menu $menus)
+    public function update(Request $request, Menu $menu)
     {
-        $this->validateSave($request,$menus);      
+        $this->validateSave($request,$menu);      
         return redirect()->route('menus.index')
                          ->with('success', 'Menu updated successfully.');
     }
@@ -62,29 +62,19 @@ class MenuController extends Controller
     {
         $aValids['menu_name'] =  'required';
         if ($isEdit) {
-            $aValids['menu_pageid'] = 'sometimes|unique:menus,menu_pageid,' . $isEdit->id;
-            $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
+            if($isEdit->menu_pageid !=  $request->menu_pageid){
+                $aValids['menu_pageid'] = 'required|unique:menus,menu_pageid,' . $isEdit->id;
+            }else{
+                $aValids['menu_pageid'] = 'required';
+            }
+            
         } else {
             $aValids['menu_pageid'] = 'required|unique:menus,menu_pageid';
-            $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
         }
-        
-        // if(!empty($request->menu_parent)){
-        //     $request->merge(['menu_parent' => $request->menu_parent]);
-        // }else{
-        //     $request->merge(['menu_parent' => 0]);
-        // }
-        // if(!empty($request->menu_customlink)){
-        //     $request->merge(['menu_customlink' => $request->menu_customlink]);
-        // }else{
-        //     $request->merge(['menu_customlink' => ""]);
-        // }
-        
+        $request->merge(['menu_parent' => $request->menu_parent ?? 0]);
         
         $validated = $request->validate($aValids);
-
         $aVals = $request->all();
-
         if($isEdit)
         {
             $isEdit->update($aVals);

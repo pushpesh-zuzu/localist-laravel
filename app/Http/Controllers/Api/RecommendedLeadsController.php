@@ -475,6 +475,7 @@ class RecommendedLeadsController extends Controller
         }
     
         $userServices = User::where('id', '!=', $customerId)
+            ->where('total_credit', '>', 0)
             ->whereHas('details', function ($query) {
                 $query->where('is_autobid', 1)->where('autobid_pause', 0);
             })
@@ -1272,7 +1273,7 @@ class RecommendedLeadsController extends Controller
                 foreach ($remainingSellers as $seller) {
                     $bidAmount = $seller->bid ?? 0;
 
-                    $user = DB::table('users')->where('id', $seller->id)->first();//changes on 2/6/25
+                    $user = DB::table('users')->where('id', $buyerId)->first();
                     if ($user && $user->total_credit >= $bidAmount) {
                         $detail = $bidAmount . " credit deducted for Your Matches";
                         DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
@@ -1378,10 +1379,10 @@ class RecommendedLeadsController extends Controller
                             // Deduct credit (only if buyer has enough)
                             $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
                             $detail = $bidAmount . " credit deducted for Autobid";
-                            $user = DB::table('users')->where('id', $seller->id)->first();//changes on 2/6/25
+                            $user = DB::table('users')->where('id', $lead->customer_id)->first();
                             if ($user && $user->total_credit >= $bidAmount) {
-                                DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);//changes on 2/6/25
-                                CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');//changes on 2/6/25
+                                DB::table('users')->where('id', $lead->customer_id)->decrement('total_credit', $bidAmount);
+                                CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
             
                                 RecommendedLead::create([
                                     'lead_id'     => $lead->id,
