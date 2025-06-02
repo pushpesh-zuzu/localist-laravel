@@ -9,6 +9,7 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Plan;
 use App\Models\UserDetail;
+use App\Models\PlanHistory;
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -18,7 +19,15 @@ use Illuminate\Support\Facades\{
 class CreditPlanController extends Controller
 {
     public function getPlans(Request $request){
-        $plans = Plan::where('status',1)->orderBy('id','DESC')->get();
+        $user_id = $request->user_id;
+        
+        $planHistory = PlanHistory::where('user_id',$user_id)->orderBy('id','desc')->first();
+        if(!empty($planHistory)){
+            $plans = Plan::where('status',1)->where('plan_type','normal')->orderBy('id','DESC')->get();
+        }else{
+            $plans = Plan::where('status',1)->where('plan_type','starter')->orderBy('id','DESC')->get();
+        }
+        
         foreach ($plans as $key => $value) {
             if ($value->no_of_leads > 0) {
                 $value['per_credit'] = round($value->price / (float) $value->no_of_leads, 2);
