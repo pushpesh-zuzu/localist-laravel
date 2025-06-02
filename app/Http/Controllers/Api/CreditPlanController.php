@@ -20,12 +20,13 @@ class CreditPlanController extends Controller
 {
     public function getPlans(Request $request){
         $user_id = $request->user_id;
-        
+        $primaryCategory = User::where('id',$user_id)->value('primary_category');
+
         $planHistory = PlanHistory::where('user_id',$user_id)->orderBy('id','desc')->first();
         if(!empty($planHistory)){
-            $plans = Plan::where('status',1)->where('plan_type','normal')->orderBy('id','DESC')->get();
+            $plans = Plan::where('category_id', $primaryCategory)->where('status',1)->where('plan_type','normal')->orderBy('id','DESC')->get();
         }else{
-            $plans = Plan::where('status',1)->where('plan_type','starter')->orderBy('id','DESC')->get();
+            $plans = Plan::where('category_id', $primaryCategory)->where('status',1)->where('plan_type','starter')->orderBy('id','DESC')->get();
         }
         
         foreach ($plans as $key => $value) {

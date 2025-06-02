@@ -2091,8 +2091,8 @@ class LeadPreferenceController extends Controller
 
     public function totalCredit(Request $request){ 
         $user_id = $request->user_id;
-    
-        $data['total_credit'] = User::where('id',$user_id)->value('total_credit');
+        $totalCredits = User::where('id',$user_id)->value('total_credit');
+        $data['total_credit'] = !empty($totalCredits) ? $totalCredits : 0;
         $plan = PlanHistory::where('user_id',$user_id)->orderBy('id','desc')->first();
         $data['plan_purchased'] = !empty($plan)? 1 : 0;
         return $this->sendResponse('Total credit', $data);                                               
