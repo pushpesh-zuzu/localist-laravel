@@ -93,6 +93,18 @@ class PaymentController extends Controller
                 $dataCr['updated_at'] = date('Y-m-d H:i:s');
                 User::where('id',$user_id)->update($dataCr);
 
+                //add plan purchase
+                $dataPh['user_id'] = $user_id;
+                $dataPh['is_topup'] = $request->top_up;
+                $dataPh['credits'] = $credits;
+                $dataPh['plan_name'] = $request->details;
+                $dataPh['price'] = number_format($request->amount, 2);
+                $dataPh['vat'] = number_format($request->vat, 2);
+                $dataPh['total_amount'] = number_format($total_amount, 2);
+                $dataPh['created_at'] = date('Y-m-d H:i:s');
+                PlanHistory::insertGetId($dataPh);
+                
+                
                 //create transaction logs
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
                 
@@ -114,17 +126,7 @@ class PaymentController extends Controller
                 }
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
                 Invoice::insertGetId($dataInv);
-
-                //add plan purchase
-                $dataPh['user_id'] = $user_id;
-                $dataPh['is_topup'] = $request->top_up;
-                $dataPh['credits'] = $credits;
-                $dataPh['plan_name'] = $request->details;
-                $dataPh['price'] = number_format($request->amount, 2);
-                $dataPh['vat'] = number_format($request->vat, 2);
-                $dataPh['total_amount'] = number_format($total_amount, 2);
-                $dataPh['created_at'] = date('Y-m-d H:i:s');
-                PlanHistory::insertGetId($dataPh);
+                                
                 return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
