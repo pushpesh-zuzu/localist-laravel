@@ -86,6 +86,13 @@ class PaymentController extends Controller
             
 
             if ($paymentIntent->status === 'succeeded') {
+                //add up new credit in total credits
+                $prevCredits = intval(User::where('id',$user_id)->value('total_credit'));
+
+                $dataCr['total_credit'] = $prevCredits + intval($credits);
+                $dataCr['updated_at'] = date('Y-m-d H:i:s');
+                User::where('id',$user_id)->update($dataCr);
+
                 //create transaction logs
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
                 
