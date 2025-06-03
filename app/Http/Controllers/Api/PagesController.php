@@ -25,7 +25,7 @@ class PagesController extends Controller
         $forCustomers = Menu::whereIn('menu_name', $forCustomersMenus)->get();
         $forProfessionals = Menu::whereIn('menu_name', $forProfessionalsMenus)->get();
         $about = Menu::whereIn('menu_name', $aboutMenus)->get();
-        $help = Menu::where('menu_name','help-center')->first();
+        $help = Menu::where('menu_slug','help-center')->first();
         
         return $this->sendResponse(__('Pages Data'), [
             [
