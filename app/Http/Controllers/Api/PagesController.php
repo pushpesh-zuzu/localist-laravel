@@ -19,7 +19,7 @@ class PagesController extends Controller
     public function bottomPages(){
         $forCustomersMenus = ['Find a Professional', 'How it works', 'Login', 'Mobile App'];
         $forProfessionalsMenus = ['How it works', 'Pricing', 'Join as a Professional', 'Help Centre', 'Mobile App'];
-        $aboutMenus = ['About Bark', 'Careers', 'Blog', 'Press'];
+        $aboutMenus = ['About Localists', 'Careers', 'Blog', 'Press'];
 
         // Fetching grouped menu items by menu_name
         $forCustomers = Menu::whereIn('menu_name', $forCustomersMenus)->get();
