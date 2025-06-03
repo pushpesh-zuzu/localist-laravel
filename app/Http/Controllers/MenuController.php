@@ -12,7 +12,7 @@ class MenuController extends Controller
 {
     public function index()
     {
-        $aRows = Menu::with('parent')->orderBy('id','DESC')->get(); 
+        $aRows = Menu::with(['parent','pages'])->orderBy('id','DESC')->get(); 
         return view('menus.index', compact('aRows'));
     }
 

@@ -19,6 +19,7 @@
           <tr>
             <th scope="col" width="20px;">#</th>
             <th scope="col">Menu Name</th>
+            <th scope="col">Page</th>
             <th scope="col">Parent Menu</th>
             <th scope="col">Menu Slug</th>
             <th scope="col">Status</th>
@@ -30,6 +31,7 @@
           <tr>
             <th scope="row">{{ $aKey+1 }}</th>
             <td>{{ $aRow->menu_name }}</td>
+            <td>{{ $aRow->pages->page_title ?? '' }}</td>
             <td>{{ $aRow->parent->menu_name ?? '' }}</td>
             <td>{{ $aRow->menu_slug }}</td>
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
