@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 class CreditScorePredictor{
 
-    public static function predict($servie_id, $data){
+    public static function predict($servie_id, $predict, $data){
         $rel = 0;
         $url = "";
         switch($servie_id){
@@ -23,7 +23,12 @@ class CreditScorePredictor{
             default:
                 $url = "";
         }
-        $output = self::getPrediction($url, $data);
+        $data = json_decode($data, true);
+        foreach($data as $q){
+            $predict[$q['ques']] = !empty($q['ans']) ? preg_replace(['/^,/', '/\?$/'], '', trim($q['ans'])) : null;
+        }
+        
+        $output = self::getPrediction($url, $predict);
         if(!empty($output['success'])){
             if($output['success'] == 1){
                 $tRel = number_format($output['prediction'], 5);

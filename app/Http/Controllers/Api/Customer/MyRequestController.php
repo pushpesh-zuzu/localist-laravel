@@ -175,11 +175,7 @@ class MyRequestController extends Controller
             $predict['Verified'] = $data['is_phone_verified'];
             $predict['Frequent'] = $data['is_frequent_user'];
 
-            $questions = json_decode($request->questions, true);
-            foreach($questions as $q){
-                $predict[$q['ques']] = preg_replace(['/^,/', '/\?$/'], '', $q['ans']);
-            }            
-            $data['credit_score'] = CreditScore::predict($data['service_id'],$predict);
+            $data['credit_score'] = CreditScore::predict($data['service_id'],$predict,$request->questions);
 
             $sId = LeadRequest::insertGetId($data);
 
