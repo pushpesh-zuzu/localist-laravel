@@ -35,7 +35,7 @@ class PagesController extends Controller
         ]);
     }
 
-     public function pageDetails($page_slug){
+    public function pageDetails($page_slug){
         $pageDetails = Page::where('slug', $page_slug)->get();
         
         return $this->sendResponse(__('Pages Data'), ['pageDetails' => $pageDetails]);
