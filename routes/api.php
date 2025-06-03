@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PagesController;
 
 
 Route::get('/user', function (Request $request) {
@@ -102,23 +103,25 @@ Route::prefix('users')->group(function () {
     Route::get('/get-categories', [ApiController::class, 'getCategories']);
     Route::post('/registration', [UserController::class, 'registration']);
     Route::get('/all-services', [ApiController::class, 'allServices']);
+    Route::get('/bottom-pages', [PagesController::class, 'bottomPages']);
+    Route::get('/page-details/{slug}', [PagesController::class, 'pageDetails']);
     Route::post('/login', [UserController::class, 'login']);
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
     
         Route::post('/get-seller-recommended-leads', [LeadPreferenceController::class, 'getSellerRecommendedLeads']);
+        Route::post('get-seven-days-autobid-pause', [LeadPreferenceController::class, 'getSevenDaysAutobidPause']);
         Route::post('/get-service-wise-location', [LeadPreferenceController::class, 'getServiceWiseLocation']);
         Route::post('/seven-days-autobid-pause', [LeadPreferenceController::class, 'sevenDaysAutobidPause']);
-        Route::post('get-seven-days-autobid-pause', [LeadPreferenceController::class, 'getSevenDaysAutobidPause']);
         Route::post('/get-save-for-later-list', [LeadPreferenceController::class, 'getSaveForLaterList']);
         Route::post('/get-lead-preferences', [LeadPreferenceController::class, 'getleadpreferences']);
+        Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
         Route::post('/get_user_locations', [LeadPreferenceController::class, 'getUserLocations']);
         Route::post('/get_user_services', [LeadPreferenceController::class, 'getUserServices']);
         Route::post('/lead-preferences', [LeadPreferenceController::class, 'leadpreferences']);
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
-        Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
         // Route::post('/sort-by-leads-date', [LeadPreferenceController::class, 'sortByLeadsEntries']);
         Route::post('/get-pending-leads', [LeadPreferenceController::class, 'getPendingLeads']);
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
