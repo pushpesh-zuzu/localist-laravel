@@ -1040,18 +1040,18 @@ class RecommendedLeadsController extends Controller
                                        ->where('buyer_id', $aVals['user_id'])
                                        ->where('seller_id',$aVals['seller_id'])
                                        ->first();
-            $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                           ->where('service_id', $aVals['service_id'])
-                           ->count();
+            // $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
+            //                ->where('service_id', $aVals['service_id'])
+            //                ->count();
             $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
             // ActivityLog::where('lead_id',$aVals['lead_id'])
             //                               ->where('from_user_id',$aVals['user_id']) 
             //                               ->where('to_user_id',$aVals['seller_id']) 
             //                               ->where('activity_name',"Requested a callback") 
             //                               ->first(); 
-            if($bidCount==$settings->total_bid){
-                return $this->sendError(__('Bid Limit exceed'), 404);
-            }
+            // if($bidCount==$settings->total_bid){
+            //     return $this->sendError(__('Bid Limit exceed'), 404);
+            // }
             if(!empty($bidCheck)){
                 return $this->sendError(__('Bid already placed for this seller'), 404);
             }
@@ -1095,18 +1095,18 @@ class RecommendedLeadsController extends Controller
             $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
             $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
             $activityname = 'You Contacted '. $buyer;
-            $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                           ->where('service_id', $aVals['service_id'])
-                           ->count();
+            // $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
+            //                ->where('service_id', $aVals['service_id'])
+            //                ->count();
             $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
             // ActivityLog::where('lead_id',$aVals['lead_id'])
             //                               ->where('from_user_id',$aVals['user_id']) 
             //                               ->where('to_user_id',$aVals['buyer_id']) 
             //                               ->where('activity_name',"Seller Contacted Buyer") 
             //                               ->first(); 
-            if($bidCount==$settings->total_bid){
-                return $this->sendError(__('Bid Limit exceed'), 404);
-            }
+            // if($bidCount==$settings->total_bid){
+            //     return $this->sendError(__('Bid Limit exceed'), 404);
+            // }
             if(!empty($bidCheck)){
                 return $this->sendError(__('Bid already placed for this Buyer'), 404);
             }
