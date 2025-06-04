@@ -1223,10 +1223,14 @@ class RecommendedLeadsController extends Controller
         $inserted = 0;
         $isDataExists = LeadStatus::where('lead_id', $leadId)->where('status', 'pending')->first();
         $settings = CustomHelper::setting_value("auto_bid_limit", 0);
+        $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
         // $settings = Setting::first();
 
         // Step 1: Insert manual sellers from request first (priority)
         foreach ($aVals['seller_id'] as $index => $sellerId) {
+             if ($currentCount >= $settings) {
+                break; // Stop if limit reached
+            }   
             $alreadyExists = RecommendedLead::where('buyer_id', $buyerId)
                 ->where('lead_id', $leadId)
                 ->where('seller_id', $sellerId)
@@ -1250,12 +1254,12 @@ class RecommendedLeadsController extends Controller
                         'purchase_type' => "Best Matches"
                     ]);
                     $inserted++;
+                    $currentCount++; // Track how many have been inserted
                 }
             }
         }
 
         // Step 2: Calculate how many more we need
-        $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
         $remainingSlots = $settings - $currentCount;
 
         if ($remainingSlots > 0) {
@@ -1291,7 +1295,11 @@ class RecommendedLeadsController extends Controller
                             'purchase_type' => "Autobid"
                         ]);
                         $inserted++;
+                        $currentCount++; // Track how many have been inserted
                     }
+                        if ($currentCount >= $settings) {
+                            break; // stop if limit reached during auto-bids
+                        }
                 }
             }
         }
