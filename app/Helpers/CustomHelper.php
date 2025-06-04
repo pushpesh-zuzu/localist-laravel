@@ -10,7 +10,7 @@ use App\Models\Setting;
 class CustomHelper
 {
 
-    public static function setting_value($key, $defaultValue){
+    public static function setting_value($key, $defaultValue=''){
         $val = Setting::where('setting_name',$key)->value('setting_value');
         $rel = !empty($val) ? $val : $defaultValue;
         return $rel;
