@@ -17,20 +17,20 @@
 
           <div class="row mb-3">
             <div class="col-md-6">
-              <label class="form-label" for="name">{{ __('Total No. of Bid') }}</label>
-              <select name="total_bid" id="total_bid" class="form-control">
-                <option value="3" {{ (isset($aRow) && $aRow->total_bid == 3) ? 'selected' : '' }}>3</option>
-                <option value="4" {{ (isset($aRow) && $aRow->total_bid == 4) ? 'selected' : '' }}>4</option>
-                <option value="5" {{ (isset($aRow) && $aRow->total_bid == 5) ? 'selected' : '' }}>5</option>
-                <option value="6" {{ (isset($aRow) && $aRow->total_bid == 6) ? 'selected' : '' }}>6</option>
-                <option value="7" {{ (isset($aRow) && $aRow->total_bid == 7) ? 'selected' : '' }}>7</option>
-                <option value="8" {{ (isset($aRow) && $aRow->total_bid == 8) ? 'selected' : '' }}>8</option>
-                <option value="9" {{ (isset($aRow) && $aRow->total_bid == 9) ? 'selected' : '' }}>9</option>
-                <option value="10" {{ (isset($aRow) && $aRow->total_bid == 10) ? 'selected' : '' }}>10</option>
-              </select>
-              @if ($errors->has('total_bid'))
+              <label class="form-label" for="name">{{ __('Setting Name') }}</label>
+              <input type="text" id="setting_name" class="form-control" name="setting_name" class="form-control{{ $errors->has('setting_name') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->setting_name : old('setting_name') }}" required placeholder="Setting Name">
+              @if ($errors->has('setting_name'))
               <span class="invalid-feedback d-block" role="alert">
-                <strong>{{ $errors->first('total_bid') }}</strong>
+                <strong>{{ $errors->first('setting_name') }}</strong>
+              </span>
+              @endif
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="name">{{ __('Setting Value') }}</label>
+              <input type="text" id="setting_value" class="form-control" name="setting_value" class="form-control{{ $errors->has('setting_value') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->setting_value : old('setting_value') }}" required placeholder="Setting Value">
+              @if ($errors->has('setting_value'))
+              <span class="invalid-feedback d-block" role="alert">
+                <strong>{{ $errors->first('setting_value') }}</strong>
               </span>
               @endif
             </div>

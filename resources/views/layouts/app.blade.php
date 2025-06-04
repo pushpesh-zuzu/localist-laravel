@@ -35,6 +35,12 @@
               background-color: #d33333;
           }
         </style>
+        <style>
+          .setting-item:hover .hover-buttons {
+            display: flex !important;
+            margin-right:20px;
+          }
+        </style>
         
   </head>
   <body>

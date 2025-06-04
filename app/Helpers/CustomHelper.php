@@ -6,9 +6,16 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
 use App\Models\PurchaseHistory;
-
+use App\Models\Setting;
 class CustomHelper
 {
+
+    public static function setting_value($key, $defaultValue=''){
+        $val = Setting::where('setting_name',$key)->value('setting_value');
+        $rel = !empty($val) ? $val : $defaultValue;
+        return $rel;
+    }
+
     public static function createTrasactionLog($userId, $amount, $credits, $detail, $status=1, $type=0, $error_response=''){
         $data['user_id'] = $userId;
         $data['purchase_date'] = date('Y-m-d');
