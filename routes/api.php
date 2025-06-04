@@ -146,6 +146,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-seller-notes', [LeadPreferenceController::class, 'getSellerNotes']);
         Route::post('/pending-purchase-type-filter', [LeadPreferenceController::class, 'pendingPurchaseTypeFilter']);
         Route::post('/hired-purchase-type-filter', [LeadPreferenceController::class, 'hiredPurchaseTypeFilter']);
+        Route::post('/leads-enquiry', [LeadPreferenceController::class, 'leadsEnquiry']);
         
 
         //account details 

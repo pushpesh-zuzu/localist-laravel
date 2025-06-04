@@ -2463,5 +2463,120 @@ class LeadPreferenceController extends Controller
         
         return $this->sendResponse(__('Hired Lead'), $allLeads);
     }
+
+    public function leadsEnquiry(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $distanceFilter = $aVals['distance_filter'] ?? null;
+
+        $requestMiles = null;
+        $requestPostcode = null;
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
+            $requestMiles = (int)$matches[1];
+            $requestPostcode = strtoupper($matches[2]);
+        }
+
+        $creditRanges = [];
+        if (!empty($creditFilter)) {
+            $creditParts = array_map('trim', explode(',', $creditFilter));
+            foreach ($creditParts as $part) {
+                if (preg_match('/(\d+)\s*-\s*(\d+)\s*Credits/', $part, $matches)) {
+                    $min = (int) $matches[1];
+                    $max = (int) $matches[2];
+                    $creditRanges[] = [$min, $max];
+                }
+            }
+        }
+
+        $spotlightConditions = [];
+        if (!empty($spotlightFilter)) {
+            $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
+        }
+
+        $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
+
+        // Exclude saved leads
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        // $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
+
+        // Exclude leads from recommended table starts
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+        ->pluck('lead_id')
+        ->toArray();
+
+        // Merge both exclusion arrays
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+
+        if (!empty($excludedLeadIds)) {
+        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        }
+
+        // Exclude leads from recommended table ends
+
+
+        if (!empty($aVals['service_id'])) {
+            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+            $baseQuery = $baseQuery->whereIn('service_id', $serviceIds);
+        }
+
+
+        // Strict matching on Questions & Answers
+        $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
+
+        $preferenceMap = $this->getUserPreferenceMap($user_id);
+
+        $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
+            $leadQuestions = json_decode($lead->questions, true);
+            if (!is_array($leadQuestions)) return false;
+
+            foreach ($leadQuestions as $q) {
+                $buyerAnswers = (array) $q['ans'];
+
+                foreach ($buyerAnswers as $buyerAnswer) {
+                    $buyerAnswer = trim($buyerAnswer);
+
+                    // If buyer selected something that seller has NOT selected, reject
+                    if (!isset($preferenceMap[$buyerAnswer])) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        });
+         // ===== Add view_count to each lead =====
+        $leadIds = $filteredLeads->pluck('id')->toArray();
+        $customerIds = $filteredLeads->pluck('customer_id')->toArray();
+        $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
+            ->whereIn('lead_id', $leadIds)
+            ->select('buyer_id', 
+                     'lead_id', 
+                     DB::raw('SUM(visitors_count) as total_views'),
+                    //  DB::raw('SUM(random_count) as total_randoms')
+                    )
+            ->groupBy('buyer_id', 'lead_id')
+            ->get();
+
+        // 2. Map them into a nested array like: [buyer_id][lead_id] => count
+         $leadMetricsMap = [];
+        foreach ($rawViewCounts as $row) {
+            $views = $row->total_views >= 30 ? $row->total_views : rand(5, 30);
+            $leadMetricsMap[$row->buyer_id][$row->lead_id] = [
+                'view_count' => $views,
+                // 'randoms' => $row->total_randoms,
+            ];
+        }
+
+        // 3. Assign each lead its view_count from the map
+        $filteredLeads = $filteredLeads->map(function ($lead) use ($leadMetricsMap) {
+            $buyerId = $lead->customer_id;
+            $leadId = $lead->id;
+            $views = $leadMetricsMap[$buyerId][$leadId]['views'] ?? 0;
+            $lead->view_count = $views >= 30 ? $views : rand(5, 30);
+            return $lead;
+        });
+        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
+    }
    
 }
