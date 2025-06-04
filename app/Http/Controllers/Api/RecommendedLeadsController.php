@@ -436,7 +436,7 @@ class RecommendedLeadsController extends Controller
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null)
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
-        $settings = Setting::first();
+        $settings = CustomHelper::setting_value("recommended_list_limit", 0);
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
         $leadPostcode = $lead->postcode;
@@ -467,7 +467,7 @@ class RecommendedLeadsController extends Controller
                         'service_name' => $serviceName,
                         'sellers' => [],
                         'bidcount' => $bidCount,
-                        'totalbid' => $settings->total_bid ?? 0,
+                        'totalbid' => $settings ?? 0,
                         'baseurl' => url('/') . Storage::url('app/public/images/users')
                     ]
                 ];
@@ -507,7 +507,7 @@ class RecommendedLeadsController extends Controller
                     'service_name' => $serviceName,
                     'sellers' => [],
                     'bidcount' => $bidCount,
-                    'totalbid' => $settings->total_bid ?? 0,
+                    'totalbid' => $settings ?? 0,
                     'baseurl' => url('/') . Storage::url('app/public/images/users')
                 ]
             ];
@@ -524,7 +524,7 @@ class RecommendedLeadsController extends Controller
                     'service_name' => $serviceName,
                     'sellers' => [],
                     'bidcount' => $bidCount,
-                    'totalbid' => $settings->total_bid ?? 0,
+                    'totalbid' => $settings ?? 0,
                     'baseurl' => url('/') . Storage::url('app/public/images/users')
                 ]
             ];
@@ -578,7 +578,7 @@ class RecommendedLeadsController extends Controller
                         'service_name' => $serviceName,
                         'sellers' => [],
                         'bidcount' => $bidCount,
-                        'totalbid' => $settings->total_bid ?? 0,
+                        'totalbid' => $settings ?? 0,
                         'baseurl' => url('/') . Storage::url('app/public/images/users')
                     ]
                 ];
@@ -675,7 +675,7 @@ class RecommendedLeadsController extends Controller
                 'service_name' => $serviceName,
                 'sellers' => $finalUsers,
                 'bidcount' => $bidCount,
-                'totalbid' => $settings->total_bid ?? 0,
+                'totalbid' => $settings ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users')
             ]
         ];
@@ -1034,7 +1034,8 @@ class RecommendedLeadsController extends Controller
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditscore = LeadRequest::where('id',$aVals['lead_id'])->pluck('credit_score')->first();
         $totalcredit = User::where('id',$aVals['seller_id'])->pluck('total_credit')->first();
-        $settings = Setting::first();  
+        // $settings = Setting::first();  
+        $settings = CustomHelper::setting_value("auto_bid_limit", 0);
         if($aVals['bidtype'] == 'reply'){
             $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
                                         ->where('service_id', $aVals['service_id'])
@@ -1221,7 +1222,7 @@ class RecommendedLeadsController extends Controller
         $leadId = $aVals['lead_id'];
         $inserted = 0;
         $isDataExists = LeadStatus::where('lead_id', $leadId)->where('status', 'pending')->first();
-        $settings = CustomHelper::setting_value("recommended_list_limit", 0);
+        $settings = CustomHelper::setting_value("auto_bid_limit", 0);
         // $settings = Setting::first();
 
         // Step 1: Insert manual sellers from request first (priority)
