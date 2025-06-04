@@ -2576,7 +2576,13 @@ class LeadPreferenceController extends Controller
             $lead->view_count = $views >= 30 ? $views : rand(5, 30);
             return $lead;
         });
-        return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
+        return [
+                    'response' => [
+                        'total_leads' => $filteredLeads->count(),
+                        'unread' => []
+                    ]
+                ];
+        // return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
     }
    
 }
