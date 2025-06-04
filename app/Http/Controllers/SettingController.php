@@ -21,13 +21,9 @@ class SettingController extends Controller
      */
     public function create($id=null)
     {
-        if($id>0){
-            $aRow = Setting::where('id',1)->first(); 
-        }else{
-            $aRow = null; 
-        }
+        $data['settings'] = '';
         
-        return view('settings.create',compact('aRow'));
+        return view('settings.create',$data);
     }
 
     /**
@@ -64,8 +60,8 @@ class SettingController extends Controller
      */
     public function edit(string $id)
     {
-        $aRow = Setting::where('id',$id)->first();
-        return view('settings.create', compact('aRow'));
+        $data['settings'] = Setting::where('id',$id)->first();
+        return view('settings.create', $data);
     }
 
     /**
@@ -73,8 +69,17 @@ class SettingController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $settings = Setting::where('id',$id)->first();
-        $this->validateSave($request,$settings);      
+        $validator = \Validator::make($request->all(), [
+            'setting_name' => 'required|unique:settings,setting_name,' . $id,
+            'setting_value' => 'required',
+            ], [
+            'postcode.required' => 'Location Postcode is required.',
+        ]);
+
+        $validator->validate();
+        $data['setting_name'] = strtolower(str_replace(' ','_',$request->setting_name));
+        $data['setting_value'] = $request->setting_value;
+        Setting::where('id',$id)->update($data);
         return redirect()->route('settings.index')
                          ->with('success', 'Settings updated successfully.');
     }
