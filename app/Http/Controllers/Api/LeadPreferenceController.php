@@ -2579,7 +2579,7 @@ class LeadPreferenceController extends Controller
         return [
                     'response' => [
                         'total_leads' => $filteredLeads->count(),
-                        'unread' => []
+                        'unread' => $filteredLeads->where('is_read', 0)->count()
                     ]
                 ];
         // return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
