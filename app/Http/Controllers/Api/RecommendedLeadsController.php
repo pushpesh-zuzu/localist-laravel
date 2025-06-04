@@ -1036,7 +1036,7 @@ class RecommendedLeadsController extends Controller
         $totalcredit = User::where('id',$aVals['seller_id'])->pluck('total_credit')->first();
         $settings = Setting::first();  
         if($aVals['bidtype'] == 'reply'){
-                $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
+            $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
                                         ->where('service_id', $aVals['service_id'])
                                         ->where('buyer_id', $aVals['user_id'])
                                         ->where('seller_id',$aVals['seller_id'])
@@ -1088,7 +1088,7 @@ class RecommendedLeadsController extends Controller
                 DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
                 CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $aVals['bid'], $detail, 0, 1, $error_response='');
             }else{
-                return $this->sendError(__('Seller has no credit balance to purchase'), 404);
+                return $this->sendError(__("Seller don't have sufficient balance"), 404);
             }                           
            
         }
@@ -1221,7 +1221,8 @@ class RecommendedLeadsController extends Controller
         $leadId = $aVals['lead_id'];
         $inserted = 0;
         $isDataExists = LeadStatus::where('lead_id', $leadId)->where('status', 'pending')->first();
-        $settings = Setting::first();
+        $settings = CustomHelper::setting_value("recommended_list_limit", 0);
+        // $settings = Setting::first();
 
         // Step 1: Insert manual sellers from request first (priority)
         foreach ($aVals['seller_id'] as $index => $sellerId) {
@@ -1254,7 +1255,7 @@ class RecommendedLeadsController extends Controller
 
         // Step 2: Calculate how many more we need
         $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
-        $remainingSlots = $settings->total_bid - $currentCount;
+        $remainingSlots = $settings - $currentCount;
 
         if ($remainingSlots > 0) {
             // Step 3: Fetch and sort remaining sellers by bid
