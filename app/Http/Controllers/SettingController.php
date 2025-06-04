@@ -12,8 +12,8 @@ class SettingController extends Controller
      */
     public function index()
     {
-        $aRows = Setting::first(); 
-        return view('settings.index',get_defined_vars());
+        $data['settings'] = Setting::get(); 
+        return view('settings.index',$data);
     }
 
     /**
@@ -35,12 +35,19 @@ class SettingController extends Controller
      */
     public function store(Request $request)
     {
-        $existing = Setting::exists();
-        if ($existing) {
-            return redirect()->route('settings.index')->with('error', 'You cannot add more than one.');
-            // return back()->withErrors(['data' => 'You cannot add more than one.'])->withInput();
-        }
-        $this->validateSave($request); 
+        $validator = \Validator::make($request->all(), [
+            'setting_name' => 'required|unique:settings',
+            'setting_value' => 'required',
+            ], [
+            'postcode.required' => 'Location Postcode is required.',
+        ]);
+
+        $validator->validate();
+        
+        $data['setting_name'] = strtolower(str_replace(' ','_',$request->setting_name));
+        $data['setting_value'] = $request->setting_value;
+        Setting::insertGetId($data);
+        
         return redirect()->route('settings.index')->with('success', 'Settings created successfully.');
     }
 
@@ -82,23 +89,5 @@ class SettingController extends Controller
                          ->with('success', 'Plan deleted successfully.');
     }
 
-    protected function validateSave(Request $request,$isEdit = "")
-    {
-
-        $aValids['total_bid'] =  'required';
-        $request->validate($aValids);
-        $aVals = $request->all();
-
-       
-        
-        if($isEdit)
-        {
-            $isEdit->update($aVals);
-        }
-        else{
-            Setting::create($aVals);
-        }
-
-        
-    }
+    
 }
