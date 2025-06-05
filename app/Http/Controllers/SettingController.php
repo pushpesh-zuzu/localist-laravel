@@ -91,7 +91,7 @@ class SettingController extends Controller
     {
         Setting::where('id',$id)->delete();
         return redirect()->route('settings.index')
-                         ->with('success', 'Plan deleted successfully.');
+                         ->with('success', 'Setting deleted successfully.');
     }
 
     
