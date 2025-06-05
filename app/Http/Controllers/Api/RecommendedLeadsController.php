@@ -618,6 +618,7 @@ class RecommendedLeadsController extends Controller
         if ($applySellerLimit) {
             $sellersWith3Bids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
                                                 ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                                                ->where('purchase_type','Autobid')
                                                 ->groupBy('seller_id')
                                                 ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
                                                 ->get()
