@@ -2146,9 +2146,9 @@ class LeadPreferenceController extends Controller
         }
         
         if($aVals['autobid_pause'] == 1){
-            $modes = 'Paused Autobid for 7 days';
+            $modes = 'Autobid is inactive';
         }else{
-            $modes = 'Now Autobid is in active state';
+            $modes = 'Autobid is active';
         }
         $autobidpause = $aVals['autobid_pause'];
         // return $this->sendResponse($modes, $autobidpause); 
