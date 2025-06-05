@@ -33,7 +33,7 @@
           <!-- Hover buttons -->
           <div class="hover-buttons position-absolute top-0 end-0 p-2 d-none">
             <a href="{{ route('settings.edit',$s->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></i></a>
-            {{-- <button class="btn btn-sm btn-danger">Delete</button> --}}
+            <button class="btn btn-sm btn-danger">Delete</button>
           </div>
         </div>
 
