@@ -185,7 +185,7 @@ class RecommendedLeadsController extends Controller
         // Step 7: Drop Temporary Table
         DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_sellers");
 
-        return $this->sendResponse(__('Bids inserted successfully'),[]);
+        return $this->sendResponse(__('Bids placed successfully'),[]);
     }
 
     private function getDistance1($postcode1, $postcode2)
@@ -1163,7 +1163,7 @@ class RecommendedLeadsController extends Controller
             CustomHelper::createTrasactionLog($aVals['user_id'], 0, $aVals['bid'], $detail, 0, 1, $error_response='');
         }
        
-        return $this->sendResponse(__('Bids inserted successfully'),[]);
+        return $this->sendResponse(__('Bids placed successfully'),[]);
     }
     
     
@@ -1329,7 +1329,7 @@ class RecommendedLeadsController extends Controller
             ]);
         }
 
-        return $this->sendResponse(__('Bids inserted successfully'), [
+        return $this->sendResponse(__('Bids placed successfully'), [
             'inserted_count' => $inserted,
             'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
         ]);
