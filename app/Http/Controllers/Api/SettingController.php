@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
 use Illuminate\Support\Facades\Storage;
+use Stripe\Stripe;
+use Stripe\Customer;
+use Stripe\PaymentMethod;
 
 class SettingController extends Controller
 {
@@ -325,9 +328,57 @@ class SettingController extends Controller
             $type = 'added';
         }
 
+        //update stripe card id to user
         $dataN['stripe_payment_method_id'] = $request->stripe_payment_method_id;
         $dataN['updated_at'] = date('y-m-d H:i:s');
         User::where('id',$user_id)->update($dataN);
+
+        //check if customer exits in database or not
+        $user = User::where('id',$user_id)->first();
+        $stipeCustomerId = $user->stripe_customer_id;
+        
+        Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
+        if(empty($stipeCustomerId)){ //customer not exits in database
+            $customer = Customer::create([
+                'name' => $user->name,
+                'email' => $user->email,
+                'payment_method' => $request->stripe_payment_method_id,
+                
+            ]);
+            if(!empty($customer)){
+                $stipeCustomerId = $customer['id'];
+                
+                $dataU['stripe_customer_id'] = $stipeCustomerId;
+                $dataU['updated_at'] = date('Y-m-d H:i:s');
+                User::where('id',$user_id)->update($dataU);
+            }
+        }else{
+            // check if customer exits in stripe or not
+            try {
+                $customer = Customer::retrieve($stipeCustomerId);
+                if ($customer && isset($customer->id)) { // customer exists, attach new card to it
+                    $card = PaymentMethod::retrieve($request->stripe_payment_method_id);
+                    $card->attach(['customer' => $stipeCustomerId]);
+                    
+                }else{ //customer does not exits, create new customer and attach card to it
+                    $customer2 = Customer::create([
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'payment_method' => $request->stripe_payment_method_id,
+                        
+                    ]);
+                    if(!empty($customer2)){
+                        $stipeCustomerId = $customer2['id'];
+                        
+                        $dataU2['stripe_customer_id'] = $stipeCustomerId;
+                        $dataU2['updated_at'] = date('Y-m-d H:i:s');
+                        User::where('id',$user_id)->update($dataU2);
+                    }
+                }
+            } catch (\Exception $e) {
+                return $this->sendError("Please add card again, ERROR: " .$e->getMessage());
+            }
+        }
         
         return $this->sendResponse("Card $type successfully!");
     }

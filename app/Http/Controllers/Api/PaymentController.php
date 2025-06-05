@@ -44,8 +44,6 @@ class PaymentController extends Controller
         $user_id = $request->user_id;
         $user = User::where('id',$user_id)->first();
 
-        
-
         $paymentMethodId = $user->stripe_payment_method_id;
         if(empty($paymentMethodId)){
             return $this->sendError("No saved card found!"); 
@@ -56,22 +54,8 @@ class PaymentController extends Controller
 
         $stipeCustomerId = $user->stripe_customer_id;
         $invoicePrefix = "4152SX7I";
-        Stripe::setApiKey(config('services.stripe.secret'));
-        if(empty($stipeCustomerId)){
-            $customer = Customer::create([
-                'name' => $user->name,
-                'email' => $user->email,
-                'payment_method' => $paymentMethodId,
-                
-            ]);
-            if(!empty($customer)){
-                $stipeCustomerId = $customer['id'];
-                
-                $dataU['stripe_customer_id'] = $stipeCustomerId;
-                $dataU['updated_at'] = date('Y-m-d H:i:s');
-                User::where('id',$user_id)->update($dataU);
-            }
-        }
+
+        Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
         try {
             // Create and confirm PaymentIntent using saved payment method
             $paymentIntent = PaymentIntent::create([
@@ -83,8 +67,6 @@ class PaymentController extends Controller
                 'confirm' => true,
             ]);
             
-            
-
             if ($paymentIntent->status === 'succeeded') {
                 //add up new credit in total credits
                 $prevCredits = intval(User::where('id',$user_id)->value('total_credit'));
