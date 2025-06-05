@@ -1343,7 +1343,7 @@ class RecommendedLeadsController extends Controller
     public function closeLeads()
     {
         $now = Carbon::now();
-        $fiveMinutesAgo = $now->copy()->subMinutes(5);
+        $fiveMinutesAgo = $now->copy()->subMinutes(1);
         $twoWeeksAgo = $now->copy()->subWeeks(2);
         $sevenDaysAgo = $now->copy()->subDays(7);
         // $twoWeeksAgo = Carbon::now()->subWeeks(2);
