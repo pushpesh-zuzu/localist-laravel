@@ -1033,10 +1033,11 @@ class RecommendedLeadsController extends Controller
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditscore = LeadRequest::where('id',$aVals['lead_id'])->pluck('credit_score')->first();
-        $totalcredit = User::where('id',$aVals['seller_id'])->pluck('total_credit')->first();
+        
         // $settings = Setting::first();  
         $settings = CustomHelper::setting_value("auto_bid_limit", 0);
         if($aVals['bidtype'] == 'reply'){
+            $totalcredit = User::where('id',$aVals['seller_id'])->pluck('total_credit')->first();
             $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
                                         ->where('service_id', $aVals['service_id'])
                                         ->where('buyer_id', $aVals['user_id'])
@@ -1350,18 +1351,19 @@ class RecommendedLeadsController extends Controller
     
     public function autoBidLeadsAfter5Min($fiveMinutesAgo)
     {
+        $settings = CustomHelper::setting_value("auto_bid_limit", 0);
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
                 ->get();
-        $settings = Setting::first();  
+        // $settings = Setting::first();  
         $autoBidLeads = [];
             
             foreach ($leads as $lead) {
                 $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
                 $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
         
-                if ($existingBids >= $settings->total_bid) {
+                if ($existingBids >= $settings) {
                     continue; // Skip if already has 5 bids
                 }
         
@@ -1375,7 +1377,7 @@ class RecommendedLeadsController extends Controller
                     continue;
                 }
         
-                $sellers = collect($manualLeadsResponse->data[0]->sellers)->take($settings->total_bid - $existingBids);
+                $sellers = collect($manualLeadsResponse->data[0]->sellers)->take($settings - $existingBids);
                 $bidsPlaced = 0;
                 foreach ($sellers as $seller) {
                     $userdetails = UserDetail::where('user_id',$seller->id)->first();
@@ -1390,9 +1392,9 @@ class RecommendedLeadsController extends Controller
                             // Deduct credit (only if buyer has enough)
                             $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
                             $detail = $bidAmount . " credit deducted for Autobid";
-                            $user = DB::table('users')->where('id', $lead->customer_id)->first();
+                            $user = DB::table('users')->where('id', $seller->id)->first();
                             if ($user && $user->total_credit >= $bidAmount) {
-                                DB::table('users')->where('id', $lead->customer_id)->decrement('total_credit', $bidAmount);
+                                DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
                                 CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
             
                                 RecommendedLead::create([
