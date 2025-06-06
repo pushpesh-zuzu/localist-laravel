@@ -247,7 +247,7 @@ class LeadPreferenceController extends Controller
         if (!empty($spotlightFilter)) {
             $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
         }
-
+        
         $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
 
         // Exclude saved leads
@@ -345,17 +345,25 @@ class LeadPreferenceController extends Controller
         $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
             $leadQuestions = json_decode($lead->questions, true);
             if (!is_array($leadQuestions)) return false;
-
+          
             foreach ($leadQuestions as $q) {
                 $buyerAnswers = (array) $q['ans'];
+  
+                foreach ($buyerAnswers as $rawAnswer) {
+                     // Split multiple answers by comma
+                    $answers = array_map('trim', explode(',', $rawAnswer));
 
-                foreach ($buyerAnswers as $buyerAnswer) {
-                    $buyerAnswer = trim($buyerAnswer);
-
-                    // If buyer selected something that seller has NOT selected, reject
-                    if (!isset($preferenceMap[$buyerAnswer])) {
-                        return false;
+                    foreach ($answers as $answer) {
+                        if (!isset($preferenceMap[$answer])) {
+                            return false; // One of the answers not matched by seller
+                        }
                     }
+                    // $buyerAnswer = trim($buyerAnswer);
+                    // // If buyer selected something that seller has NOT selected, reject
+                    // if (!isset($preferenceMap[$buyerAnswer])) {
+                        
+                    //     return false;
+                    // }
                 }
             }
 
