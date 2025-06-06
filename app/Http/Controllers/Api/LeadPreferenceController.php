@@ -1255,7 +1255,7 @@ class LeadPreferenceController extends Controller
                 'exists:categories,id',
             ],
             'user_id' => 'required|exists:users,id',
-            'postcode' => 'required',
+            // 'postcode' => 'required',
           ],
           [
             'user_id.exists' => 'The selected user does not exist.',
