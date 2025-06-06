@@ -475,7 +475,7 @@ class RecommendedLeadsController extends Controller
         }
     
         $userServices = User::where('id', '!=', $customerId)
-        ->whereRaw('CAST(total_credit AS UNSIGNED) > 0')
+        ->whereRaw("CAST(COALESCE(TRIM(total_credit), '0') AS UNSIGNED) > 0")
             // ->where('total_credit', '>', 0)
             ->whereHas('details', function ($query) {
                 $query->where('is_autobid', 1)->where('autobid_pause', 0);
