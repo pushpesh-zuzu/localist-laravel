@@ -1231,6 +1231,38 @@ class LeadPreferenceController extends Controller
                 //                     ->first();
 
                 UserService::createUserService($aVals['user_id'],$serviceId,0);
+                //save answer to preferences
+                $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
+
+                foreach ($leadPreferences as $question) {
+                    // Get default options from 'answer' column of ServiceQuestion table
+                    $defaultOptions = $question->answer ?? '';
+                
+                    // Check if user already has a saved answer for this question
+                    $existingAnswer = LeadPrefrence::where('question_id', $question->id)
+                        ->where('user_id', $userId)
+                        ->pluck('answers')
+                        ->first();
+                
+                    // Use existing answer or fall back to all options from ServiceQuestion.answer
+                    $answerToUse = $existingAnswer ?? $defaultOptions;
+                
+                    // Clean the format: remove extra spaces around commas and trailing commas
+                    $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $answerToUse);
+                    $cleanedAnswer = rtrim($cleanedAnswer, ',');
+                
+                    // Insert or update the lead preference
+                    LeadPrefrence::updateOrCreate(
+                        [
+                            'user_id' => $userId,
+                            'service_id' => $serviceId,
+                            'question_id' => $question->id,
+                        ],
+                        [
+                            'answers' => $cleanedAnswer,
+                        ]
+                    );
+                }
             }
         // $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
             return $this->sendResponse(__('Service added to your profile successfully'));

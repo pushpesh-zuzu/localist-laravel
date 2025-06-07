@@ -485,7 +485,9 @@ class RecommendedLeadsController extends Controller
             })
             //rating filter
             ->when(!is_null($ratingFilter), function ($query) use ($ratingFilter) {
-                if ($ratingFilter == 5) {
+                if ($ratingFilter === 'no_rating') {
+                    $query->whereNull('avg_rating');
+                } elseif ($ratingFilter == 5) {
                     $query->where('avg_rating', '=', 5);
                 } else {
                     $query->where('avg_rating', '>=', $ratingFilter);
@@ -717,6 +719,15 @@ class RecommendedLeadsController extends Controller
                 'count' => count($result['response']['sellers']),
             ];
         }
+
+         // Handle sellers with no rating (avg_rating is null)
+        $resultNoRating = $this->FullManualLeadsCode($lead, 'asc', true, [], 'no_rating');
+
+        $ratings[] = [
+            'label' => 'No rating',
+            'value' => 'no_rating',
+            'count' => count($resultNoRating['response']['sellers']),
+        ];
 
         return $this->sendResponse(__('Filtered Data by Rating'), [$ratings]);
     }
