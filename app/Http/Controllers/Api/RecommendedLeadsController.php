@@ -486,7 +486,7 @@ class RecommendedLeadsController extends Controller
             //rating filter
             ->when(!is_null($ratingFilter), function ($query) use ($ratingFilter) {
                 if ($ratingFilter === 'no_rating') {
-                    $query->whereNull('avg_rating');
+                    $query->where('avg_rating',0);
                 } elseif ($ratingFilter == 5) {
                     $query->where('avg_rating', '=', 5);
                 } else {
