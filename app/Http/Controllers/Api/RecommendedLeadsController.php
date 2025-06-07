@@ -1500,7 +1500,7 @@ class RecommendedLeadsController extends Controller
                 }
                 // Mark autobid processed if any bid was placed or no sellers found
                     if ($bidsPlaced > 0) {
-                        LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
+                        LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1,'status'=>'pending']);
                     }
                     
             }
