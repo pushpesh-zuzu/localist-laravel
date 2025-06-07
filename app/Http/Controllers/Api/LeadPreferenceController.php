@@ -147,72 +147,6 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Service deleted Sucessfully')); 
     }
 
-  
-
-    // public function sortByCredit(Request $request)
-    // {
-    //     $aVals = $request->all();
-    //     $sortCredit = strtolower($aVals['sort_credit'] ?? '');  // Get the 'sort_credit' parameter
-
-    //     // Validate the 'sort_credit' parameter (it should be 'high', 'medium', or 'low')
-    //     if (!in_array($sortCredit, ['high', 'medium', 'low'])) {
-    //         return $this->sendResponse(__('Invalid credit category'), [], 400);
-    //     }
-
-    //     // Use basequery to get the leads (same as in your original code)
-    //     $baseQuery = $this->basequery($request->user_id);
-
-    //     // Retrieve the leads from the database
-    //     $leadRequests = $baseQuery->get();
-
-    //     // Initialize arrays to hold leads based on customer total_credit categories
-    //     $highCreditLeads = [];
-    //     $mediumCreditLeads = [];
-    //     $lowCreditLeads = [];
-
-    //     // Loop through the leads and classify them based on customer_id's total_credit
-    //     foreach ($leadRequests as $lead) {
-    //         // Get the total_credit of the customer associated with this lead
-    //         $customerTotalCredit = DB::table('users')->where('id', $lead->customer_id)->value('total_credit');
-
-    //         // Classify the customer based on total_credit
-    //         if ($customerTotalCredit >= 800) {
-    //             $creditCategory = 'high';
-    //         } elseif ($customerTotalCredit >= 500 && $customerTotalCredit < 800) {
-    //             $creditCategory = 'medium';
-    //         } else {
-    //             $creditCategory = 'low';
-    //         }
-
-    //         // Categorize the lead based on the customer's credit category
-    //         if ($creditCategory == 'high') {
-    //             $highCreditLeads[] = $lead;
-    //         } elseif ($creditCategory == 'medium') {
-    //             $mediumCreditLeads[] = $lead;
-    //         } else {
-    //             $lowCreditLeads[] = $lead;
-    //         }
-    //     }
-
-    //     // Based on the 'sort_credit' parameter, return the corresponding leads
-    //     switch ($sortCredit) {
-    //         case 'high':
-    //             $sortedLeads = $highCreditLeads;
-    //             break;
-
-    //         case 'medium':
-    //             $sortedLeads = $mediumCreditLeads;
-    //             break;
-
-    //         case 'low':
-    //             $sortedLeads = $lowCreditLeads;
-    //             break;
-    //     }
-
-    //     // Return the sorted leads
-    //     return $this->sendResponse(__('Lead Request Data Sorted by Customer Total Credit'), $sortedLeads);
-    // }
-
     public function getLeadRequest(Request $request)
     {
         $aVals = $request->all();
@@ -799,51 +733,6 @@ class LeadPreferenceController extends Controller
         }
         return $this->sendResponse($sendmessage, []);
     }
-
-    // public function sortByLeadsEntries(Request $request)
-    // {
-    //     $user_id = $request->user_id;
-    //     $sortType = $request->sort_type; // 'newest' or 'oldest'
-    //     $requestPostcode = $request->postcode ?? null;
-    //     $requestMiles = $request->miles ?? null;
-
-    //     $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
-
-    //     // Exclude saved and recommended leads
-    //     $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-    //     $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-    //     $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
-
-    //     if (!empty($excludedLeadIds)) {
-    //         $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
-    //     }
-
-    //     // Fetch all leads (default order newest first)
-    //     $orderDirection = ($sortType === 'oldest') ? 'ASC' : 'DESC';
-    //     $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
-
-    //     $preferenceMap = $this->getUserPreferenceMap($user_id);
-
-    //     // Match preferences strictly
-    //     $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
-    //         $leadQuestions = json_decode($lead->questions, true);
-    //         if (!is_array($leadQuestions)) return false;
-
-    //         foreach ($leadQuestions as $q) {
-    //             $buyerAnswers = (array) $q['ans'];
-    //             foreach ($buyerAnswers as $buyerAnswer) {
-    //                 if (!isset($preferenceMap[trim($buyerAnswer)])) {
-    //                     return false;
-    //                 }
-    //             }
-    //         }
-    //         return true;
-    //     });
-
-    //     return $this->sendResponse(__('Lead Request Data'), $filteredLeads->values());
-    // }
-
-
     // ------------------------
 
     public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
@@ -1682,25 +1571,6 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Location deleted sucessfully', []);
     }
 
-    // public function getCreditList(): JsonResponse
-    // {
-    //     $aRows = CreditList::get();
-    //     foreach ($aRows as $key => $value) {
-    //         // Extract min and max from the credit label like "1-5 Credits"
-    //         if (preg_match('/(\d+)\s*-\s*(\d+)/', $value->credits, $matches)) {
-    //             $min = (int)$matches[1];
-    //             $max = (int)$matches[2];
-    
-    //             // Count leads in leadrequest table where credit_score falls in the range
-    //             $leadCount = LeadRequest::whereBetween('credit_score', [$min, $max])->count();
-    //             $value['leadcount'] = $leadCount;
-    //         } else {
-    //             $value['leadcount'] = 0; // Default if no valid range
-    //         }
-    //     }
-    //     return $this->sendResponse(__('Credit Data'), $aRows);
-    // }
-
     public function leadsByFilter(Request $request){
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
@@ -1731,23 +1601,75 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse(__('Filter Data'),$datas);
     }
 
-    public function filterCount($spotlights, $user_id){
-        $leadSpotlights = [];
-        $baseQuery = $this->basequery($user_id); // Apply full user filters
+    // public function filterCount($spotlights, $user_id){
+    //     $leadSpotlights = [];
+    //     $baseQuery = $this->basequery($user_id); // Apply full user filters
     
+    //     foreach ($spotlights as $label => $column) {
+    //         $query = clone $baseQuery; // Clone so each one is fresh
+    //         if ($column !== 'all') {
+    //             $query = $query->where($column, 1);
+    //         }
+    //         $leadSpotlights[] = [
+    //             'spotlight' => $label,
+    //             'count' => $query->count(),
+    //         ];
+    //     }
+    
+    //     return $leadSpotlights;
+    // }
+
+    public function filterCount($spotlights, $user_id)
+    {
+        $leadSpotlights = [];
+        
+        $filters = [
+            'postcode' => null, // Add if using distance filtering
+            'miles' => null,
+            'unread' => null, // Add if needed
+            'service_ids' => [], // Add if filtering by services
+            'credit_ranges' => [], // Same
+            'lead_time' => null, // Same
+        ];
+
         foreach ($spotlights as $label => $column) {
-            $query = clone $baseQuery; // Clone so each one is fresh
+            $query = $this->getFilteredLeadQuery($user_id, $filters);
+
             if ($column !== 'all') {
                 $query = $query->where($column, 1);
             }
+
+            $leads = $query->get();
+
+            // Now filter by answer match
+            $preferenceMap = $this->getUserPreferenceMap($user_id);
+            $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
+                $leadQuestions = json_decode($lead->questions, true);
+                if (!is_array($leadQuestions)) return false;
+
+                foreach ($leadQuestions as $q) {
+                    $buyerAnswers = (array) $q['ans'];
+                    foreach ($buyerAnswers as $rawAnswer) {
+                        $answers = array_map('trim', explode(',', $rawAnswer));
+                        foreach ($answers as $answer) {
+                            if (!isset($preferenceMap[$answer])) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            });
+
             $leadSpotlights[] = [
                 'spotlight' => $label,
-                'count' => $query->count(),
+                'count' => $filteredLeads->count(),
             ];
         }
-    
+
         return $leadSpotlights;
     }
+
 
     public static function getLeadTimeData($user_id = null)
     {
@@ -1839,55 +1761,6 @@ class LeadPreferenceController extends Controller
     }
     
 
-    // public function filterCount($spotlights, $user_id){
-    //     $leadSpotlights = [];
-    //     foreach ($spotlights as $label => $column) {
-    //         if($column == 'all'){
-    //             $count = LeadRequest::where('customer_id', '!=', $user_id)->count();
-    //         }else{
-    //             $count = LeadRequest::where($column, 1)->where('customer_id', '!=', $user_id)->count();
-    //         }
-    //         $leadSpotlights[] = [
-    //             'spotlight' => $label,
-    //             'count' => $count,
-    //         ];
-    //     }
-    //     return $leadSpotlights;
-    // }
-
-    // public static function getLeadTimeData($user_id = null)
-    // {
-    //     $now = Carbon::now();
-
-    //     $timeFilters = [
-    //         'Any time' => function () {
-    //             return LeadRequest::count();
-    //         },
-    //         'Today' => function () use ($now) {
-    //             return LeadRequest::whereDate('created_at', $now->toDateString())->count();
-    //         },
-    //         'Yesterday' => function () use ($now) {
-    //             return LeadRequest::whereDate('created_at', $now->copy()->subDay()->toDateString())->count();
-    //         },
-    //         'Last 2-3 days' => function () use ($now) {
-    //             return LeadRequest::whereDate('created_at', '>=', $now->copy()->subDays(3))->count();
-    //         },
-    //         'Last 7 days' => function () use ($now) {
-    //             return LeadRequest::whereDate('created_at', '>=', $now->copy()->subDays(7))->count();
-    //         },
-    //     ];
-
-    //     $result = [];
-    //     foreach ($timeFilters as $label => $callback) {
-    //         $result[] = [
-    //             'time' => $label,
-    //             'count' => $callback(),
-    //         ];
-    //     }
-
-    //     return $result;
-    // }
-
     public function getFilterservices($user_id){
         $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
         $categories = Category::whereIn('id', $serviceId)->get();
@@ -1928,6 +1801,59 @@ class LeadPreferenceController extends Controller
         return $finalRows;
     }
 
+    public function getFilteredLeadQuery($user_id, $filters = [])
+    {
+        $baseQuery = $this->basequery($user_id, $filters['postcode'] ?? null, $filters['miles'] ?? null);
+
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+        if (!empty($excludedLeadIds)) {
+            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        }
+
+        if (!empty($filters['unread'])) {
+            $baseQuery = $baseQuery->where('is_read', 0);
+        }
+
+        if (!empty($filters['service_ids'])) {
+            $baseQuery = $baseQuery->whereIn('service_id', $filters['service_ids']);
+        }
+
+        if (!empty($filters['credit_ranges'])) {
+            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
+                foreach ($filters['credit_ranges'] as $range) {
+                    $query->orWhereBetween('credit_score', $range);
+                }
+            });
+        }
+
+        if (!empty($filters['lead_time'])) {
+            $now = Carbon::now();
+            $baseQuery = $baseQuery->where(function ($query) use ($filters, $now) {
+                switch ($filters['lead_time']) {
+                    case 'Today':
+                        $query->whereDate('created_at', $now->toDateString());
+                        break;
+                    case 'Yesterday':
+                        $query->whereDate('created_at', $now->subDay()->toDateString());
+                        break;
+                    case 'Last 2-3 days':
+                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(3));
+                        break;
+                    case 'Last 7 days':
+                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(7));
+                        break;
+                    case 'Last 14+ days':
+                        $query->whereDate('created_at', '<', Carbon::now()->subDays(14));
+                        break;
+                }
+            });
+        }
+
+        return $baseQuery;
+    }
+
     public function getFilterLocations_08_05($user_id)
     {
         $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
@@ -1944,24 +1870,7 @@ class LeadPreferenceController extends Controller
         return $aRows;
     }
 
-    // public function getFilterCreditList()
-    // {
-    //     $aRows = CreditList::get();
-    //     foreach ($aRows as $key => $value) {
-    //         // Extract min and max from the credit label like "1-5 Credits"
-    //         if (preg_match('/(\d+)\s*-\s*(\d+)/', $value->credits, $matches)) {
-    //             $min = (int)$matches[1];
-    //             $max = (int)$matches[2];
     
-    //             // Count leads in leadrequest table where credit_score falls in the range
-    //             $leadCount = LeadRequest::whereBetween('credit_score', [$min, $max])->count();
-    //             $value['leadcount'] = $leadCount;
-    //         } else {
-    //             $value['leadcount'] = 0; // Default if no valid range
-    //         }
-    //     }
-    //     return $aRows;
-    // }
     public function getLeadProfile(Request $request) 
     {
         $aVals = $request->all();
@@ -2328,89 +2237,6 @@ class LeadPreferenceController extends Controller
 
         return $activity;
     }
-
-    // public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime)
-    // {
-    //     $activity = ActivityLog::create([
-    //                  'lead_id' => $lead_id,
-    //                  'from_user_id' => $from_user_id,
-    //                  'to_user_id' => $to_user_id,
-    //                  'activity_name' => $activity_name,
-    //                  'contact_type' => $contact_type,
-    //              ]);  
-       
-    //     $leadtime = Carbon::parse($leadtime);
-
-    //     $createdAt = $activity->created_at;
-    //     $diffInMinutes = $leadtime->diffInMinutes($createdAt);
-
-    //     if ($diffInMinutes < 60) {
-    //         $duration = "$diffInMinutes minute" . ($diffInMinutes != 1 ? "s" : "");
-    //     } else {
-    //         $hours = round($diffInMinutes / 60);
-    //         $duration = "$hours hour" . ($hours != 1 ? "s" : "");
-    //     }
-
-    //     // Update the activity with duration
-    //     $activity->duration = $duration;
-    //     $activity->save();    
-
-    //     // STEP 1: Get all first-contact activity logs of this seller via allowed contact types
-    //     $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
-
-    //     $firstActivities = ActivityLog::where('from_user_id', $from_user_id)
-    //         ->whereIn('contact_type', $contactTypes)
-    //         ->orderBy('created_at')
-    //         ->get()
-    //         ->groupBy('lead_id')
-    //         ->map(function ($items) {
-    //             return $items->first(); // First contact per lead
-    //         });
-
-    //     // STEP 2: Calculate scores based on minimum duration per lead
-    //     $scores = [];
-
-    //     foreach ($firstActivities as $entry) {
-    //         $duration = $entry->duration;
-    //         if (strpos($duration, 'minute') !== false) {
-    //             preg_match('/\d+/', $duration, $matches);
-    //             $minutes = (int)$matches[0];
-    //         } else {
-    //             preg_match('/\d+/', $duration, $matches);
-    //             $minutes = (int)$matches[0] * 60;
-    //         }
-
-    //         // Scoring out of 100
-    //         if ($minutes <= 30) {
-    //             $score = 100;
-    //         } elseif ($minutes <= 60) {
-    //             $score = 90;
-    //         } elseif ($minutes <= 120) {
-    //             $score = 80;
-    //         } elseif ($minutes <= 180) {
-    //             $score = 70;
-    //         } elseif ($minutes <= 240) {
-    //             $score = 60;
-    //         } else {
-    //             $score = 50;
-    //         }
-
-    //         $scores[] = $score;
-    //     }
-
-    //     $averageScore = count($scores) > 0 ? round(array_sum($scores) / count($scores)) : 0;
-
-    //     // STEP 3: Save or update into userresponsetime
-    //     UserResponseTime::updateOrCreate(
-    //         ['seller_id' => $from_user_id],
-    //         [
-    //             'average' => $averageScore,
-    //             'minimum_duration' => $duration, // optionally update last min duration string
-    //         ]
-    //     );
-          
-    //     return $activity;                                 
-    // }
 
     public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name)
     {
