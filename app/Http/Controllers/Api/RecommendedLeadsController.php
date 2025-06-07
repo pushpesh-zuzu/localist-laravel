@@ -412,7 +412,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
     }
 
-    public function ratingFilter(Request $request)
+    public function ratingFilter_07_06_25(Request $request)
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
@@ -432,6 +432,32 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
     }
+
+    public function ratingFilter(Request $request)
+    {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+
+        $rating = $request->rating;
+
+        // Accept 1-5 or "no_rating"
+        if (!in_array($rating, ['1', '2', '3', '4', '5', 'no_rating'], true)) {
+            return $this->sendError(__('Invalid rating value'), 400);
+        }
+
+        // Cast numeric strings to int
+        $selectedRating = is_numeric($rating) ? (int) $rating : $rating;
+
+        // Pass to your filtering logic
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, [], $selectedRating);
+
+        if ($result['empty']) {
+            return $this->sendResponse(__('No Leads found'), [$result['response']]);
+        }
+
+        return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
+    }
+
 
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null)
     {
@@ -485,7 +511,7 @@ class RecommendedLeadsController extends Controller
             })
             //rating filter
             ->when(!is_null($ratingFilter), function ($query) use ($ratingFilter) {
-                if ($ratingFilter === 'no_rating') {
+                if ($ratingFilter == 'no_rating') {
                     $query->where('avg_rating',0);
                 } elseif ($ratingFilter == 5) {
                     $query->where('avg_rating', '=', 5);
