@@ -220,20 +220,45 @@ class LeadPreferenceController extends Controller
         }
 
         if (!empty($spotlightConditions)) {
-            foreach ($spotlightConditions as $condition) {
-                switch (strtolower($condition)) {
-                    case 'urgent requests':
-                        $baseQuery = $baseQuery->where('is_urgent', 1);
-                        break;
-                    case 'updated requests':
-                        $baseQuery = $baseQuery->where('is_updated', 1);
-                        break;
-                    case 'has additional details':
-                        $baseQuery = $baseQuery->where('has_additional_details', 1);
-                        break;
-                }
+                $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
+                    foreach ($spotlightConditions as $condition) {
+                        switch (strtolower($condition)) {
+                            case 'urgent requests':
+                                $query->orWhere('is_urgent', 1);
+                                break;
+                            case 'updated requests':
+                                $query->orWhere('is_updated', 1);
+                                break;
+                            case 'has additional details':
+                                $query->orWhere('has_additional_details', 1);
+                                break;
+                            case 'all lead spotlights':
+                                $query->orWhere(function ($q) {
+                                    $q->where('is_urgent', 1)
+                                    ->orWhere('is_updated', 1)
+                                    ->orWhere('has_additional_details', 1);
+                                });
+                                break;
+                        }
+                    }
+                });
             }
-        }
+
+        // if (!empty($spotlightConditions)) {
+        //     foreach ($spotlightConditions as $condition) {
+        //         switch (strtolower($condition)) {
+        //             case 'urgent requests':
+        //                 $baseQuery = $baseQuery->where('is_urgent', 1);
+        //                 break;
+        //             case 'updated requests':
+        //                 $baseQuery = $baseQuery->where('is_updated', 1);
+        //                 break;
+        //             case 'has additional details':
+        //                 $baseQuery = $baseQuery->where('has_additional_details', 1);
+        //                 break;
+        //         }
+        //     }
+        // }
 
         if ($searchName) {
             $namedLeadRequest = (clone $baseQuery)
