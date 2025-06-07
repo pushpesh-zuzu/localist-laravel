@@ -1402,17 +1402,30 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
-    
-        $validator = Validator::make($aVals, [
-            'service_id' => ['required', 'exists:categories,id'],
-            'user_id' => 'required|exists:users,id',
-            'postcode' => 'required',
-            'miles' => 'required',
-            'type' => 'required',
-        ], [
-            'user_id.exists' => 'The selected user does not exist.',
-            'service_id.exists' => 'The selected service does not exist.',
-        ]);
+        
+        if($aVals['type'] == "Nationwide"){
+             $validator = Validator::make($aVals, [
+                'service_id' => ['required', 'exists:categories,id'],
+                'user_id' => 'required|exists:users,id',
+                'miles' => 'required',
+                'type' => 'required',
+            ], [
+                'user_id.exists' => 'The selected user does not exist.',
+                'service_id.exists' => 'The selected service does not exist.',
+            ]);
+        }else{
+            $validator = Validator::make($aVals, [
+                'service_id' => ['required', 'exists:categories,id'],
+                'user_id' => 'required|exists:users,id',
+                'postcode' => 'required',
+                'miles' => 'required',
+                'type' => 'required',
+            ], [
+                'user_id.exists' => 'The selected user does not exist.',
+                'service_id.exists' => 'The selected service does not exist.',
+            ]);
+        }
+       
     
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
