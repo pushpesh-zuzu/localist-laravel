@@ -522,8 +522,8 @@ class RecommendedLeadsController extends Controller
             ->whereIn('id', function ($query) use ($serviceId) {
                 $query->select('user_id')
                     ->from('user_services')
-                    ->where('service_id', $serviceId)
-                    ->where('auto_bid', 1);
+                    ->where('service_id', $serviceId);
+                    // ->where('auto_bid', 1);
             })
             ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
             ->select('id as user_id', 'total_credit')
