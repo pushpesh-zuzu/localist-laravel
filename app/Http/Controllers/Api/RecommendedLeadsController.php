@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\{
 use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use App\Helpers\CustomHelper;
+use Illuminate\Support\Facades\Log;
 
 class RecommendedLeadsController extends Controller
 {
@@ -638,7 +639,7 @@ class RecommendedLeadsController extends Controller
                     }
                 }
             })->get();
-    
+     Log::info('Matched user:', $matchedPreferences);
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
     
         $existingBids = RecommendedLead::where('buyer_id', $customerId)
