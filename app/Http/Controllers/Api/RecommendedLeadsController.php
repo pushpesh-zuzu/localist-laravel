@@ -602,7 +602,7 @@ class RecommendedLeadsController extends Controller
                     $locationMatchedUsers[$userId] = $location;
                 }
             }
-    dd($locationMatchedUsers);
+    
             if ($locationMatchedUsers->isEmpty()) {
                 return [
                     'empty' => true,
@@ -637,7 +637,7 @@ class RecommendedLeadsController extends Controller
                         );
                     }
                 }
-            })->get();
+            })->get();dd($matchedPreferences);
     
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
     
