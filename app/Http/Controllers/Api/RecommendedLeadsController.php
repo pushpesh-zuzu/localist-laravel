@@ -603,7 +603,7 @@ class RecommendedLeadsController extends Controller
                     $locationMatchedUsers[$userId] = $location;
                 }
             }
-            Log::debug('locationMatcheduser:', $locationMatchedUsers);
+            Log::debug('locationMatcheduser:', $locationMatchedUsers->toArray());
             if ($locationMatchedUsers->isEmpty()) {
                 return [
                     'empty' => true,
@@ -689,7 +689,7 @@ class RecommendedLeadsController extends Controller
             //     ->pluck('seller_id')
             //     ->toArray();
         }
-        Log::debug('sellersWith3Bids:', $sellersWith3Bids);
+        Log::debug('sellersWith3Bids:', $sellersWith3Bids->toArray());
         $responseTimesMap = DB::table('user_response_times')
             ->whereIn('seller_id', $scoredUsers->keys()->toArray())
             ->pluck('average', 'seller_id')
@@ -730,11 +730,11 @@ class RecommendedLeadsController extends Controller
                 'quicktorespond' => isset($responseTimesMap[$userId]) && $responseTimesMap[$userId] <= 720 ? 1 : 0,
             ]);
         })->filter();
-        Log::debug('finalUsers:', $finalUsers);
+        Log::debug('finalUsers:', $finalUsers->toArray());
         $finalUsers = $distanceOrder === 'desc'
             ? $finalUsers->sortByDesc('distance')->values()
             : $finalUsers->sortBy('distance')->values();
-        Log::debug('finalUsers distance:', $finalUsers);
+        Log::debug('finalUsers distance:', $finalUsers->toArray());
         return [
             'empty' => false,
             'response' => [
