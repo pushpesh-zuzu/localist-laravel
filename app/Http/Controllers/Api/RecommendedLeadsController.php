@@ -693,7 +693,7 @@ class RecommendedLeadsController extends Controller
             ->whereIn('seller_id', $scoredUsers->keys()->toArray())
             ->pluck('average', 'seller_id')
             ->toArray();
-        dd($scoredUsers);
+        
         $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
             $locationMatchedUsers,
             $leadCreditScore,
