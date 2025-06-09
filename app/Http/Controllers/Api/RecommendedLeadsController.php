@@ -648,7 +648,7 @@ class RecommendedLeadsController extends Controller
             $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // e.g., 7 days
 
             $sellersWith3Bids = RecommendedLead::select('seller_id', 'service_id', DB::raw('MIN(created_at) as first_bid_date'))
-                ->where('purchase_type', 'auto') // Only consider auto bids
+                ->where('purchase_type', 'Autobid') // Only consider auto bids
                 ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
                 ->groupBy('seller_id', 'service_id')
                 ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
@@ -1424,17 +1424,34 @@ class RecommendedLeadsController extends Controller
     {
         $settings = CustomHelper::setting_value("auto_bid_limit", 0);
 
-        $sellersWith3Autobids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
-                                                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-                                                ->groupBy('seller_id')
-                                                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
-                                                ->get()
-                                                ->filter(function ($record) {
-                                                    $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0);
-                                                    return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
-                                                })
-                                                ->pluck('seller_id')
-                                                ->toArray();
+         $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // e.g., 7 days
+
+            $sellersWith3Autobids = RecommendedLead::select('seller_id', 'service_id', DB::raw('MIN(created_at) as first_bid_date'))
+                ->where('purchase_type', 'Autobid') // Only consider auto bids
+                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->groupBy('seller_id', 'service_id')
+                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+                ->get()
+                ->filter(function ($record) use ($autobidDaysLimit) {
+                    return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
+                })
+                ->map(function ($record) {
+                    return $record->seller_id . '_' . $record->service_id; // Make a unique key
+                })
+                ->pluck('seller_id')
+                ->toArray();
+
+        // $sellersWith3Autobids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
+        //                                         ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+        //                                         ->groupBy('seller_id')
+        //                                         ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+        //                                         ->get()
+        //                                         ->filter(function ($record) {
+        //                                             $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0);
+        //                                             return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
+        //                                         })
+        //                                         ->pluck('seller_id')
+        //                                         ->toArray();
 
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
