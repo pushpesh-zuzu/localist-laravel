@@ -180,7 +180,9 @@ class LeadPreferenceController extends Controller
         // $spotlightConditions = [];
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
-            $spotlightConditions = explode(',', $request->lead_spotlights);
+            $spotlightConditions = array_map(function ($item) {
+                                return strtolower(trim($item));
+                            }, explode(',', $request->lead_spotlights));
         }
         // if (!empty($spotlightFilter)) {
         //     $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
