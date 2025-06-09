@@ -1458,7 +1458,7 @@ class RecommendedLeadsController extends Controller
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
-                ->get();dd($leads);
+                ->get();
         // $settings = Setting::first();  
         $autoBidLeads = [];
             
@@ -1485,7 +1485,10 @@ class RecommendedLeadsController extends Controller
                 foreach ($sellers as $seller) {
                     $userdetails = UserDetail::where('user_id',$seller->id)->first();
                     // if(!empty($userdetails) && $userdetails->autobid_pause == 0){
-                    if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($seller->id, $sellersWith3Autobids)) 
+                    // if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($seller->id, $sellersWith3Autobids)) 
+                    $compositeKey = $seller->id . '_' . $seller->service_id;
+
+                    if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($compositeKey, $sellersWith3Autobids)) 
                     {
                         $alreadyBid = RecommendedLead::where([
                             ['lead_id', $lead->id],
