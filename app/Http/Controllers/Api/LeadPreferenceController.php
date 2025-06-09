@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\{
 };
 use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 
 class LeadPreferenceController extends Controller
 {
@@ -183,6 +185,8 @@ class LeadPreferenceController extends Controller
             $spotlightConditions = array_map(function ($item) {
                                 return strtolower(trim($item));
                             }, explode(',', $request->lead_spotlights));
+                            Log::info('Spotlight conditions:', $spotlightConditions);
+
         }
         // if (!empty($spotlightFilter)) {
         //     $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
