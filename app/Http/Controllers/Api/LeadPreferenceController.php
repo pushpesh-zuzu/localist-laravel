@@ -178,9 +178,13 @@ class LeadPreferenceController extends Controller
         }
 
         $spotlightConditions = [];
-        if (!empty($spotlightFilter)) {
-            $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
+        $spotlightConditions = [];
+        if (!empty($request->lead_spotlights)) {
+            $spotlightConditions = explode(',', $request->lead_spotlights);
         }
+        // if (!empty($spotlightFilter)) {
+        //     $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
+        // }
         
         $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
 
@@ -219,20 +223,20 @@ class LeadPreferenceController extends Controller
             });
         }
 
-       if (!empty($spotlightConditions)) {
+        if (!empty($spotlightConditions)) {
             $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
                 foreach ($spotlightConditions as $condition) {
                     switch (strtolower($condition)) {
-                        case 'urgent requests':
+                        case 'Urgent requests':
                             $query->orWhere('is_urgent', 1);
                             break;
-                        case 'updated requests':
+                        case 'Updated requests':
                             $query->orWhere('is_updated', 1);
                             break;
-                        case 'has additional details':
+                        case 'Has additional details':
                             $query->orWhere('has_additional_details', 1);
                             break;
-                        case 'all lead spotlights':
+                        case 'All lead spotlights':
                             $query->orWhere(function ($q) {
                                 $q->where('is_urgent', 1)
                                 ->orWhere('is_updated', 1)
