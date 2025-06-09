@@ -156,7 +156,7 @@ class LeadPreferenceController extends Controller
         $unread = $aVals['unread'] ?? null;
         $distanceFilter = $aVals['distance_filter'] ?? null;
         $creditFilter = $aVals['credits'] ?? null;
-        $spotlightFilter = $aVals['lead_spotlights'] ?? null;
+        // $spotlightFilter = $aVals['lead_spotlights'] ?? null;
 
         $requestMiles = null;
         $requestPostcode = null;
@@ -177,7 +177,7 @@ class LeadPreferenceController extends Controller
             }
         }
 
-        $spotlightConditions = [];
+        // $spotlightConditions = [];
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
             $spotlightConditions = explode(',', $request->lead_spotlights);
@@ -226,17 +226,17 @@ class LeadPreferenceController extends Controller
         if (!empty($spotlightConditions)) {
             $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
                 foreach ($spotlightConditions as $condition) {
-                    switch (strtolower($condition)) {
-                        case 'Urgent requests':
+                    switch (strtolower(trim($condition))) {
+                        case 'urgent requests':
                             $query->orWhere('is_urgent', 1);
                             break;
-                        case 'Updated requests':
+                        case 'updated requests':
                             $query->orWhere('is_updated', 1);
                             break;
-                        case 'Has additional details':
+                        case 'has additional details':
                             $query->orWhere('has_additional_details', 1);
                             break;
-                        case 'All lead spotlights':
+                        case 'all lead spotlights':
                             $query->orWhere(function ($q) {
                                 $q->where('is_urgent', 1)
                                 ->orWhere('is_updated', 1)
