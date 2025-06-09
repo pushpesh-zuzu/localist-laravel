@@ -1668,23 +1668,46 @@ class LeadPreferenceController extends Controller
 
             // Now filter by answer match
             $preferenceMap = $this->getUserPreferenceMap($user_id);
-            $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
-                $leadQuestions = json_decode($lead->questions, true);
-                if (!is_array($leadQuestions)) return false;
+            
 
-                foreach ($leadQuestions as $q) {
-                    $buyerAnswers = (array) $q['ans'];
-                    foreach ($buyerAnswers as $rawAnswer) {
-                        $answers = array_map('trim', explode(',', $rawAnswer));
-                        foreach ($answers as $answer) {
-                            if (!isset($preferenceMap[$answer])) {
-                                return false;
-                            }
+             $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
+            $leadQuestions = json_decode($lead->questions, true);
+            if (!is_array($leadQuestions)) return false;
+          
+            foreach ($leadQuestions as $q) {
+                $buyerAnswers = (array) $q['ans'];
+  
+                foreach ($buyerAnswers as $rawAnswer) {
+                     // Split multiple answers by comma
+                    $answers = array_map('trim', explode(',', $rawAnswer));
+
+                    foreach ($answers as $answer) {
+                        if (!isset($preferenceMap[$answer])) {
+                            return false; // One of the answers not matched by seller
                         }
                     }
                 }
-                return true;
-            });
+            }
+
+            return true;
+        });
+            // $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
+            //     $leadQuestions = json_decode($lead->questions, true);
+            //     if (!is_array($leadQuestions)) return false;
+
+            //     foreach ($leadQuestions as $q) {
+            //         $buyerAnswers = (array) $q['ans'];
+            //         foreach ($buyerAnswers as $rawAnswer) {
+            //             $answers = array_map('trim', explode(',', $rawAnswer));
+            //             foreach ($answers as $answer) {
+            //                 if (!isset($preferenceMap[$answer])) {
+            //                     return false;
+            //                 }
+            //             }
+            //         }
+            //     }
+            //     return true;
+            // });
 
             $leadSpotlights[] = [
                 'spotlight' => $label,
