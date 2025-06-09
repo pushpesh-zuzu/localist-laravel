@@ -529,7 +529,7 @@ class RecommendedLeadsController extends Controller
             ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
             ->select('id as user_id', 'total_credit')
             ->get();
-    
+    Log::debug('userServices:', $userServices);
         if ($userServices->isEmpty()) {
             return [
                 'empty' => true,
@@ -603,7 +603,7 @@ class RecommendedLeadsController extends Controller
                     $locationMatchedUsers[$userId] = $location;
                 }
             }
-    
+            Log::debug('locationMatcheduser:', $locationMatchedUsers);
             if ($locationMatchedUsers->isEmpty()) {
                 return [
                     'empty' => true,
@@ -639,7 +639,7 @@ class RecommendedLeadsController extends Controller
                     }
                 }
             })->get();
-     Log::error('Matched user:', $matchedPreferences->toArray());
+        Log::debug('Matched Question answer:', $matchedPreferences->toArray());
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
     
         $existingBids = RecommendedLead::where('buyer_id', $customerId)
@@ -689,7 +689,7 @@ class RecommendedLeadsController extends Controller
             //     ->pluck('seller_id')
             //     ->toArray();
         }
-    
+        Log::debug('sellersWith3Bids:', $sellersWith3Bids);
         $responseTimesMap = DB::table('user_response_times')
             ->whereIn('seller_id', $scoredUsers->keys()->toArray())
             ->pluck('average', 'seller_id')
@@ -730,11 +730,11 @@ class RecommendedLeadsController extends Controller
                 'quicktorespond' => isset($responseTimesMap[$userId]) && $responseTimesMap[$userId] <= 720 ? 1 : 0,
             ]);
         })->filter();
-    
+        Log::debug('finalUsers:', $finalUsers);
         $finalUsers = $distanceOrder === 'desc'
             ? $finalUsers->sortByDesc('distance')->values()
             : $finalUsers->sortBy('distance')->values();
-    
+        Log::debug('finalUsers distance:', $finalUsers);
         return [
             'empty' => false,
             'response' => [
