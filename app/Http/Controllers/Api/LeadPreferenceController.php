@@ -179,13 +179,14 @@ class LeadPreferenceController extends Controller
             }
         }
 
+        //----------------------------------------------Seller Panel------------------------------------------//
         // $spotlightConditions = [];
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
             $spotlightConditions = array_map(function ($item) {
                                 return strtolower(trim($item));
                             }, explode(',', $request->lead_spotlights));
-                            Log::info('Spotlight conditions:', $spotlightConditions);
+            Log::debug('Spotlight conditions:', $spotlightConditions);
 
         }
         // if (!empty($spotlightFilter)) {
@@ -229,6 +230,7 @@ class LeadPreferenceController extends Controller
             });
         }
 
+        
         if (!empty($spotlightConditions)) {
             $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
                 foreach ($spotlightConditions as $condition) {
