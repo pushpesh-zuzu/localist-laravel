@@ -639,7 +639,7 @@ class RecommendedLeadsController extends Controller
                     }
                 }
             })->get();
-    //  Log::info('Matched user:', $matchedPreferences);
+     Log::error('Matched user:', $matchedPreferences);
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
     
         $existingBids = RecommendedLead::where('buyer_id', $customerId)
