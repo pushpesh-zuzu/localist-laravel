@@ -706,8 +706,8 @@ class RecommendedLeadsController extends Controller
             $lead,
             $responseTimesMap
         ) {
-            if (in_array($userId, $existingBids)) return null;
-            if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+            //if (in_array($userId, $existingBids)) return null;
+            //if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
     
             $user = User::where('id', $userId)->whereHas('details', function ($query) {
                 $query->where('is_autobid', 1)->where('autobid_pause', 0);
