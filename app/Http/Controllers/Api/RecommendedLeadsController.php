@@ -529,7 +529,7 @@ class RecommendedLeadsController extends Controller
             ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
             ->select('id as user_id', 'total_credit')
             ->get();
-    Log::debug('userServices:', $userServices);
+        Log::debug('userServices:', $userServices->toArray());
         if ($userServices->isEmpty()) {
             return [
                 'empty' => true,
