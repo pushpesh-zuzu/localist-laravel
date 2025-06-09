@@ -707,7 +707,7 @@ class RecommendedLeadsController extends Controller
             $responseTimesMap
         ) {
             if (in_array($userId, $existingBids)) return null;
-            //if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+            if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
     
             $user = User::where('id', $userId)->whereHas('details', function ($query) {
                 $query->where('is_autobid', 1)->where('autobid_pause', 0);
@@ -1441,7 +1441,6 @@ class RecommendedLeadsController extends Controller
                 ->map(function ($record) {
                     return $record->seller_id . '_' . $record->service_id; // Make a unique key
                 })
-                ->pluck('seller_id')
                 ->toArray();
 
         // $sellersWith3Autobids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
