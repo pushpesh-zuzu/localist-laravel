@@ -709,11 +709,11 @@ class RecommendedLeadsController extends Controller
             if (in_array($userId, $existingBids)) return null;
             if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
     
-            $user = User::where('id', $userId)->whereHas('details', function ($query) {
-                $query->where('is_autobid', 1)->where('autobid_pause', 0);
-            })->first();
+            // $user = User::where('id', $userId)->whereHas('details', function ($query) {
+            //     $query->where('is_autobid', 1)->where('autobid_pause', 0);
+            // })->first();
     
-            if (!$user) return null;
+            // if (!$user) return null;
     
             $userLocation = $locationMatchedUsers[$userId];
             $miles = $userLocation->distance ?? 0;
