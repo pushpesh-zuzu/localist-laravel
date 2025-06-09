@@ -593,7 +593,7 @@ class RecommendedLeadsController extends Controller
                 ->where('service_id', $serviceId)
                 ->where('nation_wide', 1)
                 ->get()
-                ->groupBy('user_id');dd($nationWide);
+                ->groupBy('user_id');
     
             foreach ($nationWide as $userId => $locations) {
                 if (!$locationMatchedUsers->has($userId)) {
@@ -602,7 +602,7 @@ class RecommendedLeadsController extends Controller
                     $locationMatchedUsers[$userId] = $location;
                 }
             }
-    
+    dd($locationMatchedUsers);
             if ($locationMatchedUsers->isEmpty()) {
                 return [
                     'empty' => true,
