@@ -689,7 +689,7 @@ class RecommendedLeadsController extends Controller
             //     ->pluck('seller_id')
             //     ->toArray();
         }
-        Log::debug('sellersWith3Bids:', $sellersWith3Bids->toArray());
+        Log::debug('sellersWith3Bids:', $sellersWith3Bids);
         $responseTimesMap = DB::table('user_response_times')
             ->whereIn('seller_id', $scoredUsers->keys()->toArray())
             ->pluck('average', 'seller_id')
