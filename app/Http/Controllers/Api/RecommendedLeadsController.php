@@ -587,7 +587,8 @@ class RecommendedLeadsController extends Controller
         }
     
         // If no nearby match, fallback to nation_wide
-        if ($locationMatchedUsers->isEmpty()) {
+        // if ($locationMatchedUsers->isEmpty()) {
+         //Always include nationwide users, no distance calculation for them
             $nationWide = UserServiceLocation::whereIn('user_id', $sortedUserIds)
                 ->where('service_id', $serviceId)
                 ->where('nation_wide', 1)
@@ -595,9 +596,11 @@ class RecommendedLeadsController extends Controller
                 ->groupBy('user_id');
     
             foreach ($nationWide as $userId => $locations) {
-                $location = $locations->first();
-                $location->distance = null;
-                $locationMatchedUsers[$userId] = $location;
+                if (!$locationMatchedUsers->has($userId)) {
+                    $location = $locations->first();
+                    $location->distance = 0;
+                    $locationMatchedUsers[$userId] = $location;
+                }
             }
     
             if ($locationMatchedUsers->isEmpty()) {
@@ -612,7 +615,7 @@ class RecommendedLeadsController extends Controller
                     ]
                 ];
             }
-        }
+        // }
     
         $matchedUserIds = $locationMatchedUsers->keys()->toArray();
     
