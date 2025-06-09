@@ -1400,26 +1400,26 @@ class RecommendedLeadsController extends Controller
     {
         $now = Carbon::now();
         $fiveMinutesAgo = $now->copy()->subMinutes(1);
-        // $twoWeeksAgo = $now->copy()->subWeeks(2);
-        // $sevenDaysAgo = $now->copy()->subDays(7);
+        $twoWeeksAgo = $now->copy()->subWeeks(2);
+        $sevenDaysAgo = $now->copy()->subDays(7);
         // $twoWeeksAgo = Carbon::now()->subWeeks(2);
         // $fiveMinutesAgo = $now->subMinutes(5);
         // --------- Auto-Close Logic (after 2 weeks) ---------
-        // $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
-        // if($twoWeeks){
-        //     return response()->json(['message' => 'Leads closed successfully.']);
-        // }
+        $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
+        if($twoWeeks){
+            return response()->json(['message' => 'Leads closed successfully.']);
+        }
         // --------- Auto-Bid Logic (after 5 minutes) ---------
         $fiveMinutes = self::autoBidLeadsAfter5Min($fiveMinutesAgo);
         if($fiveMinutes){
             return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
         }
         // --------- 7 days after reactivate Logic  ---------
-        // $sevenDays = self::reactivateAutoBidAfter7Days($sevenDaysAgo);
-        // // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
-        // if($sevenDays){
-        //     return response()->json(['message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.']);
-        // }
+        $sevenDays = self::reactivateAutoBidAfter7Days($sevenDaysAgo);
+        // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
+        if($sevenDays){
+            return response()->json(['message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.']);
+        }
         
     }
     
@@ -1458,7 +1458,7 @@ class RecommendedLeadsController extends Controller
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
-                ->get();
+                ->get();dd($leads);
         // $settings = Setting::first();  
         $autoBidLeads = [];
             
