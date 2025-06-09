@@ -717,8 +717,6 @@ class RecommendedLeadsController extends Controller
     
             $userLocation = $locationMatchedUsers[$userId];
             $miles = $userLocation->distance ?? 0;
-            echo "<pre>";
-            echo $miles;
     
             if ($miles === 0) return null;
     
