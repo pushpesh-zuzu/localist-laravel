@@ -17,7 +17,7 @@ class PlansController extends Controller
 
     public function create()
     {
-        $category = Category::where('parent_id',0)->where('status',1)->get();
+        $category = Category::where('status',1)->get();
         $aRow = array();
         return view('plans.create',compact('aRow','category'));
     }
@@ -35,7 +35,7 @@ class PlansController extends Controller
 
     public function edit(Plan $plan)
     {
-        $category = Category::where('parent_id',0)->get();
+        $category = Category::get();
         $aRow = $plan;
         return view('plans.create', compact('aRow','category'));
     }
