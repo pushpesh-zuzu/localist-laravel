@@ -184,9 +184,9 @@ class LeadPreferenceController extends Controller
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
             $spotlightConditions = array_map(function ($item) {
-                return "'" . $item . "'"; // Add quotes to easily see spaces
-            }, explode(',', $request->lead_spotlights));
-            Log::debug('Spotlight conditions with quotes:', $spotlightConditions);
+                                return trim($item);
+                            }, explode(',', $request->lead_spotlights));
+            Log::debug('Spotlight conditions:', $spotlightConditions);
 
         }
         // if (!empty($spotlightFilter)) {
@@ -229,33 +229,57 @@ class LeadPreferenceController extends Controller
                 }
             });
         }
-
         
-        if (!empty($spotlightConditions)) {
-            $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
-                foreach ($spotlightConditions as $condition) {
-                    switch ($condition) {
-                        case 'Urgent requests':
-                            $query->orWhere('is_urgent', 1);
-                            break;
-                        case 'Updated requests':
-                            $query->orWhere('is_updated', 1);
-                            break;
-                        case 'Has additional details':
-                            $query->orWhere('has_additional_details', 1);
-                            break;
-                        case 'All lead spotlights':
-                            $query->orWhere(function ($q) {
-                                $q->where('is_urgent', 1)
-                                ->orWhere('is_updated', 1)
-                                ->orWhere('has_additional_details', 1);
-                            });
-                            break;
+       if (!empty($spotlightConditions)) {
+            $isUrgent = in_array('Urgent requests', $spotlightConditions);
+            $isUpdated = in_array('Updated requests', $spotlightConditions);
+            $hasAdditionalDetails = in_array('Has additional details', $spotlightConditions);
+            $allLeadSpotlights = in_array('All lead spotlights', $spotlightConditions);
+
+            $baseQuery = $baseQuery->where(function ($query) use ($isUrgent, $isUpdated, $hasAdditionalDetails, $allLeadSpotlights) {
+                if ($allLeadSpotlights) {
+                    $query->orWhere('is_urgent', 1)
+                        ->orWhere('is_updated', 1)
+                        ->orWhere('has_additional_details', 1);
+                } else {
+                    if ($isUrgent) {
+                        $query->orWhere('is_urgent', 1);
+                    }
+                    if ($isUpdated) {
+                        $query->orWhere('is_updated', 1);
+                    }
+                    if ($hasAdditionalDetails) {
+                        $query->orWhere('has_additional_details', 1);
                     }
                 }
             });
-               dd($baseQuery->count());
+            dd($baseQuery->count());
         }
+        // if (!empty($spotlightConditions)) {
+        //     $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
+        //         foreach ($spotlightConditions as $condition) {
+        //             switch ($condition) {
+        //                 case 'Urgent requests':
+        //                     $query->orWhere('is_urgent', 1);
+        //                     break;
+        //                 case 'Updated requests':
+        //                     $query->orWhere('is_updated', 1);
+        //                     break;
+        //                 case 'Has additional details':
+        //                     $query->orWhere('has_additional_details', 1);
+        //                     break;
+        //                 case 'All lead spotlights':
+        //                     $query->orWhere(function ($q) {
+        //                         $q->where('is_urgent', 1)
+        //                         ->orWhere('is_updated', 1)
+        //                         ->orWhere('has_additional_details', 1);
+        //                     });
+        //                     break;
+        //             }
+        //         }
+        //     });
+        //        dd($baseQuery->count());
+        // }
         // dd($baseQuery->count());
         // if (!empty($spotlightConditions)) {
         //     foreach ($spotlightConditions as $condition) {
