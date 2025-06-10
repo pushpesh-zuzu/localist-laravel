@@ -184,7 +184,7 @@ class LeadPreferenceController extends Controller
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
             $spotlightConditions = array_map(function ($item) {
-                                return trim($item);
+                                return strtolower(trim($item));
                             }, explode(',', $request->lead_spotlights));
             Log::debug('Spotlight conditions:', $spotlightConditions);
 
@@ -229,58 +229,33 @@ class LeadPreferenceController extends Controller
                 }
             });
         }
-        
-       if (!empty($spotlightConditions)) {
-            $isUrgent = in_array('Urgent requests', $spotlightConditions);
-            $isUpdated = in_array('Updated requests', $spotlightConditions);
-            $hasAdditionalDetails = in_array('Has additional details', $spotlightConditions);
-            $allLeadSpotlights = in_array('All lead spotlights', $spotlightConditions);
 
-            $baseQuery = $baseQuery->where(function ($query) use ($isUrgent, $isUpdated, $hasAdditionalDetails, $allLeadSpotlights) {
-                if ($allLeadSpotlights) {
-                    $query->orWhere('is_urgent', 1)
-                        ->orWhere('is_updated', 1)
-                        ->orWhere('has_additional_details', 1);
-                } else {
-                    if ($isUrgent) {
-                        $query->orWhere('is_urgent', 1);
-                    }
-                    if ($isUpdated) {
-                        $query->orWhere('is_updated', 1);
-                    }
-                    if ($hasAdditionalDetails) {
-                        $query->orWhere('has_additional_details', 1);
+        
+        if (!empty($spotlightConditions)) {
+            $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
+                foreach ($spotlightConditions as $condition) {
+                    switch (strtolower(trim($condition))) {
+                        case 'urgent requests':
+                            $query->orWhere('is_urgent', 1);
+                            break;
+                        case 'updated requests':
+                            $query->orWhere('is_updated', 1);
+                            break;
+                        case 'has additional details':
+                            $query->orWhere('has_additional_details', 1);
+                            break;
+                        case 'all lead spotlights':
+                            $query->orWhere(function ($q) {
+                                $q->where('is_urgent', 1)
+                                ->orWhere('is_updated', 1)
+                                ->orWhere('has_additional_details', 1);
+                            });
+                            break;
                     }
                 }
             });
-            dd($baseQuery->count());
         }
-        // if (!empty($spotlightConditions)) {
-        //     $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
-        //         foreach ($spotlightConditions as $condition) {
-        //             switch ($condition) {
-        //                 case 'Urgent requests':
-        //                     $query->orWhere('is_urgent', 1);
-        //                     break;
-        //                 case 'Updated requests':
-        //                     $query->orWhere('is_updated', 1);
-        //                     break;
-        //                 case 'Has additional details':
-        //                     $query->orWhere('has_additional_details', 1);
-        //                     break;
-        //                 case 'All lead spotlights':
-        //                     $query->orWhere(function ($q) {
-        //                         $q->where('is_urgent', 1)
-        //                         ->orWhere('is_updated', 1)
-        //                         ->orWhere('has_additional_details', 1);
-        //                     });
-        //                     break;
-        //             }
-        //         }
-        //     });
-        //        dd($baseQuery->count());
-        // }
-        // dd($baseQuery->count());
+
         // if (!empty($spotlightConditions)) {
         //     foreach ($spotlightConditions as $condition) {
         //         switch (strtolower($condition)) {
@@ -812,30 +787,30 @@ class LeadPreferenceController extends Controller
                 $query->where('form_status', 1);
             });
 
-        // if ($requestPostcode && $requestMiles) {
-        //     $leadIdsWithinDistance = [];
-        //     $leads = LeadRequest::select('id', 'postcode')
-        //         ->where('customer_id', '!=', $user_id)
-        //         ->where('closed_status',0) //added new condition to fetched only open leads
-        //         ->get();
-        //         foreach ($leads as $lead) {
-        //             if ($lead->postcode) {
-        //                 $distance = $this->getDistance($requestPostcode, $lead->postcode);
-        //                 if ($distance && ($distance <= $requestMiles)) { // <= DIRECT comparison
-        //                     $leadIdsWithinDistance[] = $lead->id;
-        //                 }
-        //             }
-        //         }
-        //     // foreach ($leads as $lead) {
-        //     //     if ($lead->postcode) {
-        //     //         $distance = $this->getDistance($requestPostcode, $lead->postcode);
-        //     //         if ($distance && ($distance <= ($requestMiles * 1.60934))) {
-        //     //             $leadIdsWithinDistance[] = $lead->id;
-        //     //         }
-        //     //     }
-        //     // }
-        //     $baseQuery->whereIn('id', $leadIdsWithinDistance);
-        // }
+        if ($requestPostcode && $requestMiles) {
+            $leadIdsWithinDistance = [];
+            $leads = LeadRequest::select('id', 'postcode')
+                ->where('customer_id', '!=', $user_id)
+                ->where('closed_status',0) //added new condition to fetched only open leads
+                ->get();
+                foreach ($leads as $lead) {
+                    if ($lead->postcode) {
+                        $distance = $this->getDistance($requestPostcode, $lead->postcode);
+                        if ($distance && ($distance <= $requestMiles)) { // <= DIRECT comparison
+                            $leadIdsWithinDistance[] = $lead->id;
+                        }
+                    }
+                }
+            // foreach ($leads as $lead) {
+            //     if ($lead->postcode) {
+            //         $distance = $this->getDistance($requestPostcode, $lead->postcode);
+            //         if ($distance && ($distance <= ($requestMiles * 1.60934))) {
+            //             $leadIdsWithinDistance[] = $lead->id;
+            //         }
+            //     }
+            // }
+            $baseQuery->whereIn('id', $leadIdsWithinDistance);
+        }
 
         return $baseQuery;
     }
