@@ -284,8 +284,9 @@ class LeadPreferenceController extends Controller
                 return $this->sendResponse(__('Lead Request Data (Filtered by Name)'), $namedLeadRequest);
             }
         }
-
+        
         if ($leadSubmitted && $leadSubmitted != 'Any time') {
+            
             $baseQuery = $baseQuery->where(function ($query) use ($leadSubmitted) {
                 $now = Carbon::now();
                 switch ($leadSubmitted) {
@@ -293,6 +294,7 @@ class LeadPreferenceController extends Controller
                         $query->whereDate('created_at', $now->toDateString());
                         break;
                     case 'Yesterday':
+                        Log::debug('Yesterday:', $now->subDay()->toArray());
                         $query->whereDate('created_at', $now->subDay()->toDateString());
                         break;
                     case 'Last 2-3 days':
@@ -1667,7 +1669,7 @@ class LeadPreferenceController extends Controller
              $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
             $leadQuestions = json_decode($lead->questions, true);
             if (!is_array($leadQuestions)) return false;
-          
+           
             foreach ($leadQuestions as $q) {
                 $buyerAnswers = (array) $q['ans'];
   
