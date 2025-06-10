@@ -1628,11 +1628,11 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Filter Data'), [
             [
                 'leadSpotlights' => $leadSpotlights,
-                'leadTime' => $leadTimeCounts,
-                'services' => $services,
-                'location' => $location,
-                'credits' => $credits,
-                'unread' => $unread,
+                // 'leadTime' => $leadTimeCounts,
+                // 'services' => $services,
+                // 'location' => $location,
+                // 'credits' => $credits,
+                // 'unread' => $unread,
             ]
         ]);
         // return $this->sendResponse(__('Filter Data'),$datas);
