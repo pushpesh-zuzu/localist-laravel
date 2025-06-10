@@ -15,7 +15,7 @@
               <th scope="col">Category</th>
               <th scope="col">Questions</th>
               <th scope="col">Status</th>
-              <th scope="col">Action</th>
+              <!-- <th scope="col">Action</th> -->
             </tr>
             </thead>
             <tbody>
@@ -29,7 +29,7 @@
                     <span class="fw-bold">Soln:</span> {{$aRow->answer ?? ''}}</br/>
                </td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
-              <td>
+              <!-- <td>
                   <a href="{{ route('servicequestion.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></a>
                   <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i>
                   </a>
@@ -37,7 +37,7 @@
                     {{ method_field('DELETE') }}
                     {{ csrf_field() }}
                   </form>
-              </td>
+              </td> -->
             </tr>
             @endforeach
             </tbody>
