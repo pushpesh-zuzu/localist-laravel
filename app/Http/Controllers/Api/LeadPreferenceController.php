@@ -184,7 +184,7 @@ class LeadPreferenceController extends Controller
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
             $spotlightConditions = array_map(function ($item) {
-                                return strtolower(trim($item));
+                                return $item;
                             }, explode(',', $request->lead_spotlights));
             Log::debug('Spotlight conditions:', $spotlightConditions);
 
@@ -234,7 +234,7 @@ class LeadPreferenceController extends Controller
         if (!empty($spotlightConditions)) {
             $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
                 foreach ($spotlightConditions as $condition) {
-                    switch (strtolower(trim($condition))) {
+                    switch ($condition) {
                         case 'urgent requests':
                             $query->orWhere('is_urgent', 1);
                             break;
@@ -255,7 +255,7 @@ class LeadPreferenceController extends Controller
                 }
             });
         }
-
+        // dd($baseQuery->count());
         // if (!empty($spotlightConditions)) {
         //     foreach ($spotlightConditions as $condition) {
         //         switch (strtolower($condition)) {
