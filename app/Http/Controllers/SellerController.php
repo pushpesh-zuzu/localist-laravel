@@ -124,6 +124,12 @@ class SellerController extends Controller
                 'customer_id' => $customerId,
                 'leads' => $customerLeads->map(function ($lead) {
                     $lead->service_name = Category::where('id', $lead->service_id)->pluck('name')->first();
+
+                    // Fetch purchase_type from recommended_leads for this lead and seller
+                    $lead->purchase_type = RecommendedLead::where('lead_id', $lead->id)
+                    ->where('seller_id', $userid)
+                    ->pluck('purchase_type')
+                    ->first();
                     return $lead;
                 })
             ];

@@ -13,6 +13,7 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Services</th>
+                <th>Purchase Type</th>
                 <th class="text-center">Postcode</th>
                 <th class="text-center">Credit Scores</th>
                 <th>Dates</th>
@@ -29,6 +30,11 @@
                     @foreach($row['leads'] as $lead)
                         <div>{{ $lead->service_name }}</div>
                     @endforeach
+                    </td>
+                    <td class="text-center">
+                        @foreach($row['leads'] as $lead)
+                            <div>{{ $lead->purchase_type }}</div>
+                        @endforeach
                     </td>
                     <td class="text-center">
                     @foreach($row['leads'] as $lead)
