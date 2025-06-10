@@ -787,30 +787,30 @@ class LeadPreferenceController extends Controller
                 $query->where('form_status', 1);
             });
 
-        if ($requestPostcode && $requestMiles) {
-            $leadIdsWithinDistance = [];
-            $leads = LeadRequest::select('id', 'postcode')
-                ->where('customer_id', '!=', $user_id)
-                ->where('closed_status',0) //added new condition to fetched only open leads
-                ->get();
-                foreach ($leads as $lead) {
-                    if ($lead->postcode) {
-                        $distance = $this->getDistance($requestPostcode, $lead->postcode);
-                        if ($distance && ($distance <= $requestMiles)) { // <= DIRECT comparison
-                            $leadIdsWithinDistance[] = $lead->id;
-                        }
-                    }
-                }
-            // foreach ($leads as $lead) {
-            //     if ($lead->postcode) {
-            //         $distance = $this->getDistance($requestPostcode, $lead->postcode);
-            //         if ($distance && ($distance <= ($requestMiles * 1.60934))) {
-            //             $leadIdsWithinDistance[] = $lead->id;
-            //         }
-            //     }
-            // }
-            $baseQuery->whereIn('id', $leadIdsWithinDistance);
-        }
+        // if ($requestPostcode && $requestMiles) {
+        //     $leadIdsWithinDistance = [];
+        //     $leads = LeadRequest::select('id', 'postcode')
+        //         ->where('customer_id', '!=', $user_id)
+        //         ->where('closed_status',0) //added new condition to fetched only open leads
+        //         ->get();
+        //         foreach ($leads as $lead) {
+        //             if ($lead->postcode) {
+        //                 $distance = $this->getDistance($requestPostcode, $lead->postcode);
+        //                 if ($distance && ($distance <= $requestMiles)) { // <= DIRECT comparison
+        //                     $leadIdsWithinDistance[] = $lead->id;
+        //                 }
+        //             }
+        //         }
+        //     // foreach ($leads as $lead) {
+        //     //     if ($lead->postcode) {
+        //     //         $distance = $this->getDistance($requestPostcode, $lead->postcode);
+        //     //         if ($distance && ($distance <= ($requestMiles * 1.60934))) {
+        //     //             $leadIdsWithinDistance[] = $lead->id;
+        //     //         }
+        //     //     }
+        //     // }
+        //     $baseQuery->whereIn('id', $leadIdsWithinDistance);
+        // }
 
         return $baseQuery;
     }
@@ -1637,24 +1637,6 @@ class LeadPreferenceController extends Controller
         ]);
         // return $this->sendResponse(__('Filter Data'),$datas);
     }
-
-    // public function filterCount($spotlights, $user_id){
-    //     $leadSpotlights = [];
-    //     $baseQuery = $this->basequery($user_id); // Apply full user filters
-    
-    //     foreach ($spotlights as $label => $column) {
-    //         $query = clone $baseQuery; // Clone so each one is fresh
-    //         if ($column !== 'all') {
-    //             $query = $query->where($column, 1);
-    //         }
-    //         $leadSpotlights[] = [
-    //             'spotlight' => $label,
-    //             'count' => $query->count(),
-    //         ];
-    //     }
-    
-    //     return $leadSpotlights;
-    // }
 
     public function filterCount($spotlights, $user_id)
     {
