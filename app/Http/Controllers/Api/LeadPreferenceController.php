@@ -184,9 +184,9 @@ class LeadPreferenceController extends Controller
         $spotlightConditions = [];
         if (!empty($request->lead_spotlights)) {
             $spotlightConditions = array_map(function ($item) {
-                                return $item;
-                            }, explode(',', $request->lead_spotlights));
-            Log::debug('Spotlight conditions:', $spotlightConditions);
+                return "'" . $item . "'"; // Add quotes to easily see spaces
+            }, explode(',', $request->lead_spotlights));
+            Log::debug('Spotlight conditions with quotes:', $spotlightConditions);
 
         }
         // if (!empty($spotlightFilter)) {
@@ -254,6 +254,7 @@ class LeadPreferenceController extends Controller
                     }
                 }
             });
+               dd($baseQuery->count());
         }
         // dd($baseQuery->count());
         // if (!empty($spotlightConditions)) {
