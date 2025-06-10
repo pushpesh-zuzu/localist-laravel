@@ -122,7 +122,7 @@ class SellerController extends Controller
             $aRows[] = [
                 'buyer_name' => $user ? $user->name : '',
                 'customer_id' => $customerId,
-                'leads' => $customerLeads->map(function ($lead) {
+                'leads' => $customerLeads->map(function ($lead)  use ($userid) {
                     $lead->service_name = Category::where('id', $lead->service_id)->pluck('name')->first();
 
                     // Fetch purchase_type from recommended_leads for this lead and seller
