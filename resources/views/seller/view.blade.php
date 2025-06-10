@@ -76,10 +76,6 @@
               <td>Address2</td>
               <td>{{ optional($aRows->userDetails)->billing_address2 ?? '' }}</td>
             </tr>
-            <!-- <tr>
-              <td>Dob</td>
-              <td>{{ $aRows->dob }}</td>
-            </tr> -->
             <tr>
               <td>City</td>
               <td>{{ optional($aRows->userDetails)->billing_city ?? '' }}</td>
@@ -117,7 +113,7 @@
             </tr>
             <tr>
               <td>Company Sales Team</td>
-              <td>{{ $aRows->company_sales_team }}</td>
+              <td>{{ $aRows->company_sales_team == 1 ? 'Yes' : 'No' }}</td>
             </tr>
             <tr>
               <td>Company Website</td>
