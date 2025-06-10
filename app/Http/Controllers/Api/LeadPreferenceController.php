@@ -1619,24 +1619,42 @@ class LeadPreferenceController extends Controller
         ];
         
         $leadSpotlights = self::filterCount($spotlights, $user_id);
-        // $leadTimeCounts = self::getLeadTimeData($user_id);
-        // $services = self::getFilterservices1($user_id);
-        // $location = self::getFilterLocations1($user_id);
-        // $credits = self::getFilterCreditList1($user_id);
-        // $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
+        $leadTimeCounts = self::getLeadTimeData($user_id);
+        $services = self::getFilterservices1($user_id);
+        $location = self::getFilterLocations1($user_id);
+        $credits = self::getFilterCreditList1($user_id);
+        $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
         
         return $this->sendResponse(__('Filter Data'), [
             [
                 'leadSpotlights' => $leadSpotlights,
-                // 'leadTime' => $leadTimeCounts,
-                // 'services' => $services,
-                // 'location' => $location,
-                // 'credits' => $credits,
-                // 'unread' => $unread,
+                'leadTime' => $leadTimeCounts,
+                'services' => $services,
+                'location' => $location,
+                'credits' => $credits,
+                'unread' => $unread,
             ]
         ]);
         // return $this->sendResponse(__('Filter Data'),$datas);
     }
+
+    // public function filterCount($spotlights, $user_id){
+    //     $leadSpotlights = [];
+    //     $baseQuery = $this->basequery($user_id); // Apply full user filters
+    
+    //     foreach ($spotlights as $label => $column) {
+    //         $query = clone $baseQuery; // Clone so each one is fresh
+    //         if ($column !== 'all') {
+    //             $query = $query->where($column, 1);
+    //         }
+    //         $leadSpotlights[] = [
+    //             'spotlight' => $label,
+    //             'count' => $query->count(),
+    //         ];
+    //     }
+    
+    //     return $leadSpotlights;
+    // }
 
     public function filterCount($spotlights, $user_id)
     {
@@ -1869,7 +1887,7 @@ class LeadPreferenceController extends Controller
                 }
             });
         }
-        
+
         if (!empty($filters['lead_time'])) {
             $now = Carbon::now();
             $baseQuery = $baseQuery->where(function ($query) use ($filters, $now) {
