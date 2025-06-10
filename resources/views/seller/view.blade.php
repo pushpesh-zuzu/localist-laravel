@@ -26,6 +26,10 @@
               <td>{{ $aRows->city }}</td>
             </tr>
             <tr>
+              <td>City</td>
+              <td>{{ $aRows->country }}</td>
+            </tr>
+            <tr>
               <td>State</td>
               <td>{{ $aRows->state }}</td>
             </tr>
@@ -34,7 +38,7 @@
               <td>{{ $aRows->zipcode }}</td>
             </tr>
             <tr>
-              <td>Apartment</td>
+              <td>Building/ House name</td>
               <td>{{ $aRows->apartment }}</td>
             </tr>
             <tr>
@@ -49,7 +53,10 @@
               <td>Total Credit</td>
               <td>{{ $aRows->total_credit }}</td>
             </tr>
-            
+             <tr>
+              <td>Street Address</td>
+              <td>{{ $aRows->address }}</td>
+            </tr>
             
             </tbody>
           </table>
