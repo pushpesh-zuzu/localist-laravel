@@ -107,42 +107,7 @@ class SellerController extends Controller
         return view('seller.credit_plans', get_defined_vars());
     }
 
-    public function sellerBids($userid) 
-    {
-        // Step 1: Get all recommended leads for this seller
-        $recommendedLeads = RecommendedLead::where('seller_id', $userid)
-            ->select('lead_id', 'buyer_id', 'purchase_type')
-            ->get();
-
-        // Step 2: Get the actual lead data
-        $leadIds = $recommendedLeads->pluck('lead_id')->unique()->toArray();
-        $leads = LeadRequest::whereIn('id', $leadIds)->orderBy('id','DESC')->get();
-
-        // Step 3: Attach purchase_type and service_name
-        foreach ($leads as $lead) {
-            $rec = $recommendedLeads->firstWhere('lead_id', $lead->id);
-            $lead->purchase_type = $rec->purchase_type ?? null;
-            $lead->service_name = Category::where('id', $lead->service_id)->pluck('name')->first();
-        }
-
-        // Step 4: Group by customer_id
-        $groupedLeads = $leads->groupBy('customer_id');
-
-        $aRows = [];
-        foreach ($groupedLeads as $customerId => $customerLeads) {
-            $user = User::find($customerId);
-
-            $aRows[] = [
-                'buyer_name' => $user ? $user->name : '',
-                'customer_id' => $customerId,
-                'leads' => $customerLeads
-            ];
-        }
-
-        return view('seller.autobid_leads', compact('aRows'));
-    }
-
-    public function sellerBids_10_06_25($userid)
+    public function sellerBids($userid)
     {
         $buyerIds = RecommendedLead::where('seller_id', $userid)->pluck('buyer_id')->unique()->toArray();
         $leads = LeadRequest::whereIn('customer_id', $buyerIds)->orderBy('id','DESC')->get();
@@ -157,7 +122,7 @@ class SellerController extends Controller
             $aRows[] = [
                 'buyer_name' => $user ? $user->name : '',
                 'customer_id' => $customerId,
-                'leads' => $customerLeads->map(function ($lead) {
+                'leads' => $customerLeads->map(function ($lead)  use ($userid) {
                     $lead->service_name = Category::where('id', $lead->service_id)->pluck('name')->first();
 
                     // Fetch purchase_type from recommended_leads for this lead and seller
