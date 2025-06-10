@@ -26,7 +26,7 @@
               <td>{{ $aRows->city }}</td>
             </tr>
             <tr>
-              <td>City</td>
+              <td>Country</td>
               <td>{{ $aRows->country }}</td>
             </tr>
             <tr>
