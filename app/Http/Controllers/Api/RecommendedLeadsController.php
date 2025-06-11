@@ -671,8 +671,9 @@ class RecommendedLeadsController extends Controller
     
             $userLocation = $locationMatchedUsers[$userId];
             $miles = $userLocation->distance ?? 0;
-    
-            if ($miles === 0) return null;
+            
+            if ($miles < 0) return null;
+            // if ($miles === 0) return null;
     
             return array_merge($user->toArray(), [
                 'credit_score' => $leadCreditScore,
