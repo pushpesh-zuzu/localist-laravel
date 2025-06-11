@@ -712,27 +712,33 @@ class RecommendedLeadsController extends Controller
         Log::debug('finalUsers distance:', $finalUsers->toArray());
 
         // Split into recommended and general sellers
-        $recommendedLimit = $settings > 0 ? $settings : 5;
-        $topCreditCount = min(3, ceil($recommendedLimit * 0.8));
+        $recommendedLimit = $settings > 0 ? $settings : 0;
+
+        // Dynamically calculate top credit sellers (80%) and nearest sellers (20%)
+        $topCreditCount = ceil($recommendedLimit * 0.8);
         $nearestCount = $recommendedLimit - $topCreditCount;
 
-        // Remove sellers with 3 autobids from top credit list
+        // Get top credit sellers excluding sellers who already have 3 autobids
         $topCreditSellers = $finalUsers->sortByDesc('total_credit')
             ->filter(fn($u) => !in_array($u['id'] . '_' . $serviceId, $sellersWith3Bids))
             ->take($topCreditCount);
 
-        // Remove those already selected by credit from pool before proximity selection
+        // Remove already selected top credit sellers from the pool
         $remainingUsers = $finalUsers->reject(fn($u) => $topCreditSellers->contains('id', $u['id']));
 
-        // Take nearest sellers regardless of credit
-        $nearestSellers = $remainingUsers->sortBy('distance')->take($nearestCount);
+        // Adjust nearest count in case fewer top credit sellers were found
+        $adjustedNearestCount = $recommendedLimit - $topCreditSellers->count();
 
-        // Merge for final recommended list
+        // Get nearest sellers from the remaining pool
+        $nearestSellers = $remainingUsers->sortBy('distance')->take($adjustedNearestCount);
+
+        // Merge top credit + nearest sellers into final recommended list
         $recommendedUsers = $topCreditSellers->merge($nearestSellers)->values();
 
-        // For general listing (not just recommended)
+        // Sort all sellers by distance for fallback/general listing
         $sortedAll = $finalUsers->sortBy('distance')->values();
 
+        // Merge recommended users first, then others not in recommended list
         $mergedSellers = $recommendedUsers->concat(
             $sortedAll->reject(fn($seller) => $recommendedUsers->contains('id', $seller['id']))
         )->values();
