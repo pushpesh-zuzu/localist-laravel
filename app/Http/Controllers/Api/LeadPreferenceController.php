@@ -428,9 +428,12 @@ class LeadPreferenceController extends Controller
         // Apply credit score filter using WHERE conditions
         if ($creditFilter) {
             $baseQuery = match ($creditFilter) {
-                'High'   => $baseQuery->where('credit_score', '>=', 21),
-                'Medium' => $baseQuery->whereBetween('credit_score', [5, 20]),
-                'Low'    => $baseQuery->where('credit_score', '<', 5),
+                'High'   => $baseQuery->where('credit_score', '>=', 15),
+                'Medium' => $baseQuery->whereBetween('credit_score', [10, 15]),
+                'Low'    => $baseQuery->where('credit_score', [5, 10]),
+                // 'High'   => $baseQuery->where('credit_score', '>=', 21),
+                // 'Medium' => $baseQuery->whereBetween('credit_score', [5, 20]),
+                // 'Low'    => $baseQuery->where('credit_score', '<', 5),
                 // 'High'   => $baseQuery->where('credit_score', '>=', 40),
                 // 'Medium' => $baseQuery->whereBetween('credit_score', [20, 39]),
                 // 'Low'    => $baseQuery->where('credit_score', '<', 20),
