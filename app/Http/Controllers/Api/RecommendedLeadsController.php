@@ -604,19 +604,35 @@ class RecommendedLeadsController extends Controller
         $questionFilters = collect($questions)
             ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
             ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
-    
-        $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
-            ->where('service_id', $serviceId)
-            ->where(function ($query) use ($questionFilters) {
-                foreach ($questionFilters as $filter) {
-                    foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
-                        $query->orWhere(fn($q2) =>
-                            $q2->where('question_id', $filter['question_id'])
-                                ->where('answers', 'LIKE', '%' . $ans . '%')
-                        );
-                    }
-                }
-            })->get();
+        $allPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+                                        ->where('service_id', $serviceId)
+                                        ->get()
+                                        ->groupBy('user_id');
+        $matchedPreferences = $allPreferences->filter(function ($prefs, $userId) use ($questionFilters) {
+                                        foreach ($questionFilters as $filter) {
+                                            $matched = $prefs->first(function ($pref) use ($filter) {
+                                                return $pref->question_id == $filter['question_id'] &&
+                                                    Str::contains($pref->answers, $filter['answer']);
+                                            });
+                                            if (!$matched) {
+                                                return false; // One of the required answers didn't match
+                                            }
+                                        }
+                                        return true; // All matched
+                                    });
+                                    
+        // $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+        //     ->where('service_id', $serviceId)
+        //     ->where(function ($query) use ($questionFilters) {
+        //         foreach ($questionFilters as $filter) {
+        //             foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
+        //                 $query->orWhere(fn($q2) =>
+        //                     $q2->where('question_id', $filter['question_id'])
+        //                         ->where('answers', 'LIKE', '%' . $ans . '%')
+        //                 );
+        //             }
+        //         }
+        //     })->get();
         // Log::debug('Matched Question answer:', $matchedPreferences->toArray());
         Log::debug('Matched Question answer:' . PHP_EOL . print_r($matchedPreferences->toArray(), true));
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
