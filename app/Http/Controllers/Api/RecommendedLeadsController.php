@@ -413,27 +413,6 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
     }
 
-    public function ratingFilter_07_06_25(Request $request)
-    {
-        $lead = LeadRequest::find($request->lead_id);
-        if (!$lead) return $this->sendError(__('No Lead found'), 404);
-
-        $selectedRating = (int) $request->rating; // Expected: 1 to 5
-
-        if ($selectedRating < 1 || $selectedRating > 5) {
-            return $this->sendError(__('Invalid rating value'), 400);
-        }
-
-        // Pass the selected rating to FullManualLeadsCode
-        $result = $this->FullManualLeadsCode($lead, 'asc', true, [], $selectedRating);
-
-        if ($result['empty']) {
-            return $this->sendResponse(__('No Leads found'), [$result['response']]);
-        }
-
-        return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
-    }
-
     public function ratingFilter(Request $request)
     {
         $lead = LeadRequest::find($request->lead_id);
@@ -504,9 +483,6 @@ class RecommendedLeadsController extends Controller
         $userServices = User::where('id', '!=', $customerId)
         ->whereRaw("CAST(COALESCE(TRIM(total_credit), '0') AS UNSIGNED) > 0")
             // ->where('total_credit', '>', 0)
-            ->whereHas('details', function ($query) {
-                $query->where('autobid_pause', 0);
-            })
             ->when($filteredUserIds, function ($query) use ($filteredUserIds) {
                 $query->whereIn('id', $filteredUserIds);
             })
@@ -1228,68 +1204,6 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Bids placed successfully'),[]);
     }
     
-    
-    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
-        $activity = ActivityLog::create([
-                     'lead_id' => $lead_id,
-                     'from_user_id' => $from_user_id,
-                     'to_user_id' => $to_user_id,
-                     'activity_name' => $activity_name,
-                     'contact_type' => $contact_type,
-                 ]);  
-        // Calculate duration in hours (minimum 1 hour)
-        // $createdAt = $activity->created_at;
-        // $durationInHours = round(max(1, $createdAt->diffInMinutes($leadtime) / 60), 2);
-
-        // // Update the activity with duration
-        // $activity->duration = $durationInHours;
-        // $activity->save();    
-
-         // Step 2: Calculate the time difference
-        $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
-        $createdAt = $activity->created_at->copy()->setTimezone('Asia/Kolkata');
-
-        $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
-        if ($diffInMinutes < 60) {
-            $duration = $diffInMinutes;
-        } else {
-            $hours = round($diffInMinutes / 60);
-            $duration = $hours;
-        }
-
-        // Step 3: Save duration and raw minutes
-        $activity->duration = $duration;
-        $activity->duration_minutes = $diffInMinutes; // You must add this column if not present
-        $activity->save();
-
-        // Step 4: Fetch all activity logs for the same seller (from_user_id), contact_type, across different lead_ids
-        $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
-        $entries = ActivityLog::where('from_user_id', $from_user_id)
-            ->whereIn('contact_type', $contactTypes)
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->groupBy('lead_id')
-            ->map(function ($logs) {
-                return $logs->first(); // Get the earliest log per lead
-            });
-
-        $totalMinutes = $entries->sum('duration_minutes');
-        $entryCount = $entries->count();
-
-        if ($entryCount > 0) {
-            $averageMinutes = round($totalMinutes / $entryCount); // rounded to nearest minute
-
-            UserResponseTime::updateOrCreate(
-                [
-                    'seller_id' => $from_user_id,
-                ],
-                [
-                    'average' => $averageMinutes
-                ]
-            );
-        }
-        return $activity;                                 
-    }
 
     public function addMultipleManualBid(Request $request)
     {
@@ -1460,7 +1374,7 @@ class RecommendedLeadsController extends Controller
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
                 ->get();
-        // $settings = Setting::first();  
+        
         $autoBidLeads = [];
             
             foreach ($leads as $lead) {
@@ -1561,10 +1475,6 @@ class RecommendedLeadsController extends Controller
         }
 
         return $sellersToUnpause;
-        // return response()->json([
-        //     'message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.',
-        //     'total_updated' => count($sellersToUnpause)
-        // ]);
     }
 
     public function leadCloseAfter2Weeks($twoWeeksAgo){
@@ -1660,7 +1570,7 @@ class RecommendedLeadsController extends Controller
         $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
         $buyer = User::where('id',$aVals['user_id'])->pluck('name')->first();
         $activityname = $buyer .' viewed your profile';
-        // $activityname = $buyer .' viewed '. $sellers .' profile';
+        
         $isActivity = self::getActivityLog($aVals['user_id'], $aVals['seller_id'], $aVals['lead_id'], $activityname);
         if(empty($isActivity)){
             self::addActivityLog($aVals['user_id'], $aVals['seller_id'], $aVals['lead_id'], $activityname, "Buyer viewed Seller Profile", $leadtime);
@@ -1682,10 +1592,7 @@ class RecommendedLeadsController extends Controller
             });
         })
         ->get();
-        // $isActivity = ActivityLog::where('from_user_id', $aVals['user_id']) 
-        //                          ->whereIn('to_user_id', [$aVals['buyer_id']]) 
-        //                          ->where('lead_id', $aVals['lead_id']) 
-        //                          ->get(); 
+        
         return $this->sendResponse(__('Activity log'),$isActivity);     
     }
 
@@ -1698,5 +1605,60 @@ class RecommendedLeadsController extends Controller
                                           ->first(); 
          return $activities;                                 
    }
+
+   public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
+        $activity = ActivityLog::create([
+                     'lead_id' => $lead_id,
+                     'from_user_id' => $from_user_id,
+                     'to_user_id' => $to_user_id,
+                     'activity_name' => $activity_name,
+                     'contact_type' => $contact_type,
+                 ]);     
+
+         // Step 2: Calculate the time difference
+        $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
+        $createdAt = $activity->created_at->copy()->setTimezone('Asia/Kolkata');
+
+        $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
+        if ($diffInMinutes < 60) {
+            $duration = $diffInMinutes;
+        } else {
+            $hours = round($diffInMinutes / 60);
+            $duration = $hours;
+        }
+
+        // Step 3: Save duration and raw minutes
+        $activity->duration = $duration;
+        $activity->duration_minutes = $diffInMinutes; // You must add this column if not present
+        $activity->save();
+
+        // Step 4: Fetch all activity logs for the same seller (from_user_id), contact_type, across different lead_ids
+        $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
+        $entries = ActivityLog::where('from_user_id', $from_user_id)
+            ->whereIn('contact_type', $contactTypes)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->groupBy('lead_id')
+            ->map(function ($logs) {
+                return $logs->first(); // Get the earliest log per lead
+            });
+
+        $totalMinutes = $entries->sum('duration_minutes');
+        $entryCount = $entries->count();
+
+        if ($entryCount > 0) {
+            $averageMinutes = round($totalMinutes / $entryCount); // rounded to nearest minute
+
+            UserResponseTime::updateOrCreate(
+                [
+                    'seller_id' => $from_user_id,
+                ],
+                [
+                    'average' => $averageMinutes
+                ]
+            );
+        }
+        return $activity;                                 
+    }
 
 }   
