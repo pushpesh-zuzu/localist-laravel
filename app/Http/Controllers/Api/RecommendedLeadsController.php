@@ -616,7 +616,8 @@ class RecommendedLeadsController extends Controller
                         );
                     }
                 }
-            })->get();
+            })->with(['question:id,questions as question_text'])->get();
+            
         // Log::debug('Matched Question answer:', $matchedPreferences->toArray());
         Log::debug('Matched Question answer:' . PHP_EOL . print_r($matchedPreferences->toArray(), true));
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
