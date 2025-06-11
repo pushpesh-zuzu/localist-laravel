@@ -605,21 +605,55 @@ class RecommendedLeadsController extends Controller
             ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
             ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
     
-        $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
-            ->where('service_id', $serviceId)
-            ->where(function ($query) use ($questionFilters) {
+        // $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+        //     ->where('service_id', $serviceId)
+        //     ->where(function ($query) use ($questionFilters) {
+        //         foreach ($questionFilters as $filter) {
+        //             foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
+        //                 $query->orWhere(fn($q2) =>
+        //                     $q2->where('question_id', $filter['question_id'])
+        //                         ->where('answers', 'LIKE', '%' . $ans . '%')
+        //                 );
+        //             }
+        //         }
+        //     })->get();
+        $matchedPreferences = collect();
+
+            foreach ($matchedUserIds as $userId) {
+                $allMatch = true;
+
                 foreach ($questionFilters as $filter) {
-                    foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
-                        $query->orWhere(fn($q2) =>
-                            $q2->where('question_id', $filter['question_id'])
-                                ->where('answers', 'LIKE', '%' . $ans . '%')
-                        );
+                    $preference = LeadPrefrence::where('user_id', $userId)
+                        ->where('service_id', $serviceId)
+                        ->where('question_id', $filter['question_id'])
+                        ->first();
+
+                    if (!$preference) {
+                        $allMatch = false;
+                        break;
+                    }
+
+                    $sellerAnswers = array_map('trim', explode(',', $preference->answers ?? ''));
+                    $buyerAnswers = array_map('trim', explode(',', $filter['answer'] ?? ''));
+
+                    // ❌ If any buyer-selected answer is not in seller's preferences, exclude seller
+                    if (count(array_intersect($buyerAnswers, $sellerAnswers)) !== count($buyerAnswers)) {
+                        $allMatch = false;
+                        break;
                     }
                 }
-            })->get();
+
+                if ($allMatch) {
+                    $matchedPreferences->push(['user_id' => $userId]);
+                }
+            }
+
+
+
         // Log::debug('Matched Question answer:', $matchedPreferences->toArray());
         Log::debug('Matched Question answer:' . PHP_EOL . print_r($matchedPreferences->toArray(), true));
-        $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
+        $scoredUsers = collect($matchedPreferences)->pluck('user_id')->flip()->map(fn() => 1);
+        // $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
     
         $existingBids = RecommendedLead::where('buyer_id', $customerId)
             ->where('lead_id', $lead->id)
