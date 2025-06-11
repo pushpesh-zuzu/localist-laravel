@@ -442,7 +442,7 @@ class RecommendedLeadsController extends Controller
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null)
     {
         $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
-        $settings = CustomHelper::setting_value("recommended_list_limit", 0);
+        $settings = CustomHelper::setting_value("recommended_list_show_limit", 0);
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
         $leadPostcode = $lead->postcode;
@@ -482,7 +482,6 @@ class RecommendedLeadsController extends Controller
     
         $userServices = User::where('id', '!=', $customerId)
         ->whereRaw("CAST(COALESCE(TRIM(total_credit), '0') AS UNSIGNED) > 0")
-            // ->where('total_credit', '>', 0)
             ->when($filteredUserIds, function ($query) use ($filteredUserIds) {
                 $query->whereIn('id', $filteredUserIds);
             })
@@ -541,6 +540,8 @@ class RecommendedLeadsController extends Controller
             ->where('service_id', $serviceId)
             ->get()
             ->groupBy('user_id');
+
+            Log::debug('userLocations:', $userLocations->toArray());
     
         // Filter based on Haversine distance or nation_wide = 1
         $locationMatchedUsers = collect();
@@ -686,9 +687,7 @@ class RecommendedLeadsController extends Controller
             if (in_array($userId, $existingBids)) return null;
             if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
     
-            $user = User::where('id', $userId)->whereHas('details', function ($query) {
-                $query->where('is_autobid', 1)->where('autobid_pause', 0);
-            })->first();
+            $user = User::where('id', $userId)->first();
     
             if (!$user) return null;
     
@@ -711,11 +710,38 @@ class RecommendedLeadsController extends Controller
             ? $finalUsers->sortByDesc('distance')->values()
             : $finalUsers->sortBy('distance')->values();
         Log::debug('finalUsers distance:', $finalUsers->toArray());
+
+        // Split into recommended and general sellers
+        $recommendedLimit = $settings > 0 ? $settings : 5;
+        $topCreditCount = min(3, ceil($recommendedLimit * 0.8));
+        $nearestCount = $recommendedLimit - $topCreditCount;
+
+        // Remove sellers with 3 autobids from top credit list
+        $topCreditSellers = $finalUsers->sortByDesc('total_credit')
+            ->filter(fn($u) => !in_array($u['id'] . '_' . $serviceId, $sellersWith3Bids))
+            ->take($topCreditCount);
+
+        // Remove those already selected by credit from pool before proximity selection
+        $remainingUsers = $finalUsers->reject(fn($u) => $topCreditSellers->contains('id', $u['id']));
+
+        // Take nearest sellers regardless of credit
+        $nearestSellers = $remainingUsers->sortBy('distance')->take($nearestCount);
+
+        // Merge for final recommended list
+        $recommendedUsers = $topCreditSellers->merge($nearestSellers)->values();
+
+        // For general listing (not just recommended)
+        $sortedAll = $finalUsers->sortBy('distance')->values();
+
+        $mergedSellers = $recommendedUsers->concat(
+            $sortedAll->reject(fn($seller) => $recommendedUsers->contains('id', $seller['id']))
+        )->values();
+
         return [
             'empty' => false,
             'response' => [
                 'service_name' => $serviceName,
-                'sellers' => $finalUsers,
+                'sellers' => $mergedSellers,
                 'bidcount' => $bidCount,
                 'totalbid' => $settings ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users')
