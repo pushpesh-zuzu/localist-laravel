@@ -617,7 +617,6 @@ class RecommendedLeadsController extends Controller
                     }
                 }
             })->get();
-            
         // Log::debug('Matched Question answer:', $matchedPreferences->toArray());
         Log::debug('Matched Question answer:' . PHP_EOL . print_r($matchedPreferences->toArray(), true));
         $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
@@ -1335,50 +1334,62 @@ class RecommendedLeadsController extends Controller
     {
         $now = Carbon::now();
         $fiveMinutesAgo = $now->copy()->subMinutes(1);
-        // $twoWeeksAgo = $now->copy()->subWeeks(2);
-        // $sevenDaysAgo = $now->copy()->subDays(7);
+        $twoWeeksAgo = $now->copy()->subWeeks(2);
+        $sevenDaysAgo = $now->copy()->subDays(7);
         // $twoWeeksAgo = Carbon::now()->subWeeks(2);
         // $fiveMinutesAgo = $now->subMinutes(5);
         // --------- Auto-Close Logic (after 2 weeks) ---------
-        // $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
-        // if($twoWeeks){
-        //     return response()->json(['message' => 'Leads closed successfully.']);
-        // }
+        $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
+        if($twoWeeks){
+            return response()->json(['message' => 'Leads closed successfully.']);
+        }
         // --------- Auto-Bid Logic (after 5 minutes) ---------
         $fiveMinutes = self::autoBidLeadsAfter5Min($fiveMinutesAgo);
         if($fiveMinutes){
             return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
         }
         // --------- 7 days after reactivate Logic  ---------
-        // $sevenDays = self::reactivateAutoBidAfter7Days($sevenDaysAgo);
-        // // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
-        // if($sevenDays){
-        //     return response()->json(['message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.']);
-        // }
+        $sevenDays = self::reactivateAutoBidAfter7Days($sevenDaysAgo);
+        // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
+        if($sevenDays){
+            return response()->json(['message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.']);
+        }
         
     }
-
-     public function autoBidLeadsAfter5Min($fiveMinutesAgo)
+    
+    public function autoBidLeadsAfter5Min($fiveMinutesAgo)
     {
         $settings = CustomHelper::setting_value("auto_bid_limit", 0);
+        $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // e.g., 7 days
+        $sellersWith3Autobids = RecommendedLead::select(
+                                                        'recommended_leads.seller_id', 
+                                                        'recommended_leads.service_id', 
+                                                        DB::raw('MIN(recommended_leads.created_at) as first_bid_date')
+                                                        )
+                        ->join('user_details', 'recommended_leads.seller_id', '=', 'user_details.user_id')
+                        ->where('user_details.is_autobid', 1)
+                        ->where('user_details.autobid_pause', 1)
+                        ->where('recommended_leads.purchase_type', 'Autobid')
+                        ->whereBetween('recommended_leads.created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                        ->groupBy('recommended_leads.seller_id', 'recommended_leads.service_id')
+                        ->havingRaw('COUNT(DISTINCT recommended_leads.buyer_id) >= ?', [$settings])
+                        // ->havingRaw('COUNT(DISTINCT recommended_leads.buyer_id) >= 3')
+                        ->get()
+                        ->filter(function ($record) use ($autobidDaysLimit) {
+                            return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
+                        })
+                        ->map(function ($record) {
+                            return $record->seller_id . '_' . $record->service_id;
+                        })
+                        ->toArray();
 
-        $sellersWith3Autobids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
-                                                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-                                                ->groupBy('seller_id')
-                                                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
-                                                ->get()
-                                                ->filter(function ($record) {
-                                                    $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0);
-                                                    return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
-                                                })
-                                                ->pluck('seller_id')
-                                                ->toArray();
+       
 
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
                 ->get();
-        // $settings = Setting::first();  
+        
         $autoBidLeads = [];
             
             foreach ($leads as $lead) {
@@ -1403,9 +1414,19 @@ class RecommendedLeadsController extends Controller
                 $bidsPlaced = 0;
                 foreach ($sellers as $seller) {
                     $userdetails = UserDetail::where('user_id',$seller->id)->first();
-                    // if(!empty($userdetails) && $userdetails->autobid_pause == 0){
-                    if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($seller->id, $sellersWith3Autobids)) 
-                    {
+                    $compositeKey = $seller->id . '_' . $seller->service_id;
+
+                      // ✅ Skip if no user details or autobid paused
+                    if (empty($userdetails) || $userdetails->autobid_pause != 0) {
+                        continue;
+                    }
+
+                    //If is_autobid = 1, apply 3 autobid limit
+                    if ($userdetails->is_autobid == 1 && in_array($compositeKey, $sellersWith3Autobids)) {
+                        continue;
+                    }
+                    // if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($compositeKey, $sellersWith3Autobids)) 
+                    // {
                         $alreadyBid = RecommendedLead::where([
                             ['lead_id', $lead->id],
                             ['buyer_id', $lead->customer_id],
@@ -1417,6 +1438,7 @@ class RecommendedLeadsController extends Controller
                             $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
                             $detail = $bidAmount . " credit deducted for Autobid";
                             $user = DB::table('users')->where('id', $seller->id)->first();
+                            
                             if ($user && $user->total_credit >= $bidAmount) {
                                 DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
                                 CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
@@ -1449,7 +1471,7 @@ class RecommendedLeadsController extends Controller
                                 $bidsPlaced++;
                             }
                         }
-                    }
+                    // }
                 }
                 // Mark autobid processed if any bid was placed or no sellers found
                     if ($bidsPlaced > 0) {
@@ -1460,132 +1482,6 @@ class RecommendedLeadsController extends Controller
         
         return $autoBidLeads;
     }
-    
-    // public function autoBidLeadsAfter5Min($fiveMinutesAgo)
-    // {
-    //     $settings = CustomHelper::setting_value("auto_bid_limit", 0);
-    //     $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // e.g., 7 days
-    //     $sellersWith3Autobids = RecommendedLead::select(
-    //                                                     'recommended_leads.seller_id', 
-    //                                                     'recommended_leads.service_id', 
-    //                                                     DB::raw('MIN(recommended_leads.created_at) as first_bid_date')
-    //                                                     )
-    //                     ->join('user_details', 'recommended_leads.seller_id', '=', 'user_details.user_id')
-    //                     ->where('user_details.is_autobid', 1)
-    //                     ->where('user_details.autobid_pause', 1)
-    //                     ->where('recommended_leads.purchase_type', 'Autobid')
-    //                     ->whereBetween('recommended_leads.created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-    //                     ->groupBy('recommended_leads.seller_id', 'recommended_leads.service_id')
-    //                     ->havingRaw('COUNT(DISTINCT recommended_leads.buyer_id) >= ?', [$settings])
-    //                     // ->havingRaw('COUNT(DISTINCT recommended_leads.buyer_id) >= 3')
-    //                     ->get()
-    //                     ->filter(function ($record) use ($autobidDaysLimit) {
-    //                         return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
-    //                     })
-    //                     ->map(function ($record) {
-    //                         return $record->seller_id . '_' . $record->service_id;
-    //                     })
-    //                     ->toArray();
-
-       
-
-    //     $leads = LeadRequest::where('closed_status', 0)
-    //             ->where('should_autobid', 0)
-    //             ->where('created_at', '<=', $fiveMinutesAgo)
-    //             ->get();
-        
-    //     $autoBidLeads = [];
-            
-    //         foreach ($leads as $lead) {
-    //             $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
-    //             $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
-        
-    //             if ($existingBids >= $settings) {
-    //                 continue; // Skip if already has 5 bids
-    //             }
-        
-    //             // Call getManualLeads with a request object
-    //             $manualLeadRequest = new Request(['lead_id' => $lead->id]);
-    //             $manualLeadsResponse = $this->getManualLeads($manualLeadRequest)->getData();
-    //             //  $manualLeadsResponse = $this->getManualLeads($lead->id)->getData();
-        
-    //             if (empty($manualLeadsResponse->data[0]->sellers)) {
-    //                 LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
-    //                 continue;
-    //             }
-        
-    //             $sellers = collect($manualLeadsResponse->data[0]->sellers)->take($settings - $existingBids);
-    //             $bidsPlaced = 0;
-    //             foreach ($sellers as $seller) {
-    //                 $userdetails = UserDetail::where('user_id',$seller->id)->first();
-    //                 $compositeKey = $seller->id . '_' . $seller->service_id;
-
-    //                   // ✅ Skip if no user details or autobid paused
-    //                 if (empty($userdetails) || $userdetails->autobid_pause != 0) {
-    //                     continue;
-    //                 }
-
-    //                 //If is_autobid = 1, apply 3 autobid limit
-    //                 if ($userdetails->is_autobid == 1 && in_array($compositeKey, $sellersWith3Autobids)) {
-    //                     continue;
-    //                 }
-    //                 // if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($compositeKey, $sellersWith3Autobids)) 
-    //                 // {
-    //                     $alreadyBid = RecommendedLead::where([
-    //                         ['lead_id', $lead->id],
-    //                         ['buyer_id', $lead->customer_id],
-    //                         ['seller_id', $seller->id],
-    //                     ])->exists();
-            
-    //                     if (!$alreadyBid) {
-    //                         // Deduct credit (only if buyer has enough)
-    //                         $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
-    //                         $detail = $bidAmount . " credit deducted for Autobid";
-    //                         $user = DB::table('users')->where('id', $seller->id)->first();
-                            
-    //                         if ($user && $user->total_credit >= $bidAmount) {
-    //                             DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
-    //                             CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
-            
-    //                             RecommendedLead::create([
-    //                                 'lead_id'     => $lead->id,
-    //                                 'buyer_id'    => $lead->customer_id,
-    //                                 'seller_id'   => $seller->id,
-    //                                 'service_id'  => $seller->service_id,
-    //                                 'bid'         => $bidAmount,
-    //                                 'distance'    => $seller->distance ?? 0,
-    //                                 'purchase_type' => "Autobid"
-    //                             ]);
-                                
-            
-    //                             $autoBidLeads[] = [
-    //                                 'lead_id'   => $lead->id,
-    //                                 'seller_id' => $seller->id,
-    //                             ];
-
-    //                             if(empty($isDataExists)){
-    //                                 LeadStatus::create([
-    //                                     'lead_id' => $lead->id,
-    //                                     'user_id' => $lead->customer_id,
-    //                                     'status' => 'pending',
-    //                                     'clicked_from' => 2,
-    //                                 ]);  
-    //                             }
-                                
-    //                             $bidsPlaced++;
-    //                         }
-    //                     }
-    //                 // }
-    //             }
-    //             // Mark autobid processed if any bid was placed or no sellers found
-    //                 if ($bidsPlaced > 0) {
-    //                     LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1,'status'=>'pending']);
-    //                 }
-                    
-    //         }
-        
-    //     return $autoBidLeads;
-    // }
 
     public function reactivateAutoBidAfter7Days($sevenDaysAgo)
     {
