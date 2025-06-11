@@ -100,11 +100,16 @@ class PaymentController extends Controller
                 $dataInv['total_amount'] = number_format($total_amount, 2);
                 
                 $userDetails = UserDetail::where('user_id',$user_id)->first();
-                if(!empty($userDetails)){
+                if(!empty($userDetails->billing_contact_name)){
                     $dataInv['name'] =$userDetails->billing_contact_name;
                     $dataInv['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
                     $dataInv['address'] .= $userDetails->billing_postcode;
                     $dataInv['phone'] = $userDetails->billing_phone;
+                }else{
+                    $dataInv['name'] =$user->name;
+                    $dataInv['address'] = $user->apartment .', ' .$userDetails->address .', ' .$userDetails->city .' - ';
+                    $dataInv['address'] .= $user->zipcode;
+                    $dataInv['phone'] = $user->phone;
                 }
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
                 Invoice::insertGetId($dataInv);
