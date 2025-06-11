@@ -34,6 +34,25 @@ use Illuminate\Support\Facades\Log;
 
 class LeadPreferenceController extends Controller
 {
+
+    public function changePrimaryService(Request $request){
+        $validator = Validator::make($request->all(), [
+                'service_id' => 'required|integer|exists:categories,id',
+            ], [
+            'service_id.exists' => 'Provided service id does not exists.',
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $user_id = $request->user_id;
+        $data['primary_category'] = $request->service_id;
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        User::where('id',$user_id)->update($data);
+        return $this->sendResponse("Primary service changed successfully");
+    }
+
     public function getservices(Request $request){
         $user_id = $request->user_id; 
         $categories = self::getFilterservices($user_id);
@@ -1809,6 +1828,9 @@ class LeadPreferenceController extends Controller
         foreach ($categories as $key => $value) {
             $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
             $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
+
+            //for getting primary category in service list
+            $value['primaryService'] =  User::where('id', $user_id)->value('primary_category');
         }
         return $categories;
     }
