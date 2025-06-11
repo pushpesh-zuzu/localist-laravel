@@ -1389,7 +1389,7 @@ class RecommendedLeadsController extends Controller
         $leads = LeadRequest::where('closed_status', 0)
                 ->where('should_autobid', 0)
                 ->where('created_at', '<=', $fiveMinutesAgo)
-                ->get();
+                ->get();dd($leads);
         
         $autoBidLeads = [];
             
