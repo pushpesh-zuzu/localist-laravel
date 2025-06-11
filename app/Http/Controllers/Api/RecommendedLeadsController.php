@@ -604,22 +604,44 @@ class RecommendedLeadsController extends Controller
         $questionFilters = collect($questions)
             ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
             ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
+
+          $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+                                            ->where('service_id', $serviceId)
+                                            ->get()
+                                            ->groupBy('user_id')
+                                            ->filter(function ($preferences, $userId) use ($questionFilters) {
+                                                // Check all buyer questions are matched by this seller
+                                                foreach ($questionFilters as $filter) {
+                                                    $questionMatched = $preferences->first(function ($pref) use ($filter) {
+                                                        return $pref->question_id == $filter['question_id'] &&
+                                                            in_array(trim($filter['answer']), array_map('trim', explode(',', $pref->answers)));
+                                                    });
+
+                                                    if (!$questionMatched) {
+                                                        return false; // Missing match for at least one question
+                                                    }
+                                                }
+                                                return true; // All questions matched
+                                            });  
     
-        $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
-            ->where('service_id', $serviceId)
-            ->where(function ($query) use ($questionFilters) {
-                foreach ($questionFilters as $filter) {
-                    foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
-                        $query->orWhere(fn($q2) =>
-                            $q2->where('question_id', $filter['question_id'])
-                                ->where('answers', 'LIKE', '%' . $ans . '%')
-                        );
-                    }
-                }
-            })->get();
-        Log::debug('Matched Question answer:', $matchedPreferences->toArray());
-        $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
-    
+        // $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
+        //     ->where('service_id', $serviceId)
+        //     ->where(function ($query) use ($questionFilters) {
+        //         foreach ($questionFilters as $filter) {
+        //             foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
+        //                 $query->orWhere(fn($q2) =>
+        //                     $q2->where('question_id', $filter['question_id'])
+        //                         ->where('answers', 'LIKE', '%' . $ans . '%')
+        //                 );
+        //             }
+        //         }
+        //     })->get();
+        // Log::debug('Matched Question answer:', $matchedPreferences->toArray());
+        Log::debug('Matched Question answer:' . PHP_EOL . print_r($matchedPreferences->toArray(), true));
+        // $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
+        $scoredUsers = $matchedPreferences->keys()->mapWithKeys(function ($userId) {
+                                                                return [$userId => 1]; // or any score logic you have
+                                                            });                                    
         $existingBids = RecommendedLead::where('buyer_id', $customerId)
             ->where('lead_id', $lead->id)
             ->pluck('seller_id')
@@ -644,7 +666,8 @@ class RecommendedLeadsController extends Controller
                 })
                 ->toArray();
         }
-        Log::debug('sellersWith3Bids:', $sellersWith3Bids);
+        // Log::debug('sellersWith3Bids:', $sellersWith3Bids);
+        Log::debug('sellersWith3Bids:' . PHP_EOL . print_r($sellersWith3Bids, true));
         $responseTimesMap = DB::table('user_response_times')
             ->whereIn('seller_id', $scoredUsers->keys()->toArray())
             ->pluck('average', 'seller_id')
@@ -684,11 +707,11 @@ class RecommendedLeadsController extends Controller
                 'quicktorespond' => isset($responseTimesMap[$userId]) && $responseTimesMap[$userId] <= 720 ? 1 : 0,
             ]);
         })->filter();
-        Log::debug('finalUsers:', $finalUsers->toArray());
+        // Log::debug('finalUsers:', $finalUsers->toArray());
         $finalUsers = $distanceOrder === 'desc'
             ? $finalUsers->sortByDesc('distance')->values()
             : $finalUsers->sortBy('distance')->values();
-        Log::debug('finalUsers distance:', $finalUsers->toArray());
+        // Log::debug('finalUsers distance:', $finalUsers->toArray());
         Log::debug('finalUsers distance:' . PHP_EOL . print_r($finalUsers->toArray(), true));
 
         // Split into recommended and general sellers
