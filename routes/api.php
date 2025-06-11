@@ -108,7 +108,8 @@ Route::prefix('users')->group(function () {
     Route::post('/login', [UserController::class, 'login']);
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-    
+        Route::post('change-primary-service', [LeadPreferenceController::class, 'changePrimaryService']);
+        
         Route::post('/get-seller-recommended-leads', [LeadPreferenceController::class, 'getSellerRecommendedLeads']);
         Route::post('get-seven-days-autobid-pause', [LeadPreferenceController::class, 'getSevenDaysAutobidPause']);
         Route::post('/get-service-wise-location', [LeadPreferenceController::class, 'getServiceWiseLocation']);
