@@ -688,11 +688,14 @@ class RecommendedLeadsController extends Controller
             if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
     
             $user = User::where('id', $userId)->first();
-    
+            Log::debug('User data:' . PHP_EOL . print_r($user, true));
             if (!$user) return null;
     
             $userLocation = $locationMatchedUsers[$userId];
+            Log::debug('userLocation:' . PHP_EOL . print_r($userLocation, true));
+
             $miles = $userLocation->distance ?? 0;
+            Log::debug('miles:' . PHP_EOL . print_r($miles, true));
             
             if ($miles < 0) return null;
             // if ($miles === 0) return null;
