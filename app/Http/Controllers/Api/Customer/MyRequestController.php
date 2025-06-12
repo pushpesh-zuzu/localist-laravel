@@ -87,6 +87,8 @@ class MyRequestController extends Controller
                     $dataUser['name'] = $request->name;
                     $dataUser['email'] = $request->email;
                     $dataUser['phone'] = $request->phone;
+                    $dataUser['zipcode'] = $request->postcode;
+                    $dataUser['city'] = $request->city;
                     $password = Str::random(10);
                     $dataUser['password'] = Hash::make($password);
                     $dataUser['user_type'] = 2;
