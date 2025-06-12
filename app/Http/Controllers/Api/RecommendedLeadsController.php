@@ -1403,7 +1403,7 @@ class RecommendedLeadsController extends Controller
         
     }
     
-      public function autoBidLeadsAfter5Min($fiveMinutesAgo)
+    public function autoBidLeadsAfter5Min($fiveMinutesAgo)
     {
         $settings = CustomHelper::setting_value("auto_bid_limit", 0);
 
