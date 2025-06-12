@@ -804,70 +804,141 @@ class LeadPreferenceController extends Controller
 
     public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
     {
-        // 1. Fetch all service IDs seller provides
+        // Fetch all service IDs seller provides
         $userServices = DB::table('user_services')
             ->where('user_id', $user_id)
             ->pluck('service_id')
             ->toArray();
 
-        // 2. Fetch seller's allowed service + postcode combinations
+        // Fetch only the postcode + service combinations seller supports
         $allowedServiceLocations = DB::table('user_service_locations')
             ->where('user_id', $user_id)
             ->whereIn('service_id', $userServices)
             ->where('status', 1)
             ->whereNotNull('postcode')
-            ->select('service_id', 'postcode')
+            ->select('service_id', 'postcode', 'nation_wide')
             ->get();
 
-        // 3. Prepare array of allowed (service_id, postcode) pairs
-        $allowedPairs = [];
-        foreach ($allowedServiceLocations as $loc) {
-            $allowedPairs[] = [
-                'service_id' => $loc->service_id,
-                'postcode'   => strtoupper(trim($loc->postcode)),
-            ];
+        // Prepare arrays to check
+        $postcodeServiceMap = [];
+        $nationwideServices = [];
+
+        foreach ($allowedServiceLocations as $row) {
+            if ($row->nation_wide == 1) {
+                $nationwideServices[] = $row->service_id;
+            } else {
+                $postcodeServiceMap[] = [
+                    'service_id' => $row->service_id,
+                    'postcode'   => strtoupper(trim($row->postcode)),
+                ];
+            }
         }
 
-        // 4. Start base query
+        // Build base query
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->where('closed_status', 0)
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
+            })
+            ->where(function ($query) use ($postcodeServiceMap, $nationwideServices) {
+                foreach ($postcodeServiceMap as $item) {
+                    $query->orWhere(function ($q) use ($item) {
+                        $q->where('service_id', $item['service_id'])
+                        ->where('postcode', strtoupper($item['postcode']));
+                    });
+                }
+
+                if (!empty($nationwideServices)) {
+                    $query->orWhereIn('service_id', $nationwideServices);
+                }
             });
 
-        // 5. Apply (service_id, postcode) pair filtering
-        $baseQuery = $baseQuery->where(function ($query) use ($allowedPairs) {
-            foreach ($allowedPairs as $pair) {
-                $query->orWhere(function ($q) use ($pair) {
-                    $q->where('service_id', $pair['service_id'])
-                    ->where('postcode', strtoupper($pair['postcode']));
-                });
-            }
-        });
-
-        // 6. Optional: Filter by distance
+        // Optional Distance Filter (applies AFTER postcode filtering)
         if ($requestPostcode && $requestMiles) {
             $leadIdsWithinDistance = [];
 
-            // Only get postcode+id for leads matching the above conditions
             $leads = $baseQuery->select('id', 'postcode')->get();
-
             foreach ($leads as $lead) {
                 if ($lead->postcode) {
                     $distance = $this->getDistance($requestPostcode, $lead->postcode);
-                    if ($distance && $distance <= $requestMiles) {
+                    if ($distance && ($distance <= $requestMiles)) {
                         $leadIdsWithinDistance[] = $lead->id;
                     }
                 }
             }
 
-            $baseQuery = $baseQuery->whereIn('id', $leadIdsWithinDistance);
+            $baseQuery->whereIn('id', $leadIdsWithinDistance);
         }
 
         return $baseQuery;
     }
 
     // public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
+    // {
+    //     // 1. Fetch all service IDs seller provides
+    //     $userServices = DB::table('user_services')
+    //         ->where('user_id', $user_id)
+    //         ->pluck('service_id')
+    //         ->toArray();
+
+    //     // 2. Fetch seller's allowed service + postcode combinations
+    //     $allowedServiceLocations = DB::table('user_service_locations')
+    //         ->where('user_id', $user_id)
+    //         ->whereIn('service_id', $userServices)
+    //         ->where('status', 1)
+    //         ->whereNotNull('postcode')
+    //         ->select('service_id', 'postcode')
+    //         ->get();
+
+    //     // 3. Prepare array of allowed (service_id, postcode) pairs
+    //     $allowedPairs = [];
+    //     foreach ($allowedServiceLocations as $loc) {
+    //         $allowedPairs[] = [
+    //             'service_id' => $loc->service_id,
+    //             'postcode'   => strtoupper(trim($loc->postcode)),
+    //         ];
+    //     }
+
+    //     // 4. Start base query
+    //     $baseQuery = LeadRequest::with(['customer', 'category'])
+    //         ->where('closed_status', 0)
+    //         ->whereHas('customer', function ($query) {
+    //             $query->where('form_status', 1);
+    //         });
+
+    //     // 5. Apply (service_id, postcode) pair filtering
+    //     $baseQuery = $baseQuery->where(function ($query) use ($allowedPairs) {
+    //         foreach ($allowedPairs as $pair) {
+    //             $query->orWhere(function ($q) use ($pair) {
+    //                 $q->where('service_id', $pair['service_id'])
+    //                 ->where('postcode', strtoupper($pair['postcode']));
+    //             });
+    //         }
+    //     });
+
+    //     // 6. Optional: Filter by distance
+    //     if ($requestPostcode && $requestMiles) {
+    //         $leadIdsWithinDistance = [];
+
+    //         // Only get postcode+id for leads matching the above conditions
+    //         $leads = $baseQuery->select('id', 'postcode')->get();
+
+    //         foreach ($leads as $lead) {
+    //             if ($lead->postcode) {
+    //                 $distance = $this->getDistance($requestPostcode, $lead->postcode);
+    //                 if ($distance && $distance <= $requestMiles) {
+    //                     $leadIdsWithinDistance[] = $lead->id;
+    //                 }
+    //             }
+    //         }
+
+    //         $baseQuery = $baseQuery->whereIn('id', $leadIdsWithinDistance);
+    //     }
+
+    //     return $baseQuery;
+    // }
+
+    // public function basequery_old_without_postcode($user_id, $requestPostcode = null, $requestMiles = null)
     // {
     //     $userServices = DB::table('user_services')
     //         ->where('user_id', $user_id)
