@@ -556,7 +556,8 @@ class RecommendedLeadsController extends Controller
                         $sellerCoordinates['lat'],
                         $sellerCoordinates['lng']
                     );
-                    if ($distance !== null && $distance > 0) {
+                    // if ($distance !== null && $distance > 0) {
+                    if ($distance !== null && $distance >= 0){
                         $location->distance = $distance;
                         $locationMatchedUsers[$userId] = $location;
                         break; // Take the first valid match
