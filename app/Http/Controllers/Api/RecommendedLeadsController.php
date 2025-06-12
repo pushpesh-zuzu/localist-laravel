@@ -1450,7 +1450,7 @@ class RecommendedLeadsController extends Controller
                 foreach ($sellers as $seller) {
                     $userdetails = UserDetail::where('user_id',$seller->id)->first();
                     // if(!empty($userdetails) && $userdetails->autobid_pause == 0){
-                    if (!empty($userdetails) && $userdetails->autobid_pause == 0 && !in_array($seller->id, $sellersWith3Autobids)) 
+                    if (!empty($userdetails) && $userdetails->autobid_pause == 0 && $userdetails->is_autobid == 1 && !in_array($seller->id, $sellersWith3Autobids)) 
                     {
                         $alreadyBid = RecommendedLead::where([
                             ['lead_id', $lead->id],
