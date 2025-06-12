@@ -746,7 +746,11 @@ class RecommendedLeadsController extends Controller
         $adjustedNearestCount = $recommendedLimit - $topCreditSellers->count();
 
         // Get nearest sellers from the remaining pool
-        $nearestSellers = $remainingUsers->sortBy('distance')->take($adjustedNearestCount);
+        $nearestSellers = $remainingUsers
+                        ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+                        ->sortBy('distance')
+                        ->take($adjustedNearestCount);
+        // $nearestSellers = $remainingUsers->sortBy('distance')->take($adjustedNearestCount);
 
         // Merge top credit + nearest sellers into final recommended list
         $recommendedUsers = $topCreditSellers->merge($nearestSellers)->values();
