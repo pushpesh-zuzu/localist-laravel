@@ -327,6 +327,14 @@ class LeadPreferenceController extends Controller
             });
         }
 
+        $leadIdsWithFiveBids = DB::table('recommended_leads')
+            ->select('lead_id')
+            ->groupBy('lead_id')
+            ->havingRaw('COUNT(*) >= 5')
+            ->pluck('lead_id')
+            ->toArray();
+
+        $baseQuery = $baseQuery->whereNotIn('id', $leadIdsWithFiveBids);
         // Strict matching on Questions & Answers
         $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
 
