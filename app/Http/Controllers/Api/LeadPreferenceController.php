@@ -802,7 +802,7 @@ class LeadPreferenceController extends Controller
     }
     // ------------------------
 
-    public function basequery_with_nearest_postcode_also($user_id, $requestPostcode = null, $requestMiles = null)
+    public function basequery($user_id, $requestPostcode = null, $requestMiles = null)
     {
         // Fetch all service IDs seller provides
         $userServices = DB::table('user_services')
