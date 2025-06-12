@@ -87,6 +87,9 @@ class MyRequestController extends Controller
                     $dataUser['name'] = $request->name;
                     $dataUser['email'] = $request->email;
                     $dataUser['phone'] = $request->phone;
+                    $dataUser['zipcode'] = $request->postcode;
+                    $dataUser['city'] = $request->city;
+                    //for
                     $password = Str::random(10);
                     $dataUser['password'] = Hash::make($password);
                     $dataUser['user_type'] = 2;
@@ -200,6 +203,7 @@ class MyRequestController extends Controller
                 // $apiController = new ApiController();
                 // $bidRel = $apiController->autobid($request);
                 // unset($apiController);
+
 
                 return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
@@ -347,12 +351,13 @@ class MyRequestController extends Controller
             $data['phone_verified'] = 1;
             $data['updated_at'] = date('Y-m-d H:i:s');
             User::where('id',$request->user_id)->update($data);
+
+            $dataLead['is_phone_verified'] = '1';
+            $dataLead['updated_at'] = date('Y-m-d H:i:s');
+            LeadRequest::where('customer_id', $request->user_id)->update($dataLead);
             return $this->sendResponse('Phone number verified successfully!');
 
         }
-        print_r($cOtp);
-        echo "<br>";
-        print_r($otp);
         return $this->sendError('Wrong OTP, try again!');
     }
 
