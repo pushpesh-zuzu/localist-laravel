@@ -656,7 +656,7 @@ class RecommendedLeadsController extends Controller
              $sellersWith3Bids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
                                                 ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
                                                 ->groupBy('seller_id')
-                                                // ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+                                                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
                                                 ->get()
                                                 ->filter(function ($record) {
                                                     $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // Use your config
@@ -685,7 +685,7 @@ class RecommendedLeadsController extends Controller
             $responseTimesMap
         ) {
             if (in_array($userId, $existingBids)) return null;
-            if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+            // if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
     
             $user = User::where('id', $userId)->first();
             Log::debug('User data:' . PHP_EOL . print_r($user, true));
@@ -731,9 +731,12 @@ class RecommendedLeadsController extends Controller
         // $topCreditSellers = $finalUsers->sortByDesc('total_credit')
         //     ->filter(fn($u) => !in_array($u['id'] . '_' . $serviceId, $sellersWith3Bids))
         //     ->take($topCreditCount);
+        // $topCreditSellers = $finalUsers->sortByDesc('total_credit')
+        //                         ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+        //                         ->take($topCreditCount);
         $topCreditSellers = $finalUsers->sortByDesc('total_credit')
-    ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
-    ->take($topCreditCount);
+                                        ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+                                        ->take($topCreditCount);
         Log::debug('topCreditSellers:' . PHP_EOL . print_r($topCreditSellers, true));    
 
         // Remove already selected top credit sellers from the pool
