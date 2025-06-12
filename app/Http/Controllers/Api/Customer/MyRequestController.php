@@ -202,6 +202,7 @@ class MyRequestController extends Controller
                 // $apiController = new ApiController();
                 // $bidRel = $apiController->autobid($request);
                 // unset($apiController);
+                
 
                 return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
