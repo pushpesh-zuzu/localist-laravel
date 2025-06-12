@@ -665,6 +665,7 @@ class RecommendedLeadsController extends Controller
             $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // e.g., 7 days
              $sellersWith3Bids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
                                                 ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                                                ->where('purchase_type', 'Autobid')
                                                 ->groupBy('seller_id')
                                                 ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
                                                 ->get()
@@ -1408,6 +1409,7 @@ class RecommendedLeadsController extends Controller
 
         $sellersWith3Autobids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
                                                 ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                                                ->where('purchase_type', 'Autobid')
                                                 ->groupBy('seller_id')
                                                 ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
                                                 ->get()

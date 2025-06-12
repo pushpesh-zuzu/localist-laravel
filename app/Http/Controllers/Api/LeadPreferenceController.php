@@ -273,6 +273,7 @@ class LeadPreferenceController extends Controller
                     }
                 }
             });
+             Log::debug('Spotlight after fetching leads:', $baseQuery->toArray());
         }
 
         // if (!empty($spotlightConditions)) {
