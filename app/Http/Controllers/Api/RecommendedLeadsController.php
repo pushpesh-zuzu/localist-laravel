@@ -605,18 +605,7 @@ class RecommendedLeadsController extends Controller
             ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
             ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
     
-        // $matchedPreferences = LeadPrefrence::whereIn('user_id', $matchedUserIds)
-        //     ->where('service_id', $serviceId)
-        //     ->where(function ($query) use ($questionFilters) {
-        //         foreach ($questionFilters as $filter) {
-        //             foreach (array_map('trim', explode(',', $filter['answer'])) as $ans) {
-        //                 $query->orWhere(fn($q2) =>
-        //                     $q2->where('question_id', $filter['question_id'])
-        //                         ->where('answers', 'LIKE', '%' . $ans . '%')
-        //                 );
-        //             }
-        //         }
-        //     })->get();
+        
         $matchedPreferences = collect();
 
             foreach ($matchedUserIds as $userId) {
@@ -675,21 +664,6 @@ class RecommendedLeadsController extends Controller
                                                 })
                                                 ->pluck('seller_id')
                                                 ->toArray();
-
-            // $sellersWith3Bids = RecommendedLead::select('seller_id', 'service_id', DB::raw('MIN(created_at) as first_bid_date'))
-            //     ->where('purchase_type', 'Autobid') // Only consider auto bids
-            //     ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-            //     ->groupBy('seller_id', 'service_id')
-            //     ->havingRaw('COUNT(DISTINCT recommended_leads.buyer_id) >= ?', [$autobid_limit])
-            //     // ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
-            //     ->get()
-            //     ->filter(function ($record) use ($autobidDaysLimit) {
-            //         return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
-            //     })
-            //     ->map(function ($record) {
-            //         return $record->seller_id . '_' . $record->service_id; // Make a unique key
-            //     })
-            //     ->toArray();
         }
         // Log::debug('sellersWith3Bids:', $sellersWith3Bids);
         Log::debug('sellersWith3Bids:' . PHP_EOL . print_r($sellersWith3Bids, true));
@@ -751,9 +725,12 @@ class RecommendedLeadsController extends Controller
 
 
         // Get top credit sellers excluding sellers who already have 3 autobids
+        // $topCreditSellers = $finalUsers->sortByDesc('total_credit')
+        //     ->filter(fn($u) => !in_array($u['id'] . '_' . $serviceId, $sellersWith3Bids))
+        //     ->take($topCreditCount);
         $topCreditSellers = $finalUsers->sortByDesc('total_credit')
-            ->filter(fn($u) => !in_array($u['id'] . '_' . $serviceId, $sellersWith3Bids))
-            ->take($topCreditCount);
+    ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+    ->take($topCreditCount);
         Log::debug('topCreditSellers:' . PHP_EOL . print_r($topCreditSellers, true));    
 
         // Remove already selected top credit sellers from the pool
