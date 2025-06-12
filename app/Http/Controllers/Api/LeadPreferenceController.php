@@ -837,6 +837,7 @@ class LeadPreferenceController extends Controller
         // Build base query
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->where('closed_status', 0)
+            ->where('status','!=','hired')
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
