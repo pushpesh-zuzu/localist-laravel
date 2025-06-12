@@ -814,7 +814,7 @@ class LeadPreferenceController extends Controller
             ->whereIn('service_id', $userServices)
             ->where('status', 1)
             ->whereNotNull('postcode')
-            ->select('service_id', 'postcode', 'nation_wide', 'miles')
+            ->select('service_id', 'postcode', 'nation_wide')
             ->get();
 
         $postcodeServiceMap = [];
@@ -826,14 +826,13 @@ class LeadPreferenceController extends Controller
             } else {
                 $postcodeServiceMap[] = [
                     'service_id' => $row->service_id,
-                    'postcode'   => strtoupper(trim($row->postcode)),
-                    'miles'      => $row->miles ?? 10, // fallback if miles is null
+                    'postcode' => strtoupper(trim($row->postcode)),
                 ];
             }
         }
 
-        // Step 1: Initial fetch - leads matching service_id
-        $candidateLeads = LeadRequest::with(['customer', 'category'])
+        // Get all leads with matching services first
+        $baseQuery = LeadRequest::with(['customer', 'category'])
             ->where('closed_status', 0)
             ->where('status', '!=', 'hired')
             ->whereHas('customer', function ($query) {
@@ -847,46 +846,42 @@ class LeadPreferenceController extends Controller
                 if (!empty($nationwideServices)) {
                     $query->orWhereIn('service_id', $nationwideServices);
                 }
-            })
-            ->get();
+            });
 
-        // Step 2: Apply per-seller-location distance filtering
-        $filteredLeadIds = collect();
+        // Now filter based on distance (across seller’s service_postcode vs lead_postcode)
+        $filteredLeads = collect();
 
-        foreach ($candidateLeads as $lead) {
+        $leads = $baseQuery->get(); // Get all candidate leads first
+
+        foreach ($leads as $lead) {
             foreach ($postcodeServiceMap as $item) {
                 if ($lead->service_id == $item['service_id'] && $lead->postcode) {
                     $distance = $this->getDistance($item['postcode'], $lead->postcode);
-                    if ($distance !== null && $distance <= $item['miles']) {
-                        $filteredLeadIds->push($lead->id);
-                        break;
+                    if ($distance !== null && $distance <= 10) { // default nearby = 10 miles
+                        $filteredLeads->push($lead->id);
+                        break; // no need to check further seller postcodes for same lead
                     }
                 }
             }
 
-            // Nationwide leads always allowed
+            // Allow nationwide
             if (in_array($lead->service_id, $nationwideServices)) {
-                $filteredLeadIds->push($lead->id);
+                $filteredLeads->push($lead->id);
             }
         }
 
-        // Step 3: Now fetch only filtered leads (via new query)
-        $finalQuery = LeadRequest::with(['customer', 'category'])
-            ->whereIn('id', $filteredLeadIds->unique());
+        $baseQuery->whereIn('id', $filteredLeads->unique());
 
-        // Step 4: Optional filter for buyer’s postcode range
+        // Optional: Distance from buyer’s request location (if supplied)
         if ($requestPostcode && $requestMiles) {
-            $finalQuery = $finalQuery->get()->filter(function ($lead) use ($requestPostcode, $requestMiles) {
+            $baseQuery = $baseQuery->get()->filter(function ($lead) use ($requestPostcode, $requestMiles) {
                 $distance = $this->getDistance($requestPostcode, $lead->postcode);
                 return $distance !== null && $distance <= $requestMiles;
             });
-
-            return $finalQuery->values(); // returns a filtered collection
         }
 
-        return $finalQuery; // returns a query builder
+        return $baseQuery;
     }
-
 
     // public function basequery_with_nearest_postcode_also($user_id, $requestPostcode = null, $requestMiles = null)
     // {
