@@ -39,7 +39,14 @@ class UserController extends Controller
     }
 
     public function getSellerProfile(Request $request){
-        $userId = $request->user_id;
+        $validator = Validator::make($request->all(), [
+            'seller_id' => 'required|integer|exists:users,id',
+            ], [
+            'seller_id.required' => 'Seller id is required.',
+            'seller_id.exists' => 'Seller id does not exists.',
+        ]);
+        $userId = $request->seller_id;
+        
         $user = User::where('id',$userId)->first();
         $user['user_details'] = UserDetail::where('user_id',$userId)->first();
         $user['reviews'] = Review::where('user_id',$userId)->get();
