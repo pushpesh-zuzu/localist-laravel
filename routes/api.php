@@ -156,6 +156,7 @@ Route::prefix('users')->group(function () {
         Route::post('/change-password', [UserController::class, 'changePassword']);
         Route::post('/update-profile', [UserController::class, 'updateProfile']);
         Route::post('/edit-profile', [UserController::class, 'editProfile']);
+        Route::post('/get-seller-profile', [UserController::class, 'getSellerProfile']);
 
         Route::post('/switch_user', [UserController::class, 'switchUser']);
         Route::post('/logout', [UserController::class, 'logout']);

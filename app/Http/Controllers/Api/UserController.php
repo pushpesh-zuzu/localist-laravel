@@ -11,6 +11,7 @@ use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\UserDetail;
 use App\Models\Category;
+use App\Models\Review;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
@@ -20,6 +21,7 @@ use App\Services\ZeroBounceService;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\LoginHistory;
+
 
 class UserController extends Controller
 {
@@ -34,6 +36,17 @@ class UserController extends Controller
     public function index()
     {
         return response()->json(User::all(), 200);
+    }
+
+    public function getSellerProfile(Request $request){
+        $userId = $request->user_id;
+        $user = User::where('id',$userId)->first();
+        $user['user_details'] = UserDetail::where('user_id',$userId)->first();
+        $user['reviews'] = Review::where('user_id',$userId)->get();
+        $user['accreditations'] = \DB::table('user_accreditations')->where('user_id',$userId)->get();
+        $user['services'] = UserService::where('user_id',$userId)->with(['userServices'])->get();
+        $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$userId)->get();
+        return $this->sendResponse('Seller Profile.', $user);
     }
 
     public function registration(Request $request): JsonResponse{
