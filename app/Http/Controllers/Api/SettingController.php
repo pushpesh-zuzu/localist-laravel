@@ -23,14 +23,14 @@ use Stripe\PaymentMethod;
 
 class SettingController extends Controller
 {
-    public function sellerMyprofile(Request $request): JsonResponse
+    public function updateSellerProfile(Request $request): JsonResponse
     {
         $user_id = $request->user_id; 
         $aValues = $request->all();
         $users = User::where('id',$user_id)->first();
         $userdetails = UserDetail::where('user_id',$user_id)->first();
         $accreditations = UserAccreditation::where('user_id',$user_id)->where('id',$aValues['accreditation_id'])->first();
-        $serviceDetails = UserServiceDetail::where('user_id',$user_id)->where('id',$aValues['user_service_id'])->first();
+        // $serviceDetails = UserServiceDetail::where('user_id',$user_id)->where('id',$aValues['user_service_id'])->first();
         if($aValues['type'] == 'about'){
                 if ($request->hasFile('company_logo')) {
                     $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');

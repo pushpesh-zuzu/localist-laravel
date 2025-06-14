@@ -191,7 +191,7 @@ Route::prefix('users')->group(function () {
         //My Profile
         Route::post('/seller-myprofile-qa', [SettingController::class, 'sellerMyprofileqa']);
         Route::get('/seller-profile-ques', [SettingController::class, 'sellerProfileQues']);
-        Route::post('/seller-myprofile', [SettingController::class, 'sellerMyprofile']);
+        Route::post('/update-seller-profile', [SettingController::class, 'updateSellerProfile']);
 
         Route::post('/add-suggested-que', [SuggestedQuestionController::class, 'addSuggestedQue']);
 
