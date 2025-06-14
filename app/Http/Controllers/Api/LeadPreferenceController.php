@@ -1379,12 +1379,10 @@ class LeadPreferenceController extends Controller
 
     public function expandRadius(Request $request){
         $validator = Validator::make($request->all(), [
-            'location_id' => 'required|integer|exists:user_service_locations,id',
-            'radius' => 'required|integer',
+            'location_id' => 'required|integer|exists:user_service_locations,id'
             ], [
             'location_id.required' => 'Location Id is required.',
             'location_id.exists' => 'Provided location id does not exists.',
-            'radius.required' => 'Radius is required.'
         ]);
 
         if($validator->fails()){
@@ -1392,12 +1390,10 @@ class LeadPreferenceController extends Controller
         }
 
         $prevMile = UserServiceLocation::where('id',$request->location_id)->value('miles');
-        $data['miles'] = $prevMile + $request->radius;
+        $data['miles'] = $prevMile + 10;
         $data['updated_at'] = date('Y-m-d H:i:s');
         UserServiceLocation::where('id',$request->location_id)->update($data);
-
-        $usl = UserServiceLocation::where('id',$request->location_id)->first();
-        return $this->sendResponse('Radius Expaned',$usl);
+        return $this->sendResponse('Radius Expaned');
 
     }
 
