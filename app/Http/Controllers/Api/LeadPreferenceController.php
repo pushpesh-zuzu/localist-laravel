@@ -1430,21 +1430,7 @@ class LeadPreferenceController extends Controller
                     }
         
                     $userServiceId = $userService->id;
-                    // $postcode = isset($aVals['postcode']) && $aVals['postcode'] !== '' ? $aVals['postcode'] : '000000';
-                    // $miles = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 0 : $aVals['miles'];
                     $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
-
-           
-                // $aLocations['service_id'] = $serviceId;
-                // $aLocations['user_service_id'] = $userServiceId;
-                // $aLocations['user_id'] = $aVals['user_id'];
-                // $aLocations['postcode'] =$aVals['postcode'];
-                // $aLocations['miles'] = $aVals['miles'];
-                // $aLocations['nation_wide'] = $nationWide;
-                // $aLocations['city'] = $aVals['city'];
-                // $aLocations['travel_time'] = $travel_time;
-                // $aLocations['travel_by'] = $travel_by;
-                // $aLocations['type'] = $aVals['type'];
 
                 $aLocation = UserServiceLocation::create(
                     ['user_id' => $aVals['user_id'], 
@@ -1460,8 +1446,6 @@ class LeadPreferenceController extends Controller
                     'coordinates' => $aVals['coordinates']
                     ] // Fields to insert
                 );
-    
-                // UserServiceLocation::createUserServiceLocation($aLocations);
             }
             return $this->sendResponse(__('Location updated successfully'));
         }else{
@@ -1474,20 +1458,6 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $userId = $aVals['user_id'];
         $uniqueRows = self::getFilterLocations($userId);
-        // Get all locations for the user
-        // $aRows = UserServiceLocation::where('user_id', $userId)
-        //     ->orderBy('postcode')
-        //     ->get();
-
-        // // Group by postcode to remove duplicates (only first entry per postcode)
-        // $uniqueRows = $aRows->unique('postcode')->values();
-
-        // // Add total services per postcode
-        // foreach ($uniqueRows as $value) {
-        //     $value['total_services'] = $aRows->where('postcode', $value->postcode)->count();
-        //     $value['leadcount'] =  LeadRequest::where('postcode', $value->postcode)->count();
-        // }
-
         return $this->sendResponse(__('User Service Data'), $uniqueRows);
     }
 
