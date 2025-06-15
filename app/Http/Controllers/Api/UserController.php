@@ -52,9 +52,9 @@ class UserController extends Controller
         $userId = $request->seller_id;
         
         $user = User::where('id',$userId)->first();
-        $user['user_details'] = UserDetail::where('user_id',$userId)->first();
+        // $user['user_details'] = UserDetail::where('user_id',$userId)->first();
         $user['reviews'] = Review::where('user_id',$userId)->get();
-        $user['accreditations'] = \DB::table('user_accreditations')->where('user_id',$userId)->get();
+        $user['accreditations'] = UserAccreditation::with(['users'])->where('user_id',$userId)->get();
         $user['services'] = UserService::where('user_id',$userId)->with(['userServices'])->get();
         $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$userId)->get();
         return $this->sendResponse('Seller Profile.', $user);
