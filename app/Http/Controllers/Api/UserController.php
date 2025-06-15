@@ -21,7 +21,7 @@ use App\Services\ZeroBounceService;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\LoginHistory;
-
+use App\Models\UserAccreditation;
 
 class UserController extends Controller
 {
