@@ -1,14 +1,62 @@
 <?php
 
 namespace App\Helpers;
-use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session};
+use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session, Http};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
 use App\Models\PurchaseHistory;
 use App\Models\Setting;
+use App\Models\Postcode;
+
 class CustomHelper
 {
+    public static function getPostcodesWithinRadius($postcode, $radius = 0, $km=false){
+        $val = $km ? 6371 : 3959;
+
+        // Get latitude and longitude of the given postcode
+        $center = Postcode::where('postcode', $postcode)->first();
+        if (!$center) {
+            return []; // or throw exception
+        }
+        $lat = $center->latitude;
+        $lng = $center->longitude;
+        // Haversine formula to get nearby postcodes
+        $results = \DB::table('postcodes')
+            ->select('postcode', 'latitude', 'longitude',
+                DB::raw("(
+                    $val * acos(
+                        cos(radians(?)) *
+                        cos(radians(latitude)) *
+                        cos(radians(longitude) - radians(?)) +
+                        sin(radians(?)) *
+                        sin(radians(latitude))
+                    )
+                ) AS distance"))
+            ->addBinding($lat)
+            ->addBinding($lng)
+            ->addBinding($lat)
+            ->having('distance', '<=', $radius)
+            ->orderBy('distance')
+            ->get()->toArray();
+        $pureArray = json_decode(json_encode($results), true);
+        return $pureArray;
+    }
+
+    public static function getCoordinates($postcode){
+        $apiKey = CustomHelper::setting_value('google_maps_api');
+        $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
+            'address' => $postcode,
+            'key' => $apiKey,
+        ]);
+
+        $data = $response->json();
+        if (!empty($data['results'][0])) {
+            return json_encode($data['results'][0]['geometry']['location']); // ['lat' => ..., 'lng' => ...]
+        }
+
+        return null;
+    }
 
     public static function setting_value($key, $defaultValue=''){
         $val = Setting::where('setting_name',$key)->value('setting_value');
