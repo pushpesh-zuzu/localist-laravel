@@ -45,6 +45,10 @@ class UserController extends Controller
             'seller_id.required' => 'Seller id is required.',
             'seller_id.exists' => 'Seller id does not exists.',
         ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
         $userId = $request->seller_id;
         
         $user = User::where('id',$userId)->first();
