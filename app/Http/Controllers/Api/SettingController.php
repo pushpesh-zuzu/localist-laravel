@@ -85,28 +85,26 @@ class SettingController extends Controller
             $userdetails->update([
                 'company_photos' => $company_photos,
                 // 'user_emails_reviews' => $aValues['user_emails_reviews'],
-                'is_youtube_video' => $aValues['is_youtube_video'],
                 'company_youtube_link' => $aValues['company_youtube_link'],
-                'is_fb' => $aValues['is_fb'],
                 'fb_link' => $aValues['fb_link'],
-                'is_twitter' => $aValues['is_twitter'],
                 'twitter_link' => $aValues['twitter_link'],
-                'is_link_desc' => $aValues['is_link_desc'],
-                'link_desc' => $aValues['link_desc'],
+                'tiktok_link' => $aValues['tiktok_link'],
+                'insta_link' => $aValues['insta_link'],
+                'linkedin_link' => $aValues['linkedin_link'],
+                'extra_links' => $aValues['extra_links']
+                
             ]);  
         }else{
             $userdetails = UserDetail::create([
                 'user_id'  => $user_id,
                 'company_photos' => $company_photos,
-                // 'user_emails_reviews' => $aValues['user_emails_reviews'],
-                'is_youtube_video' => $aValues['is_youtube_video'],
                 'company_youtube_link' => $aValues['company_youtube_link'],
-                'is_fb' => $aValues['is_fb'],
                 'fb_link' => $aValues['fb_link'],
-                'is_twitter' => $aValues['is_twitter'],
                 'twitter_link' => $aValues['twitter_link'],
-                'is_link_desc' => $aValues['is_link_desc'],
-                'link_desc' => $aValues['link_desc'],
+                'tiktok_link' => $aValues['tiktok_link'],
+                'insta_link' => $aValues['insta_link'],
+                'linkedin_link' => $aValues['linkedin_link'],
+                'extra_links' => $aValues['extra_links'],
                 'is_autobid' => 1
             ]);
         }
@@ -114,22 +112,20 @@ class SettingController extends Controller
     }
 
     public function aboutData($aValues,$company_logo,$profile_image,$users,$user_id){
-        // if(isset($users) && $users != ''){
-            $users->update([
-                'company_name' => $aValues['company_name'],
-                'company_logo' => $company_logo,
-                'name' => $aValues['name'],
-                'profile_image' => $profile_image,
-                'company_email' => $aValues['company_email'],
-                'company_phone' => $aValues['company_phone'],
-                'company_website' => $aValues['company_website'],
-                'company_location' => $aValues['company_location'],
-                'company_locaion_reason' => $aValues['company_locaion_reason'],
-                'company_size' => $aValues['company_size'],
-                'company_total_years' => $aValues['company_total_years'],
-                'about_company' => $aValues['about_company'],
-            ]);
-        // }
+        $users->update([
+            'company_name' => $aValues['company_name'],
+            'company_logo' => $company_logo,
+            'name' => $aValues['name'],
+            'profile_image' => $profile_image,
+            'company_email' => $aValues['company_email'],
+            'company_phone' => $aValues['company_phone'],
+            'company_website' => $aValues['company_website'],
+            'company_location' => $aValues['company_location'],
+            'company_locaion_reason' => $aValues['company_locaion_reason'],
+            'company_size' => $aValues['company_size'],
+            'company_total_years' => $aValues['company_total_years'],
+            'about_company' => $aValues['about_company'],
+        ]);
         return $users;
     }
 
