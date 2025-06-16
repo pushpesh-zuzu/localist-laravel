@@ -65,6 +65,7 @@ class LeadPreferenceController extends Controller
             return !in_array($item['service_id'], $nwServices);
         });
 
+
         //add other services
         $otherServices = [];
         foreach($ulDistance as $d){
@@ -179,11 +180,84 @@ class LeadPreferenceController extends Controller
                 ->orWhere('phone', 'like', '%' .  $filters['searchName'] . '%');
             });
         }
-        // $filters['leadSubmitted']
-        // $filters['services']
-        // $filters['creditFilter']
-        // $filters['spotlightFilter']
-        // $filters['unread']
+
+        if(!empty($filters['spotlightFilter'])){
+            $splghts = explode(',', $filters['spotlightFilter']);
+            foreach($splghts as $sl){
+                if(strtolower(trim($sl)) === 'all lead spotlights'){
+                        $baseQuery = $baseQuery->where(function ($query){
+                            $query->where('is_urgent', '=', '1')
+                                ->where('is_updated', '=', '1')
+                                ->where('has_additional_details', '=', '1');
+                        });
+                }else{
+                    if(strtolower(trim($sl)) === 'urgent requests'){
+                        $baseQuery = $baseQuery->where(function ($query){
+                            $query->where('is_urgent', '=', '1');
+                        });
+                    }
+                    if(strtolower(trim($sl)) === 'updated requests'){
+                        $baseQuery = $baseQuery->where(function ($query){
+                            $query->where('is_updated', '=', '1');
+                        });
+                    }
+                    if(strtolower(trim($sl)) === 'has additional details'){
+                        $baseQuery = $baseQuery->where(function ($query){
+                            $query->where('has_additional_details', '=', '1');
+                        });
+                    }
+                }
+                
+            }
+        }
+        
+        if(!empty($filters['lead_time'])){
+            if(strtolower(trim($filters['lead_time'])) === 'today'){
+                $baseQuery = $baseQuery->where(function ($query){
+                    $query->whereDate('created_at', Carbon::now()->toDateString());
+                });
+            }
+            if(strtolower(trim($filters['lead_time'])) === 'yesterday'){
+                $baseQuery = $baseQuery->where(function ($query){
+                    $query->whereDate('created_at', Carbon::now()->subDay()->toDateString());
+                });
+            }
+            if(strtolower(trim($filters['lead_time'])) === 'last 2-3 days'){
+                $baseQuery = $baseQuery->where(function ($query){
+                    $query->whereDate('created_at', '>' , Carbon::now()->subDay(3)->toDateString());
+                });
+            }
+            if(strtolower(trim($filters['lead_time'])) === 'last 7 days'){
+                $baseQuery = $baseQuery->where(function ($query){
+                    $query->whereDate('created_at', '>', Carbon::now()->subDay(7)->toDateString());
+                });
+            }
+            if(strtolower(trim($filters['lead_time'])) === 'last 14+ days'){
+                $baseQuery = $baseQuery->where(function ($query){
+                    $query->whereDate('created_at', '<' ,Carbon::now()->subDay()->toDateString());
+                });
+            }
+        }
+        if(!empty($filters['services'])){
+            $sIds = explode(',', $filters['services']);
+            $baseQuery = $baseQuery->where(function ($query) use ($sIds){
+                $query->whereIn('service_id', $sIds);
+            });
+        }
+
+        if(!empty($filters['creditFilter'])){
+            $crFs = explode(',', str_replace('Credits','',$filters['creditFilter']));
+            $creditRanges = [];
+            foreach($crFs as $crf){
+                $cc1 = explode('-',str_replace(' ','',$crf));
+                $creditRanges[] = [ min($cc1),  max($cc1)];
+            }
+            $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
+                foreach ($creditRanges as $range) {
+                    $query->orWhereRaw('CAST(credit_score AS UNSIGNED) BETWEEN ? AND ?', [$range[0], $range[1]]);
+                }
+            });
+        }
         
         $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
 
@@ -221,10 +295,11 @@ class LeadPreferenceController extends Controller
         $user_id = $request->user_id;
         //filters
         $filters['searchName'] = $aVals['name'] ?? null;
-        $filters['leadSubmitted'] = $aVals['lead_time'] ?? null;
+        $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
+        $filters['lead_time'] = $aVals['lead_time'] ?? null;
         $filters['services'] = $aVals['service_id'] ?? null;      
         $filters['creditFilter'] = $aVals['credits'] ?? null;
-        $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
+       
         $filters['unread'] = $aVals['unread'] ?? null; 
         $distanceFilter = $aVals['distance_filter'] ?? null;
         $requestMiles = null;
