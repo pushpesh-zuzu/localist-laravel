@@ -37,7 +37,7 @@ class LeadPreferenceController extends Controller
 {
     
     
-    public function basequery($user_id, $requestPostcode = null, $requestMiles = null){
+    public function getLeads($user_id, $requestPostcode = null, $requestMiles = null, $filters = []){
         $userServices = UserService::where('user_id',$user_id)->select('service_id')->get();
         //get all types of locations
         $ulNationWide = UserServiceLocation::where('user_id', $user_id)->where('nation_wide','1')->get();
@@ -86,207 +86,6 @@ class LeadPreferenceController extends Controller
             //closure condition
             ->where('status','!=','hired')
             ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString());
-
-            if($requestPostcode === null){ //select default condition for location
-                //include locations
-                $baseQuery = $baseQuery->where(function ($query) use ($ulDistance, $ulTravel, $ulMap, $nwServices) {
-                    //for distance type
-                    foreach ($ulDistance as $item) {
-                        $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
-                        $query->orWhere(function ($q) use ($item, $radiusPostcode) {
-                            $q->where('service_id', $item['service_id'])
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
-                        });
-                    }
-
-                    //for travel time
-                    foreach ($ulTravel as $item) {
-                        $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
-                        $query->orWhere(function ($q) use ($item, $radiusPostcode) {
-                            $q->where('service_id', $item['service_id'])
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
-                        });
-                    }
-
-                    //for draw on map
-                    foreach ($ulMap as $item) {
-                        $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
-                        $query->orWhere(function ($q) use ($item, $radiusPostcode) {
-                            $q->where('service_id', $item['service_id'])
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
-                        });
-                    }
-
-                    //include nation wide services
-                    if (!empty($nwServices)) {
-                        $query->orWhereIn('service_id', $nwServices);
-                    }
-                });
-            }else{
-                $baseQuery = $baseQuery->where(function ($query) use ($nwServices, $otherServices, $requestPostcode, $requestMiles) {
-                    //for distance type
-                    $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
-                    foreach($otherServices as $item){
-                        $query->orWhere(function ($q) use ($item, $radiusPostcode) {
-                            $q->where('service_id', $item)
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
-                        });
-                    }
-
-                    //include nation wide services
-                    if (!empty($nwServices)) {
-                        $query->orWhereIn('service_id', $nwServices);
-                    }
-                });
-            }
-        // print_r($baseQuery->toRawSql());
-        return $baseQuery;
-        
-    }
-
-    public function getLeadRequest(Request $request)
-    {
-        $aVals = $request->all();
-        $user_id = $request->user_id;
-        $searchName = $aVals['name'] ?? null;
-        $leadSubmitted = $aVals['lead_time'] ?? null;
-        $unread = $aVals['unread'] ?? null;
-        $distanceFilter = $aVals['distance_filter'] ?? null;
-        $creditFilter = $aVals['credits'] ?? null;
-        // $spotlightFilter = $aVals['lead_spotlights'] ?? null;
-
-        $requestMiles = null;
-        $requestPostcode = null;
-        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
-            $requestMiles = (int)$matches[1];
-            $requestPostcode = strtoupper($matches[2]);
-        }
-
-        $creditRanges = [];
-        if (!empty($creditFilter)) {
-            $creditParts = array_map('trim', explode(',', $creditFilter));
-            foreach ($creditParts as $part) {
-                if (preg_match('/(\d+)\s*-\s*(\d+)\s*Credits/', $part, $matches)) {
-                    $min = (int) $matches[1];
-                    $max = (int) $matches[2];
-                    $creditRanges[] = [$min, $max];
-                }
-            }
-        }
-
-        //----------------------------------------------Seller Panel------------------------------------------//
-        // $spotlightConditions = [];
-        $spotlightConditions = [];
-        if (!empty($request->lead_spotlights)) {
-            $spotlightConditions = array_map(function ($item) {
-                                return strtolower(trim($item));
-                            }, explode(',', $request->lead_spotlights));
-            Log::debug('Spotlight conditions:', $spotlightConditions);
-
-        }
-        // if (!empty($spotlightFilter)) {
-        //     $spotlightConditions = array_map('trim', explode(',', $spotlightFilter));
-        // }
-        
-        $baseQuery = $this->basequery($user_id, $requestPostcode, $requestMiles);
-        
-        // Exclude saved leads
-        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        // $baseQuery = $baseQuery->whereNotIn('id', $savedLeadIds);
-
-        // Exclude leads from recommended table starts
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
-
-        // Merge both exclusion arrays
-        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
-
-        if (!empty($excludedLeadIds)) {
-        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
-        }
-
-        // Exclude leads from recommended table ends
-
-        if (!empty($unread) && $unread == 1) {
-            $baseQuery = $baseQuery->where('is_read', 0);
-        }
-
-        if (!empty($aVals['service_id'])) {
-            $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
-            $baseQuery = $baseQuery->whereIn('service_id', $serviceIds);
-        }
-
-        if (!empty($creditRanges)) {
-            $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
-                foreach ($creditRanges as $range) {
-                    $query->orWhereBetween('credit_score', $range);
-                }
-            });
-        }
-
-        
-        if (!empty($spotlightConditions)) {
-            $baseQuery = $baseQuery->where(function ($query) use ($spotlightConditions) {
-                foreach ($spotlightConditions as $condition) {
-                    switch (strtolower(trim($condition))) {
-                        case 'urgent requests':
-                            $query->orWhere('is_urgent', 1);
-                            break;
-                        case 'updated requests':
-                            $query->orWhere('is_updated', 1);
-                            break;
-                        case 'has additional details':
-                            $query->orWhere('has_additional_details', 1);
-                            break;
-                        case 'all lead spotlights':
-                            $query->orWhere(function ($q) {
-                                $q->where('is_urgent', 1)
-                                ->orWhere('is_updated', 1)
-                                ->orWhere('has_additional_details', 1);
-                            });
-                            break;
-                    }
-                }
-            });
-        }
-
-        if ($searchName) {
-            $namedLeadRequest = (clone $baseQuery)
-                ->whereHas('customer', function ($query) use ($searchName) {
-                    $query->where('name', 'LIKE', '%' . $searchName . '%');
-                })
-                ->orderBy('id', 'DESC')
-                ->get();
-
-            if ($namedLeadRequest->isNotEmpty()) {
-                return $this->sendResponse(__('Lead Request Data (Filtered by Name)'), $namedLeadRequest);
-            }
-        }
-
-        if ($leadSubmitted && $leadSubmitted != 'Any time') {
-            $baseQuery = $baseQuery->where(function ($query) use ($leadSubmitted) {
-                $now = Carbon::now();
-                switch ($leadSubmitted) {
-                    case 'Today':
-                        $query->whereDate('created_at', $now->toDateString());
-                        break;
-                    case 'Yesterday':
-                        $query->whereDate('created_at', $now->subDay()->toDateString());
-                        break;
-                    case 'Last 2-3 days':
-                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(3));
-                        break;
-                    case 'Last 7 days':
-                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(7));
-                        break;
-                    case 'Last 14+ days':
-                        $query->whereDate('created_at', '<', Carbon::now()->subDays(14));
-                        break;
-                }
-            });
-        }
-
         $leadIdsWithFiveBids = DB::table('recommended_leads')
             ->select('lead_id')
             ->groupBy('lead_id')
@@ -296,11 +95,100 @@ class LeadPreferenceController extends Controller
 
         $baseQuery = $baseQuery->whereNotIn('id', $leadIdsWithFiveBids);
 
-        // Strict matching on Questions & Answers
+        if($requestPostcode === null){ //select default condition for location
+            //include locations
+            $baseQuery = $baseQuery->where(function ($query) use ($ulDistance, $ulTravel, $ulMap, $nwServices) {
+                //for distance type
+                foreach ($ulDistance as $item) {
+                    $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
+                    $query->orWhere(function ($q) use ($item, $radiusPostcode) {
+                        $q->where('service_id', $item['service_id'])
+                        ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
+                    });
+                }
+
+                //for travel time
+                foreach ($ulTravel as $item) {
+                    $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
+                    $query->orWhere(function ($q) use ($item, $radiusPostcode) {
+                        $q->where('service_id', $item['service_id'])
+                        ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
+                    });
+                }
+
+                //for draw on map
+                foreach ($ulMap as $item) {
+                    $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
+                    $query->orWhere(function ($q) use ($item, $radiusPostcode) {
+                        $q->where('service_id', $item['service_id'])
+                        ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
+                    });
+                }
+
+                //include nation wide services
+                if (!empty($nwServices)) {
+                    $query->orWhereIn('service_id', $nwServices);
+                }
+            });
+        }else{
+            $baseQuery = $baseQuery->where(function ($query) use ($nwServices, $otherServices, $requestPostcode, $requestMiles) {
+                //for distance type
+                $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
+                foreach($otherServices as $item){
+                    $query->orWhere(function ($q) use ($item, $radiusPostcode) {
+                        $q->where('service_id', $item)
+                        ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
+                    });
+                }
+
+                //include nation wide services
+                if (!empty($nwServices)) {
+                    $query->orWhereIn('service_id', $nwServices);
+                }
+            });
+        }
+        
+
+        // Exclude saved leads
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+        
+        // Exclude leads from recommended table starts as a bid has been placed
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+            ->pluck('lead_id')
+            ->toArray();
+
+        // Merge both exclusion arrays
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+        if (!empty($excludedLeadIds)) {
+            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+        }
+
+
+        //apply filters
+        if(!empty($filters['searchName'])){
+            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
+                $query->whereHas('customer', function ($q) use ($filters) {
+                    $q->where('name', 'like', '%' . $filters['searchName'] . '%');
+                    // ->orWhere('city', 'like', '%' . $searchTerm . '%');
+                })
+                ->orWhereHas('category', function ($q) use ($filters) {
+                    $q->where('name', 'like', '%' . $filters['searchName'] . '%');
+                })
+                ->orWhere('city', 'like', '%' .  $filters['searchName'] . '%')
+                ->orWhere('postcode', 'like', '%' .  $filters['searchName'] . '%')
+                ->orWhere('phone', 'like', '%' .  $filters['searchName'] . '%');
+            });
+        }
+        // $filters['leadSubmitted']
+        // $filters['services']
+        // $filters['creditFilter']
+        // $filters['spotlightFilter']
+        // $filters['unread']
+        
         $allLeads = $baseQuery->orderBy('id', 'DESC')->get();
 
+        // Strict matching on Questions & Answers
         $preferenceMap = $this->getUserPreferenceMap($user_id);
-
         $filteredLeads = $allLeads->filter(function ($lead) use ($preferenceMap) {
             $leadQuestions = json_decode($lead->questions, true);
             if (!is_array($leadQuestions)) return false;
@@ -322,9 +210,34 @@ class LeadPreferenceController extends Controller
 
             return true;
         });
-         // ===== Add view_count to each lead =====
-        $leadIds = $filteredLeads->pluck('id')->toArray();
-        $customerIds = $filteredLeads->pluck('customer_id')->toArray();
+
+        return $filteredLeads;
+        
+    }
+
+    public function getLeadRequest(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        //filters
+        $filters['searchName'] = $aVals['name'] ?? null;
+        $filters['leadSubmitted'] = $aVals['lead_time'] ?? null;
+        $filters['services'] = $aVals['service_id'] ?? null;      
+        $filters['creditFilter'] = $aVals['credits'] ?? null;
+        $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
+        $filters['unread'] = $aVals['unread'] ?? null; 
+        $distanceFilter = $aVals['distance_filter'] ?? null;
+        $requestMiles = null;
+        $requestPostcode = null;
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
+            $requestMiles = (int)$matches[1];
+            $requestPostcode = strtoupper($matches[2]);
+        }
+        $baseLeads = $this->getLeads($user_id, $requestPostcode, $requestMiles, $filters);
+        
+        // ===== Add view_count to each lead =====
+        $leadIds = $baseLeads->pluck('id')->toArray();
+        $customerIds = $baseLeads->pluck('customer_id')->toArray();
         $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
             ->whereIn('lead_id', $leadIds)
             ->select('buyer_id', 
@@ -347,7 +260,7 @@ class LeadPreferenceController extends Controller
 
 
         // 3. Assign each lead its view_count from the map
-        $filteredLeads = $filteredLeads->map(function ($lead) use ($leadMetricsMap) {
+        $baseLeads = $baseLeads->map(function ($lead) use ($leadMetricsMap) {
             $buyerId = $lead->customer_id;
             $leadId = $lead->id;
             $views = $leadMetricsMap[$buyerId][$leadId]['views'] ?? 0;
@@ -356,7 +269,12 @@ class LeadPreferenceController extends Controller
             return $lead;
         });
         
-        return $this->sendResponse(__('Lead Request Data'), $filteredLeads);
+
+        $data['count'] = count($baseLeads);
+        $data['leads'] = $baseLeads;
+
+
+        return $this->sendResponse(__('Lead Request Data'), $data);
     }
 
     public function changePrimaryService(Request $request){
