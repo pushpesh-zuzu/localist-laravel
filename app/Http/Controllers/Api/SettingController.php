@@ -77,7 +77,7 @@ class SettingController extends Controller
                 ]);
         }
 
-        return $this->sendResponse(__('MyProfile updated successfully'),$userData );
+        return $this->sendResponse(__('Profile updated successfully'));
     }
 
     public function userdetailData($aValues,$company_photos,$userdetails,$user_id){
