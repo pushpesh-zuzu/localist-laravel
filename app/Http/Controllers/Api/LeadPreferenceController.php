@@ -270,11 +270,11 @@ class LeadPreferenceController extends Controller
         });
         
 
-        $data['count'] = count($baseLeads);
-        $data['leads'] = $baseLeads;
+        // $data['count'] = count($baseLeads);
+        // $data['leads'] = $baseLeads;
 
 
-        return $this->sendResponse(__('Lead Request Data'), $data);
+        return $this->sendResponse(__('Lead Request Data'), $baseLeads);
     }
 
     public function changePrimaryService(Request $request){

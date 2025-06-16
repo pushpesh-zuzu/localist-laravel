@@ -29,8 +29,7 @@ class SettingController extends Controller
         $aValues = $request->all();
         $users = User::where('id',$user_id)->first();
         $userdetails = UserDetail::where('user_id',$user_id)->first();
-        $accreditations = UserAccreditation::where('user_id',$user_id)->where('id',$aValues['accreditation_id'])->first();
-        // $serviceDetails = UserServiceDetail::where('user_id',$user_id)->where('id',$aValues['user_service_id'])->first();
+        
         if($aValues['type'] == 'about'){
                 if ($request->hasFile('company_logo')) {
                     $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');
@@ -70,51 +69,14 @@ class SettingController extends Controller
                 }else{
                     $accre_image = "";
                 }
-                  // Handle delete condition
-                if (isset($aValues['deleteData']) && $aValues['deleteData'] == 1) {
-                    $accrDeleteIds = explode(',', $aValues['accr_delete_id']);
-                    $accDatas = UserAccreditation::whereIn('id', $accrDeleteIds)
-                                                 ->where('user_id', $user_id)
-                                                 ->get();
-                    if (count($accDatas)>0) {
-                        UserAccreditation::whereIn('id', $accrDeleteIds)
-                            ->where('user_id', $user_id)
-                            ->delete();
-                            return $this->sendResponse(__('Accreditations deleted successfully'), []);
-                    } else {
-                        return $this->sendError("No Data found");
-                        // Delete a single record
-                        // UserAccreditation::where('id', $aValues['accr_delete_id'])
-                        //     ->where('user_id', $user_id)
-                        //     ->delete();
-                    }
 
-                    
-                }
-
-                $userData = self::accreditationData($aValues,$accreditations,$user_id,$accre_image,$userdetails);
-                $userData->is_accreditations =  $aValues['is_accreditations']; 
+                $accreditations = UserAccreditation::create([
+                    'user_id'  => $user_id,
+                    'name' => $aValues['accre_name'],
+                    'image' => $accre_image
+                ]);
         }
 
-        if($aValues['type'] == 'userservices'){
-               // Handle delete condition
-               if (isset($aValues['deleteData']) && $aValues['deleteData'] == 1) {
-                $serviceDeleteIds = explode(',', $aValues['service_delete_id']);
-                $serDatas = UserServiceDetail::whereIn('id', $serviceDeleteIds)
-                                             ->where('user_id', $user_id)
-                                             ->get();
-                if (count($serDatas)>0) {
-                    UserServiceDetail::whereIn('id', $serviceDeleteIds)
-                                     ->where('user_id', $user_id)
-                                     ->delete();
-                } else {
-                    return $this->sendError("No Data found");
-                }
-
-                return $this->sendResponse(__('Services deleted successfully'), []);
-            }
-            $userData = self::serviceData($aValues,$serviceDetails,$user_id);
-        }
         return $this->sendResponse(__('MyProfile updated successfully'),$userData );
     }
 
@@ -171,44 +133,7 @@ class SettingController extends Controller
         return $users;
     }
 
-    public function accreditationData($aValues,$accreditations,$user_id,$image,$userdetails){
-        if(isset($accreditations) && $accreditations != ''){
-            $accreditations->update([
-                'name' => $aValues['accre_name'],
-                'image' => $image
-            ]);
-            $userdetails->update([
-                'is_accreditations' => $aValues['is_accreditations'],
-            ]);
-        }else{
-            $accreditations = UserAccreditation::create([
-                'user_id'  => $user_id,
-                'name' => $aValues['accre_name'],
-                'image' => $image
-            ]);
-            UserDetail::create([
-                'user_id'  => $user_id,
-                'is_accreditations' => $aValues['is_accreditations'],
-            ]);
-        }
-        return $accreditations;
-    }
 
-    public function serviceData($aValues,$serviceDetails,$user_id){
-        if(isset($serviceDetails) && $serviceDetails != ''){
-            $serviceDetails->update([
-                'title' => $aValues['service_title'],
-                'description' => $aValues['service_desc']
-            ]);
-        }else{
-            $serviceDetails = UserServiceDetail::create([
-                'user_id'  => $user_id,
-                'title' => $aValues['service_title'],
-                'description' => $aValues['service_desc']
-            ]);
-        }
-        return $serviceDetails;
-    }
 
     public function sellerProfileQues(){
         $questions = ProfileQuestion::where('status', 1)->orderBy('id', 'DESC')->get();
