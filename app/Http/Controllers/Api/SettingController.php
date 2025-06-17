@@ -31,22 +31,35 @@ class SettingController extends Controller
         $userdetails = UserDetail::where('user_id',$user_id)->first();
         
         if($aValues['type'] == 'about'){
-                if ($request->hasFile('company_logo')) {
-                    $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');
-                    $company_logo = $imagePath; 
-                }else{
-                    $company_logo = "";
-                }
-                if ($request->hasFile('profile_image')) {
-                    $profileimagePath =  CustomHelper::fileUpload($aValues['profile_image'],'users');
-                    $profile_image = $profileimagePath; 
-                }else{
-                    $profile_image = "";
-                }
-                $userData = self::aboutData($aValues,$company_logo,$profile_image,$users,$user_id);
+            if ($request->hasFile('company_logo')) {
+                $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');
+                $company_logo = $imagePath; 
+            }else{
+                $company_logo = "";
+            }
+            if ($request->hasFile('profile_image')) {
+                $profileimagePath =  CustomHelper::fileUpload($aValues['profile_image'],'users');
+                $profile_image = $profileimagePath; 
+            }else{
+                $profile_image = "";
+            }
+            $users->update([
+                'company_name' => $aValues['company_name'],
+                'company_logo' => $company_logo,
+                'name' => $aValues['name'],
+                'profile_image' => $profile_image,
+                'company_email' => $aValues['company_email'],
+                'company_phone' => $aValues['company_phone'],
+                'company_website' => $aValues['company_website'],
+                'company_location' => $aValues['company_location'],
+                'company_locaion_reason' => $aValues['company_locaion_reason'],
+                'company_size' => $aValues['company_size'],
+                'company_total_years' => $aValues['company_total_years'],
+                'about_company' => $aValues['about_company'],
+            ]);
         }
 
-        if($aValues['type'] == 'user_details'){
+        if($aValues['type'] == 'photos'){
             if ($request->hasFile('company_photos')) {
                 $companyimgPaths = []; // Store multiple image names
                 foreach ($request->file('company_photos') as $image) {
@@ -60,7 +73,44 @@ class SettingController extends Controller
             }else{
                 $company_photos = "";
             }
-            $userData = self::userdetailData($aValues,$company_photos,$userdetails,$user_id);
+            if(isset($userdetails) && $userdetails != ''){
+                $userdetails->update([
+                    'company_photos' => $company_photos,
+                    'company_youtube_link' => $aValues['company_youtube_link'],
+                ]);  
+            }else{
+                $userdetails = UserDetail::create([
+                    'user_id'  => $user_id,
+                    'company_photos' => $company_photos,
+                    'company_youtube_link' => $aValues['company_youtube_link'],
+                    'is_autobid' => 1
+                ]);
+            }
+        }
+
+        if($aValues['type'] == 'social_media'){
+            if(isset($userdetails) && $userdetails != ''){
+                $userdetails->update([
+                    'fb_link' => $aValues['fb_link'],
+                    'twitter_link' => $aValues['twitter_link'],
+                    'tiktok_link' => $aValues['tiktok_link'],
+                    'insta_link' => $aValues['insta_link'],
+                    'linkedin_link' => $aValues['linkedin_link'],
+                    'extra_links' => $aValues['extra_links']
+                    
+                ]);  
+            }else{
+                $userdetails = UserDetail::create([
+                    'user_id'  => $user_id,
+                    'fb_link' => $aValues['fb_link'],
+                    'twitter_link' => $aValues['twitter_link'],
+                    'tiktok_link' => $aValues['tiktok_link'],
+                    'insta_link' => $aValues['insta_link'],
+                    'linkedin_link' => $aValues['linkedin_link'],
+                    'extra_links' => $aValues['extra_links'],
+                    'is_autobid' => 1
+                ]);
+            }
         }
         if($aValues['type'] == 'accreditations'){
                 if ($request->hasFile('accre_image')) {
@@ -79,57 +129,6 @@ class SettingController extends Controller
 
         return $this->sendResponse(__('Profile updated successfully'));
     }
-
-    public function userdetailData($aValues,$company_photos,$userdetails,$user_id){
-        if(isset($userdetails) && $userdetails != ''){
-            $userdetails->update([
-                'company_photos' => $company_photos,
-                // 'user_emails_reviews' => $aValues['user_emails_reviews'],
-                'company_youtube_link' => $aValues['company_youtube_link'],
-                'fb_link' => $aValues['fb_link'],
-                'twitter_link' => $aValues['twitter_link'],
-                'tiktok_link' => $aValues['tiktok_link'],
-                'insta_link' => $aValues['insta_link'],
-                'linkedin_link' => $aValues['linkedin_link'],
-                'extra_links' => $aValues['extra_links']
-                
-            ]);  
-        }else{
-            $userdetails = UserDetail::create([
-                'user_id'  => $user_id,
-                'company_photos' => $company_photos,
-                'company_youtube_link' => $aValues['company_youtube_link'],
-                'fb_link' => $aValues['fb_link'],
-                'twitter_link' => $aValues['twitter_link'],
-                'tiktok_link' => $aValues['tiktok_link'],
-                'insta_link' => $aValues['insta_link'],
-                'linkedin_link' => $aValues['linkedin_link'],
-                'extra_links' => $aValues['extra_links'],
-                'is_autobid' => 1
-            ]);
-        }
-        return $userdetails;
-    }
-
-    public function aboutData($aValues,$company_logo,$profile_image,$users,$user_id){
-        $users->update([
-            'company_name' => $aValues['company_name'],
-            'company_logo' => $company_logo,
-            'name' => $aValues['name'],
-            'profile_image' => $profile_image,
-            'company_email' => $aValues['company_email'],
-            'company_phone' => $aValues['company_phone'],
-            'company_website' => $aValues['company_website'],
-            'company_location' => $aValues['company_location'],
-            'company_locaion_reason' => $aValues['company_locaion_reason'],
-            'company_size' => $aValues['company_size'],
-            'company_total_years' => $aValues['company_total_years'],
-            'about_company' => $aValues['about_company'],
-        ]);
-        return $users;
-    }
-
-
 
     public function sellerProfileQues(){
         $questions = ProfileQuestion::where('status', 1)->orderBy('id', 'DESC')->get();
