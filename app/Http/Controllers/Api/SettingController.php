@@ -114,7 +114,7 @@ class SettingController extends Controller
         }
         if($aValues['type'] == 'accreditations'){
            
-
+            //uploading multiple accres
             $files = $request->file('accre_image');
             $names = $request->input('accre_name', []); 
             foreach($files as $index => $img){
