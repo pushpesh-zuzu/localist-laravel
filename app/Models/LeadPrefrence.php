@@ -17,4 +17,5 @@ class LeadPrefrence extends Model
     {
         return $this->belongsTo(ServiceQuestion::class, 'question_id', 'id');
     }
+    
 }

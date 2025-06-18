@@ -113,18 +113,19 @@ class SettingController extends Controller
             }
         }
         if($aValues['type'] == 'accreditations'){
-                if ($request->hasFile('accre_image')) {
-                    $imagePath =  CustomHelper::accfileUpload($aValues['accre_image'],'accreditations');
-                    $accre_image = $imagePath; 
-                }else{
-                    $accre_image = "";
-                }
+           
 
+            $files = $request->file('accre_image');
+            $names = $request->input('accre_name', []); 
+            foreach($files as $index => $img){
+                $imagePath =  CustomHelper::accfileUpload($img,'accreditations');                    
                 $accreditations = UserAccreditation::create([
                     'user_id'  => $user_id,
-                    'name' => $aValues['accre_name'],
-                    'image' => $accre_image
+                    'name' => $names[$index],
+                    'image' => $imagePath
                 ]);
+            }
+
         }
 
         return $this->sendResponse(__('Profile updated successfully'));

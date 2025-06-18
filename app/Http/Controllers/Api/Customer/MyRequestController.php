@@ -151,6 +151,17 @@ class MyRequestController extends Controller
             $data['city'] = $request->city;
             $data['postcode'] = $request->postcode;
             $data['questions'] = $request->questions;
+
+            //make the answers in proper json array so that it can be used for strict macthing
+            $arrQuesD = json_decode($request->questions, true);
+            $arrQues = [];
+            foreach ($arrQuesD as $aq) {
+                $temp['ques'] = $aq['ques'];
+                $temp['ans'] = array_map('trim', explode(',', $aq['ans']));
+                $arrQues[] = $temp;
+            }
+            $data['arrayed_questions'] = json_encode($arrQues);
+
             $data['phone'] = $request->phone;
 
             $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
