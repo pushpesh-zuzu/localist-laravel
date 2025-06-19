@@ -25,8 +25,12 @@ class SettingController extends Controller
 {
     public function updateSellerProfile(Request $request): JsonResponse
     {
+        
         $user_id = $request->user_id; 
         $aValues = $request->all();
+        echo "<pre>";
+        print_r($aValues);
+        exit;
         $users = User::where('id',$user_id)->first();
         $userdetails = UserDetail::where('user_id',$user_id)->first();
         
