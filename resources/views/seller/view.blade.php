@@ -29,10 +29,7 @@
               <td>Country</td>
               <td>{{ $aRows->country }}</td>
             </tr>
-            <tr>
-              <td>State</td>
-              <td>{{ $aRows->state }}</td>
-            </tr>
+            
             <tr>
               <td>Zipcode</td>
               <td>{{ $aRows->zipcode }}</td>
@@ -126,30 +123,30 @@
               <td>Company Website</td>
               <td>{{ $aRows->company_website }}</td>
             </tr>
-            <!-- <tr>
+            <tr>
               <td>Company Email</td>
-              <td>{{ $aRows->company_email }}</td>
-            </tr> -->
-            <!-- <tr>
-              <td>Mobile</td>
-              <td>{{ $aRows->company_phone }}</td>
-            </tr> -->
-            <!-- <tr>
+              <td>{{ !empty($aRows->company_email) ? $aRows->company_email : 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td>Company Phone</td>
+              <td>{{ !empty($aRows->company_phone) ? $aRows->company_phone : 'N/A' }} </td>
+            </tr>
+            <tr>
               <td>Company Location</td>
-              <td>{{ $aRows->company_location }}</td>
+              <td>{{!empty($aRows->company_location) ? $aRows->company_location : 'N/A' }} </td>
             </tr>
             <tr>
               <td>Location Reason</td>
-              <td>{{ $aRows->company_location_reason }}</td>
+              <td>{{!empty($aRows->company_location_reason) ? $aRows->company_location_reason : 'N/A' }} </td>
             </tr>
             <tr>
               <td>Total Years</td>
-              <td>{{ $aRows->company_total_years }}</td>
+              <td>{{!empty($aRows->company_total_years) ? $aRows->company_total_years : 'N/A' }} </td>
             </tr>
             <tr>
               <td>About</td>
-              <td>{{ $aRows->about_company }}</td>
-            </tr> -->
+              <td>{{!empty($aRows->about_company) ? $aRows->about_company : 'N/A' }} </td>
+            </tr>
             <!-- <tr>
               <td>Company Logo</td>
               <td>
@@ -174,27 +171,40 @@
             <tbody>
             <tr>
               <td style="width: 200px;">Youtube Link</td>
-              <td>{{ optional($aRows->userDetails)->company_youtube_link ?? '' }}</td>
+              <td>{{ optional($aRows->userDetails)->company_youtube_link ?? 'N/A' }}</td>
             </tr>
             <tr>
-              <td>Facebook Link</td>
-              <td>{{ optional($aRows->userDetails)->fb_link ?? '' }}</td>
+              <td>Facebook</td>
+              <td>{{ optional($aRows->userDetails)->fb_link ?? 'N/A' }}</td>
             </tr>
             <tr>
-              <td>Twitter Link</td>
-              <td>{{ optional($aRows->userDetails)->twitter_link ?? '' }}</td>
+              <td>Twitter</td>
+              <td>{{ optional($aRows->userDetails)->twitter_link ?? 'N/A' }}</td>
             </tr>
             <tr>
-              <td>Other Link</td>
-              <td>{{ optional($aRows->userDetails)->link_desc ?? '' }}</td>
+              <td>TikTok</td>
+              <td>{{ optional($aRows->userDetails)->tiktok_link ?? 'N/A' }}</td>
             </tr>
+            <tr>
+              <td>Instagram</td>
+              <td>{{ optional($aRows->userDetails)->insta_link ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td>Linkedin</td>
+              <td>{{ optional($aRows->userDetails)->linkedin_link ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td>Extra Links</td>
+              <td>{{ optional($aRows->userDetails)->extra_links ?? 'N/A' }}</td>
+            </tr>
+            
             <tr>
               <td>Accreditations</td>
               <td><a href="{{ route('seller.sellerAccreditations',$aRows->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a></td>
             </tr>
             <tr>
-              <td>Profile Services</td>
-              <td><a href="{{ route('seller.sellerProfileServices',$aRows->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a></td>
+              <td>Services</td>
+              <td><a href="{{ route('seller.services',$aRows->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a></td>
             </tr>
             <!-- <tr>
               <td>Company Photos</td>
