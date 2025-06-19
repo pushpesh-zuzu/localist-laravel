@@ -363,21 +363,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendError('User not found');                                              
     }
 
-    public function getManualLeads(Request $request)
-    {
-        $lead = LeadRequest::find($request->lead_id);
-        if (!$lead) return $this->sendError(__('No Lead found'), 404);
-        $responseTimeFilter = $request->responseTimeFilter ?? [];
-        $ratingFilter = $request->rating ?? [];
-
-        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
-
-        if ($result['empty']) {
-            return $this->sendResponse(__('No Leads found'), [$result['response']]);
-        }
-
-        return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
-    }
+    
 
     public function sortByLocation(Request $request)
     {
@@ -438,6 +424,21 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
     }
 
+    public function getManualLeads(Request $request)
+    {
+        $lead = LeadRequest::find($request->lead_id);
+        if (!$lead) return $this->sendError(__('No Lead found'), 404);
+        $responseTimeFilter = $request->responseTimeFilter ?? [];
+        $ratingFilter = $request->rating ?? [];
+
+        $result = $this->FullManualLeadsCode($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
+
+        if ($result['empty']) {
+            return $this->sendResponse(__('No Leads found'), [$result['response']]);
+        }
+
+        return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
+    }
 
     private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null)
     {
