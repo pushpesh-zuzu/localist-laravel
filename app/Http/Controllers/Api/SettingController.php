@@ -94,7 +94,6 @@ class SettingController extends Controller
             // echo "<pre>";
             // print_r($aValues);
             // exit;
-            $type = "";
             if(isset($userdetails) && $userdetails != ''){
                 $userdetails->update([
                     'fb_link' => $aValues['fb_link'],
@@ -105,7 +104,6 @@ class SettingController extends Controller
                     'extra_links' => str_replace("\n", ",", $aValues['extra_links'])
                     
                 ]);  
-                echo $type = 'update';
             }else{
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
@@ -114,10 +112,9 @@ class SettingController extends Controller
                     'tiktok_link' => $aValues['tiktok_link'],
                     'insta_link' => $aValues['insta_link'],
                     'linkedin_link' => $aValues['linkedin_link'],
-                    'extra_links' => $aValues['extra_links'],
+                    'extra_links' => str_replace("\n", ",", $aValues['extra_links']),
                     'is_autobid' => 1
                 ]);
-                $type = 'new';
             }
         }
         if($aValues['type'] == 'accreditations'){
