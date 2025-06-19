@@ -28,9 +28,7 @@ class SettingController extends Controller
         
         $user_id = $request->user_id; 
         $aValues = $request->all();
-        echo "<pre>";
-        print_r($aValues);
-        exit;
+        
         $users = User::where('id',$user_id)->first();
         $userdetails = UserDetail::where('user_id',$user_id)->first();
         
@@ -93,6 +91,10 @@ class SettingController extends Controller
         }
 
         if($aValues['type'] == 'social_media'){
+            // echo "<pre>";
+            // print_r($aValues);
+            // exit;
+            $type = "";
             if(isset($userdetails) && $userdetails != ''){
                 $userdetails->update([
                     'fb_link' => $aValues['fb_link'],
@@ -103,6 +105,7 @@ class SettingController extends Controller
                     'extra_links' => $aValues['extra_links']
                     
                 ]);  
+                echo $type = 'update';
             }else{
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
@@ -114,6 +117,7 @@ class SettingController extends Controller
                     'extra_links' => $aValues['extra_links'],
                     'is_autobid' => 1
                 ]);
+                $type = 'new';
             }
         }
         if($aValues['type'] == 'accreditations'){
