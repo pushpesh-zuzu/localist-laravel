@@ -1663,6 +1663,8 @@ class LeadPreferenceController extends Controller
                                 ->whereIn('id', $savedLeadIds)
                                 ->orderBy('id', 'DESC')
                                 ->get();
+        //add lead view count
+        $savedLeads = $this->addLeadViewCount($savedLeads);
 
         if ($savedLeads->isEmpty()) {
             return $this->sendResponse(__('Saved Leads'), [
@@ -1673,7 +1675,7 @@ class LeadPreferenceController extends Controller
         }else{
             return $this->sendResponse(__('Saved Leads'), [
                 [
-                    'savedLeads' => $savedLeads
+                    'savedLeads' => $savedLeads->values()
                 ]
             ]);
         }
