@@ -432,14 +432,361 @@ class RecommendedLeadsController extends Controller
         $responseTimeFilter = $request->responseTimeFilter ?? [];
         $ratingFilter = $request->rating ?? [];
 
-        // $result = $this->fullManualLeadsCode($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
-        $result = $this->getYourMatchesSellers($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
+        $result = $this->fullManualLeadsCode($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
+        // $result = $this->getYourMatchesSellers($lead, 'asc', true, $responseTimeFilter, $ratingFilter);
 
         if ($result['empty']) {
             return $this->sendResponse(__('No Leads found'), [$result['response']]);
         }
 
         return $this->sendResponse(__('AutoBid Data'), [$result['response']]);
+    }
+    private function FullManualLeadsCode($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null)
+    {
+        $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
+        $settings = CustomHelper::setting_value("recommended_list_count", 0);
+        $autobid_limit = CustomHelper::setting_value("autobid_limit", 0);
+        $serviceId = $lead->service_id;
+        $leadCreditScore = $lead->credit_score;
+        $leadPostcode = $lead->postcode;
+        $customerId = $lead->customer_id;
+        $questions = json_decode($lead->questions, true);
+        $serviceName = Category::find($serviceId)->name ?? '';
+    
+        $filteredUserIds = null;
+        if (!empty($responseTimeFilter)) {
+            $timeThresholds = [
+                'Responds within 10 mins' => 10,
+                'Responds within 1 hour' => 60,
+                'Responds within 6 hours' => 360,
+                'Responds within 24 hours' => 1440,
+            ];
+            $maxAllowed = $timeThresholds[$responseTimeFilter] ?? null;
+    
+            if ($maxAllowed !== null) {
+                $filteredUserIds = DB::table('user_response_times')
+                    ->where('average', '<=', $maxAllowed)
+                    ->pluck('seller_id')
+                    ->toArray();
+            }
+            if (is_array($filteredUserIds) && count($filteredUserIds) === 0) {
+                return [
+                    'empty' => true,
+                    'response' => [
+                        'service_name' => $serviceName,
+                        'sellers' => [],
+                        'bidcount' => $bidCount,
+                        'totalbid' => $settings ?? 0,
+                        'baseurl' => url('/') . Storage::url('app/public/images/users')
+                    ]
+                ];
+            }
+        }
+    
+        $userServices = User::where('id', '!=', $customerId)
+        ->whereRaw("CAST(COALESCE(TRIM(total_credit), '0') AS UNSIGNED) > 0")
+            ->when($filteredUserIds, function ($query) use ($filteredUserIds) {
+                $query->whereIn('id', $filteredUserIds);
+            })
+            //rating filter
+            ->when(!is_null($ratingFilter), function ($query) use ($ratingFilter) {
+                if ($ratingFilter == 'no_rating') {
+                    $query->where('avg_rating',0);
+                } elseif ($ratingFilter == 5) {
+                    $query->where('avg_rating', '=', 5);
+                } else {
+                    $query->where('avg_rating', '>=', $ratingFilter);
+                }
+            })
+            ->whereIn('id', function ($query) use ($serviceId) {
+                $query->select('user_id')
+                    ->from('user_services')
+                    ->where('service_id', $serviceId);
+                    // ->where('auto_bid', 1);
+            })
+            ->orderByRaw('CAST(total_credit AS UNSIGNED) DESC')
+            ->select('id as user_id', 'total_credit')
+            ->get();
+        Log::debug('userServices:', $userServices->toArray());
+        if ($userServices->isEmpty()) {
+            return [
+                'empty' => true,
+                'response' => [
+                    'service_name' => $serviceName,
+                    'sellers' => [],
+                    'bidcount' => $bidCount,
+                    'totalbid' => $settings ?? 0,
+                    'baseurl' => url('/') . Storage::url('app/public/images/users')
+                ]
+            ];
+        }
+    
+        $sortedUserIds = $userServices->pluck('user_id')->toArray();
+    
+        // Get lead coordinates
+        $leadCoordinates = $this->getCoordinatesFromPostcode($leadPostcode);
+        if (!isset($leadCoordinates['lat'], $leadCoordinates['lng'])) {
+            return [
+                'empty' => true,
+                'response' => [
+                    'service_name' => $serviceName,
+                    'sellers' => [],
+                    'bidcount' => $bidCount,
+                    'totalbid' => $settings ?? 0,
+                    'baseurl' => url('/') . Storage::url('app/public/images/users')
+                ]
+            ];
+        }
+    
+        // Get all user service locations and calculate distance using Haversine
+        $userLocations = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+            ->where('service_id', $serviceId)
+            ->get()
+            ->groupBy('user_id');
+
+            Log::debug('userLocations:', $userLocations->toArray());
+    
+        // Filter based on Haversine distance or nation_wide = 1
+        $locationMatchedUsers = collect();
+        foreach ($userLocations as $userId => $locations) {
+            foreach ($locations as $location) {
+                $sellerCoordinates = json_decode($location->coordinates, true);
+                if (isset($sellerCoordinates['lat'], $sellerCoordinates['lng'])) {
+                    $distance = $this->calculateHaversineDistance(
+                        $leadCoordinates['lat'],
+                        $leadCoordinates['lng'],
+                        $sellerCoordinates['lat'],
+                        $sellerCoordinates['lng']
+                    );
+                    // if ($distance !== null && $distance > 0) {
+                    if ($distance !== null && $distance >= 0){
+                        $location->distance = $distance;
+                        $locationMatchedUsers[$userId] = $location;
+                        break; // Take the first valid match
+                    }
+                }
+            }
+        }
+    
+        // If no nearby match, fallback to nation_wide
+        // if ($locationMatchedUsers->isEmpty()) {
+         //Always include nationwide users, no distance calculation for them
+            $nationWide = UserServiceLocation::whereIn('user_id', $sortedUserIds)
+                ->where('service_id', $serviceId)
+                ->where('nation_wide', 1)
+                ->get()
+                ->groupBy('user_id');
+    
+            foreach ($nationWide as $userId => $locations) {
+                if (!$locationMatchedUsers->has($userId)) {
+                    $location = $locations->first();
+                    $location->distance = 0;
+                    $locationMatchedUsers[$userId] = $location;
+                }
+            }
+            Log::debug('locationMatcheduser:', $locationMatchedUsers->toArray());
+            if ($locationMatchedUsers->isEmpty()) {
+                return [
+                    'empty' => true,
+                    'response' => [
+                        'service_name' => $serviceName,
+                        'sellers' => [],
+                        'bidcount' => $bidCount,
+                        'totalbid' => $settings ?? 0,
+                        'baseurl' => url('/') . Storage::url('app/public/images/users')
+                    ]
+                ];
+            }
+        // }
+    
+        $matchedUserIds = $locationMatchedUsers->keys()->toArray();
+    
+        $questionTextToId = ServiceQuestion::whereIn('questions', collect($questions)->pluck('ques')->toArray())
+            ->pluck('id', 'questions')->toArray();
+    
+        $questionFilters = collect($questions)
+            ->filter(fn($q) => is_array($q) && isset($q['ques'], $questionTextToId[$q['ques']]))
+            ->map(fn($q) => ['question_id' => $questionTextToId[$q['ques']], 'answer' => $q['ans']]);
+    
+        
+        $matchedPreferences = collect();
+
+            foreach ($matchedUserIds as $userId) {
+                $allMatch = true;
+
+                foreach ($questionFilters as $filter) {
+                    $preference = LeadPrefrence::where('user_id', $userId)
+                        ->where('service_id', $serviceId)
+                        ->where('question_id', $filter['question_id'])
+                        ->first();
+
+                    if (!$preference) {
+                        $allMatch = false;
+                        break;
+                    }
+
+                    $sellerAnswers = array_map('trim', explode(',', $preference->answers ?? ''));
+                    $buyerAnswers = array_map('trim', explode(',', $filter['answer'] ?? ''));
+
+                    // ❌ If any buyer-selected answer is not in seller's preferences, exclude seller
+                    if (count(array_intersect($buyerAnswers, $sellerAnswers)) !== count($buyerAnswers)) {
+                        $allMatch = false;
+                        break;
+                    }
+                }
+
+                if ($allMatch) {
+                    $matchedPreferences->push(['user_id' => $userId]);
+                }
+            }
+
+
+
+        // Log::debug('Matched Question answer:', $matchedPreferences->toArray());
+        Log::debug('Matched Question answer:' . PHP_EOL . print_r($matchedPreferences->toArray(), true));
+        $scoredUsers = collect($matchedPreferences)->pluck('user_id')->flip()->map(fn() => 1);
+        // $scoredUsers = $matchedPreferences->groupBy('user_id')->map->count();
+    
+        $existingBids = RecommendedLead::where('buyer_id', $customerId)
+            ->where('lead_id', $lead->id)
+            ->pluck('seller_id')
+            ->toArray();
+    
+        $sellersWith3Bids = [];
+        if ($applySellerLimit) {
+            $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // e.g., 7 days
+
+            $sellersWith3Bids = RecommendedLead::select('seller_id', DB::raw('COUNT(*) as total_bids'), DB::raw('MIN(created_at) as first_bid_date'))
+                                                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                                                ->groupBy('seller_id')
+                                                ->having('total_bids', '>=', 3)
+                                                ->get()
+                                                ->filter(function ($record) {
+                                                    $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0);
+                                                    return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
+                                                })
+                                                ->pluck('seller_id')
+                                                ->toArray();
+            //  $sellersWith3Bids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
+            //                                     ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+            //                                     ->groupBy('seller_id')
+            //                                     ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
+            //                                     ->get()
+            //                                     ->filter(function ($record) {
+            //                                         $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0); // Use your config
+            //                                         return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
+            //                                     })
+            //                                     ->pluck('seller_id')
+            //                                     ->toArray();
+        }
+        // Log::debug('sellersWith3Bids:', $sellersWith3Bids);
+        Log::debug('sellersWith3Bids:' . PHP_EOL . print_r($sellersWith3Bids, true));
+        $responseTimesMap = DB::table('user_response_times')
+            ->whereIn('seller_id', $scoredUsers->keys()->toArray())
+            ->pluck('average', 'seller_id')
+            ->toArray();
+        
+        $finalUsers = $scoredUsers->filter(fn($score) => $score > 0)->keys()->map(function ($userId) use (
+            $locationMatchedUsers,
+            $leadCreditScore,
+            $scoredUsers,
+            $serviceName,
+            $serviceId,
+            $existingBids,
+            $sellersWith3Bids,
+            $applySellerLimit,
+            $lead,
+            $responseTimesMap
+        ) {
+            if (in_array($userId, $existingBids)) return null;
+            // if ($applySellerLimit && in_array($userId, $sellersWith3Bids)) return null;
+    
+            $user = User::where('id', $userId)->first();
+            Log::debug('User data:' . PHP_EOL . print_r($user, true));
+            if (!$user) return null;
+    
+            $userLocation = $locationMatchedUsers[$userId];
+            Log::debug('userLocation:' . PHP_EOL . print_r($userLocation, true));
+
+            $miles = $userLocation->distance ?? 0;
+            Log::debug('miles:' . PHP_EOL . print_r($miles, true));
+            
+            if ($miles < 0) return null;
+            // if ($miles === 0) return null;
+    
+            return array_merge($user->toArray(), [
+                'credit_score' => $leadCreditScore,
+                'service_name' => $serviceName,
+                'service_id' => $serviceId,
+                'distance' => $miles,
+                'score' => $scoredUsers[$userId] ?? 0,
+                'quicktorespond' => isset($responseTimesMap[$userId]) && $responseTimesMap[$userId] <= 720 ? 1 : 0,
+            ]);
+        })->filter();
+        // Log::debug('finalUsers:', $finalUsers->toArray());
+        $finalUsers = $distanceOrder === 'desc'
+            ? $finalUsers->sortByDesc('distance')->values()
+            : $finalUsers->sortBy('distance')->values();
+        // Log::debug('finalUsers distance:', $finalUsers->toArray());
+        Log::debug('finalUsers distance:' . PHP_EOL . print_r($finalUsers->toArray(), true));
+
+        // Split into recommended and general sellers
+        $recommendedLimit = $settings > 0 ? $settings : 0;
+        // Log::debug('finalUsers distance:', $finalUsers->toArray());
+        Log::debug('recommendedLimit:' . PHP_EOL . print_r($recommendedLimit, true));
+
+        // Dynamically calculate top credit sellers (80%) and nearest sellers (20%)
+        $topCreditCount = ceil($recommendedLimit * 0.8);
+        $nearestCount = $recommendedLimit - $topCreditCount;
+        Log::debug('nearestCount:' . PHP_EOL . print_r($nearestCount, true));
+
+
+        // Get top credit sellers excluding sellers who already have 3 autobids
+        // $topCreditSellers = $finalUsers->sortByDesc('total_credit')
+        //     ->filter(fn($u) => !in_array($u['id'] . '_' . $serviceId, $sellersWith3Bids))
+        //     ->take($topCreditCount);
+        // $topCreditSellers = $finalUsers->sortByDesc('total_credit')
+        //                         ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+        //                         ->take($topCreditCount);
+        $topCreditSellers = $finalUsers->sortByDesc('total_credit')
+                                        ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+                                        ->take($topCreditCount);
+        Log::debug('topCreditSellers:' . PHP_EOL . print_r($topCreditSellers, true));    
+
+        // Remove already selected top credit sellers from the pool
+        $remainingUsers = $finalUsers->reject(fn($u) => $topCreditSellers->contains('id', $u['id']));
+
+        // Adjust nearest count in case fewer top credit sellers were found
+        $adjustedNearestCount = $recommendedLimit - $topCreditSellers->count();
+
+        // Get nearest sellers from the remaining pool
+        $nearestSellers = $remainingUsers
+                        ->filter(fn($u) => !in_array($u['id'], $sellersWith3Bids))
+                        ->sortBy('distance')
+                        ->take($adjustedNearestCount);
+        // $nearestSellers = $remainingUsers->sortBy('distance')->take($adjustedNearestCount);
+
+        // Merge top credit + nearest sellers into final recommended list
+        $recommendedUsers = $topCreditSellers->merge($nearestSellers)->values();
+
+        // Sort all sellers by distance for fallback/general listing
+        $sortedAll = $finalUsers->sortBy('distance')->values();
+
+        // Merge recommended users first, then others not in recommended list
+        $mergedSellers = $recommendedUsers->concat(
+            $sortedAll->reject(fn($seller) => $recommendedUsers->contains('id', $seller['id']))
+        )->values();
+
+        return [
+            'empty' => false,
+            'response' => [
+                'service_name' => $serviceName,
+                'sellers' => $mergedSellers,
+                'bidcount' => $bidCount,
+                'totalbid' => $settings ?? 0,
+                'baseurl' => url('/') . Storage::url('app/public/images/users')
+            ]
+        ];
     }
 
     private function getYourMatchesSellers($lead, $distanceOrder = 'asc', $applySellerLimit = false, $responseTimeFilter = [], $ratingFilter = null){
