@@ -88,7 +88,7 @@ class LeadPreferenceController extends Controller
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
-            ->where('user_id', '<>', $user_id) //do not include self request leads
+            ->where('customer_id', '<>', $user_id) //do not include self request leads
             //closure condition
             ->where('status','!=','hired')
             ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString());
