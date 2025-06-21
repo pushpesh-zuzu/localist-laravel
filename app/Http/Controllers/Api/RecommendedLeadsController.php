@@ -140,7 +140,7 @@ class RecommendedLeadsController extends Controller
         //user rating filter
 
         echo "<pre>";
-        print_r($rows->toArray());
+        print_r($rows->get()->toArray());
         exit;
 
 
