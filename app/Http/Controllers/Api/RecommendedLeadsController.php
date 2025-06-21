@@ -499,11 +499,9 @@ class RecommendedLeadsController extends Controller
             })
             ->map(function ($r) use($serviceName){
                 $r->service_name= $serviceName;
-                $r->quicktorespond = $r->response_time <= 720 ? 1 : 0;
+                $r->quicktorespond = ($r->response_time > 0 && $r->response_time <= 720) ? 1 : 0;
                 return $r;
             });
-
-        
 
         // Step 4: Filter by distance using Haversine Formula
         $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
@@ -533,6 +531,7 @@ class RecommendedLeadsController extends Controller
             'response' => [
                 'service_name' => $serviceName,
                 'sellers' => $final,
+                'bid' => $leadCreditScore,
                 'displayCount' => $recommendedCount ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'w80' => (int) ($recommendedCount * 0.8)
@@ -710,6 +709,23 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
     }
 
+    public function buyerActivities(Request $request)
+    {
+        $aVals = $request->all();
+        $isActivity = ActivityLog::where('lead_id', $aVals['lead_id'])
+        ->where(function ($query) use ($aVals) {
+            $query->where(function ($q) use ($aVals) {
+                $q->where('from_user_id', $aVals['user_id']) // seller viewed buyer
+                  ->where('to_user_id', $aVals['buyer_id']);
+            })->orWhere(function ($q) use ($aVals) {
+                $q->where('from_user_id', $aVals['buyer_id']) // buyer viewed seller
+                  ->where('to_user_id', $aVals['user_id']);
+            });
+        })
+        ->get();
+        
+        return $this->sendResponse(__('Activity log'),$isActivity);     
+    }
     
 
 
@@ -718,126 +734,81 @@ class RecommendedLeadsController extends Controller
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
         }
-        
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
-        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
-        $creditscore = LeadRequest::where('id',$aVals['lead_id'])->pluck('credit_score')->first();
-        
-        // $settings = Setting::first();  
-        $settings = CustomHelper::setting_value("auto_bid_limit", 0);
-        if($aVals['bidtype'] == 'reply'){
-            $totalcredit = User::where('id',$aVals['seller_id'])->pluck('total_credit')->first();
-            $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                                        ->where('service_id', $aVals['service_id'])
-                                        ->where('buyer_id', $aVals['user_id'])
-                                        ->where('seller_id',$aVals['seller_id'])
-                                        ->first();
-            if($totalcredit >= $creditscore){
-                    // $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                //                ->where('service_id', $aVals['service_id'])
-                //                ->count();
-                $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback");
-                // ActivityLog::where('lead_id',$aVals['lead_id'])
-                //                               ->where('from_user_id',$aVals['user_id']) 
-                //                               ->where('to_user_id',$aVals['seller_id']) 
-                //                               ->where('activity_name',"Requested a callback") 
-                //                               ->first(); 
-                // if($bidCount==$settings->total_bid){
-                //     return $this->sendError(__('Bid Limit exceed'), 404);
-                // }
-                if(!empty($bidCheck)){
-                    return $this->sendError(__('Bid already placed for this seller'), 404);
-                }
-                $bids = RecommendedLead::create([
-                    'service_id' => $aVals['service_id'], 
-                    'seller_id' => $aVals['seller_id'], 
-                    'buyer_id' => $aVals['user_id'], //buyer
-                    'lead_id' => $aVals['lead_id'], 
-                    'bid' => $aVals['bid'], 
-                    'distance' => $aVals['distance'], 
-                    'purchase_type' => "Request Reply"
-                ]); 
-                LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
-                if(empty($isDataExists)){
-                    LeadStatus::create([
-                    'lead_id' => $aVals['lead_id'],
-                        'user_id' => $aVals['user_id'],
-                        'status' => 'pending',
-                        'clicked_from' => 2,
-                    ]);  
-                }   
-                if(empty($isActivityExists)){
-                    self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback", "Request Reply", $leadtime);
-                    // ActivityLog::create([
-                    //      'lead_id' => $aVals['lead_id'],
-                    //      'from_user_id' => $aVals['user_id'],
-                    //      'to_user_id' => $aVals['seller_id'],
-                    //      'activity_name' => "Requested a callback",
-                    //  ]);  
-                }
-                $detail = $aVals['bid'] . " credit deducted for Request Reply";
-                DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $aVals['bid']);
-                CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $aVals['bid'], $detail, 0, 1, $error_response='');
-            }else{
-                return $this->sendError(__("Seller don't have sufficient balance"), 404);
-            }                           
-           
+        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+        $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
+        $autoBidLimit = CustomHelper::setting_value("autobid_limit", 0);
+        $totalCredit = User::where('id',$aVals['seller_id'])->value('total_credit');
+        //check if seller has enough credits
+        if($creditScore > $totalCredit){
+            return $this->sendError(__("Seller don't have sufficient balance"), 404);
         }
-        if($aVals['bidtype'] == 'purchase_leads'){
-            $bidsdata = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                                       ->where('service_id', $aVals['service_id'])
-                                       ->where('seller_id', $aVals['user_id'])
-                                       ->where('buyer_id',$aVals['buyer_id'])
-                                       ->first();
-            $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
-            $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
-            $activityname = 'You Contacted '. $buyer;
-            // $bidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
-            //                ->where('service_id', $aVals['service_id'])
-            //                ->count();
-            $isActivityExists = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
-            // if($bidCount==$settings->total_bid){
-            //     return $this->sendError(__('Bid Limit exceed'), 404);
-            // }
-            if(!empty($bidCheck)){
-                return $this->sendError(__('Bid already placed for this Buyer'), 404);
-            }
+        //check if same seller has placed bid or not for this lead
+        $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
+            ->where('service_id', $aVals['service_id'])
+            ->where('buyer_id', $aVals['user_id'])
+            ->where('seller_id',$aVals['seller_id'])
+            ->first();
+        if(!empty($bidCheck)){
+            return $this->sendError('Bid Already Placed for this seller', 404);
+        }
+        // check if 5 bids has been placed on this lead or not
+        $slotCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
+            ->where('service_id', $aVals['service_id'])
+            ->count();
+        if($slotCount >=5){
+            return $this->sendError('Five slots has been full! No more bids can be placed.', 404);
+        }
+        $info = "";
+        if($aVals['bidtype'] == 'reply'){
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
-                'seller_id' => $aVals['user_id'], //seller
-                'buyer_id' => $aVals['buyer_id'], 
+                'seller_id' => $aVals['seller_id'], 
+                'buyer_id' => $aVals['user_id'], //buyer
                 'lead_id' => $aVals['lead_id'], 
-                'bid' => $aVals['bid'], 
-                'distance' => $aVals['distance'],
-                'purchase_type' => "Manual Bid" 
-            ]); 
-            LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
-            SaveForLater::where('seller_id',$aVals['user_id'])
-                        ->where('user_id',$aVals['buyer_id'])  
-                        ->where('lead_id',$aVals['lead_id'])
-                        ->delete();
-
-            if(empty($isDataExists)){
-                LeadStatus::create([
-                    'lead_id' => $aVals['lead_id'],
-                    'user_id' => $aVals['user_id'],
-                    'status' => 'pending',
-                    'clicked_from' => 1,
-                ]);  
-            }          
-            if(empty($isActivityExists)){
-                self::addActivityLog($aVals['user_id'], $aVals['buyer_id'], $aVals['lead_id'], $activityname, "Manual Bid", $leadtime);
-                // ActivityLog::create([
-                //      'lead_id' => $aVals['lead_id'],
-                //      'from_user_id' => $aVals['user_id'],
-                //      'to_user_id' => $aVals['buyer_id'],
-                //      'activity_name' => "Contacted Buyer",
-                //  ]);  
-            }
-            $detail = $aVals['bid'] . " credit deducted for Contacting to Customer";
-            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $aVals['bid']);
-            CustomHelper::createTrasactionLog($aVals['user_id'], 0, $aVals['bid'], $detail, 0, 1, $error_response='');
+                'bid' => $creditScore, 
+                'distance' => $aVals['distance'], 
+                'purchase_type' => "Request Reply"
+            ]);
+            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback", "Request Reply", $leadTime);
+            $info = $creditScore . " credit deducted for Request Reply";            
+        }else if($aVals['bidtype'] == 'purchase_leads'){
+            $sellerName = User::where('id',$aVals['user_id'])->value('name');
+            $buyerName = User::where('id',$aVals['user_id'])->value('name');
+            $bids = RecommendedLead::create([
+                'service_id' => $aVals['service_id'], 
+                'seller_id' => $aVals['seller_id'], 
+                'buyer_id' => $aVals['user_id'], //buyer
+                'lead_id' => $aVals['lead_id'], 
+                'bid' => $creditScore, 
+                'distance' => $aVals['distance'], 
+                'purchase_type' => "Manual Bid"
+            ]);
+            $activityname = 'You Contacted '. $buyerName;
+            self::addActivityLog($aVals['user_id'], $aVals['user_id'], $aVals['lead_id'], $activityname, "Manual Bid", $leadTime);
+            $info = $creditScore . " credit deducted for Contacting to Customer";
         }
+
+
+        LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
+        //remove from save for later
+        SaveForLater::where('seller_id',$aVals['user_id'])
+            ->where('user_id',$aVals['user_id'])  
+            ->where('lead_id',$aVals['lead_id'])
+            ->delete();
+        if(empty($isDataExists)){
+            LeadStatus::create([
+            'lead_id' => $aVals['lead_id'],
+                'user_id' => $aVals['user_id'],
+                'status' => 'pending',
+                'clicked_from' => 2,
+            ]);  
+        }
+        //deduct credit
+        DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $creditScore);
+        //create transaction log
+        CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $info, 1, 1, $error_response='');
+
        
         return $this->sendResponse(__('Bids placed successfully'),[]);
     }
