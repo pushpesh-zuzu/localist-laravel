@@ -409,6 +409,7 @@ class RecommendedLeadsController extends Controller
 
     private function getAllSellers($lead, $filters = [], $autobid = false){
         // echo "<pre>";print_r($filters);exit;
+        $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
@@ -531,8 +532,8 @@ class RecommendedLeadsController extends Controller
             'response' => [
                 'service_name' => $serviceName,
                 'sellers' => $final,
-                'bid' => $leadCreditScore,
-                'displayCount' => $recommendedCount ?? 0,
+                'bidcount' => $bidCount,
+                'totalbid' => $recommendedCount ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'w80' => (int) ($recommendedCount * 0.8)
             ]
