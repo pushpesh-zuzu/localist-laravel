@@ -139,9 +139,9 @@ class RecommendedLeadsController extends Controller
             );
         //user rating filter
 
-        echo "<pre>";
-        print_r($rows->get()->toArray());
-        exit;
+        // echo "<pre>";
+        // print_r($refPostcode);
+        // exit;
 
 
         if(!empty($filters['rating'])){
