@@ -107,7 +107,7 @@ class RecommendedLeadsController extends Controller
 
         // Step 2: Preselect user_service_locations using simplified logic
         $rows = DB::table('user_service_locations as usl')
-            ->join('users', function ($join) use ($repliesUsers) {
+            ->join('users', function ($join)  {
                 $join->on('users.id', '=', 'usl.user_id')
                     ->where('users.form_status', 1);
                     // ->whereNotIn('users.id', $repliesUsers);
