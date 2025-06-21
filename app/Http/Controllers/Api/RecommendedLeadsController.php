@@ -383,9 +383,9 @@ class RecommendedLeadsController extends Controller
             $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
             $w80 = (int) ($recommendedCount * 0.8);
             
-            // Step 1: Sort all by total_credit DESC
+            // Step 1: Sort all by credit_score DESC
             $sorted = $result['response']['sellers']
-                ->sortByDesc('total_credit')           
+                ->sortByDesc('credit_score')           
                 ->values();
 
             $topN = $sorted->take($w80); //Step 2: Take first 4
@@ -458,7 +458,7 @@ class RecommendedLeadsController extends Controller
                 'users.id as id',
                 'users.name',
                 'users.profile_image',
-                'users.total_credit',
+                'users.total_credit as credit_score',
                 'users.avg_rating',
                 'users.form_status',
                 'user_details.is_autobid',
@@ -536,12 +536,11 @@ class RecommendedLeadsController extends Controller
         }
 
         return [
-            'empty' => false,
+            'empty' => empty($final) ? true : false,
             'response' => [
                 'service_name' => $serviceName,
                 'sellers' => $final,
-                'bidcount' => $bidCount,
-                'totalbid' => $recommendedCount ?? 0,
+                'displayCount' => $recommendedCount ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'w80' => (int) ($recommendedCount * 0.8)
             ]
@@ -823,110 +822,12 @@ class RecommendedLeadsController extends Controller
     }
     
 
-    public function addMultipleManualBid(Request $request)
-    {
+    public function addMultipleManualBid(Request $request){
         $aVals = $request->all();
         $buyerId = $aVals['user_id'];
         $leadId = $aVals['lead_id'];
         $inserted = 0;
-        $isDataExists = LeadStatus::where('lead_id', $leadId)->where('status', 'pending')->first();
-        $settings = CustomHelper::setting_value("auto_bid_limit", 0);
-        $currentCount = RecommendedLead::where('lead_id', $leadId)->count();
-        // $settings = Setting::first();
-
-        // Step 1: Insert manual sellers from request first (priority)
-        foreach ($aVals['seller_id'] as $index => $sellerId) {
-             if ($currentCount >= $settings) {
-                break; // Stop if limit reached
-            }   
-            $alreadyExists = RecommendedLead::where('buyer_id', $buyerId)
-                ->where('lead_id', $leadId)
-                ->where('seller_id', $sellerId)
-                ->exists();
-
-            if (!$alreadyExists) {
-                $bidAmount = $aVals['bid'][$index];
-
-                $user = DB::table('users')->where('id', $sellerId)->first();
-                if ($user && $user->total_credit >= $bidAmount) {
-                    $detail = $bidAmount . " credit deducted for Your Matches";
-                    DB::table('users')->where('id', $sellerId)->decrement('total_credit', $bidAmount);
-                    CustomHelper::createTrasactionLog($sellerId, 0, $bidAmount, $detail, 0, 1, $error_response='');
-                    RecommendedLead::create([
-                        'buyer_id' => $buyerId,
-                        'lead_id' => $leadId,
-                        'seller_id' => $sellerId,
-                        'service_id' => $aVals['service_id'][$index],
-                        'bid' => $bidAmount,
-                        'distance' => $aVals['distance'][$index],
-                        'purchase_type' => "Best Matches"
-                    ]);
-                    $inserted++;
-                    $currentCount++; // Track how many have been inserted
-                }
-            }
-        }
-
-        // Step 2: Calculate how many more we need
-        $remainingSlots = $settings - $currentCount;
-
-        if ($remainingSlots > 0) {
-            // Step 3: Fetch and sort remaining sellers by bid
-            $response = $this->getManualLeads($request)->getData();
-
-            if (!empty($response->data[0]->sellers)) {
-                $remainingSellers = collect($response->data[0]->sellers)
-                    ->reject(function ($seller) use ($buyerId, $leadId) {
-                        return RecommendedLead::where('buyer_id', $buyerId)
-                            ->where('lead_id', $leadId)
-                            ->where('seller_id', $seller->id)
-                            ->exists();
-                    })
-                    ->sortBy('bid') // prioritize lower bids
-                    ->take($remainingSlots);
-
-                foreach ($remainingSellers as $seller) {
-                    $bidAmount = $seller->bid ?? 0;
-
-                    $user = DB::table('users')->where('id', $seller->id)->first();
-                    if ($user && $user->total_credit >= $bidAmount) {
-                        $detail = $bidAmount . " credit deducted for Your Matches";
-                        DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
-                        CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
-                        RecommendedLead::create([
-                            'buyer_id' => $buyerId,
-                            'lead_id' => $leadId,
-                            'seller_id' => $seller->id,
-                            'service_id' => $seller->service_id,
-                            'bid' => $bidAmount,
-                            'distance' => $seller->distance ?? 0,
-                            'purchase_type' => "Autobid"
-                        ]);
-                        $inserted++;
-                        $currentCount++; // Track how many have been inserted
-                    }
-                        if ($currentCount >= $settings) {
-                            break; // stop if limit reached during auto-bids
-                        }
-                }
-            }
-        }
-
-        LeadRequest::where('id', $leadId)->update(['should_autobid' => 1, 'status' => "pending"]);
-
-        if (empty($isDataExists)) {
-            LeadStatus::create([
-                'lead_id' => $leadId,
-                'user_id' => $buyerId,
-                'status' => 'pending',
-                'clicked_from' => 2,
-            ]);
-        }
-
-        return $this->sendResponse(__('Bids placed successfully'), [
-            'inserted_count' => $inserted,
-            'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
-        ]);
+        echo "<pre>";print_r($aVals);
     }
 
     public function closeLeads()
