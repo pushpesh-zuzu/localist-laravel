@@ -113,7 +113,7 @@ class RecommendedLeadsController extends Controller
             
             // Step 1: Sort all by credit_score DESC
             $sorted = $result['response']['sellers']
-                ->sortByDesc('credit_score')           
+                ->sortByDesc('total_credit')           
                 ->values();
 
             $topN = $sorted->take($w80); //Step 2: Take first 4
@@ -128,17 +128,12 @@ class RecommendedLeadsController extends Controller
             return $this->sendResponse('No Seller Found!', [$result['response']]);
         }
         
-
-        
-
         return $this->sendResponse('Your Matches List', [$result['response']]);
     }
     
 
     private function getAllSellers($lead, $filters = [], $autobid = false){
-        // echo "<pre>";print_r($filters);exit;
-        $bidCount = RecommendedLead::where('lead_id', $lead->id)->count();
-        $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
+        $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
         $refPostcode = $lead->postcode;
@@ -200,13 +195,7 @@ class RecommendedLeadsController extends Controller
                 'p.latitude as lat',
                 'p.longitude as lng'
             );
-        //user rating filter
-
-        // echo "<pre>";
-        // print_r($refPostcode);
-        // exit;
-
-
+       
         if(!empty($filters['rating'])){
             if($filters['rating'] === 'no_rating'){
                 $rows = $rows->where('users.avg_rating', 0);
@@ -482,6 +471,7 @@ class RecommendedLeadsController extends Controller
         $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
         $autoBidLimit = CustomHelper::setting_value("autobid_limit", 0);
         $totalCredit = User::where('id',$aVals['seller_id'])->value('total_credit');
+        $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         //check if seller has enough credits
         if($creditScore > $totalCredit){
             return $this->sendError(__("Seller don't have sufficient balance"), 404);
@@ -496,11 +486,12 @@ class RecommendedLeadsController extends Controller
             return $this->sendError('Bid Already Placed for this seller', 404);
         }
         // check if 5 bids has been placed on this lead or not
-        $slotCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
+        $totalBidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
             ->where('service_id', $aVals['service_id'])
             ->count();
-        if($slotCount >=5){
-            return $this->sendError('Five slots has been full! No more bids can be placed.', 404);
+        if($totalBidCount >= $leadSlotCount){
+            $word = CustomHelper::numberToWords($leadSlotCount);
+            return $this->sendError($word .' slots has been full! No more bids can be placed.', 404);
         }
         $info = "";
         if($aVals['bidtype'] == 'reply'){
@@ -555,14 +546,33 @@ class RecommendedLeadsController extends Controller
        
         return $this->sendResponse(__('Bids placed successfully'),[]);
     }
-    
+
+    private function tt(Request $request){
+        return $this->sendError('Five slots has been full! No more bids can be placed.', 404);
+        return $this->sendResponse('testing function');
+    }
 
     public function addMultipleManualBid(Request $request){
         $aVals = $request->all();
+        $request['bidtype'] = 'reply';
         $buyerId = $aVals['user_id'];
         $leadId = $aVals['lead_id'];
         $inserted = 0;
-        echo "<pre>";print_r($aVals);
+        foreach ($aVals['seller_id'] as $index => $sellerId) {
+            $request->replace($request->only(['user_id', 'lead_id','bidtype']));
+            $request['service_id'] = $aVals['service_id'][$index];
+            $request['distance'] = $aVals['distance'][$index];
+            $request['seller_id'] = $sellerId;
+            $fResponse =  $this->addManualBid($request);
+            $fData = json_decode($fResponse->getContent(), true);
+            if (!empty($fData['success'])) {
+                $inserted++;
+            }
+        }
+        return $this->sendResponse('Bids placed successfully', [
+            'inserted_count' => $inserted,
+            'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
+        ]);
     }
 
     public function closeLeads()

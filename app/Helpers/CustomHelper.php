@@ -11,6 +11,10 @@ use App\Models\Postcode;
 
 class CustomHelper
 {
+    public static function numberToWords($number){
+        $f = new \NumberFormatter('en', \NumberFormatter::SPELLOUT);
+        return ucfirst($f->format($number));
+    }
     public static function getPostcodesWithinRadius($postcode, $radius = 0, $km=false){
         $val = $km ? 6371 : 3959;
 
