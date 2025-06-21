@@ -101,16 +101,16 @@ class RecommendedLeadsController extends Controller
         $refLng = $ref->longitude;
 
         // users who have contacted this lead
-        // $repliesUsers = RecommendedLead::where('lead_id', $lead->id)
-        //     ->where('service_id', $serviceId)
-        //     ->pluck('seller_id')->toArray();
+        $repliesUsers = RecommendedLead::where('lead_id', $lead->id)
+            ->where('service_id', $serviceId)
+            ->pluck('seller_id')->toArray();
 
         // Step 2: Preselect user_service_locations using simplified logic
         $rows = DB::table('user_service_locations as usl')
-            ->join('users', function ($join)  {
+            ->join('users', function ($join) use ($repliesUsers)  {
                 $join->on('users.id', '=', 'usl.user_id')
-                    ->where('users.form_status', 1);
-                    // ->whereNotIn('users.id', $repliesUsers);
+                    ->where('users.form_status', 1)
+                    ->whereNotIn('users.id', $repliesUsers);
                     
             })
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
@@ -138,6 +138,12 @@ class RecommendedLeadsController extends Controller
                 'p.longitude as lng'
             );
         //user rating filter
+
+        echo "<pre>";
+        print_r($rows->toArray());
+        exit;
+
+
         if(!empty($filters['rating'])){
             if($filters['rating'] === 'no_rating'){
                 $rows = $rows->where('users.avg_rating', 0);
