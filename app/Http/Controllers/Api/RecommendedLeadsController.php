@@ -418,7 +418,7 @@ class RecommendedLeadsController extends Controller
         $question = $lead->arrayed_questions;
         $serviceName = Category::find($serviceId)->name ?? '';
         
-        if (!is_array(json_decode($arrayedQuestions, true))) {
+        if (!is_array(json_decode($question, true))) {
             return $this->sendError('Invalid or missing lead questions', 404);
         }
 
