@@ -433,11 +433,17 @@ class RecommendedLeadsController extends Controller
         $refLat = $ref->latitude;
         $refLng = $ref->longitude;
 
+        // users who have contacted this lead
+        $repliesUsers = RecommendedLead::where('lead_id', $lead->id)
+            ->where('service_id', $serviceId)
+            ->pluck('seller_id')->toArray();
+
         // Step 2: Preselect user_service_locations using simplified logic
         $rows = DB::table('user_service_locations as usl')
-            ->join('users', function ($join) use ($leadCreditScore) {
+            ->join('users', function ($join) use ($repliesUsers) {
                 $join->on('users.id', '=', 'usl.user_id')
-                    ->where('users.form_status', 1);
+                    ->where('users.form_status', 1)
+                    ->whereNotIn('users.id', $repliesUsers);
                     
             })
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
