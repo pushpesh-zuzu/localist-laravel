@@ -35,16 +35,9 @@ class RecommendedLeadsController extends Controller
     {
         $user_id = $request->user_id; 
         $autobid = $request->is_autobid;
-        $userdetails = UserDetail::where('user_id',$user_id)->first();
-        if(isset($userdetails) && $userdetails != ''){
-            $userdetails->update(['is_autobid' => $autobid]);
-        }else{
-            $userdetails = UserDetail::create([
-                'user_id'  => $user_id,
-                'is_autobid' => $autobid
-            ]);
-        }
-        $data = $userdetails;
+        $data['is_autobid'] = $autobid;
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        UserDetail::where('user_id', $user_id)->update($data);
         return $this->sendResponse(__('Autobid switched successfully'),$data );   
     }
 
