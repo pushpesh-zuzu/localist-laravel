@@ -30,6 +30,18 @@ use Illuminate\Support\Facades\Log;
 
 class RecommendedLeadsController extends Controller
 {
+
+    public function getSwitchAutobid(Request $request){ 
+        $aVals = $request->all();
+        $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
+        if(!empty($isDataExists)){
+            return $this->sendResponse(__('Autobid Switch Data'), [
+                'isautobid' => $isDataExists->is_autobid
+            ]);
+        }      
+        return $this->sendError('User not found');                                              
+    }
+    
     public function getRecommendedLeads(Request $request) 
     {
         $seller_id = $request->user_id; 
