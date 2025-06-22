@@ -207,6 +207,8 @@ class RecommendedLeadsController extends Controller
     }
 
     private function getAllSellers($lead, $filters = [], $autobid = false){
+        // echo "<pre>";print_r($lead->toArray());exit;
+
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
@@ -250,7 +252,7 @@ class RecommendedLeadsController extends Controller
             ->leftJoin('user_response_times as urt', 'urt.seller_id', '=', 'usl.user_id')
             ->where('users.id' ,'<>', $lead->customer_id) //do not include self as seller
             ->where('usl.service_id', $serviceId)
-            ->where('users.total_credit', '>=', $leadCreditScore)
+            ->where('users.total_credit', '>=', (int) $leadCreditScore)
             ->select(
                 'users.id as id',
                 'users.name',
@@ -269,6 +271,8 @@ class RecommendedLeadsController extends Controller
                 'p.latitude as lat',
                 'p.longitude as lng'
             );
+
+            // echo "<pre>";print_r($rows->get()->toArray());exit;
 
         //for autobid sellers include below contions
         if($autobid){
@@ -319,6 +323,8 @@ class RecommendedLeadsController extends Controller
         }    
             
         $rows = $rows->get();
+
+        
 
         // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
