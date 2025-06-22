@@ -31,6 +31,23 @@ use Illuminate\Support\Facades\Log;
 class RecommendedLeadsController extends Controller
 {
 
+    public function switchRecommendedLeads(Request $request): JsonResponse
+    {
+        $user_id = $request->user_id; 
+        $autobid = $request->is_autobid;
+        $userdetails = UserDetail::where('user_id',$user_id)->first();
+        if(isset($userdetails) && $userdetails != ''){
+            $userdetails->update(['is_autobid' => $autobid]);
+        }else{
+            $userdetails = UserDetail::create([
+                'user_id'  => $user_id,
+                'is_autobid' => $autobid
+            ]);
+        }
+        $data = $userdetails;
+        return $this->sendResponse(__('Autobid switched successfully'),$data );   
+    }
+    
     public function getSwitchAutobid(Request $request){ 
         $aVals = $request->all();
         $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
@@ -41,7 +58,7 @@ class RecommendedLeadsController extends Controller
         }      
         return $this->sendError('User not found');                                              
     }
-    
+
     public function getRecommendedLeads(Request $request) 
     {
         $seller_id = $request->user_id; 
