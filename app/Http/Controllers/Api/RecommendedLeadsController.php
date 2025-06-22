@@ -47,7 +47,7 @@ class RecommendedLeadsController extends Controller
         $data = $userdetails;
         return $this->sendResponse(__('Autobid switched successfully'),$data );   
     }
-    
+
     public function getSwitchAutobid(Request $request){ 
         $aVals = $request->all();
         $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
@@ -427,9 +427,9 @@ class RecommendedLeadsController extends Controller
                 $userAnswers = $prefMap[$question] ?? [];
 
                 // Log for debugging
-                // logger("User ID: $userId | Question: {$q['ques']} => $question");
-                // logger("Lead Answers: ", $leadAnswers);
-                // logger("User Prefs: ", $userAnswers);
+                logger("User ID: $userId | Question: {$q['ques']} => $question");
+                logger("Lead Answers: ", $leadAnswers);
+                logger("User Prefs: ", $userAnswers);
 
                 // Case 4: match if user pref contains "other"
                 if (in_array('other', $userAnswers)) {
@@ -438,16 +438,16 @@ class RecommendedLeadsController extends Controller
 
                 // Case 3: exclude if no overlap
                 if (empty(array_intersect($leadAnswers, $userAnswers))) {
-                    // logger("❌ Mismatch on: {$q['ques']}");
-                    // logger("Lead Answers: ", $leadAnswers);
-                    // logger("User Prefs: ", $userAnswers);
+                    logger("❌ Mismatch on: {$q['ques']}");
+                    logger("Lead Answers: ", $leadAnswers);
+                    logger("User Prefs: ", $userAnswers);
                     $matchedAll = false;
                     break;
                 }
             }
 
             if ($matchedAll) {
-                // logger("✅ Matched user: $userId");
+                logger("✅ Matched user: $userId");
                 $matchingUserIds[] = $userId;
             }
         }
