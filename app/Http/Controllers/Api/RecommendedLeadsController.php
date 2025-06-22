@@ -271,9 +271,6 @@ class RecommendedLeadsController extends Controller
                 'p.latitude as lat',
                 'p.longitude as lng'
             );
-
-            print_r(json_encode($rows->get()->pluck('id')->toArray()));
-
         //for autobid sellers include below contions
         if($autobid){
 
@@ -339,7 +336,6 @@ class RecommendedLeadsController extends Controller
                 return $r;
             });
 
-        print_r(json_encode($grouped->pluck('id')));
 
         // Step 4: Filter by distance using Haversine Formula
         $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
@@ -349,9 +345,7 @@ class RecommendedLeadsController extends Controller
             );
 
             $row->distance = (double) round($distance, 2); // add distance field
-            print_r("row: " .$row->postcode .'; row-lat: ' .$row->lat ."; roe-long: " .$row->lng ." \n");
-            print_r("ref: " .$refPostcode .'; row-lat: ' .$refLat ."; roe-long: " .$refLng ."; dist: " .$distance ."; \n\n\n");
-
+            
             return $row->nation_wide == 1
                 || $row->postcode == $refPostcode
                 || $row->miles >= $distance;
