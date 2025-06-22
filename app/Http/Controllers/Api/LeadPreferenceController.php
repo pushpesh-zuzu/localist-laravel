@@ -1236,14 +1236,8 @@ class LeadPreferenceController extends Controller
     public function leadsByFilter(Request $request){
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
-        $spotlights = [
-            'All lead spotlights' => 'all',
-            'Urgent requests' => 'is_urgent',
-            'Updated requests' => 'is_updated',
-            'Has additional details' => 'has_additional_details',
-        ];
         
-        $leadSpotlights = self::filterCount($spotlights, $user_id);
+        $leadSpotlights = self::getSpotligths($user_id);
         $leadTimeCounts = self::getLeadTimeData($user_id);
         $services = self::getFilterservices1($user_id);
         $location = self::getFilterLocations1($user_id);
@@ -1263,74 +1257,23 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse(__('Filter Data'),$datas);
     }
 
-    public function filterCount($spotlights, $user_id)
+    public function getSpotligths($user_id)
     {
-        $leadSpotlights = [];
-        
-        $filters = [
-            'postcode' => null, // Add if using distance filtering
-            'miles' => null,
-            'unread' => null, // Add if needed
-            'service_ids' => [], // Add if filtering by services
-            'credit_ranges' => [], // Same
-            'lead_time' => null, // Same
+        $spotlights = [
+            'All lead spotlights',
+            'Urgent requests',
+            'Updated requests',
+            'Has additional details',
         ];
-
-        foreach ($spotlights as $label => $column) {
-            $query = $this->getFilteredLeadQuery($user_id, $filters);
-
-            if ($column !== 'all') {
-                $query = $query->where($column, 1);
-            }
-
-            $leads = $query->get();
-
-            // Now filter by answer match
-            $preferenceMap = $this->getUserPreferenceMap($user_id);
-            
-
-             $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
-            $leadQuestions = json_decode($lead->questions, true);
-            if (!is_array($leadQuestions)) return false;
-           
-            foreach ($leadQuestions as $q) {
-                $buyerAnswers = (array) $q['ans'];
-  
-                foreach ($buyerAnswers as $rawAnswer) {
-                     // Split multiple answers by comma
-                    $answers = array_map('trim', explode(',', $rawAnswer));
-
-                    foreach ($answers as $answer) {
-                        if (!isset($preferenceMap[$answer])) {
-                            return false; // One of the answers not matched by seller
-                        }
-                    }
-                }
-            }
-
-            return true;
-        });
-            // $filteredLeads = $leads->filter(function ($lead) use ($preferenceMap) {
-            //     $leadQuestions = json_decode($lead->questions, true);
-            //     if (!is_array($leadQuestions)) return false;
-
-            //     foreach ($leadQuestions as $q) {
-            //         $buyerAnswers = (array) $q['ans'];
-            //         foreach ($buyerAnswers as $rawAnswer) {
-            //             $answers = array_map('trim', explode(',', $rawAnswer));
-            //             foreach ($answers as $answer) {
-            //                 if (!isset($preferenceMap[$answer])) {
-            //                     return false;
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     return true;
-            // });
-
+        $leadSpotlights = [];
+        foreach ($spotlights as $sp) {
+            $query = $this->getBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
+            $allLeads = $query->orderBy('id', 'asc')->get();
+            //Macting as per seller pref
+            $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
             $leadSpotlights[] = [
-                'spotlight' => $label,
-                'count' => $filteredLeads->count(),
+                'spotlight' => $sp,
+                'count' => count($allLeads),
             ];
         }
 
@@ -1338,35 +1281,27 @@ class LeadPreferenceController extends Controller
     }
 
 
-    public static function getLeadTimeData($user_id = null)
+    private function getLeadTimeData($user_id = null)
     {
-        $now = Carbon::now();
-        $instance = new self(); // because basequery is not static
-        $baseQuery = $instance->basequery($user_id);
-
         $timeFilters = [
-            'Any time' => function () use ($baseQuery) {
-                return (clone $baseQuery)->count();
-            },
-            'Today' => function () use ($baseQuery, $now) {
-                return (clone $baseQuery)->whereDate('created_at', $now->toDateString())->count();
-            },
-            'Yesterday' => function () use ($baseQuery, $now) {
-                return (clone $baseQuery)->whereDate('created_at', $now->copy()->subDay()->toDateString())->count();
-            },
-            'Last 2-3 days' => function () use ($baseQuery, $now) {
-                return (clone $baseQuery)->whereDate('created_at', '>=', $now->copy()->subDays(3))->count();
-            },
-            'Last 7 days' => function () use ($baseQuery, $now) {
-                return (clone $baseQuery)->whereDate('created_at', '>=', $now->copy()->subDays(7))->count();
-            },
+            'Today',
+            'Yesterday',
+            'Last 2-3 days',
+            'Last 7 days',
+            'Last 14+ days'
         ];
 
         $result = [];
-        foreach ($timeFilters as $label => $callback) {
+        foreach ($timeFilters as $time) {
+            $baseQuery = $this->getBaseQuery($user_id, null, null, ['lead_time' => $time]);
+            
+            $allLeads = $baseQuery->orderBy('id', 'asc')->get();
+
+            //Macting as per seller pref
+            $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
             $result[] = [
-                'time' => $label,
-                'count' => $callback(),
+                'time' => $time,
+                'count' => count($allLeads),
             ];
         }
 
@@ -1380,7 +1315,7 @@ class LeadPreferenceController extends Controller
 
         foreach ($categories as $category) {
             // Use basequery to get all lead IDs matching filters
-            $leads = $this->basequery($user_id)->where('service_id', $category->id)->get();
+            $leads = $this->getBaseQuery($user_id)->where('service_id', $category->id)->get();
             $category['locations'] = UserServiceLocation::where('user_id', $user_id)->where('service_id', $category->id)->count();
             $category['leadcount'] = $leads->count();
         }
@@ -1395,7 +1330,7 @@ class LeadPreferenceController extends Controller
 
         foreach ($uniqueRows as $row) {
             // Use basequery and apply postcode match
-            $leadCount = $this->basequery($user_id)
+            $leadCount = $this->getBasequery($user_id)
                             ->where('postcode', $row->postcode)
                             ->count();
 
@@ -1411,17 +1346,12 @@ class LeadPreferenceController extends Controller
         $creditList = CreditList::get();
     
         foreach ($creditList as $creditItem) {
-            if (preg_match('/(\d+)\s*-\s*(\d+)/', $creditItem->credits, $matches)) {
-                $min = (int)$matches[1];
-                $max = (int)$matches[2];
-    
-                // Cast credit_score to integer if stored as string
-                $creditItem['leadcount'] = $this->basequery($user_id)
-                    ->whereRaw('CAST(credit_score AS UNSIGNED) BETWEEN ? AND ?', [$min, $max])
-                    ->count();
-            } else {
-                $creditItem['leadcount'] = 0;
-            }
+            $baseQuery = $this->getBasequery($user_id, null, null, ['creditFilter' => $creditItem]);
+            $allLeads = $baseQuery->orderBy('id', 'asc')->get();
+
+            //Macting as per seller pref
+            $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
+            $creditItem['leadcount'] = count($allLeads);
         }
     
         return $creditList;
@@ -1471,61 +1401,6 @@ class LeadPreferenceController extends Controller
         return $finalRows;
     }
 
-    public function getFilteredLeadQuery($user_id, $filters = [])
-    {
-        $baseQuery = $this->basequery($user_id, $filters['postcode'] ?? null, $filters['miles'] ?? null);
-
-        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
-        if (!empty($excludedLeadIds)) {
-            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
-        }
-
-        if (!empty($filters['unread'])) {
-            $baseQuery = $baseQuery->where('is_read', 0);
-        }
-
-        if (!empty($filters['service_ids'])) {
-            $baseQuery = $baseQuery->whereIn('service_id', $filters['service_ids']);
-        }
-
-        if (!empty($filters['credit_ranges'])) {
-            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
-                foreach ($filters['credit_ranges'] as $range) {
-                    $query->orWhereBetween('credit_score', $range);
-                }
-            });
-        }
-
-        if (!empty($filters['lead_time'])) {
-            $now = Carbon::now();
-            $baseQuery = $baseQuery->where(function ($query) use ($filters, $now) {
-                switch ($filters['lead_time']) {
-                    case 'Today':
-                        $query->whereDate('created_at', $now->toDateString());
-                        break;
-                    case 'Yesterday':
-                        $query->whereDate('created_at', $now->subDay()->toDateString());
-                        break;
-                    case 'Last 2-3 days':
-                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(3));
-                        break;
-                    case 'Last 7 days':
-                        $query->whereDate('created_at', '>=', Carbon::now()->subDays(7));
-                        break;
-                    case 'Last 14+ days':
-                        $query->whereDate('created_at', '<', Carbon::now()->subDays(14));
-                        break;
-                }
-            });
-        }
-
-        return $baseQuery;
-    }
-
-    
-    
     public function getLeadProfile(Request $request) 
     {
         $aVals = $request->all();
