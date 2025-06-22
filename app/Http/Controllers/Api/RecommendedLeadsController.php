@@ -272,7 +272,7 @@ class RecommendedLeadsController extends Controller
                 'p.longitude as lng'
             );
 
-            // echo "<pre>";print_r($rows->get()->toArray());exit;
+            print_r(json_encode($rows->get()->pluck('id')->toArray()));
 
         //for autobid sellers include below contions
         if($autobid){
@@ -339,6 +339,8 @@ class RecommendedLeadsController extends Controller
                 return $r;
             });
 
+        print_r(json_encode($grouped->pluck('id')));
+
         // Step 4: Filter by distance using Haversine Formula
         $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
             $distance = 3958.8 * acos(
@@ -347,6 +349,8 @@ class RecommendedLeadsController extends Controller
             );
 
             $row->distance = (double) round($distance, 2); // add distance field
+            print_r("row: " .$row->postcode .'; row-lat: ' .$row->lat ."; roe-long: " .$row->lng ." \n");
+            print_r("ref: " .$refPostcode .'; row-lat: ' .$refLat ."; roe-long: " .$refLng ."; dist: " .$distance ."; \n\n\n");
 
             return $row->nation_wide == 1
                 || $row->postcode == $refPostcode
@@ -599,33 +603,59 @@ class RecommendedLeadsController extends Controller
         $info = "";
         if($aVals['bidtype'] == 'reply'){
             
-            $pType = "Request Reply";
+            $bids = RecommendedLead::create([
+                'service_id' => $aVals['service_id'], 
+                'seller_id' => $aVals['seller_id'], 
+                'buyer_id' => $aVals['user_id'], //buyer
+                'lead_id' => $aVals['lead_id'], 
+                'bid' => $creditScore, 
+                'distance' => $aVals['distance'], 
+                'purchase_type' => 'Request Reply'
+            ]);
             $logInfo = "Requested a callback";
-            $trInfo = $creditScore . " credit deducted for Request Reply";            
+            $trInfo = $creditScore . " credit deducted for Request Reply";
+            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$logInfo, "Request Reply", $leadTime);
+            //deduct credit
+            DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $creditScore);
+            //create transaction log
+            CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');            
+
         }else if($aVals['bidtype'] == 'purchase_leads'){
             $sellerName = User::where('id',$aVals['user_id'])->value('name');
             $buyerName = User::where('id',$aVals['user_id'])->value('name');
             
-            $pType = "Manual Bid";
+            $bids = RecommendedLead::create([
+                'service_id' => $aVals['service_id'], 
+                'seller_id' => $aVals['user_id'], 
+                'buyer_id' => $aVals['buyer_id'], //buyer
+                'lead_id' => $aVals['lead_id'], 
+                'bid' => $creditScore, 
+                'distance' => $aVals['distance'], 
+                'purchase_type' => "Manual Bid"
+            ]);
             $logInfo = 'You Contacted '. $buyerName;            
             $trInfo = $creditScore . " credit deducted for Contacting to Customer";
+            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$logInfo, "Request Reply", $leadTime);
+            //deduct credit
+            DB::table('users')->where('id', $aVals['user_id'])->decrement('total_credit', $creditScore);
+            //create transaction log
+            CustomHelper::createTrasactionLog($aVals['user_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');
         }else{
-            $pType = "Autobid";
+            
+            $bids = RecommendedLead::create([
+                'service_id' => $aVals['service_id'], 
+                'seller_id' => $aVals['seller_id'], 
+                'buyer_id' => $aVals['user_id'], //buyer
+                'lead_id' => $aVals['lead_id'], 
+                'bid' => $creditScore, 
+                'distance' => $aVals['distance'], 
+                'purchase_type' => "Autobid"
+            ]);
             $trInfo = $creditScore . " credit deducted for Autobid";
+            CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');
         }
 
-        $bids = RecommendedLead::create([
-            'service_id' => $aVals['service_id'], 
-            'seller_id' => $aVals['seller_id'], 
-            'buyer_id' => $aVals['user_id'], //buyer
-            'lead_id' => $aVals['lead_id'], 
-            'bid' => $creditScore, 
-            'distance' => $aVals['distance'], 
-            'purchase_type' => $pType
-        ]);
-        if(($aVals['bidtype'] === 'reply') || ($aVals['bidtype'] === 'purchase_leads')){
-            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$logInfo, "Request Reply", $leadTime);
-        }
+        
         
             
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
@@ -642,16 +672,23 @@ class RecommendedLeadsController extends Controller
                 'clicked_from' => 2,
             ]);  
         }
-        //deduct credit
-        DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $creditScore);
-        //create transaction log
-        CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');
+        
 
         //check if for autobid it be allow or not
         // $leadTotalAutoBid = 
        
         return $this->sendResponse(__('Bids placed successfully'),[]);
     }
+
+    public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
+        $activities = ActivityLog::where('lead_id',$lead_id)
+                                          ->where('from_user_id',$from_user_id) 
+                                          ->where('to_user_id',$to_user_id) 
+                                          ->where('lead_id',$lead_id) 
+                                          ->where('activity_name',$activity_name) 
+                                          ->first(); 
+         return $activities;                                 
+   }
 
     public function addMultipleManualBid(Request $request){
         $aVals = $request->all();
@@ -709,15 +746,7 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){
-        $activities = ActivityLog::where('lead_id',$lead_id)
-                                          ->where('from_user_id',$from_user_id) 
-                                          ->where('to_user_id',$to_user_id) 
-                                          ->where('lead_id',$lead_id) 
-                                          ->where('activity_name',$activity_name) 
-                                          ->first(); 
-         return $activities;                                 
-   }
+    
 
    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
         $activity = ActivityLog::create([
