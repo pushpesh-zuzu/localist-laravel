@@ -89,17 +89,19 @@ class LeadPreferenceController extends Controller
                 $query->where('form_status', 1);
             })
             ->where('customer_id', '<>', $user_id) //do not include self request leads
+            
             //closure condition
-            ->where('status','!=','hired')
-            ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString());
-        $leadIdsWithFiveBids = DB::table('recommended_leads')
+            ->where('status','!=','hired') // do not include hired leads
+            ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString()); // do not include leads which are orlder than 14 days
+        $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
+        $slotFullLeads = DB::table('recommended_leads')
             ->select('lead_id')
             ->groupBy('lead_id')
-            ->havingRaw('COUNT(*) >= 5')
+            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
             ->pluck('lead_id')
             ->toArray();
 
-        $baseQuery = $baseQuery->whereNotIn('id', $leadIdsWithFiveBids);
+        $baseQuery = $baseQuery->whereNotIn('id', $slotFullLeads);
                 
         if($requestPostcode === null){ //select default condition for location
             //include locations
@@ -125,7 +127,7 @@ class LeadPreferenceController extends Controller
             });
         }else{
             
-            $baseQuery = $baseQuery->where(function ($query) use ($nwServices, $allServices, $requestPostcode, $requestMiles, $user_id) {
+            $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
                 //for distance type
                 $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);                
                 foreach($allServices as $item){

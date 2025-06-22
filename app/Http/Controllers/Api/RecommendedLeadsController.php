@@ -94,8 +94,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
     
-    public function getManualLeads(Request $request)
-    {
+    public function getManualLeads(Request $request){
         
         $lead = LeadRequest::find($request->lead_id);
         
@@ -131,6 +130,52 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse('Your Matches List', [$result['response']]);
     }
     
+    public function closeLeads(Request $request){
+        // unpause auto bid after 7 days
+        $this->unpauseAutobidAfter7Days();
+        //close leads after 14 days
+        $this->leadCloseAfter2Weeks();
+        
+        $now = Carbon::now();
+        $fiveMinutesAgo = $now->copy()->subMinutes(5);
+        
+
+        //start getting auto bid leads
+        //get Leads which are N minutes older
+        $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
+        //get Leads which are created N munites before
+        $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
+        $leads = LeadRequest::where('closed_status', 0)
+            ->where('should_autobid', 0)
+            ->where('created_at', '>=', $nMinutesAgo)
+            // ->toRawSql();
+            ->get();
+        foreach($leads as $lead){            
+            $sellers = $this->getAllSellers($lead, [], true);
+            if(!empty($sellers['response']['sellers'])){
+                foreach($sellers['response']['sellers'] as $s){                    
+                    $request->replace($request->only(['user_id']));
+                    $request['bidtype'] = 'autobid';
+                    $request['lead_id'] = $lead->id;
+                    $request['service_id'] = $lead->service_id;
+                    $request['distance'] = $s->distance;
+                    $request['seller_id'] = $s->id;
+                    $request['user_id'] = $lead->customer_id;
+                    $fResponse =  $this->addManualBid($request);
+                    $fData = json_decode($fResponse->getContent(), true);
+                    if (!empty($fData['success'])) {
+                        print_r("Autobid inserted for lead_id: " .$lead->id ."; sellerId: " .$s->id);
+                    }else{
+
+                    }
+                }
+                
+            }
+        }
+
+
+        
+    }
 
     private function getAllSellers($lead, $filters = [], $autobid = false){
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
@@ -195,6 +240,29 @@ class RecommendedLeadsController extends Controller
                 'p.latitude as lat',
                 'p.longitude as lng'
             );
+
+        //for autobid sellers include below contions
+        if($autobid){
+
+            //include seller who have enabled abutobid and autobid not paused for 7 days
+            $rows = $rows->where('user_details.is_autobid', 1)
+                ->where('user_details.autobid_pause', 0);
+
+            $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
+            $autobidDaysLimit = CustomHelper::setting_value("autobid_days_limit", 7);
+
+            $sellerCompletedAutoBid = RecommendedLead::select('seller_id', DB::raw('COUNT(*) as total_bids'), DB::raw('MIN(created_at) as first_bid_date'))
+                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->where('purchase_type', 'Autobid')
+                ->groupBy('seller_id')
+                ->havingRaw('COUNT(*) >= ?', [$autobidLimit])
+                ->pluck('seller_id')
+                ->toArray();
+
+            $rows = $rows->whereNotIn('users.id', $sellerCompletedAutoBid);
+
+                
+        }
        
         if(!empty($filters['rating'])){
             if($filters['rating'] === 'no_rating'){
@@ -469,7 +537,6 @@ class RecommendedLeadsController extends Controller
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
-        $autoBidLimit = CustomHelper::setting_value("autobid_limit", 0);
         $totalCredit = User::where('id',$aVals['seller_id'])->value('total_credit');
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         //check if seller has enough credits
@@ -485,7 +552,8 @@ class RecommendedLeadsController extends Controller
         if(!empty($bidCheck)){
             return $this->sendError('Bid Already Placed for this seller', 404);
         }
-        // check if 5 bids has been placed on this lead or not
+        
+        // check if N bids has been placed on this lead or not
         $totalBidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
             ->where('service_id', $aVals['service_id'])
             ->count();
@@ -495,35 +563,36 @@ class RecommendedLeadsController extends Controller
         }
         $info = "";
         if($aVals['bidtype'] == 'reply'){
-            $bids = RecommendedLead::create([
-                'service_id' => $aVals['service_id'], 
-                'seller_id' => $aVals['seller_id'], 
-                'buyer_id' => $aVals['user_id'], //buyer
-                'lead_id' => $aVals['lead_id'], 
-                'bid' => $creditScore, 
-                'distance' => $aVals['distance'], 
-                'purchase_type' => "Request Reply"
-            ]);
-            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],"Requested a callback", "Request Reply", $leadTime);
-            $info = $creditScore . " credit deducted for Request Reply";            
+            
+            $pType = "Request Reply";
+            $logInfo = "Requested a callback";
+            $trInfo = $creditScore . " credit deducted for Request Reply";            
         }else if($aVals['bidtype'] == 'purchase_leads'){
             $sellerName = User::where('id',$aVals['user_id'])->value('name');
             $buyerName = User::where('id',$aVals['user_id'])->value('name');
-            $bids = RecommendedLead::create([
-                'service_id' => $aVals['service_id'], 
-                'seller_id' => $aVals['seller_id'], 
-                'buyer_id' => $aVals['user_id'], //buyer
-                'lead_id' => $aVals['lead_id'], 
-                'bid' => $creditScore, 
-                'distance' => $aVals['distance'], 
-                'purchase_type' => "Manual Bid"
-            ]);
-            $activityname = 'You Contacted '. $buyerName;
-            self::addActivityLog($aVals['user_id'], $aVals['user_id'], $aVals['lead_id'], $activityname, "Manual Bid", $leadTime);
-            $info = $creditScore . " credit deducted for Contacting to Customer";
+            
+            $pType = "Manual Bid";
+            $logInfo = 'You Contacted '. $buyerName;            
+            $trInfo = $creditScore . " credit deducted for Contacting to Customer";
+        }else{
+            $pType = "Autobid";
+            $trInfo = $creditScore . " credit deducted for Autobid";
         }
 
-
+        $bids = RecommendedLead::create([
+            'service_id' => $aVals['service_id'], 
+            'seller_id' => $aVals['seller_id'], 
+            'buyer_id' => $aVals['user_id'], //buyer
+            'lead_id' => $aVals['lead_id'], 
+            'bid' => $creditScore, 
+            'distance' => $aVals['distance'], 
+            'purchase_type' => $pType
+        ]);
+        if(($aVals['bidtype'] === 'reply') || ($aVals['bidtype'] === 'purchase_leads')){
+            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$logInfo, "Request Reply", $leadTime);
+        }
+        
+            
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
         //remove from save for later
         SaveForLater::where('seller_id',$aVals['user_id'])
@@ -541,15 +610,12 @@ class RecommendedLeadsController extends Controller
         //deduct credit
         DB::table('users')->where('id', $aVals['seller_id'])->decrement('total_credit', $creditScore);
         //create transaction log
-        CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $info, 1, 1, $error_response='');
+        CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');
 
+        //check if for autobid it be allow or not
+        // $leadTotalAutoBid = 
        
         return $this->sendResponse(__('Bids placed successfully'),[]);
-    }
-
-    private function tt(Request $request){
-        return $this->sendError('Five slots has been full! No more bids can be placed.', 404);
-        return $this->sendResponse('testing function');
     }
 
     public function addMultipleManualBid(Request $request){
@@ -575,142 +641,13 @@ class RecommendedLeadsController extends Controller
         ]);
     }
 
-    public function closeLeads()
-    {
-        $now = Carbon::now();
-        $fiveMinutesAgo = $now->copy()->subMinutes(5);
-        $twoWeeksAgo = $now->copy()->subWeeks(2);
-        $sevenDaysAgo = $now->copy()->subDays(7);
-        // $twoWeeksAgo = Carbon::now()->subWeeks(2);
-        // $fiveMinutesAgo = $now->subMinutes(5);
-        // --------- Auto-Close Logic (after 2 weeks) ---------
-        $twoWeeks = self::leadCloseAfter2Weeks($twoWeeksAgo);
-        if($twoWeeks){
-            return response()->json(['message' => 'Leads closed successfully.']);
-        }
-        // --------- Auto-Bid Logic (after 5 minutes) ---------
-        $fiveMinutes = self::autoBidLeadsAfter5Min($fiveMinutesAgo);
-        if($fiveMinutes){
-            return response()->json(['message' => 'Auto-bid completed for leads older than 5 minutes.']);
-        }
-        // --------- 7 days after reactivate Logic  ---------
-        $sevenDays = self::reactivateAutoBidAfter7Days($sevenDaysAgo);
-        // $leadsToClose = LeadRequest::where('id', 249)->update(['closed_status'=>1]);
-        if($sevenDays){
-            return response()->json(['message' => 'Auto-bid unpaused for sellers paused more than 7 days ago.']);
-        }
-        
-    }
     
-    public function autoBidLeadsAfter5Min($fiveMinutesAgo)
-    {
-        $settings = CustomHelper::setting_value("auto_bid_limit", 0);
-
-         
-        //$sellersWith3Autobids = RecommendedLead::select('seller_id', DB::raw('MIN(created_at) as first_bid_date'))
-        $sellersWith3Autobids =RecommendedLead::select('seller_id', DB::raw('COUNT(*) as total_bids'), DB::raw('MIN(created_at) as first_bid_date'))
-                                                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-                                                ->where('purchase_type', 'Autobid')
-                                                ->groupBy('seller_id')
-                                                ->havingRaw('COUNT(DISTINCT buyer_id) >= 3')
-                                                ->get()
-                                                ->filter(function ($record) {
-                                                    $autobidDaysLimit = CustomHelper::setting_value('autobid_days_limit', 0);
-                                                    return Carbon::parse($record->first_bid_date)->diffInDays(Carbon::now()) < $autobidDaysLimit;
-                                                })
-                                                ->pluck('seller_id')
-                                                ->toArray();
-
-        $leads = LeadRequest::where('closed_status', 0)
-                ->where('should_autobid', 0)
-                ->where('created_at', '<=', $fiveMinutesAgo)
-                ->get();
-        // $settings = Setting::first();  
-        $autoBidLeads = [];
-            
-            foreach ($leads as $lead) {
-                $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();
-                $existingBids = RecommendedLead::where('lead_id', $lead->id)->count();
-        
-                if ($existingBids >= $settings) {
-                    continue; // Skip if already has 5 bids
-                }
-        
-                // Call getManualLeads with a request object
-                $manualLeadRequest = new Request(['lead_id' => $lead->id]);
-                $manualLeadsResponse = $this->getManualLeads($manualLeadRequest)->getData();
-                //  $manualLeadsResponse = $this->getManualLeads($lead->id)->getData();
-        
-                if (empty($manualLeadsResponse->data[0]->sellers)) {
-                    LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1]);
-                    continue;
-                }
-        
-                $sellers = collect($manualLeadsResponse->data[0]->sellers)->take($settings - $existingBids);
-                $bidsPlaced = 0;
-                foreach ($sellers as $seller) {
-                    $userdetails = UserDetail::where('user_id',$seller->id)->first();
-                    // if(!empty($userdetails) && $userdetails->autobid_pause == 0){
-                    if (!empty($userdetails) && $userdetails->autobid_pause == 0 && $userdetails->is_autobid == 1 && !in_array($seller->id, $sellersWith3Autobids)) 
-                    {
-                        $alreadyBid = RecommendedLead::where([
-                            ['lead_id', $lead->id],
-                            ['buyer_id', $lead->customer_id],
-                            ['seller_id', $seller->id],
-                        ])->exists();
-            
-                        if (!$alreadyBid) {
-                            // Deduct credit (only if buyer has enough)
-                            $bidAmount = $seller->bid ?? $lead->credit_score ?? 0;
-                            $detail = $bidAmount . " credit deducted for Autobid";
-                            $user = DB::table('users')->where('id', $seller->id)->first();
-                            if ($user && $user->total_credit >= $bidAmount) {
-                                DB::table('users')->where('id', $seller->id)->decrement('total_credit', $bidAmount);
-                                CustomHelper::createTrasactionLog($seller->id, 0, $bidAmount, $detail, 0, 1, $error_response='');
-            
-                                RecommendedLead::create([
-                                    'lead_id'     => $lead->id,
-                                    'buyer_id'    => $lead->customer_id,
-                                    'seller_id'   => $seller->id,
-                                    'service_id'  => $seller->service_id,
-                                    'bid'         => $bidAmount,
-                                    'distance'    => $seller->distance ?? 0,
-                                    'purchase_type' => "Autobid"
-                                ]);
-                                
-            
-                                $autoBidLeads[] = [
-                                    'lead_id'   => $lead->id,
-                                    'seller_id' => $seller->id,
-                                ];
-
-                                if(empty($isDataExists)){
-                                    LeadStatus::create([
-                                        'lead_id' => $lead->id,
-                                        'user_id' => $lead->customer_id,
-                                        'status' => 'pending',
-                                        'clicked_from' => 2,
-                                    ]);  
-                                }
-                                
-                                $bidsPlaced++;
-                            }
-                        }
-                    }
-                }
-                // Mark autobid processed if any bid was placed or no sellers found
-                    if ($bidsPlaced > 0) {
-                        LeadRequest::where('id', $lead->id)->update(['should_autobid' => 1,'status'=>'pending']);
-                    }
-                    
-            }
-        
-        return $autoBidLeads;
-    }
     
-    public function reactivateAutoBidAfter7Days($sevenDaysAgo)
+    
+    
+    public function unpauseAutobidAfter7Days()
     {
-        
+        $sevenDaysAgo = Carbon::now()->subDays(7);
         // Get all sellers whose auto-bid is paused and last updated more than 7 days ago
         $sellersToUnpause = UserDetail::where('autobid_pause', 1)
             ->where('updated_at', '<=', $sevenDaysAgo)
@@ -721,27 +658,19 @@ class RecommendedLeadsController extends Controller
                 'autobid_pause' => 0
             ]);
         }
-
-        return $sellersToUnpause;
     }
 
-    public function leadCloseAfter2Weeks($twoWeeksAgo){
-        $leadsToClose = LeadRequest::where('status', 0)
-            ->where('created_at', '<', $twoWeeksAgo)
-            ->get();
-        $settings = CustomHelper::setting_value("auto_bid_limit", 0);    
-        // $settings = Setting::first();  
-        foreach ($leadsToClose as $lead) {
-            // Count only unique sellers the buyer has bid on
-            $selectedSellerCount = RecommendedLead::where('lead_id', $lead->id)
-                ->where('buyer_id', $lead->customer_id)
-                ->distinct('seller_id') // ensure unique seller count
-                ->count('seller_id');
+    
 
-            if ($selectedSellerCount < $settings) {
-                $lead->closed_status = 1; // Mark as closed
-                $lead->save();
-            }
+    public function leadCloseAfter2Weeks(){
+        $leadsToClose = LeadRequest::where('status', 0)
+            ->where('closed_status', 0)
+            ->where('created_at', '<', Carbon::now()->subDays(14)->toDateString())
+            ->get();
+        
+        foreach ($leadsToClose as $lead) {
+            $lead->closed_status = 1; // Mark as closed
+            $lead->save();
         }
     }
 
