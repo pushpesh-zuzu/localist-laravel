@@ -576,8 +576,12 @@ class RecommendedLeadsController extends Controller
         $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
-        $totalCredit = User::where('id',$aVals['seller_id'])->value('total_credit');
+        
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
+
+        $bsId = !empty($aVals['seller_id']) ? $aVals['seller_id'] : $aVals['user_id'];
+
+        $totalCredit = User::where('id', $bsId)->value('total_credit');
         //check if seller has enough credits
         if($creditScore > $totalCredit){
             return $this->sendError(__("Seller don't have sufficient balance"), 404);
@@ -586,7 +590,7 @@ class RecommendedLeadsController extends Controller
         $bidCheck = RecommendedLead::where('lead_id', $aVals['lead_id'])
             ->where('service_id', $aVals['service_id'])
             ->where('buyer_id', $aVals['user_id'])
-            ->where('seller_id',$aVals['seller_id'])
+            ->where('seller_id',$bsId)
             ->first();
         if(!empty($bidCheck)){
             return $this->sendError('Bid Already Placed for this seller', 404);
@@ -673,10 +677,6 @@ class RecommendedLeadsController extends Controller
             ]);  
         }
         
-
-        //check if for autobid it be allow or not
-        // $leadTotalAutoBid = 
-       
         return $this->sendResponse(__('Bids placed successfully'),[]);
     }
 
