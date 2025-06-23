@@ -687,7 +687,7 @@ class RecommendedLeadsController extends Controller
             //create transaction log
             CustomHelper::createTrasactionLog($aVals['user_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');
         }else{
-            
+            // for autobid
             $bids = RecommendedLead::create([
                 'service_id' => $aVals['service_id'], 
                 'seller_id' => $aVals['seller_id'], 
@@ -700,9 +700,6 @@ class RecommendedLeadsController extends Controller
             $trInfo = $creditScore . " credit deducted for Autobid";
             CustomHelper::createTrasactionLog($aVals['seller_id'], 0, $creditScore, $trInfo, 1, 1, $error_response='');
         }
-
-        
-        
             
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
         //remove from save for later
@@ -719,7 +716,7 @@ class RecommendedLeadsController extends Controller
             ]);  
         }
         
-        return $this->sendResponse(__('Bids placed successfully'),[]);
+        return $this->sendResponse('Bid placed successfully');
     }
 
     public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name){

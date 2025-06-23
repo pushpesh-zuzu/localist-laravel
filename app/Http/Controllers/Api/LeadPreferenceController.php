@@ -283,7 +283,7 @@ class LeadPreferenceController extends Controller
             $serviceId = $lead->service_id;
 
             if (!isset($groupedPrefs[$serviceId])) {
-                // logger("No preferences for service_id: $serviceId");
+                logger("No preferences for service_id: $serviceId");
                 return false;
             }
 
@@ -291,7 +291,7 @@ class LeadPreferenceController extends Controller
             $leadQuestions = json_decode($lead->arrayed_questions, true);
 
             if (!is_array($leadQuestions)) {
-                // logger("Invalid questions JSON for lead ID: {$lead->id}");
+                logger("Invalid questions JSON for lead ID: {$lead->id}");
                 return false;
             }
 
@@ -306,7 +306,7 @@ class LeadPreferenceController extends Controller
                 $expectedAnswers = $pref['answers'];
 
                 if (!isset($leadMap[$question])) {
-                    // logger("Lead ID {$lead->id} missing question: $question");
+                    logger("Lead ID {$lead->id} missing question: $question");
                     return false;
                 }
 
@@ -315,14 +315,14 @@ class LeadPreferenceController extends Controller
                 $intersect = array_intersect($expectedAnswers, $leadAnswers);
 
                 if (empty($intersect) && !in_array('Other', $expectedAnswers)) {
-                    // logger("Lead ID {$lead->id} failed on question: $question");
-                    // logger("Lead answers: " . json_encode($leadAnswers));
-                    // logger("Expected answers: " . json_encode($expectedAnswers));
+                    logger("Lead ID {$lead->id} failed on question: $question");
+                    logger("Lead answers: " . json_encode($leadAnswers));
+                    logger("Expected answers: " . json_encode($expectedAnswers));
                     return false;
                 }
             }
 
-            // logger("Matched Lead ID: {$lead->id}, Service ID: $serviceId");
+            logger("Matched Lead ID: {$lead->id}, Service ID: $serviceId");
             return true;
         });
     }
