@@ -23,6 +23,7 @@ use App\Models\SellerNote;
 use App\Models\Category;
 use App\Models\PlanHistory;
 use App\Models\User;
+use App\Models\AutobidStatusLog;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator, Http
@@ -1630,25 +1631,25 @@ class LeadPreferenceController extends Controller
     public function sevenDaysAutobidPause(Request $request){ 
         $aVals = $request->all();
         $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
-        if(isset($userdetails) && $userdetails != ''){
-            $userdetails->update(['autobid_pause' => $aVals['autobid_pause']]);
-        }else{
-            $userdetails = UserDetail::create([
-                'user_id'  => $aVals['user_id'],
-                'autobid_pause' => $aVals['autobid_pause']
-            ]);
+        if(!empty($userdetails)){
+            $autobidpause = $aVals['autobid_pause'];
+            $msg = $autobidpause  == 1 ? 'Autobid is inactive' : 'Autobid is active';
+            if($userdetails->is_autobid == 1){
+                $data['autobid_pause'] = $autobidpause;
+                UserDetail::where('user_id',$aVals['user_id'])->update($data);
+
+
+                $bidStatus = $autobidpause == 1 ? 'paused' : 'resumed';
+                $data2['user_id'] = $aVals['user_id'];
+                $data2['action'] = $bidStatus;
+                AutobidStatusLog::insertGetId($data2);
+                return $this->sendResponse($msg, [
+                    'autobidpause' => $autobidpause
+                ]);
+            }
+            return $this->sendError('Autobid is already off');   
         }
-        
-        if($aVals['autobid_pause'] == 1){
-            $modes = 'Autobid is inactive';
-        }else{
-            $modes = 'Autobid is active';
-        }
-        $autobidpause = $aVals['autobid_pause'];
-        // return $this->sendResponse($modes, $autobidpause); 
-        return $this->sendResponse($modes, [
-            'autobidpause' => $autobidpause
-        ]);                                          
+        return $this->sendError('User not found!');                                       
     }
 
     public function getSevenDaysAutobidPause(Request $request){ 

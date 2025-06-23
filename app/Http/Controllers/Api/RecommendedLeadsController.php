@@ -20,6 +20,8 @@ use App\Models\Category;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\RecommendedLead;
+use App\Models\AutobidStatusLog;
+
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
@@ -31,21 +33,32 @@ use Illuminate\Support\Facades\Log;
 class RecommendedLeadsController extends Controller
 {
 
-    public function switchRecommendedLeads(Request $request): JsonResponse
+    public function switchAutobid(Request $request): JsonResponse
     {
-        $user_id = $request->user_id; 
-        $autobid = $request->is_autobid;
-        $data['is_autobid'] = $autobid;
-        $data['updated_at'] = date('Y-m-d H:i:s');
-        UserDetail::where('user_id', $user_id)->update($data);
-        return $this->sendResponse(__('Autobid switched successfully'),$data );   
+        $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
+        if(!empty($userdetails)){
+            $user_id = $request->user_id; 
+            $autobid = $request->is_autobid;
+            $data['is_autobid'] = $autobid;
+            $data['autobid_pause'] = 0;            
+            $data['updated_at'] = date('Y-m-d H:i:s');
+            UserDetail::where('user_id', $user_id)->update($data);
+
+            $bidStatus = $autobid == 1 ? 'enabled' : 'disabled';
+            $data2['user_id'] = $request->user_id;
+            $data2['action'] = $bidStatus;
+            AutobidStatusLog::insertGetId($data2);
+            return $this->sendResponse(__('Autobid switched successfully'), $data ); 
+        }
+        return $this->sendError('User not found!');
+          
     }
 
-    public function getSwitchAutobid(Request $request){ 
+    public function getAutobid(Request $request){ 
         $aVals = $request->all();
         $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
         if(!empty($isDataExists)){
-            return $this->sendResponse(__('Autobid Switch Data'), [
+            return $this->sendResponse(__('Autobid Data'), [
                 'isautobid' => $isDataExists->is_autobid
             ]);
         }      

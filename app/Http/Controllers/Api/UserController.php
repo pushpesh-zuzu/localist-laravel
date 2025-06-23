@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\LoginHistory;
 use App\Models\UserAccreditation;
+use App\Models\AutobidStatusLog;
 
 class UserController extends Controller
 {
@@ -79,7 +80,7 @@ class UserController extends Controller
                 return $this->sendError('Email is Invalid');
             }
         }
-        $randomString = Str::random(10);
+        $randomString = '12345678';//Str::random(10);
         $aVals['password'] = Hash::make($randomString);
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = 0;
@@ -104,6 +105,13 @@ class UserController extends Controller
                     'billing_phone' => $request->phone,
                     'billing_vat_register' => 1,
                 ]);
+
+                if($auto_bid == 1){
+                    $data['user_id'] = $user->id;
+                    $data['action'] = 'enabled';
+                    AutobidStatusLog::insertGetId($data);
+                }
+                
             }
               // Check if service_id is an array or convert it to one
             $cleanedServiceId = str_replace(' ', '', $aVals['service_id']);
