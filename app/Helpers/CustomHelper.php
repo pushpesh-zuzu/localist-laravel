@@ -8,9 +8,49 @@ use App\Events\NewNotificationEvent;
 use App\Models\PurchaseHistory;
 use App\Models\Setting;
 use App\Models\Postcode;
+use Illuminate\Support\Carbon;
 
 class CustomHelper
 {
+
+    public static function getCurrentAutobidBatch(int $userId): ?array
+    {
+        // Get the most recent status log
+        $latestLog = DB::table('autobid_status_logs')
+            ->where('user_id', $userId)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if (!$latestLog || !in_array($latestLog->action, ['enabled', 'resumed'])) {
+            return null; // Autobid is currently OFF or paused
+        }
+
+        // Now get the most recent time it was turned ON or resumed BEFORE any pause/disable
+        $log = DB::table('autobid_status_logs')
+            ->where('user_id', $userId)
+            ->whereIn('action', ['enabled', 'resumed'])
+            ->where('id', '<=', $latestLog->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $activeSince = Carbon::parse($log->created_at);
+
+        // Calculate current batch
+        $today = Carbon::today();
+        $daysSinceStart = $activeSince->diffInDays($today);
+        $batchNumber = intdiv($daysSinceStart, 7); // 0-based
+
+        $batchStart = $activeSince->copy()->addDays($batchNumber * 7);
+        $batchEnd = $batchStart->copy()->addDays(6);
+
+        return [
+            'start' => $batchStart->format('d/m/Y'),
+            'end' => $batchEnd->format('d/m/Y'),
+            'batch_number' => $batchNumber + 1
+        ];
+    }
+
+
     public static function numberToWords($number){
         $f = new \NumberFormatter('en', \NumberFormatter::SPELLOUT);
         return ucfirst($f->format($number));

@@ -90,7 +90,7 @@ class MyRequestController extends Controller
                     $dataUser['zipcode'] = $request->postcode;
                     $dataUser['city'] = $request->city;
                     //for
-                    $password = Str::random(10);
+                    $password = '12345678';//Str::random(10);
                     $dataUser['password'] = Hash::make($password);
                     $dataUser['user_type'] = 2;
                     $dataUser['active_status'] = 2;
