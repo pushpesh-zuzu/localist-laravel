@@ -1638,7 +1638,6 @@ class LeadPreferenceController extends Controller
                 $data['autobid_pause'] = $autobidpause;
                 UserDetail::where('user_id',$aVals['user_id'])->update($data);
 
-
                 $bidStatus = $autobidpause == 1 ? 'paused' : 'resumed';
                 $data2['user_id'] = $aVals['user_id'];
                 $data2['action'] = $bidStatus;

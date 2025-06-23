@@ -35,7 +35,7 @@ class RecommendedLeadsController extends Controller
 
     public function switchAutobid(Request $request): JsonResponse
     {
-        $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
+        $userdetails = UserDetail::where('user_id',$request->user_id)->first();
         if(!empty($userdetails)){
             $user_id = $request->user_id; 
             $autobid = $request->is_autobid;
