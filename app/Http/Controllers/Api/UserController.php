@@ -118,7 +118,7 @@ class UserController extends Controller
             foreach ($serviceIds as $index => $serviceId) {
                 $aLocations = []; // Reset for each iteration
                 // Create a separate row for each service_id
-                $service = UserService::createUserService($user->id, $serviceId, $auto_bid);
+                $service = UserService::createUserService($user->id, $serviceId);
                 if ($service) {
                     $aLocations['service_id'] = $serviceId;
                     $aLocations['user_service_id'] = $service->id;

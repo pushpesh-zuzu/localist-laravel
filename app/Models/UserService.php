@@ -27,11 +27,11 @@ class UserService extends Model
         return $this->hasMany(Category::class,'id','service_id');
     }
 
-    public static function createUserService($user_id, $service_id, $auto_bid)
+    public static function createUserService($user_id, $service_id, $auto_bid=0)
     {
         $aServices['service_id'] = $service_id;
         $aServices['user_id'] = $user_id;
-        $aServices['auto_bid'] = $auto_bid;
+        // $aServices['auto_bid'] = $auto_bid;
         $service = UserService::create($aServices);
         return $service;
     }
