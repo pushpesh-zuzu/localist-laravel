@@ -383,7 +383,9 @@ class RecommendedLeadsController extends Controller
             ->map(function ($r) use($serviceName, $leadCreditScore){
                 $r->credit_score = $leadCreditScore;
                 $r->service_name= $serviceName;
-                $r->quicktorespond = ($r->response_time > 0 && $r->response_time <= 720) ? 1 : 0;
+                $rpTime = !empty($r->response_time) ? $r->response_time : 15;
+                $r->response_time = $rpTime;
+                $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
                 return $r;
             });
 
