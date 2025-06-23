@@ -438,7 +438,7 @@ class RecommendedLeadsController extends Controller
 
 
         return [
-            'empty' => empty($final) ? true : false,
+            'empty' => empty($finalUniqueSellers) ? true : false,
             'response' => [
                 'service_name' => $serviceName,
                 'sellers' => $finalUniqueSellers,
