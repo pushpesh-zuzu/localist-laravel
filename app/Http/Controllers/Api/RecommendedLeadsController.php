@@ -411,11 +411,37 @@ class RecommendedLeadsController extends Controller
             }
         }
 
+        // print_r($final);
+        // exit;
+
+        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
+            static $seen = [];
+
+            // Check if this seller ID is already seen
+            if (isset($seen[$seller->id])) {
+                // Keep the one with lower distance
+                if ($seller->distance < $seen[$seller->id]->distance) {
+                    $seen[$seller->id] = $seller;
+                }
+            } else {
+                // First time seeing this seller
+                $seen[$seller->id] = $seller;
+            }
+
+            // Always return false, final result is built in pipe
+            return false;
+        })->pipe(function () use (&$seen) {
+            // Reindex to get a collection of just the lowest-distance sellers
+            return collect(array_values($seen));
+        });
+
+
+
         return [
             'empty' => empty($final) ? true : false,
             'response' => [
                 'service_name' => $serviceName,
-                'sellers' => $final,
+                'sellers' => $finalUniqueSellers,
                 'displayCount' => $recommendedCount ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
                 'w80' => (int) ($recommendedCount * 0.8)
