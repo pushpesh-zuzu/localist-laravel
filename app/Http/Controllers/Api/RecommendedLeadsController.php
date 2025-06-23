@@ -171,25 +171,26 @@ class RecommendedLeadsController extends Controller
         //close leads after 14 days
         $this->leadCloseAfter2Weeks();
         
-        // $now = Carbon::now();
-        // $fiveMinutesAgo = $now->copy()->subMinutes(5);
         
-
-        // //start getting auto bid leads
-        // //get Leads which are N minutes older
-        // $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
-        // //get Leads which are created N munites before
-        // $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
-        // $leads = LeadRequest::where('closed_status', 0)
-        //     ->where('should_autobid', 0)
-        //     ->where('created_at', '>=', $nMinutesAgo)
-        //     // ->toRawSql();
-        //     ->get();
-        // foreach($leads as $lead){            
-        //     $sellers = $this->getAllSellers($lead, [], true);
-        //     if(!empty($sellers['response']['sellers'])){
-        //         foreach($sellers['response']['sellers'] as $s){                    
-        //             $request->replace($request->only(['user_id']));
+        //start getting auto bid leads
+        //get Leads which are N minutes older
+        $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
+        print_r("startBidAfter: " .$startBidAfter ." mins\n");
+        //get Leads which are created N munites before
+        $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
+        $leads = LeadRequest::where('closed_status', 0)
+            ->where('should_autobid', 0)
+            ->where('created_at', '>=', $nMinutesAgo)
+            // ->toRawSql();
+            ->get();
+        $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
+        foreach($leads as $lead){            
+            $sellers = $this->getAllSellers($lead, [], true);
+            if(!empty($sellers['response']['sellers'])){
+                foreach($sellers['response']['sellers'] as $s){    
+                    print_r("leadId: " .$lead->id ."\n");
+                    
+        //              $request->replace($request->only(['user_id']));
         //             $request['bidtype'] = 'autobid';
         //             $request['lead_id'] = $lead->id;
         //             $request['service_id'] = $lead->service_id;
@@ -203,10 +204,10 @@ class RecommendedLeadsController extends Controller
         //             }else{
 
         //             }
-        //         }
+                }
                 
-        //     }
-        // }
+            }
+        }
 
 
         
@@ -254,7 +255,7 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    private function getAllSellers($lead, $filters = [], $autobid = false){
+    private function getAllSellers($lead, $filters = []){
         // echo "<pre>";print_r($lead->toArray());exit;
 
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
@@ -319,28 +320,7 @@ class RecommendedLeadsController extends Controller
                 'p.latitude as lat',
                 'p.longitude as lng'
             );
-        //for autobid sellers include below contions
-        if($autobid){
-
-            //include seller who have enabled abutobid and autobid not paused for 7 days
-            $rows = $rows->where('user_details.is_autobid', 1)
-                ->where('user_details.autobid_pause', 0);
-
-            $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
-            $autobidDaysLimit = CustomHelper::setting_value("autobid_days_limit", 7);
-
-            $sellerCompletedAutoBid = RecommendedLead::select('seller_id', DB::raw('COUNT(*) as total_bids'), DB::raw('MIN(created_at) as first_bid_date'))
-                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-                ->where('purchase_type', 'Autobid')
-                ->groupBy('seller_id')
-                ->havingRaw('COUNT(*) >= ?', [$autobidLimit])
-                ->pluck('seller_id')
-                ->toArray();
-
-            $rows = $rows->whereNotIn('users.id', $sellerCompletedAutoBid);
-
-                
-        }
+        
        
         if(!empty($filters['rating'])){
             if($filters['rating'] === 'no_rating'){
@@ -622,7 +602,7 @@ class RecommendedLeadsController extends Controller
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
 
         $bsId = !empty($aVals['seller_id']) ? $aVals['seller_id'] : $aVals['user_id'];
-
+        
         $totalCredit = User::where('id', $bsId)->value('total_credit');
         //check if seller has enough credits
         if($creditScore > $totalCredit){
@@ -654,8 +634,7 @@ class RecommendedLeadsController extends Controller
                 'seller_id' => $aVals['seller_id'], 
                 'buyer_id' => $aVals['user_id'], //buyer
                 'lead_id' => $aVals['lead_id'], 
-                'bid' => $creditScore, 
-                'distance' => $aVals['distance'], 
+                'bid' => $creditScore,  
                 'purchase_type' => 'Request Reply'
             ]);
             $logInfo = "Requested a callback";
@@ -675,8 +654,7 @@ class RecommendedLeadsController extends Controller
                 'seller_id' => $aVals['user_id'], 
                 'buyer_id' => $aVals['buyer_id'], //buyer
                 'lead_id' => $aVals['lead_id'], 
-                'bid' => $creditScore, 
-                'distance' => $aVals['distance'], 
+                'bid' => $creditScore,  
                 'purchase_type' => "Manual Bid"
             ]);
             $logInfo = 'You Contacted '. $buyerName;            
@@ -693,8 +671,7 @@ class RecommendedLeadsController extends Controller
                 'seller_id' => $aVals['seller_id'], 
                 'buyer_id' => $aVals['user_id'], //buyer
                 'lead_id' => $aVals['lead_id'], 
-                'bid' => $creditScore, 
-                'distance' => $aVals['distance'], 
+                'bid' => $creditScore,  
                 'purchase_type' => "Autobid"
             ]);
             $trInfo = $creditScore . " credit deducted for Autobid";
