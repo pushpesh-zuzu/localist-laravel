@@ -75,7 +75,30 @@ class SellerController extends Controller
      */
     public function destroy(string $id)
     {
-        User::where('id',$id)->delete();
+        \DB::table('users')->where('id',$id)->delete();
+        \DB::table('user_accreditations')->where('user_id',$id)->delete();
+        \DB::table('user_card_details')->where('user_id',$id)->delete();
+        \DB::table('user_details')->where('user_id',$id)->delete();
+        \DB::table('user_hiring_histories')->where('user_id',$id)->delete();
+        \DB::table('user_response_times')->where('seller_id',$id)->delete();
+        \DB::table('user_services')->where('user_id',$id)->delete();
+        \DB::table('user_service_locations')->where('user_id',$id)->delete();
+        \DB::table('activity_logs')->where('from_user_id',$id)->orWhere('to_user_id',$id)->delete();
+        \DB::table('invoices')->where('user_id',$id)->delete();
+        \DB::table('lead_prefrences')->where('user_id',$id)->delete();
+        \DB::table('lead_requests')->where('customer_id',$id)->delete();
+        \DB::table('lead_statuses')->where('user_id',$id)->delete();
+        \DB::table('login_histories')->where('user_id',$id)->delete();
+        \DB::table('plan_histories')->where('user_id',$id)->delete();
+        \DB::table('profile_q_a_s')->where('user_id',$id)->delete();
+        \DB::table('purchase_histories')->where('user_id',$id)->delete();
+        \DB::table('recommended_leads')->where('seller_id',$id)->orWhere('buyer_id',$id)->delete();
+        \DB::table('reviews')->where('user_id',$id)->delete();
+        \DB::table('save_for_laters')->where('seller_id',$id)->orWhere('user_id',$id)->delete();
+        \DB::table('seller_notes')->where('seller_id',$id)->orWhere('buyer_id',$id)->delete();
+        \DB::table('suggested_questions')->where('user_id',$id)->delete();
+        \DB::table('unique_visitors')->where('seller_id',$id)->orWhere('buyer_id',$id)->delete();
+        
         return redirect()->route('seller.index')
                          ->with('success', 'Seller deleted successfully.');
     }
