@@ -23,6 +23,9 @@ use Carbon\Carbon;
 use App\Models\LoginHistory;
 use App\Models\UserAccreditation;
 use App\Models\AutobidStatusLog;
+use App\Models\RecommendedLead;
+use App\Models\LeadRequest;
+use App\Models\UserResponseTime;
 
 class UserController extends Controller
 {
@@ -53,6 +56,21 @@ class UserController extends Controller
         $userId = $request->seller_id;
         
         $user = User::where('id',$userId)->first();
+        //for hired list count
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $userId)
+            ->pluck('lead_id')
+            ->toArray();
+        $hiredLeads = LeadRequest::with(['customer', 'category'])
+            ->whereIn('id',$recommendedLeadIds)
+            ->whereHas('customer', function($query) {
+                $query->where('form_status', 1);
+            })->where('status','hired')
+            ->orderBy('id', 'DESC')
+            ->get();
+        $user['hire_count'] = count($hiredLeads);
+        $responseTime = UserResponseTime::where('seller_id', $userId)->value('average');
+        $responseTime = !empty($responseTime) ? $responseTime : 15;
+        $user['response_time'] = CustomHelper::formatTimeDuration($responseTime);
         $user['user_details'] = UserDetail::where('user_id',$userId)->first();
         $user['reviews'] = Review::where('user_id',$userId)->get();
         $user['reviews_count'] = count($user['reviews']);

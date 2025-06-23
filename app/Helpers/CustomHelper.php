@@ -12,6 +12,34 @@ use Illuminate\Support\Carbon;
 
 class CustomHelper
 {
+    public static function formatTimeDuration(int $minutes): string {
+        if ($minutes <= 0) {
+            return '0 mins';
+        }
+
+        $days = floor($minutes / 1440); // 1440 mins in a day
+        $hours = floor(($minutes % 1440) / 60);
+        $mins = $minutes % 60;
+
+        $parts = [];
+        if ($days > 0) {
+            $parts[] = $days . ' day' . ($days > 1 ? 's' : '');
+        }
+        if ($hours > 0) {
+            $parts[] = $hours . ' hr' . ($hours > 1 ? 's' : '');
+        }
+        if ($mins > 0) {
+            $parts[] = $mins . ' min' . ($mins > 1 ? 's' : '');
+        }
+
+        if (count($parts) === 1) {
+            return $parts[0];
+        }
+
+        $last = array_pop($parts);
+        return implode(', ', $parts) . ' and ' . $last;
+    }
+
 
     public static function getCurrentAutobidBatch(int $userId): ?array
     {
@@ -44,8 +72,8 @@ class CustomHelper
         $batchEnd = $batchStart->copy()->addDays(6);
 
         return [
-            'start' => $batchStart->format('d/m/Y'),
-            'end' => $batchEnd->format('d/m/Y'),
+            'start' => $batchStart->format('Y-m-d'),
+            'end' => $batchEnd->format('Y-m-d'),
             'batch_number' => $batchNumber + 1
         ];
     }

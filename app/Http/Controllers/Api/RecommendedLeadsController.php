@@ -175,37 +175,51 @@ class RecommendedLeadsController extends Controller
         //start getting auto bid leads
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
-        print_r("startBidAfter: " .$startBidAfter ." mins\n");
-        //get Leads which are created N munites before
+        //get Leads which are created N munites before and not closed and autobid is open for that lead
         $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
         $leads = LeadRequest::where('closed_status', 0)
-            ->where('should_autobid', 0)
+            ->where('should_autobid', 1)
             ->where('created_at', '>=', $nMinutesAgo)
             // ->toRawSql();
             ->get();
         $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
-        foreach($leads as $lead){            
-            $sellers = $this->getAllSellers($lead, [], true);
+        foreach($leads as $lead){
+            $sellerInserted = 0;
+            $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();            
+            $sellers = $this->getAllSellers($lead);
             if(!empty($sellers['response']['sellers'])){
-                foreach($sellers['response']['sellers'] as $s){    
-                    print_r("leadId: " .$lead->id ."\n");
+                foreach($sellers['response']['sellers'] as $s){
+                    $batch = CustomHelper::getCurrentAutobidBatch($s->id);    
+                    if(!empty($batch)){
+                        $dateStart = Carbon::parse($batch['start'])->startOfDay();
+                        $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
+                        $count = \DB::table('recommended_leads')
+                            ->where('lead_id', $lead->id)
+                            ->where('seller_id', $s->id)
+                            ->where('buyer_id', $lead->customer_id)
+                            ->whereBetween('created_at', [$dateStart, $dateEnd])
+                            ->count();
+                        if($count < $autobidLimit){
+                            $request->replace($request->only(['abc']));
+                            $request['bidtype'] = 'autobid';
+                            $request['lead_id'] = $lead->id;
+                            $request['service_id'] = $lead->service_id;
+                            $request['distance'] = $s->distance;
+                            $request['seller_id'] = $s->id;
+                            $request['user_id'] = $lead->customer_id;
+                            $this->addManualBid($request);
+                            $sellerInserted = 1;
+                        }
+                    }
                     
-        //              $request->replace($request->only(['user_id']));
-        //             $request['bidtype'] = 'autobid';
-        //             $request['lead_id'] = $lead->id;
-        //             $request['service_id'] = $lead->service_id;
-        //             $request['distance'] = $s->distance;
-        //             $request['seller_id'] = $s->id;
-        //             $request['user_id'] = $lead->customer_id;
-        //             $fResponse =  $this->addManualBid($request);
-        //             $fData = json_decode($fResponse->getContent(), true);
-        //             if (!empty($fData['success'])) {
-        //                 print_r("Autobid inserted for lead_id: " .$lead->id ."; sellerId: " .$s->id);
-        //             }else{
-
-        //             }
                 }
                 
+            }
+            if($sellerInserted){
+                LeadRequest::where('id', $lead->id)->update([
+                    'should_autobid' => 0,
+                    'status'=>'pending'
+                ]);
             }
         }
 
@@ -623,6 +637,10 @@ class RecommendedLeadsController extends Controller
             ->where('service_id', $aVals['service_id'])
             ->count();
         if($totalBidCount >= $leadSlotCount){
+            LeadRequest::where('id', $aVals['lead_id'])->update([
+                'should_autobid'  => 0,
+                'closed_status' => 1
+            ]);
             $word = CustomHelper::numberToWords($leadSlotCount);
             return $this->sendError($word .' slots has been full! No more bids can be placed.', 404);
         }
