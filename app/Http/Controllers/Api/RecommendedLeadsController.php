@@ -171,45 +171,87 @@ class RecommendedLeadsController extends Controller
         //close leads after 14 days
         $this->leadCloseAfter2Weeks();
         
-        $now = Carbon::now();
-        $fiveMinutesAgo = $now->copy()->subMinutes(5);
+        // $now = Carbon::now();
+        // $fiveMinutesAgo = $now->copy()->subMinutes(5);
         
 
-        //start getting auto bid leads
-        //get Leads which are N minutes older
-        $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
-        //get Leads which are created N munites before
-        $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
-        $leads = LeadRequest::where('closed_status', 0)
-            ->where('should_autobid', 0)
-            ->where('created_at', '>=', $nMinutesAgo)
-            // ->toRawSql();
-            ->get();
-        foreach($leads as $lead){            
-            $sellers = $this->getAllSellers($lead, [], true);
-            if(!empty($sellers['response']['sellers'])){
-                foreach($sellers['response']['sellers'] as $s){                    
-                    $request->replace($request->only(['user_id']));
-                    $request['bidtype'] = 'autobid';
-                    $request['lead_id'] = $lead->id;
-                    $request['service_id'] = $lead->service_id;
-                    $request['distance'] = $s->distance;
-                    $request['seller_id'] = $s->id;
-                    $request['user_id'] = $lead->customer_id;
-                    $fResponse =  $this->addManualBid($request);
-                    $fData = json_decode($fResponse->getContent(), true);
-                    if (!empty($fData['success'])) {
-                        print_r("Autobid inserted for lead_id: " .$lead->id ."; sellerId: " .$s->id);
-                    }else{
+        // //start getting auto bid leads
+        // //get Leads which are N minutes older
+        // $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
+        // //get Leads which are created N munites before
+        // $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
+        // $leads = LeadRequest::where('closed_status', 0)
+        //     ->where('should_autobid', 0)
+        //     ->where('created_at', '>=', $nMinutesAgo)
+        //     // ->toRawSql();
+        //     ->get();
+        // foreach($leads as $lead){            
+        //     $sellers = $this->getAllSellers($lead, [], true);
+        //     if(!empty($sellers['response']['sellers'])){
+        //         foreach($sellers['response']['sellers'] as $s){                    
+        //             $request->replace($request->only(['user_id']));
+        //             $request['bidtype'] = 'autobid';
+        //             $request['lead_id'] = $lead->id;
+        //             $request['service_id'] = $lead->service_id;
+        //             $request['distance'] = $s->distance;
+        //             $request['seller_id'] = $s->id;
+        //             $request['user_id'] = $lead->customer_id;
+        //             $fResponse =  $this->addManualBid($request);
+        //             $fData = json_decode($fResponse->getContent(), true);
+        //             if (!empty($fData['success'])) {
+        //                 print_r("Autobid inserted for lead_id: " .$lead->id ."; sellerId: " .$s->id);
+        //             }else{
 
-                    }
-                }
+        //             }
+        //         }
                 
+        //     }
+        // }
+
+
+        
+    }
+
+    public function unpauseAutobidAfter7Days()
+    {
+        $sevenDaysAgo = Carbon::now()->subDays(7);
+        
+        $sellers = UserDetail::where('is_autobid','1')
+            ->where('autobid_pause','1')
+            ->pluck('id')
+            ->toArray();
+        foreach($sellers as $s){
+            $latestPaused = AutobidStatusLog::where('user_id', $s)
+                ->where('action', 'paused')
+                ->latest('id')
+                ->first();
+            if ($latestPaused) {
+                $pDate = Carbon::parse($latestPaused->created_at)->toDateString();
+                $ok = $isSixDaysBefore = Carbon::parse($pDate)->equalTo(Carbon::today()->subDays(6));
+                if($ok){
+                    UserDetail::where('id', $s)->update([
+                        'autobid_pause' => 0
+                    ]);
+                    $data['user_id'] = $s;
+                    $data['action'] = 'resumed';
+                    AutobidStatusLog::insertGetId($data);
+                }
             }
         }
+    }
 
+    
 
+    public function leadCloseAfter2Weeks(){
+        $leadsToClose = LeadRequest::where('status', 0)
+            ->where('closed_status', 0)
+            ->where('created_at', '<', Carbon::now()->subDays(14)->toDateString())
+            ->get();
         
+        foreach ($leadsToClose as $lead) {
+            $lead->closed_status = 1; // Mark as closed
+            $lead->save();
+        }
     }
 
     private function getAllSellers($lead, $filters = [], $autobid = false){
@@ -717,34 +759,7 @@ class RecommendedLeadsController extends Controller
     
     
     
-    public function unpauseAutobidAfter7Days()
-    {
-        $sevenDaysAgo = Carbon::now()->subDays(7);
-        // Get all sellers whose auto-bid is paused and last updated more than 7 days ago
-        $sellersToUnpause = UserDetail::where('autobid_pause', 1)
-            ->where('updated_at', '<=', $sevenDaysAgo)
-            ->get();
-
-        foreach ($sellersToUnpause as $seller) {
-            $seller->update([
-                'autobid_pause' => 0
-            ]);
-        }
-    }
-
     
-
-    public function leadCloseAfter2Weeks(){
-        $leadsToClose = LeadRequest::where('status', 0)
-            ->where('closed_status', 0)
-            ->where('created_at', '<', Carbon::now()->subDays(14)->toDateString())
-            ->get();
-        
-        foreach ($leadsToClose as $lead) {
-            $lead->closed_status = 1; // Mark as closed
-            $lead->save();
-        }
-    }
 
     
 

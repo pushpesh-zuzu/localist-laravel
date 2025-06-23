@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\AutobidStatusLog;
+use Illuminate\Support\Carbon;
 
 class User extends Authenticatable
 {
@@ -119,6 +121,45 @@ class User extends Authenticatable
     public function serviceLocations()
     {
         return $this->hasMany(UserServiceLocation::class, 'user_id', 'id');
+    }
+
+    public function getCurrentAutobidBatch(): ?array
+    {
+        $latestLog = $this->autobidStatusLogs()
+            ->latest('id')
+            ->first();
+
+        if (!$latestLog || !in_array($latestLog->action, ['enabled', 'resumed'])) {
+            return null;
+        }
+
+        $activeLog = $this->autobidStatusLogs()
+            ->whereIn('action', ['enabled', 'resumed'])
+            ->where('id', '<=', $latestLog->id)
+            ->latest('id')
+            ->first();
+
+        if (!$activeLog) {
+            return null;
+        }
+
+        $activeSince = Carbon::parse($activeLog->created_at);
+        $daysSinceStart = $activeSince->diffInDays(Carbon::today());
+        $batchNumber = intdiv($daysSinceStart, 7);
+
+        $batchStart = $activeSince->copy()->addDays($batchNumber * 7);
+        $batchEnd = $batchStart->copy()->addDays(6);
+
+        return [
+            'start' => $batchStart->format('d/m/Y'),
+            'end' => $batchEnd->format('d/m/Y'),
+            'batch_number' => $batchNumber + 1,
+        ];
+    }
+
+    public function autobidStatusLogs()
+    {
+        return $this->hasMany(AutobidStatusLog::class);
     }
 
 }

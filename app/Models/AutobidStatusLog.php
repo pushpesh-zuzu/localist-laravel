@@ -9,4 +9,6 @@ class AutobidStatusLog extends Model
 {
     protected $table = "autobid_status_logs";
     protected $fillable = ['user_id','action'];
+
+    
 }
