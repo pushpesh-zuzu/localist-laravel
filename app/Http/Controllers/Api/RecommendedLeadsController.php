@@ -414,9 +414,9 @@ class RecommendedLeadsController extends Controller
         // print_r($final);
         // exit;
 
-        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
-            static $seen = [];
+        $seen = [];
 
+        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
             // Check if this seller ID is already seen
             if (isset($seen[$seller->id])) {
                 // Keep the one with lower distance
