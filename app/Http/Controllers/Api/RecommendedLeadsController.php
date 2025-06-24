@@ -669,21 +669,24 @@ class RecommendedLeadsController extends Controller
         $trInfo = "";
         $pType = "";
         $clickedFrom = 2;
-        if($aVals['bidtype'] == 'reply'){            
+        $sellerName = User::where('id',$sellerId)->value('name');
+        $buyerName = User::where('id',$buyerId)->value('name');
+        if($aVals['bidtype'] == 'reply'){    
+                    
             $pType = "Request Reply";
             $trInfo = $creditScore . " credit deducted for Request Reply";
-            self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'],"Requested a callback", "Request Reply", $leadTime);
+            self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'], $buyerName ." contacted " .$sellerName, "Request Reply", $leadTime);
             
         }else if($aVals['bidtype'] == 'purchase_leads'){
-            $buyerName = User::where('id',$aVals['user_id'])->value('name');
             $clickedFrom = 1;
             $pType = "Manual Bid";
             $trInfo = $creditScore . " credit deducted for Contacting to Customer";
-            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],'You Contacted '. $buyerName, "Manual Bid", $leadTime);
+            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$sellerName .' ontacted '. $buyerName, "Manual Bid", $leadTime);
         }else{
             // for autobid
             $pType = "Autobid";
             $trInfo = $creditScore . " credit deducted for Autobid";
+            self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'], "Autobid placed for " .$sellerName, "Autobid", $leadTime);
         }
         $bids = RecommendedLead::create([
             'service_id' => $aVals['service_id'], 
