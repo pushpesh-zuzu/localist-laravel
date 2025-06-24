@@ -1667,7 +1667,7 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $type = $aVals['type'];
         $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
-        $buyer = User::where('id',$aVals['buyer_id'])->pluck('name')->first();
+        $buyer = User::where('id',$aVals['seller_id'])->pluck('name')->first();
         $activityname = "";
         if($type == 'Whatsapp'){
             // $activityname = $sellers .' viewed '. $buyer .' profile';
@@ -1683,9 +1683,9 @@ class LeadPreferenceController extends Controller
             $activityname = 'You contacted '. $buyer .' through SMS';
         }
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
-        $isActivity = self::getActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname);
+        $isActivity = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$activityname);
         if(empty($isActivity)){
-            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$activityname, $type, $leadtime);
+            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$activityname, $type, $leadtime);
         }
         return $this->sendResponse(__('Status Updated'), []);                                          
     }
