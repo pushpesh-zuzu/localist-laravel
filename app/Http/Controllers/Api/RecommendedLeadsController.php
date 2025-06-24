@@ -176,16 +176,13 @@ class RecommendedLeadsController extends Controller
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
         //get Leads which are created N munites before and not closed and autobid is open for that lead
-        $nMinutesAgo = Carbon::now()->subMinutes($startBidAfter);
-        $leads = LeadRequest::where('closed_status', 0)
-            ->where('should_autobid', 1)
-            ->where('created_at', '>=', $nMinutesAgo)
-            // ->toRawSql();
+        $leads = LeadRequest::where('should_autobid', 1)
+            ->where('created_at', '<=', Carbon::now()->subMinutes($startBidAfter))
             ->get();
         $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
         foreach($leads as $lead){
             $sellerInserted = 0;
-            $isDataExists = LeadStatus::where('lead_id',$lead->id)->where('status','pending')->first();            
+                      
             $sellers = $this->getAllSellers($lead);
             if(!empty($sellers['response']['sellers'])){
                 foreach($sellers['response']['sellers'] as $s){
@@ -208,27 +205,11 @@ class RecommendedLeadsController extends Controller
                             $request['seller_id'] = $s->id;
                             $request['user_id'] = $lead->customer_id;
                             $this->addManualBid($request);
-                            $sellerInserted = 1;
                         }
                     }
                     
                 }
                 
-            }
-
-            if($sellerInserted){
-                LeadRequest::where('id', $lead->id)->update([
-                    'should_autobid' => 0,
-                    'status'=>'pending'
-                ]);
-                if(empty($isDataExists)){
-                    LeadStatus::create([
-                        'lead_id' => $lead->id,
-                        'user_id' => $lead->customer_id,
-                        'status' => 'pending',
-                        'clicked_from' => 2,
-                    ]);  
-                }
             }
         }
 
@@ -717,8 +698,8 @@ class RecommendedLeadsController extends Controller
             
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
         //remove from save for later
-        SaveForLater::where('seller_id',$aVals['user_id'])
-            ->where('user_id',$sellerId)  
+        SaveForLater::where('seller_id',$sellerId)
+            ->where('user_id',$buyerId)  
             ->where('lead_id',$aVals['lead_id'])
             ->delete();
         if(empty($isDataExists)){

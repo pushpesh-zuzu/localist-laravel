@@ -53,11 +53,13 @@ class UserController extends Controller
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
-        $userId = $request->seller_id;
+        $sellerId = $request->seller_id;
+        $buyerId = $request->buyer_id;
+        $leadId = $request->lead_id;
         
-        $user = User::where('id',$userId)->first();
+        $user = User::where('id',$sellerId)->first();
         //for hired list count
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $userId)
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $sellerId)
             ->pluck('lead_id')
             ->toArray();
         $hiredLeads = LeadRequest::with(['customer', 'category'])
@@ -68,15 +70,21 @@ class UserController extends Controller
             ->orderBy('id', 'DESC')
             ->get();
         $user['hire_count'] = count($hiredLeads);
-        $responseTime = UserResponseTime::where('seller_id', $userId)->value('average');
+
+        $replyCount = RecommendedLead::where('lead_id', $leadId)
+            ->where('seller_id',$sellerId)
+            ->where('buyer_id', $buyerId)
+            ->count();
+        $user['lead_purchased'] = $replyCount > 0 ? 1 : 0;
+        $responseTime = UserResponseTime::where('seller_id', $sellerId)->value('average');
         $responseTime = !empty($responseTime) ? $responseTime : 15;
         $user['response_time'] = CustomHelper::formatTimeDuration($responseTime);
-        $user['user_details'] = UserDetail::where('user_id',$userId)->first();
-        $user['reviews'] = Review::where('user_id',$userId)->get();
+        $user['user_details'] = UserDetail::where('user_id',$sellerId)->first();
+        $user['reviews'] = Review::where('user_id',$sellerId)->get();
         $user['reviews_count'] = count($user['reviews']);
-        $user['accreditations'] = UserAccreditation::where('user_id',$userId)->get();
-        $user['services'] = UserService::where('user_id',$userId)->with(['userServices'])->get();
-        $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$userId)->get();
+        $user['accreditations'] = UserAccreditation::where('user_id',$sellerId)->get();
+        $user['services'] = UserService::where('user_id',$sellerId)->with(['userServices'])->get();
+        $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$sellerId)->get();
         return $this->sendResponse('Seller Profile.', $user);
     }
 
