@@ -99,7 +99,11 @@ class RecommendedLeadsController extends Controller
                     // 👇 Apply quicktorespond check
                     $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
                     $firstResponse = ActivityLog::where('lead_id', $leadid)
-                        ->where('from_user_id', $bid->seller_id)
+                        ->where(function($q){
+                            $q->where('from_user_id', $bid->seller_id)
+                            ->orWhere('to_user_id',$bid->seller_id);
+
+                        })
                         ->whereIn('contact_type', $contactTypes)
                         ->orderBy('created_at', 'asc')
                         ->first();
