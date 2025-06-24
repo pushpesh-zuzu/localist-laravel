@@ -65,7 +65,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendError('User not found');                                              
     }
 
-    public function getRecommendedLeads(Request $request) 
+    public function getRepliesList(Request $request) 
     {
         $seller_id = $request->user_id; 
         $leadid = $request->lead_id; 
@@ -120,7 +120,7 @@ class RecommendedLeadsController extends Controller
                     $sellerData['bid'] = $bid->bid;
                     $sellerData['distance'] = $bid->distance;
                     $sellerData['quicktorespond'] = $quickToRespond;
-
+                    $sellerData['lead_id'] = $bid->lead_id;
                     $result[] = $sellerData;
                 }
             }
