@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-slot name="header">{{ __('View Lead Buyers') }} </x-slot>
+    <x-slot name="header">{{ __('Seller Information') }} </x-slot>
   <div class="row">
     <div class="col-md-6 col-xl-6 col-sm-12">
       <div class="card mb-4">
@@ -10,7 +10,7 @@
           <table class="table table-striped table-bordered">
             <tbody>
             <tr>
-              <td style="width: 100px;">Name</td>
+              <td style="width: 180px;">Name</td>
               <td>{{ $aRows->name }}</td>
             </tr>
             <tr>
@@ -39,7 +39,7 @@
               <td>{{ $aRows->apartment }}</td>
             </tr>
             <tr>
-              <td>Registration</td>
+              <td>Registration Date</td>
               <td>{{ $aRows->created_at->format('d-m-Y') }}</td>
             </tr>
             <tr>
@@ -132,19 +132,19 @@
               <td>{{ !empty($aRows->company_phone) ? $aRows->company_phone : 'N/A' }} </td>
             </tr>
             <tr>
-              <td>Company Location</td>
+              <td>Business Location</td>
               <td>{{!empty($aRows->company_location) ? $aRows->company_location : 'N/A' }} </td>
             </tr>
             <tr>
-              <td>Location Reason</td>
+              <td>Business Location Reason</td>
               <td>{{!empty($aRows->company_location_reason) ? $aRows->company_location_reason : 'N/A' }} </td>
             </tr>
             <tr>
-              <td>Total Years</td>
+              <td>Years In Business</td>
               <td>{{!empty($aRows->company_total_years) ? $aRows->company_total_years : 'N/A' }} </td>
             </tr>
             <tr>
-              <td>About</td>
+              <td>Company Description</td>
               <td>{{!empty($aRows->about_company) ? $aRows->about_company : 'N/A' }} </td>
             </tr>
             <!-- <tr>
