@@ -121,6 +121,11 @@ class RecommendedLeadsController extends Controller
                     $sellerData['distance'] = $bid->distance;
                     $sellerData['quicktorespond'] = $quickToRespond;
                     $sellerData['lead_id'] = $bid->lead_id;
+
+                    $sellerData['activty_log'] = [
+                        'log' => $firstResponse->activity_name,
+                        'date_time' => date('d M Y, H:i')
+                    ];
                     $result[] = $sellerData;
                 }
             }

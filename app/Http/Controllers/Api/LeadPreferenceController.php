@@ -1708,7 +1708,7 @@ class LeadPreferenceController extends Controller
             }
             $isActivity = self::getActivityLog($buyerId, $sellerId,$aVals['lead_id'],$activityname);
             if(empty($isActivity)){
-                self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'],$activityname, $type, $leadtime);
+                self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, $type, $leadtime);
             }
         }
         
