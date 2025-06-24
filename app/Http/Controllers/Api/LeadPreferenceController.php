@@ -1666,26 +1666,45 @@ class LeadPreferenceController extends Controller
     { 
         $aVals = $request->all();
         $type = $aVals['type'];
-        $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
-        $buyer = User::where('id',$aVals['seller_id'])->pluck('name')->first();
+        // $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
+        // $buyer = User::where('id',$aVals['seller_id'])->pluck('name')->first();
+        $sellerId = $aVals['seller_id'];
+        $buyerId = $aVals['buyer_id'];
+        $sellerName = User::where('id', $sellerId)->pluck('name')->first();
+        $buyerName = User::where('id', $buyerId)->pluck('name')->first();
         $activityname = "";
-        if($type == 'Whatsapp'){
-            // $activityname = $sellers .' viewed '. $buyer .' profile';
-            $activityname = 'You contacted '. $buyer .' through Whatsapp';
+        if($aVals['type'] == 'seller'){
+            if($type == 'Whatsapp'){
+                $activityname = $sellerName .' contacted '. $buyerName .' through Whatsapp';
+            }
+            if($type == 'email'){
+            $activityname = $sellerName.' contacted '. $buyerName .' through email'; 
+            }
+            if($type == 'mobile'){
+                $activityname = $sellerName .' contacted '. $buyerName .' through mobile';
+            }
+            if($type == 'sms'){
+                $activityname = $sellerName .' contacted '. $buyerName .' through SMS';
+            }
+        }else{
+            if($type == 'Whatsapp'){
+                $activityname = $buyerName .' contacted '. $sellerName .' through Whatsapp';
+            }
+            if($type == 'email'){
+            $activityname = $buyerName .' contacted '. $sellerName .' through email'; 
+            }
+            if($type == 'mobile'){
+                $activityname = $buyerName .' contacted '. $sellerName .' through mobile';
+            }
+            if($type == 'sms'){
+                $activityname = $buyerName .' contacted '. $sellerName .' through SMS';
+            }
         }
-        if($type == 'email'){
-           $activityname = 'You contacted '. $buyer .' through email'; 
-        }
-        if($type == 'mobile'){
-            $activityname = 'You contacted '. $buyer .' through mobile';
-        }
-        if($type == 'sms'){
-            $activityname = 'You contacted '. $buyer .' through SMS';
-        }
+        
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
-        $isActivity = self::getActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$activityname);
+        $isActivity = self::getActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname);
         if(empty($isActivity)){
-            self::addActivityLog($aVals['user_id'],$aVals['seller_id'],$aVals['lead_id'],$activityname, $type, $leadtime);
+            self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
         }
         return $this->sendResponse(__('Status Updated'), []);                                          
     }
