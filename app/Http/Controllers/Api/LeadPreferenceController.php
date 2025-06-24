@@ -1673,7 +1673,7 @@ class LeadPreferenceController extends Controller
         $sellerName = User::where('id', $sellerId)->pluck('name')->first();
         $buyerName = User::where('id', $buyerId)->pluck('name')->first();
         $activityname = "";
-        if($aVals['type'] == 'seller'){
+        if($aVals['response_type'] == 'seller'){
             if($type == 'Whatsapp'){
                 $activityname = $sellerName .' contacted '. $buyerName .' through Whatsapp';
             }
