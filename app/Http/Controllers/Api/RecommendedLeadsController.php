@@ -192,7 +192,6 @@ class RecommendedLeadsController extends Controller
                         $dateStart = Carbon::parse($batch['start'])->startOfDay();
                         $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
                         $count = \DB::table('recommended_leads')
-                            ->where('lead_id', $lead->id)
                             ->where('seller_id', $s->id)
                             ->where('purchase_type', 'Autobid')
                             ->whereBetween('created_at', [$dateStart, $dateEnd])
