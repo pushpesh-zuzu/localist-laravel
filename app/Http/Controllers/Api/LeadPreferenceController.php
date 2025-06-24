@@ -1673,6 +1673,9 @@ class LeadPreferenceController extends Controller
         $sellerName = User::where('id', $sellerId)->pluck('name')->first();
         $buyerName = User::where('id', $buyerId)->pluck('name')->first();
         $activityname = "";
+
+        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+
         if($aVals['response_type'] == 'seller'){
             if($type == 'Whatsapp'){
                 $activityname = $sellerName .' contacted '. $buyerName .' through Whatsapp';
@@ -1685,6 +1688,10 @@ class LeadPreferenceController extends Controller
             }
             if($type == 'sms'){
                 $activityname = $sellerName .' contacted '. $buyerName .' through SMS';
+            }
+            $isActivity = self::getActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname);
+            if(empty($isActivity)){
+                self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
             }
         }else{
             if($type == 'Whatsapp'){
@@ -1699,13 +1706,14 @@ class LeadPreferenceController extends Controller
             if($type == 'sms'){
                 $activityname = $buyerName .' contacted '. $sellerName .' through SMS';
             }
+            $isActivity = self::getActivityLog($buyerId, $sellerId,$aVals['lead_id'],$activityname);
+            if(empty($isActivity)){
+                self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'],$activityname, $type, $leadtime);
+            }
         }
         
-        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
-        $isActivity = self::getActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname);
-        if(empty($isActivity)){
-            self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
-        }
+        
+        
         return $this->sendResponse(__('Status Updated'), []);                                          
     }
 

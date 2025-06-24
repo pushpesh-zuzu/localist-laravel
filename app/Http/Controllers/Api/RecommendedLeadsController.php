@@ -691,7 +691,8 @@ class RecommendedLeadsController extends Controller
             'seller_id' => $sellerId, 
             'buyer_id' => $buyerId, //buyer
             'lead_id' => $aVals['lead_id'], 
-            'bid' => $creditScore,  
+            'bid' => $creditScore, 
+            'distance' => $aVals['distance'],
             'purchase_type' => $pType
         ]);
         //deduct credit
