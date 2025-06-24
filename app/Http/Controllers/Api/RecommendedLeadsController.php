@@ -123,8 +123,8 @@ class RecommendedLeadsController extends Controller
                     $sellerData['lead_id'] = $bid->lead_id;
 
                     $sellerData['activty_log'] = [
-                        'log' => $firstResponse->activity_name,
-                        'date_time' => date('d M Y, H:i')
+                        'log' => !empty($firstResponse->activity_name) ? $firstResponse->activity_name : '',
+                        'date_time' => !empty($firstResponse->created_at) ? date('d M Y, H:i', strtotime($firstResponse->created_at)) : ''
                     ];
                     $result[] = $sellerData;
                 }
