@@ -176,7 +176,8 @@ class RecommendedLeadsController extends Controller
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
         //get Leads which are created N munites before and not closed and autobid is open for that lead
-        $leads = LeadRequest::where('should_autobid', 1)
+        $leads = LeadRequest::where('closed_status', 0)
+            ->where('should_autobid', 1)
             ->where('created_at', '<=', Carbon::now()->subMinutes($startBidAfter))
             ->get();
         $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
