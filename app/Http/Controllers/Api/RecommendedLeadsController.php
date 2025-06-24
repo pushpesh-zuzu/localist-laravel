@@ -195,6 +195,7 @@ class RecommendedLeadsController extends Controller
                             ->where('lead_id', $lead->id)
                             ->where('seller_id', $s->id)
                             ->where('buyer_id', $lead->customer_id)
+                            ->where('purchase_type', 'Autobid')
                             ->whereBetween('created_at', [$dateStart, $dateEnd])
                             ->count();
                         if($count < $autobidLimit){
