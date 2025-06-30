@@ -18,4 +18,9 @@ class Category extends Model
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
+    public function userServices()
+    {
+        return $this->hasMany(UserService::class, 'service_id');
+    }
+
 }
