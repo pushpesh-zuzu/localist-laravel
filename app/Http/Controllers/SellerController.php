@@ -79,7 +79,6 @@ class SellerController extends Controller
         \DB::table('user_accreditations')->where('user_id',$id)->delete();
         \DB::table('user_card_details')->where('user_id',$id)->delete();
         \DB::table('user_details')->where('user_id',$id)->delete();
-        \DB::table('user_hiring_histories')->where('user_id',$id)->delete();
         \DB::table('user_response_times')->where('seller_id',$id)->delete();
         \DB::table('user_services')->where('user_id',$id)->delete();
         \DB::table('user_service_locations')->where('user_id',$id)->delete();
@@ -87,7 +86,6 @@ class SellerController extends Controller
         \DB::table('invoices')->where('user_id',$id)->delete();
         \DB::table('lead_prefrences')->where('user_id',$id)->delete();
         \DB::table('lead_requests')->where('customer_id',$id)->delete();
-        \DB::table('lead_statuses')->where('user_id',$id)->delete();
         \DB::table('login_histories')->where('user_id',$id)->delete();
         \DB::table('plan_histories')->where('user_id',$id)->delete();
         \DB::table('profile_q_a_s')->where('user_id',$id)->delete();

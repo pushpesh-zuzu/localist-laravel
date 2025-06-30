@@ -59,17 +59,11 @@ class UserController extends Controller
         
         $user = User::where('id',$sellerId)->first();
         //for hired list count
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $sellerId)
-            ->pluck('lead_id')
-            ->toArray();
-        $hiredLeads = LeadRequest::with(['customer', 'category'])
-            ->whereIn('id',$recommendedLeadIds)
-            ->whereHas('customer', function($query) {
-                $query->where('form_status', 1);
-            })->where('status','hired')
-            ->orderBy('id', 'DESC')
-            ->get();
-        $user['hire_count'] = count($hiredLeads);
+        $hireCount = RecommendedLead::where('seller_id', $sellerId)
+            ->where('status','hired')
+            ->count();
+
+        $user['hire_count'] = $hireCount;
 
         $replyCount = RecommendedLead::where('lead_id', $leadId)
             ->where('seller_id',$sellerId)

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\UserServiceLocation;
-use App\Models\UserHiringHistory;
 use App\Models\UserResponseTime;
 use App\Models\RecommendedLead;
 use App\Models\ServiceQuestion;
@@ -16,7 +15,6 @@ use App\Models\SaveForLater;
 use App\Models\ActivityLog;
 use App\Models\LeadRequest;
 use App\Models\UserService;
-use App\Models\LeadStatus;
 use App\Models\UserDetail;
 use App\Models\CreditList;
 use App\Models\SellerNote;
@@ -584,14 +582,15 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
+            ->where('status','<>', 'hired')
+            ->pluck('lead_id')
+            ->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)
         ->whereHas('customer', function($query) {
             $query->where('form_status', 1);
-        })->where('status','pending')
+        })
         ->orderBy('id', 'DESC')
         ->get();
         
@@ -624,8 +623,9 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
+            ->where('status','hired')
+            ->pluck('lead_id')
+            ->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)
@@ -647,42 +647,41 @@ class LeadPreferenceController extends Controller
     public function addHiredLeads(Request $request)
     {
         $aVals = $request->all();
-        $leads = LeadRequest::where('id',$aVals['lead_id'])->first();
-        $users = User::where('id',$leads->customer_id)->pluck('name')->first();
-        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status',$aVals['status_type'])->first();
-        $statustype = $aVals['status_type'];
-        $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
-        $buyer = User::where('id',$leads->customer_id)->pluck('name')->first(); 
-        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
-        $activityname = 'You updated ' .$buyer. ' status to hired';
-        $isActivity = self::getActivityLog($aVals['user_id'],$leads->customer_id,$aVals['lead_id'],$activityname);
-
-        if (!empty($leads)) {
-            if ($leads->status == "hired" && $aVals['status_type'] == "hired") {
-                return $this->sendError(__("You already hired this buyer, now you can't change this status"), 404);
-            }
+        $lead = LeadRequest::where('id',$aVals['lead_id'])->first();
         
-            // Allow updating to 'hired' or re-assigning the same status
-            LeadRequest::where('id',$aVals['lead_id'])->update(['status' => $statustype]);
-        
-            $sendmessage = 'You hired ' . $users;
-        
-            if (empty($isDataExists)) {
-                LeadStatus::create([
-                    'lead_id' => $aVals['lead_id'],
-                    'user_id' => $aVals['user_id'],
-                    'status' => $statustype,
-                    'clicked_from' => 1,
-                ]);
-            }
-
-            
-        } else {
-            $sendmessage = 'No Leads found';
+        if(empty($lead)){
+            return $this->sendError('Lead not found', 404);
         }
-        if(empty($isActivity)){
-                self::addActivityLog($aVals['user_id'],$leads->customer_id,$aVals['lead_id'],$activityname, "hired", $leadtime);
+
+        $sellerId = $request->user_id;
+        $buyerId = $lead->customer_id;
+        
+        $users = User::where('id',$buyerId)->pluck('name')->first();
+
+        $sellerName = User::where('id',$sellerId)->pluck('name')->first();
+        $buyerName = User::where('id',$leads->customer_id)->pluck('name')->first(); 
+        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
+        $activityname = $sellerName . ' updated status to hired';
+        $isActivity = self::getActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname);
+
+        if($lead->status != 'hired'){
+            LeadRequest::where('id',$aVals['lead_id'])->update([
+                'status'=>'hired',
+                'hired_by' => $sellerId
+            ]);
+            RecommendedLead::where('lead_id', $aVals['lead_id'])
+                ->where('seller_id', $sellerId)
+                ->where('buyer_id', $buyerId)
+                ->update([
+                    'status' => 'hired'
+                ]);
+            $sendmessage = 'Request submited sucessfully';
+            if(empty($isActivity)){
+                self::addActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname, "hired", $leadTime);
             }
+        }else{
+            $sendmessage = 'This lead is already hired!';
+        }
         
         return $this->sendResponse($sendmessage, []);
     }
@@ -690,34 +689,37 @@ class LeadPreferenceController extends Controller
     public function submitLeads(Request $request)
     {
         $aVals = $request->all();
-        $leadsreq = LeadRequest::where('id',$aVals['lead_id'])->first();
-        $leads = UserHiringHistory::where('lead_id',$aVals['lead_id'])
-                                  ->where('user_id',$aVals['seller_id'])
-                                  ->where('name',$aVals['name'])
-                                  ->first();
-        $sellers = User::where('id',$aVals['seller_id'])->pluck('name')->first();
-        $buyer = User::where('id',$leadsreq->customer_id)->pluck('name')->first(); 
-        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
-        $activityname = $buyer . ' updated your status to hired';
-        $isActivity = self::getActivityLog($leadsreq->customer_id,$aVals['seller_id'],$aVals['lead_id'],$activityname);
-
-        if (empty($leads)) {
-            UserHiringHistory::create([
-                'lead_id' => $aVals['lead_id'],
-                'user_id' => $aVals['seller_id'],
-                'name' => $aVals['name']
-            ]);
-            LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'hired']);
-            
-            if(empty($isActivity)){
-                self::addActivityLog($leadsreq->customer_id,$aVals['seller_id'],$aVals['lead_id'],$activityname, "hired", $leadtime);
-            }
-            
-            // $sendmessage = 'You hired this job';
-            $sendmessage = 'Request submited sucessfully';
-        } else {
-            $sendmessage = 'Already you hired this user';
+        $sellerId = $aVals['seller_id'];
+        $buyerId = $request->user_id;
+        $lead = LeadRequest::where('id',$aVals['lead_id'])->first();
+        if(empty($lead)){
+            return $this->sendError('Lead not found', 404);
         }
+        $buyerName = User::where('id',$buyerId)->pluck('name')->first(); 
+        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
+        
+        $activityname = $buyerName . ' updated status to hired';
+        $isActivity = self::getActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname);
+
+        if($lead->status != 'hired'){
+            LeadRequest::where('id',$aVals['lead_id'])->update([
+                'status'=>'hired',
+                'hired_by' => $buyerId
+            ]);
+            RecommendedLead::where('lead_id', $aVals['lead_id'])
+                ->where('seller_id', $sellerId)
+                ->where('buyer_id', $buyerId)
+                ->update([
+                    'status' => 'hired'
+                ]);
+            $sendmessage = 'Request submited sucessfully';
+            if(empty($isActivity)){
+                self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, "hired", $leadTime);
+            }
+        }else{
+            $sendmessage = 'This lead is already hired!';
+        }
+        
         return $this->sendResponse($sendmessage, []);
     }
     // ------------------------

@@ -15,7 +15,6 @@ use App\Models\LeadRequest;
 use App\Models\ActivityLog;
 use App\Models\UserService;
 use App\Models\UserDetail;
-use App\Models\LeadStatus;
 use App\Models\Category;
 use App\Models\Setting;
 use App\Models\User;
@@ -67,7 +66,7 @@ class RecommendedLeadsController extends Controller
 
     public function getRepliesList(Request $request) 
     {
-        $seller_id = $request->user_id; 
+        $buyerId = $request->user_id; 
         $leadid = $request->lead_id; 
         $result = [];
 
@@ -78,11 +77,12 @@ class RecommendedLeadsController extends Controller
             }
 
             // Fetch all matching bids
-            $bids = RecommendedLead::where('buyer_id', $seller_id)
+            $bids = RecommendedLead::where('buyer_id', $buyerId)
                 ->where('lead_id', $leadid)
                 // ->where('distance','!=', 0)
                 ->orderBy('distance', 'ASC')
                 ->get();
+            // print_r($bids->toArray());exit;
 
             
             // Get seller IDs and unique service IDs
@@ -99,8 +99,10 @@ class RecommendedLeadsController extends Controller
                     // 👇 Apply quicktorespond check
                     $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
                     $firstResponse = ActivityLog::where('lead_id', $leadid)
-                        ->where(function($q) use ($bid){
-                            $q->where('from_user_id', $bid->seller_id)
+                        ->where(function($q) use ($buyerId, $bid){
+                            $q->where('from_user_id', $buyerId)
+                            ->orWhere('from_user_id', $bid->seller_id)
+                            ->orWhere('to_user_id',$buyerId)                            
                             ->orWhere('to_user_id',$bid->seller_id);
 
                         })
@@ -636,7 +638,6 @@ class RecommendedLeadsController extends Controller
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
         }
-        $isDataExists = LeadStatus::where('lead_id',$aVals['lead_id'])->where('status','pending')->first();
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
         
@@ -675,7 +676,6 @@ class RecommendedLeadsController extends Controller
         $logInfo = "";
         $trInfo = "";
         $pType = "";
-        $clickedFrom = 2;
         $sellerName = User::where('id',$sellerId)->value('name');
         $buyerName = User::where('id',$buyerId)->value('name');
         if($aVals['bidtype'] == 'reply'){    
@@ -685,7 +685,6 @@ class RecommendedLeadsController extends Controller
             self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'], $buyerName ." contacted " .$sellerName, "Request Reply", $leadTime);
             
         }else if($aVals['bidtype'] == 'purchase_leads'){
-            $clickedFrom = 1;
             $pType = "Manual Bid";
             $trInfo = $creditScore . " credit deducted for Contacting to Customer";
             self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$sellerName .' ontacted '. $buyerName, "Manual Bid", $leadTime);
@@ -715,14 +714,7 @@ class RecommendedLeadsController extends Controller
             ->where('user_id',$buyerId)  
             ->where('lead_id',$aVals['lead_id'])
             ->delete();
-        if(empty($isDataExists)){
-            LeadStatus::create([
-            'lead_id' => $aVals['lead_id'],
-                'user_id' => $aVals['user_id'],
-                'status' => 'pending',
-                'clicked_from' => $clickedFrom,
-            ]);  
-        }
+        
         
         return $this->sendResponse('Bid placed successfully');
     }

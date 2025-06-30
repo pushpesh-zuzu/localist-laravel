@@ -14,8 +14,15 @@
               <div class="col-md-4"><b>City: </b> {{ $aRows->city }}</div>
               <div class="col-md-4"><b>Zipcode: </b> {{ $aRows->zipcode }}</div>
               <div class="col-md-4"><b>Registration Date: </b> {{ $aRows->created_at->format('d-m-Y') }}</div>
-              <div class="col-md-4"><b>Last Login: </b> {{ $aRows->last_login }}</div>
-              <div class="col-md-4"><b>Number of hirers: </b> 0</div>
+              <div class="col-md-4"><b>Last Login: </b> {{ date('dS M Y \a\t h:i A', strtotime($aRows->last_login)) }}</div>
+              <div class="col-md-4">
+                <?php
+                  $hireCount = App\Models\RecommendedLead::where('buyer_id', $aRows->id)
+                    ->where('status','hired')
+                    ->count();
+                ?>
+                <b>Number of hirers: </b> {{$hireCount}}
+              </div>
               <?php
                 $badges = "";
                 $is_phone_verified =  App\Models\User::where('id',$user_id)->value('phone_verified') == 1 ? 1 : 0;
