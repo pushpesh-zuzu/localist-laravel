@@ -36,4 +36,9 @@ class UserService extends Model
         return $service;
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'service_id');
+    }
+
 }
