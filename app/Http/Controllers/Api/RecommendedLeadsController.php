@@ -198,26 +198,32 @@ class RecommendedLeadsController extends Controller
             $sellers = $this->getAllSellers($lead);
             if(!empty($sellers['response']['sellers'])){
                 foreach($sellers['response']['sellers'] as $s){
-                    $batch = CustomHelper::getCurrentAutobidBatch($s->id);    
-                    if(!empty($batch)){
-                        $dateStart = Carbon::parse($batch['start'])->startOfDay();
-                        $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
-                        $count = \DB::table('recommended_leads')
-                            ->where('seller_id', $s->id)
-                            ->where('purchase_type', 'Autobid')
-                            ->whereBetween('created_at', [$dateStart, $dateEnd])
-                            ->count();
-                        if($count < $autobidLimit){
-                            $request->replace($request->only(['abc']));
-                            $request['bidtype'] = 'autobid';
-                            $request['lead_id'] = $lead->id;
-                            $request['service_id'] = $lead->service_id;
-                            $request['distance'] = $s->distance;
-                            $request['seller_id'] = $s->id;
-                            $request['user_id'] = $lead->customer_id;
-                            $this->addManualBid($request);
+                    $leadCreatedAt = Carbon::parse($lead->created_at);
+                    $sellerRegisteredAt = Carbon::parse($s->user_created_time);
+                    
+                    if($leadCreatedAt->greaterThan($sellerRegisteredAt)){
+                        $batch = CustomHelper::getCurrentAutobidBatch($s->id);    
+                        if(!empty($batch)){
+                            $dateStart = Carbon::parse($batch['start'])->startOfDay();
+                            $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
+                            $count = \DB::table('recommended_leads')
+                                ->where('seller_id', $s->id)
+                                ->where('purchase_type', 'Autobid')
+                                ->whereBetween('created_at', [$dateStart, $dateEnd])
+                                ->count();
+                            if($count < $autobidLimit){
+                                $request->replace($request->only(['abc']));
+                                $request['bidtype'] = 'autobid';
+                                $request['lead_id'] = $lead->id;
+                                $request['service_id'] = $lead->service_id;
+                                $request['distance'] = $s->distance;
+                                $request['seller_id'] = $s->id;
+                                $request['user_id'] = $lead->customer_id;
+                                $this->addManualBid($request);
+                            }
                         }
                     }
+                    
                     
                 }
                 
@@ -333,7 +339,8 @@ class RecommendedLeadsController extends Controller
                 'usl.postcode',
                 'urt.average as response_time',
                 'p.latitude as lat',
-                'p.longitude as lng'
+                'p.longitude as lng',
+                'users.created_at as user_created_time'
             );
         
        
