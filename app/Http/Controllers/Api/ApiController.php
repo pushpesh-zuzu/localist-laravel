@@ -59,7 +59,6 @@ class ApiController extends Controller
             $subcategories = Category::where('is_home', 1)
                 ->where('parent_id', $category->id)
                 ->where('status', 1)
-                ->orderBy('id', 'DESC')
                 ->get();
     
             // Only add the category if subcategories exist
