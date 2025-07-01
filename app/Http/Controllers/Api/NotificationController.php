@@ -47,6 +47,12 @@ class NotificationController extends Controller
                 $user_type = 'customer';
                 $noti_type = 'email';
                 break;
+            case 'buyer_browser_new_lead':
+            case 'buyer_browser_customer_sending_message':
+            case 'buyer_browser_new_review':
+                $user_type = 'buyer';
+                $noti_type = 'browser';
+                break;
             default:
                 $user_type = 'error';
                 $noti_type = 'error';
@@ -117,7 +123,7 @@ class NotificationController extends Controller
                 );
                 array_push($notiSettingList,$noti);
             }
-            //Updates about new features on Bark
+            //Updates about new features on Localist
             if (!in_array('customer_email_update_about_new_feature', array_column($notiSettingList, 'noti_name'))) {
                 $noti = array(
                     "user_id"=> $user_id,
@@ -127,6 +133,46 @@ class NotificationController extends Controller
                     "noti_type"=> "email"
                 );
                 array_push($notiSettingList,$noti);
+            }
+        }
+        //for seller
+        if($request->user_type == 'buyer'){
+            if($request->noti_type == 'browser'){ //for browser type
+                //Changes to buyer_browser_new_lead
+                if (!in_array('buyer_browser_new_lead', array_column($notiSettingList, 'noti_name'))) {
+                    $noti = array(
+                        "user_id"=> $user_id,
+                        "noti_name"=> "buyer_browser_new_lead",
+                        "noti_value"=> 0,
+                        "user_type"=> "customer",
+                        "noti_type"=> "browser"
+                    );
+                    array_push($notiSettingList,$noti);
+                }
+
+                //Changes to buyer_browser_customer_sending_message
+                if (!in_array('buyer_browser_customer_sending_message', array_column($notiSettingList, 'noti_name'))) {
+                    $noti = array(
+                        "user_id"=> $user_id,
+                        "noti_name"=> "buyer_browser_customer_sending_message",
+                        "noti_value"=> 0,
+                        "user_type"=> "customer",
+                        "noti_type"=> "browser"
+                    );
+                    array_push($notiSettingList,$noti);
+                }
+
+                //Changes to buyer_browser_new_review
+                if (!in_array('buyer_browser_new_review', array_column($notiSettingList, 'noti_name'))) {
+                    $noti = array(
+                        "user_id"=> $user_id,
+                        "noti_name"=> "buyer_browser_new_review",
+                        "noti_value"=> 0,
+                        "user_type"=> "customer",
+                        "noti_type"=> "browser"
+                    );
+                    array_push($notiSettingList,$noti);
+                }
             }
         }
         return $this->sendResponse('Notification Settings List',$notiSettingList);
@@ -140,7 +186,7 @@ class NotificationController extends Controller
 
         event(new NewNotificationEvent($message, $userId));
 
-        return response()->json(['sent' => true]);
+        return $this->sendResponse('Notification Sent');
     }
     
 }
