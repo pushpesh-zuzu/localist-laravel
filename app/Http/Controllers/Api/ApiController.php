@@ -51,7 +51,6 @@ class ApiController extends Controller
         $categories = Category::where('is_home', 1)
             ->where('parent_id', 0)
             ->where('status', 1)
-            ->orderBy('id', 'DESC')
             ->get();
     
         $result = [];
