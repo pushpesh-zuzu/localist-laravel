@@ -140,7 +140,7 @@ class NotificationController extends Controller
 
         event(new NewNotificationEvent($message, $userId));
 
-        return response()->json(['sent' => true]);
+        return $this->sendResponse('Notification Sent');
     }
     
 }
