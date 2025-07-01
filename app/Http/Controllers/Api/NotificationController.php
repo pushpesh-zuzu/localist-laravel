@@ -47,6 +47,12 @@ class NotificationController extends Controller
                 $user_type = 'customer';
                 $noti_type = 'email';
                 break;
+            case 'buyer_browser_new_lead':
+            case 'buyer_browser_customer_sending_message':
+            case 'buyer_browser_new_review':
+                $user_type = 'buyer';
+                $noti_type = 'browser';
+                break;
             default:
                 $user_type = 'error';
                 $noti_type = 'error';
