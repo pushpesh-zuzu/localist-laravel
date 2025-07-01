@@ -20,6 +20,9 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\RecommendedLead;
 use App\Models\AutobidStatusLog;
+use App\Models\NotificationSetting;
+use App\Notifications\BrowserNotification;
+
 
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
@@ -36,10 +39,10 @@ class RecommendedLeadsController extends Controller
     {
         $userdetails = UserDetail::where('user_id',$request->user_id)->first();
         if(!empty($userdetails)){
-            $user_id = $request->user_id; 
+            $user_id = $request->user_id;
             $autobid = $request->is_autobid;
             $data['is_autobid'] = $autobid;
-            $data['autobid_pause'] = 0;            
+            $data['autobid_pause'] = 0;
             $data['updated_at'] = date('Y-m-d H:i:s');
             UserDetail::where('user_id', $user_id)->update($data);
 
@@ -47,27 +50,27 @@ class RecommendedLeadsController extends Controller
             $data2['user_id'] = $request->user_id;
             $data2['action'] = $bidStatus;
             AutobidStatusLog::insertGetId($data2);
-            return $this->sendResponse(__('Autobid switched successfully'), $data ); 
+            return $this->sendResponse(__('Autobid switched successfully'), $data );
         }
         return $this->sendError('User not found!');
-          
+
     }
 
-    public function getAutobid(Request $request){ 
+    public function getAutobid(Request $request){
         $aVals = $request->all();
         $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
         if(!empty($isDataExists)){
             return $this->sendResponse(__('Autobid Data'), [
                 'isautobid' => $isDataExists->is_autobid
             ]);
-        }      
-        return $this->sendError('User not found');                                              
+        }
+        return $this->sendError('User not found');
     }
 
-    public function getRepliesList(Request $request) 
+    public function getRepliesList(Request $request)
     {
-        $buyerId = $request->user_id; 
-        $leadid = $request->lead_id; 
+        $buyerId = $request->user_id;
+        $leadid = $request->lead_id;
         $result = [];
 
         if (!empty($leadid)) {
@@ -84,7 +87,7 @@ class RecommendedLeadsController extends Controller
                 ->get();
             // print_r($bids->toArray());exit;
 
-            
+
             // Get seller IDs and unique service IDs
             $sellerIds = $bids->pluck('seller_id')->toArray();
             $serviceIds = $bids->pluck('service_id')->unique()->toArray();
@@ -102,7 +105,7 @@ class RecommendedLeadsController extends Controller
                         ->where(function($q) use ($buyerId, $bid){
                             $q->where('from_user_id', $buyerId)
                             ->orWhere('from_user_id', $bid->seller_id)
-                            ->orWhere('to_user_id',$buyerId)                            
+                            ->orWhere('to_user_id',$buyerId)
                             ->orWhere('to_user_id',$bid->seller_id);
 
                         })
@@ -139,11 +142,11 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
-    
+
     public function getManualLeads(Request $request){
-        
+
         $lead = LeadRequest::find($request->lead_id);
-        
+
 
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
         $responseTimeFilter = $request->responseTimeFilter ?? [];
@@ -155,10 +158,10 @@ class RecommendedLeadsController extends Controller
             // for weightage sorting
             $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
             $w80 = (int) ($recommendedCount * 0.8);
-            
+
             // Step 1: Sort all by credit_score DESC
             $sorted = $result['response']['sellers']
-                ->sortByDesc('total_credit')           
+                ->sortByDesc('total_credit')
                 ->values();
 
             $topN = $sorted->take($w80); //Step 2: Take first 4
@@ -172,17 +175,17 @@ class RecommendedLeadsController extends Controller
         }else{
             return $this->sendResponse('No Seller Found!', [$result['response']]);
         }
-        
+
         return $this->sendResponse('Your Matches List', [$result['response']]);
     }
-    
+
     public function closeLeads(Request $request){
         // unpause auto bid after 7 days
         $this->unpauseAutobidAfter7Days();
         //close leads after 14 days
         $this->leadCloseAfter2Weeks();
-        
-        
+
+
         //start getting auto bid leads
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
@@ -194,11 +197,11 @@ class RecommendedLeadsController extends Controller
         $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
         foreach($leads as $lead){
             $sellerInserted = 0;
-                      
+
             $sellers = $this->getAllSellers($lead);
             if(!empty($sellers['response']['sellers'])){
                 foreach($sellers['response']['sellers'] as $s){
-                    $batch = CustomHelper::getCurrentAutobidBatch($s->id);    
+                    $batch = CustomHelper::getCurrentAutobidBatch($s->id);
                     if(!empty($batch)){
                         $dateStart = Carbon::parse($batch['start'])->startOfDay();
                         $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
@@ -218,20 +221,20 @@ class RecommendedLeadsController extends Controller
                             $this->addManualBid($request);
                         }
                     }
-                    
+
                 }
-                
+
             }
         }
 
 
-        
+
     }
 
     public function unpauseAutobidAfter7Days()
     {
         $sevenDaysAgo = Carbon::now()->subDays(7);
-        
+
         $sellers = UserDetail::where('is_autobid','1')
             ->where('autobid_pause','1')
             ->pluck('id')
@@ -256,14 +259,14 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    
+
 
     public function leadCloseAfter2Weeks(){
         $leadsToClose = LeadRequest::where('status', 0)
             ->where('closed_status', 0)
             ->where('created_at', '<', Carbon::now()->subDays(14)->toDateString())
             ->get();
-        
+
         foreach ($leadsToClose as $lead) {
             $lead->closed_status = 1; // Mark as closed
             $lead->save();
@@ -280,7 +283,7 @@ class RecommendedLeadsController extends Controller
         $customerId = $lead->customer_id;
         $question = $lead->arrayed_questions;
         $serviceName = Category::find($serviceId)->name ?? '';
-        
+
         if (!is_array(json_decode($question, true))) {
             return $this->sendError('Invalid or missing lead questions', 404);
         }
@@ -309,7 +312,7 @@ class RecommendedLeadsController extends Controller
                 $join->on('users.id', '=', 'usl.user_id')
                     ->where('users.form_status', 1)
                     ->whereNotIn('users.id', $repliesUsers);
-                    
+
             })
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
             ->join('postcodes as p', 'p.postcode', '=', 'usl.postcode')
@@ -335,12 +338,12 @@ class RecommendedLeadsController extends Controller
                 'p.latitude as lat',
                 'p.longitude as lng'
             );
-        
-       
+
+
         if(!empty($filters['rating'])){
             if($filters['rating'] === 'no_rating'){
                 $rows = $rows->where('users.avg_rating', 0);
-                
+
             }else if($filters['rating'] === 5){
                 $rows = $rows->where('users.avg_rating', '=', 5);
             }else{
@@ -360,11 +363,11 @@ class RecommendedLeadsController extends Controller
 
             $rows = $rows->where('urt.average','<>', null)
                 ->where('urt.average', '<=', $maxAllowed);
-        }    
-            
+        }
+
         $rows = $rows->get();
 
-        
+
 
         // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
@@ -390,15 +393,15 @@ class RecommendedLeadsController extends Controller
             );
 
             $row->distance = (double) round($distance, 2); // add distance field
-            
+
             return $row->nation_wide == 1
                 || $row->postcode == $refPostcode
                 || $row->miles >= $distance;
         });
 
-        
+
         $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)->sortBy('distance');
-        
+
         if(!empty($filters['distance_order'])){
             if($filters['distance_order'] === 'farthest to nearest'){
                 $final = $final->sortByDesc('distance');
@@ -444,7 +447,7 @@ class RecommendedLeadsController extends Controller
     }
     private function usersAccordingToPrefs($arrayed_questions, $filteredUsers, $serviceId){
         $arrayedQuestions = json_decode($arrayed_questions, true);
-        
+
         $userIds = $filteredUsers->pluck('user_id')->all();
 
         // Load preferences of filtered users
@@ -474,7 +477,7 @@ class RecommendedLeadsController extends Controller
 
         return $final;
     }
-    
+
     public function filterMatchingUsers(array $arrayedQuestions, array $groupedPrefs): array
     {
         $matchingUserIds = [];
@@ -587,14 +590,14 @@ class RecommendedLeadsController extends Controller
 
         return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
     }
-    
+
     public function sortByLocation(Request $request)
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
 
         $distanceOrderRaw = $request->distance_order;
-        
+
         $result = $this->getAllSellers($lead, [ 'distance_order' => $distanceOrderRaw]);
         $result['response']['sellers'] = $result['response']['sellers']->values()->toArray();
 
@@ -627,10 +630,10 @@ class RecommendedLeadsController extends Controller
             });
         })
         ->get();
-        
-        return $this->sendResponse(__('Activity log'),$isActivity);     
+
+        return $this->sendResponse(__('Activity log'),$isActivity);
     }
-    
+
 
 
     public function addManualBid(Request $request){
@@ -640,12 +643,12 @@ class RecommendedLeadsController extends Controller
         }
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
-        
+
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
 
         $sellerId = ($aVals['bidtype'] == 'purchase_leads') ? $aVals['user_id'] : $aVals['seller_id'];
         $buyerId = ($aVals['bidtype'] == 'purchase_leads') ? $aVals['buyer_id'] : $aVals['user_id'];
-        
+
         $totalCredit = User::where('id', $sellerId)->value('total_credit');
         //check if seller has enough credits
         if($creditScore > $totalCredit){
@@ -660,7 +663,7 @@ class RecommendedLeadsController extends Controller
         if(!empty($bidCheck)){
             return $this->sendError('Bid Already Placed for this seller', 404);
         }
-        
+
         // check if N bids has been placed on this lead or not
         $totalBidCount = RecommendedLead::where('lead_id', $aVals['lead_id'])
             ->where('service_id', $aVals['service_id'])
@@ -676,14 +679,16 @@ class RecommendedLeadsController extends Controller
         $logInfo = "";
         $trInfo = "";
         $pType = "";
-        $sellerName = User::where('id',$sellerId)->value('name');
+        $seller = User::where('id', $sellerId)->first();
+        $sellerName = $seller->name;
+        // $sellerName = User::where('id',$sellerId)->value('name');
         $buyerName = User::where('id',$buyerId)->value('name');
-        if($aVals['bidtype'] == 'reply'){    
-                    
+        if($aVals['bidtype'] == 'reply'){
+
             $pType = "Request Reply";
             $trInfo = $creditScore . " credit deducted for Request Reply";
             self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'], $buyerName ." contacted " .$sellerName, "Request Reply", $leadTime);
-            
+
         }else if($aVals['bidtype'] == 'purchase_leads'){
             $pType = "Manual Bid";
             $trInfo = $creditScore . " credit deducted for Contacting to Customer";
@@ -695,27 +700,33 @@ class RecommendedLeadsController extends Controller
             self::addActivityLog($buyerId, $sellerId,$aVals['lead_id'], "Autobid placed for " .$sellerName, "Autobid", $leadTime);
         }
         $bids = RecommendedLead::create([
-            'service_id' => $aVals['service_id'], 
-            'seller_id' => $sellerId, 
+            'service_id' => $aVals['service_id'],
+            'seller_id' => $sellerId,
             'buyer_id' => $buyerId, //buyer
-            'lead_id' => $aVals['lead_id'], 
-            'bid' => $creditScore, 
+            'lead_id' => $aVals['lead_id'],
+            'bid' => $creditScore,
             'distance' => $aVals['distance'],
             'purchase_type' => $pType
         ]);
+
+        $notificationDetails=NotificationSetting::where('user_id',$sellerId)->where('noti_value',1)->where('noti_name','buyer_browser_new_lead')->where('user_type','buyer')->where('noti_type','browser')->first();
+
+        if ($notificationDetails && $sellerId) {
+            $seller->notify(new BrowserNotification($sellerId,$notificationDetails->noti_name,$notificationDetails->id));
+        }
         //deduct credit
         DB::table('users')->where('id', $sellerId)->decrement('total_credit', $creditScore);
         //create transaction log
         CustomHelper::createTrasactionLog($sellerId, 0, $creditScore, $trInfo, 1, 1, $error_response='');
-            
+
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
         //remove from save for later
         SaveForLater::where('seller_id',$sellerId)
-            ->where('user_id',$buyerId)  
+            ->where('user_id',$buyerId)
             ->where('lead_id',$aVals['lead_id'])
             ->delete();
-        
-        
+
+
         return $this->sendResponse('Bid placed successfully');
     }
 
@@ -742,13 +753,13 @@ class RecommendedLeadsController extends Controller
         ]);
     }
 
-    
-    
-    
-    
-    
 
-    
+
+
+
+
+
+
 
    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
         $activity = ActivityLog::create([
@@ -757,7 +768,7 @@ class RecommendedLeadsController extends Controller
                      'to_user_id' => $to_user_id,
                      'activity_name' => $activity_name,
                      'contact_type' => $contact_type,
-                 ]);     
+                 ]);
 
          // Step 2: Calculate the time difference
         $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
@@ -802,7 +813,7 @@ class RecommendedLeadsController extends Controller
                 ]
             );
         }
-        return $activity;                                 
+        return $activity;
     }
 
-}   
+}
