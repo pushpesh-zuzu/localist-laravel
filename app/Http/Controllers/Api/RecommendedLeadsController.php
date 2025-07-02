@@ -716,11 +716,6 @@ class RecommendedLeadsController extends Controller
             'purchase_type' => $pType
         ]);
 
-        $notificationDetails=NotificationSetting::where('user_id',$sellerId)->where('noti_value',1)->where('noti_name','buyer_browser_new_lead')->where('user_type','buyer')->where('noti_type','browser')->first();
-
-        if ($notificationDetails && $sellerId) {
-            $seller->notify(new BrowserNotification($sellerId,$notificationDetails->noti_name,$notificationDetails->id));
-        }
         //deduct credit
         DB::table('users')->where('id', $sellerId)->decrement('total_credit', $creditScore);
         //create transaction log

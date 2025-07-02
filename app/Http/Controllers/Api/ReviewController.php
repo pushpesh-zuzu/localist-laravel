@@ -19,7 +19,7 @@ use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Models\Review;
 use App\Models\NotificationSetting;
-use App\Notifications\BrowserNotification;
+use App\Models\NotificationLog;
 
 class ReviewController extends Controller{
 
@@ -63,8 +63,17 @@ class ReviewController extends Controller{
             $seller = User::where('id', $user_id)->first();
             $notificationDetails=NotificationSetting::where('user_id',$user_id)->where('noti_value',1)->where('noti_name','buyer_browser_new_review')->where('user_type','buyer')->where('noti_type','browser')->first();
             if ($notificationDetails && $user_id) {
-                $seller->notify(new BrowserNotification($user_id,$notificationDetails->noti_name,$notificationDetails->id));
+                 NotificationLog::create([
+                    'user_id'  => $user_id,
+                    'lead_id' => 0,
+                    'noti_name'  => 'buyer_browser_new_review',
+                    'message'  => $request->review,
+                    'title' => 'New Review',
+                    'status' => 'unread',
+                    'type' => 'browser'
+                ]);
             }
+
             return $this->sendResponse('Review submitted successfully!');
         }
         return $this->sendError('Something went wrong, try again!');

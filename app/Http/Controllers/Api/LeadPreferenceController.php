@@ -32,7 +32,8 @@ use \Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
 use App\Models\NotificationSetting;
-use App\Notifications\BrowserNotification;
+use App\Models\NotificationLog;
+
 
 class LeadPreferenceController extends Controller
 {
@@ -363,13 +364,45 @@ class LeadPreferenceController extends Controller
         //Macting as per seller pref
         $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
 
+
+        if (!empty($allLeads)) {
+             $this->notificationLogs($user_id,$allLeads);
+        }
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
         return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
     }
 
+    public function notificationLogs($user_id,$allLeads){
+        $notificationDetails=NotificationSetting::where('user_id',$user_id)->where('noti_value',1)->where('noti_name','buyer_browser_new_lead')->where('user_type','buyer')->where('noti_type','browser')->first();
+        if($allLeads && $notificationDetails){
+            foreach ($allLeads as $lead) {
+                $exists = NotificationLog::where('user_id', $user_id)
+                ->where('lead_id', $lead->id)
+                ->where('noti_name', 'buyer_browser_new_lead')
+                ->where('message', 'New Lead Request Arrived')
+                ->where('status', 'unread')
+                ->where('type', 'browser')
+                ->exists();
 
+            if (!$exists) {
+                NotificationLog::create(
+                    [
+                        'user_id' => $user_id,
+                        'lead_id' => $lead->id,
+                        'title' => 'New Lead',
+                        'noti_name'  => 'buyer_browser_new_lead',
+                        'message'  => 'New Lead Request Arrived',
+                        'status' => 'unread',
+                        'type' => 'browser'
+                    ]
+                );
+            }
+            }
+        }
+        return true;
+    }
 
 
     private function addLeadViewCount($baseLeads){
@@ -1716,11 +1749,18 @@ class LeadPreferenceController extends Controller
                 self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, $type, $leadtime);
             }
 
-            $seller = User::where('id', $sellerId)->first();
             $notificationDetails=NotificationSetting::where('user_id',$sellerId)->where('noti_value',1)->where('noti_name','buyer_browser_customer_sending_message')->where('user_type','buyer')->where('noti_type','browser')->first();
 
             if ($notificationDetails && $sellerId) {
-                $seller->notify(new BrowserNotification($sellerId,$notificationDetails->noti_name,$notificationDetails->id));
+                NotificationLog::create([
+                    'user_id'  => $sellerId,
+                    'lead_id' => 0,
+                    'noti_name'  => 'buyer_browser_customer_sending_message',
+                    'message'  => 'Customers sending me a message',
+                    'title' => 'Customer Message',
+                    'status' => 'unread',
+                    'type' => 'browser'
+                ]);
             }
 
 
