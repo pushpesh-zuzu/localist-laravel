@@ -144,7 +144,7 @@ class NotificationController extends Controller
                         "user_id"=> $user_id,
                         "noti_name"=> "buyer_browser_new_lead",
                         "noti_value"=> 0,
-                        "user_type"=> "customer",
+                        "user_type"=> "buyer",
                         "noti_type"=> "browser"
                     );
                     array_push($notiSettingList,$noti);
@@ -156,7 +156,7 @@ class NotificationController extends Controller
                         "user_id"=> $user_id,
                         "noti_name"=> "buyer_browser_customer_sending_message",
                         "noti_value"=> 0,
-                        "user_type"=> "customer",
+                        "user_type"=> "buyer",
                         "noti_type"=> "browser"
                     );
                     array_push($notiSettingList,$noti);
@@ -168,7 +168,7 @@ class NotificationController extends Controller
                         "user_id"=> $user_id,
                         "noti_name"=> "buyer_browser_new_review",
                         "noti_value"=> 0,
-                        "user_type"=> "customer",
+                        "user_type"=> "buyer",
                         "noti_type"=> "browser"
                     );
                     array_push($notiSettingList,$noti);
