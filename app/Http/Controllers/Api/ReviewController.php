@@ -61,18 +61,9 @@ class ReviewController extends Controller{
             $data2['updated_at'] = date('y-m-d H:i:s');
             User::where('id',$user_id)->update($data2);
             $seller = User::where('id', $user_id)->first();
-            $notificationDetails=NotificationSetting::where('user_id',$user_id)->where('noti_value',1)->where('noti_name','buyer_browser_new_review')->where('user_type','buyer')->where('noti_type','browser')->first();
-            if ($notificationDetails && $user_id) {
-                 NotificationLog::create([
-                    'user_id'  => $user_id,
-                    'lead_id' => 0,
-                    'noti_name'  => 'buyer_browser_new_review',
-                    'message'  => $request->review,
-                    'title' => 'New Review',
-                    'status' => 'unread',
-                    'type' => 'browser'
-                ]);
-            }
+
+            //Add Notification Log for new review
+            CustomHelper::logNotifications($user_id,0,'buyer_browser_new_review', 'New Review', $request->review);
 
             return $this->sendResponse('Review submitted successfully!');
         }

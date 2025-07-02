@@ -180,16 +180,6 @@ class NotificationController extends Controller
 
     }
 
-    public function sendNotification(Request $request)
-    {
-        $userId = $request->user_id;
-        $message = $request->message;
-
-        event(new NewNotificationEvent($message, $userId));
-
-        return $this->sendResponse('Notification Sent');
-    }
-
     public function getAllNotifications(Request $request){
         $userId =$request->user_id;
 
@@ -227,5 +217,35 @@ class NotificationController extends Controller
             'message' => 'All notifications marked as read.'
         ]);
     }
+
+    public function notificationCronLogs(Request $request){
+        $leadPref = new LeadPreferenceController();
+
+        User::where('form_status', 1)
+            ->whereIn('user_type', [1, 3])
+            ->select('id')
+            ->chunk(1000, function ($sellersChunk) use ($leadPref) {
+                foreach ($sellersChunk as $seller) {
+                    $baseQuery = $leadPref->getBaseQuery($seller->id);
+                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+                    $allLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+                    foreach ($allLeads as $lead) {
+                        CustomHelper::logNotifications(
+                            $seller->id,
+                            $lead->id,
+                            'buyer_browser_new_lead',
+                            'New Lead',
+                            'You have got a new lead',
+                            true
+                        );
+                    }
+                }
+            });
+
+        unset($leadPref);
+    }
+
 
 }

@@ -284,7 +284,7 @@ class LeadPreferenceController extends Controller
             $serviceId = $lead->service_id;
 
             if (!isset($groupedPrefs[$serviceId])) {
-                logger("No preferences for service_id: $serviceId");
+                // logger("No preferences for service_id: $serviceId");
                 return false;
             }
 
@@ -292,7 +292,7 @@ class LeadPreferenceController extends Controller
             $leadQuestions = json_decode($lead->arrayed_questions, true);
 
             if (!is_array($leadQuestions)) {
-                logger("Invalid questions JSON for lead ID: {$lead->id}");
+                // logger("Invalid questions JSON for lead ID: {$lead->id}");
                 return false;
             }
 
@@ -307,7 +307,7 @@ class LeadPreferenceController extends Controller
                 $expectedAnswers = $pref['answers'];
 
                 if (!isset($leadMap[$question])) {
-                    logger("Lead ID {$lead->id} missing question: $question");
+                    // logger("Lead ID {$lead->id} missing question: $question");
                     return false;
                 }
 
@@ -316,21 +316,21 @@ class LeadPreferenceController extends Controller
                 $intersect = array_intersect($expectedAnswers, $leadAnswers);
 
                 if (empty($intersect) && !in_array('Other', $expectedAnswers)) {
-                    logger("Lead ID {$lead->id} failed on question: $question");
-                    logger("Lead answers: " . json_encode($leadAnswers));
-                    logger("Expected answers: " . json_encode($expectedAnswers));
+                    // logger("Lead ID {$lead->id} failed on question: $question");
+                    // logger("Lead answers: " . json_encode($leadAnswers));
+                    // logger("Expected answers: " . json_encode($expectedAnswers));
                     return false;
                 }
             }
 
-            logger("Matched Lead ID: {$lead->id}, Service ID: $serviceId");
+            // logger("Matched Lead ID: {$lead->id}, Service ID: $serviceId");
             return true;
         });
     }
 
 
 
-    private function leadsAccordingTOSellerPref($user_id, $leads){
+    public function leadsAccordingTOSellerPref($user_id, $leads){
         $pref = $this->getUserPreferenceMap($user_id);
         $leads  = collect($leads);
         $groupedPrefs = collect($pref)->groupBy('service_id')->toArray();
@@ -364,46 +364,11 @@ class LeadPreferenceController extends Controller
         //Macting as per seller pref
         $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
 
-
-        if (!empty($allLeads)) {
-             $this->notificationLogs($user_id,$allLeads);
-        }
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
         return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
     }
-
-    public function notificationLogs($user_id,$allLeads){
-        $notificationDetails=NotificationSetting::where('user_id',$user_id)->where('noti_value',1)->where('noti_name','buyer_browser_new_lead')->where('user_type','buyer')->where('noti_type','browser')->first();
-        if($allLeads && $notificationDetails){
-            foreach ($allLeads as $lead) {
-                $exists = NotificationLog::where('user_id', $user_id)
-                ->where('lead_id', $lead->id)
-                ->where('noti_name', 'buyer_browser_new_lead')
-                ->where('message', 'You have Received a New Lead')
-                ->where('status', 'unread')
-                ->where('type', 'browser')
-                ->exists();
-
-            if (!$exists) {
-                NotificationLog::create(
-                    [
-                        'user_id' => $user_id,
-                        'lead_id' => $lead->id,
-                        'title' => 'New Lead',
-                        'noti_name'  => 'buyer_browser_new_lead',
-                        'message'  => 'You have Received a New Lead',
-                        'status' => 'unread',
-                        'type' => 'browser'
-                    ]
-                );
-            }
-            }
-        }
-        return true;
-    }
-
 
     private function addLeadViewCount($baseLeads){
         // ===== Add view_count to each lead =====
@@ -464,12 +429,6 @@ class LeadPreferenceController extends Controller
     public function getservices(Request $request){
         $user_id = $request->user_id;
         $categories = self::getFilterservices($user_id);
-        // $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
-        // $categories = Category::whereIn('id', $serviceId)->get();
-        // foreach ($categories as $key => $value) {
-        //     $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
-        //     $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
-        // }
         return $this->sendResponse(__('Service Data'), $categories);
     }
 
@@ -1749,24 +1708,10 @@ class LeadPreferenceController extends Controller
                 self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, $type, $leadtime);
             }
 
-            $notificationDetails=NotificationSetting::where('user_id',$sellerId)->where('noti_value',1)->where('noti_name','buyer_browser_customer_sending_message')->where('user_type','buyer')->where('noti_type','browser')->first();
-
-            if ($notificationDetails && $sellerId) {
-                NotificationLog::create([
-                    'user_id'  => $sellerId,
-                    'lead_id' => 0,
-                    'noti_name'  => 'buyer_browser_customer_sending_message',
-                    'message'  => 'You Received a New Message',
-                    'title' => 'Customer Message',
-                    'status' => 'unread',
-                    'type' => 'browser'
-                ]);
-            }
-
-
+            //Add Notification Log for new contact
+            CustomHelper::logNotifications($sellerId, $aVals['lead_id'], 'buyer_browser_customer_sending_message', 
+                'New Message', 'You Received a New Message');
         }
-
-
 
         return $this->sendResponse(__('Status Updated'), []);
     }

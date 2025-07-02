@@ -34,11 +34,14 @@ Route::get('test_lead',[ApiController::class,'getLeadByPrefer']);
 
 
 Route::prefix('notification')->group(function () {
+
+    Route::get('notification-cron-logs', [NotificationController::class,'notificationCronLogs']);
+
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
         Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
         Route::post('fetch-all-notifications',[NotificationController::class,'getAllNotifications']);
-        Route::post('mark-as-read',[NotificationController::class,'markAllNotifications']);
+        //Route::post('mark-all-read',[NotificationController::class,'markAllNotifications']);
     });
 
 });
@@ -197,20 +200,7 @@ Route::prefix('users')->group(function () {
 
         Route::post('/add-suggested-que', [SuggestedQuestionController::class, 'addSuggestedQue']);
 
-        // routes/api.php
-        Route::post('/send-notification', [NotificationController::class, 'sendNotification']);
 
     });
-    // Route::get('/{id}', [UserController::class, 'show']);
-    // Route::put('/{id}', [UserController::class, 'update']);
-    //Route::delete('/{id}', [UserController::class, 'destroy']);
 
-    // add services
-
-    // Route::post('/add_service', [UserController::class, 'addUserService']);
-    // Route::post('/add_location', [UserController::class, 'addUserLocation']);
-    // Route::post('/get_user_services', [UserController::class, 'getUserServices']);
-    // Route::post('/get_user_locations', [UserController::class, 'getUserLocations']);
-    // Route::post('/switch_user', [UserController::class, 'switchUser']);
-    // Route::get('/get-categories', [UserController::class, 'getCategories']);
 });

@@ -6,12 +6,56 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
 use App\Models\PurchaseHistory;
+use App\Models\NotificationSetting;
+use App\Models\NotificationLog;
 use App\Models\Setting;
 use App\Models\Postcode;
 use Illuminate\Support\Carbon;
 
 class CustomHelper
 {
+
+    public static function logNotifications($userId, $leadId, $notiName, $title, $message, $checkExisting=false, $notiType='browser', $userType='buyer'){
+        $insertLog = true;
+        $isSettingOn=NotificationSetting::where('user_id',$userId)
+            ->where('noti_name',$notiName)
+            ->where('user_type',$userType)
+            ->where('noti_type',$notiType)
+            ->value('noti_value');
+        
+        //check whether setting is turned on or not
+        if(!$isSettingOn){
+            $insertLog = false;
+        }
+        
+        // if checkExisting is true then check if the same lead exists or not
+        if($checkExisting){
+            $logExists = NotificationLog::where('user_id',$userId)
+                ->where('lead_id',$leadId)
+                ->where('noti_name',$notiName)
+                ->where('user_type',$userType)
+                ->where('noti_type',$notiType)
+                ->value('id');
+            //if notification exists then do not log the notification
+            if($logExists){
+                $insertLog = false;
+            }
+        }
+            
+        //insert if all conditions id fulfiled    
+        if ($insertLog && $userId) {
+            NotificationLog::create([
+                'user_id'  => $userId,
+                'lead_id' => $leadId,
+                'noti_name'  => $notiName,
+                'title' => $title,
+                'message'  => $message,                
+                'user_type' => $userType,
+                'noti_type' => $notiType                
+            ]);
+        }
+    }
+
     public static function formatTimeDuration(int $minutes): string {
         if ($minutes <= 0) {
             return '0 mins';

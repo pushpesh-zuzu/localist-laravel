@@ -512,9 +512,9 @@ class RecommendedLeadsController extends Controller
                 $userAnswers = $prefMap[$question] ?? [];
 
                 // Log for debugging
-                logger("User ID: $userId | Question: {$q['ques']} => $question");
-                logger("Lead Answers: ", $leadAnswers);
-                logger("User Prefs: ", $userAnswers);
+                // logger("User ID: $userId | Question: {$q['ques']} => $question");
+                // logger("Lead Answers: ", $leadAnswers);
+                // logger("User Prefs: ", $userAnswers);
 
                 // Case 4: match if user pref contains "other"
                 if (in_array('other', $userAnswers)) {
@@ -523,16 +523,16 @@ class RecommendedLeadsController extends Controller
 
                 // Case 3: exclude if no overlap
                 if (empty(array_intersect($leadAnswers, $userAnswers))) {
-                    logger("❌ Mismatch on: {$q['ques']}");
-                    logger("Lead Answers: ", $leadAnswers);
-                    logger("User Prefs: ", $userAnswers);
+                    // logger("❌ Mismatch on: {$q['ques']}");
+                    // logger("Lead Answers: ", $leadAnswers);
+                    // logger("User Prefs: ", $userAnswers);
                     $matchedAll = false;
                     break;
                 }
             }
 
             if ($matchedAll) {
-                logger("✅ Matched user: $userId");
+                // logger("✅ Matched user: $userId");
                 $matchingUserIds[] = $userId;
             }
         }
