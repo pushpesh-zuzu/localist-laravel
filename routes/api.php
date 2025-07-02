@@ -31,13 +31,14 @@ Route::get('/check_api', function () {
 
 Route::get('test_lead',[ApiController::class,'getLeadByPrefer']);
 
-Route::post('notification/fetch-all-notifications',[NotificationController::class,'getAllNotifications']);
-Route::post('notification/mark-as-read',[NotificationController::class,'markAllNotifications']);
+
 
 Route::prefix('notification')->group(function () {
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
         Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
+        Route::post('fetch-all-notifications',[NotificationController::class,'getAllNotifications']);
+        Route::post('mark-as-read',[NotificationController::class,'markAllNotifications']);
     });
 
 });
