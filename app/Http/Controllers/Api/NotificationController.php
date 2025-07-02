@@ -73,7 +73,7 @@ class NotificationController extends Controller
                 NotificationSetting::insertGetId($data);
             }else{
                 NotificationSetting::where('id',$noti_id)->update($data);
-            }            
+            }
             return $this->sendResponse('Notification Setting Updated');
         }
         return $this->sendError('Something went wrong, please check for proper notification name');
@@ -98,9 +98,9 @@ class NotificationController extends Controller
             ->where('noti_type',$request->noti_type)
             ->select(['user_id','noti_name','noti_value','user_type','noti_type'])
             ->get()->toArray();
-        
+
         //for customer
-        if($request->user_type == 'customer'){            
+        if($request->user_type == 'customer'){
             //Changes to my requests
             if (!in_array('customer_email_change_in_request', array_column($notiSettingList, 'noti_name'))) {
                 $noti = array(
@@ -144,7 +144,7 @@ class NotificationController extends Controller
                         "user_id"=> $user_id,
                         "noti_name"=> "buyer_browser_new_lead",
                         "noti_value"=> 0,
-                        "user_type"=> "customer",
+                        "user_type"=> "buyer",
                         "noti_type"=> "browser"
                     );
                     array_push($notiSettingList,$noti);
@@ -156,7 +156,7 @@ class NotificationController extends Controller
                         "user_id"=> $user_id,
                         "noti_name"=> "buyer_browser_customer_sending_message",
                         "noti_value"=> 0,
-                        "user_type"=> "customer",
+                        "user_type"=> "buyer",
                         "noti_type"=> "browser"
                     );
                     array_push($notiSettingList,$noti);
@@ -168,7 +168,7 @@ class NotificationController extends Controller
                         "user_id"=> $user_id,
                         "noti_name"=> "buyer_browser_new_review",
                         "noti_value"=> 0,
-                        "user_type"=> "customer",
+                        "user_type"=> "buyer",
                         "noti_type"=> "browser"
                     );
                     array_push($notiSettingList,$noti);
@@ -188,5 +188,5 @@ class NotificationController extends Controller
 
         return $this->sendResponse('Notification Sent');
     }
-    
+
 }

@@ -18,9 +18,11 @@ use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Models\Review;
+use App\Models\NotificationSetting;
+use App\Notifications\BrowserNotification;
 
 class ReviewController extends Controller{
-    
+
     public function getCustomerLink(Request $request){
         $user_id = $request->user_id;
         $uuid = User::where('id',$user_id)->value('uuid');
@@ -42,7 +44,7 @@ class ReviewController extends Controller{
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
-        
+
         $uuid = $request->uuid;
         $user_id = User::where('uuid',$uuid)->value('id');
         $data['user_id'] = $user_id;
@@ -58,10 +60,15 @@ class ReviewController extends Controller{
             $data2['avg_rating'] = number_format($avg_rating, 1);;
             $data2['updated_at'] = date('y-m-d H:i:s');
             User::where('id',$user_id)->update($data2);
+            $seller = User::where('id', $user_id)->first();
+            $notificationDetails=NotificationSetting::where('user_id',$user_id)->where('noti_value',1)->where('noti_name','buyer_browser_new_review')->where('user_type','buyer')->where('noti_type','browser')->first();
+            if ($notificationDetails && $user_id) {
+                $seller->notify(new BrowserNotification($user_id,$notificationDetails->noti_name,$notificationDetails->id));
+            }
             return $this->sendResponse('Review submitted successfully!');
         }
         return $this->sendError('Something went wrong, try again!');
-        
+
     }
 
     public function getReviews(Request $request, $uuid){

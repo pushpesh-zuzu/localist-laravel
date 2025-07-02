@@ -31,11 +31,13 @@ use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
+use App\Models\NotificationSetting;
+use App\Notifications\BrowserNotification;
 
 class LeadPreferenceController extends Controller
 {
-    
-    
+
+
     public function getBaseQuery($user_id, $requestPostcode = null, $requestMiles = null, $filters = []){
         $userServices = UserService::where('user_id',$user_id)->select('service_id')->get();
         //get all types of locations
@@ -76,19 +78,19 @@ class LeadPreferenceController extends Controller
         foreach($ulMap as $m){
             array_push($otherServices, $m['service_id']);
         }
-        
+
         //remove duplicate services from array
         $otherServices = array_unique($otherServices);
 
         //merge both arrays into one array
-        $allServices = array_merge($nwServices,$otherServices);       
-        
+        $allServices = array_merge($nwServices,$otherServices);
+
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
             ->where('customer_id', '<>', $user_id) //do not include self request leads
-            
+
             //closure condition
             ->where('status','!=','hired') // do not include hired leads
             ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString()); // do not include leads which are orlder than 14 days
@@ -101,17 +103,17 @@ class LeadPreferenceController extends Controller
             ->toArray();
 
         $baseQuery = $baseQuery->whereNotIn('id', $slotFullLeads);
-                
+
         if($requestPostcode === null){ //select default condition for location
             //include locations
             $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, $ulTravel, $ulMap, $nwServices) {
                 //for distance type
 
-                
+
                 foreach ($ulDistance as $item) {
                     $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
-                    
-                    
+
+
                     $query->orWhere(function ($q) use ($item, $radiusPostcode) {
                         $q->where('service_id', $item['service_id'])
                             ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
@@ -125,10 +127,10 @@ class LeadPreferenceController extends Controller
 
             });
         }else{
-            
+
             $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
                 //for distance type
-                $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);                
+                $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
                 foreach($allServices as $item){
 
                     $quesPref = $this->getUserPreferenceMap($user_id, $item);
@@ -145,7 +147,7 @@ class LeadPreferenceController extends Controller
 
         // Exclude saved leads
         $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-        
+
         // Exclude leads from recommended table starts as a bid has been placed
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
             ->pluck('lead_id')
@@ -200,10 +202,10 @@ class LeadPreferenceController extends Controller
                         });
                     }
                 }
-                
+
             }
         }
-        
+
         if(!empty($filters['lead_time'])){
             if(strtolower(trim($filters['lead_time'])) === 'today'){
                 $baseQuery = $baseQuery->where(function ($query){
@@ -251,14 +253,14 @@ class LeadPreferenceController extends Controller
                 }
             });
         }
-        
+
         return $baseQuery;
-        
+
     }
 
     private function getUserPreferenceMap($user_id){
         $rawAnswers = LeadPrefrence::with(['question'])
-            ->where('user_id', $user_id)            
+            ->where('user_id', $user_id)
             ->get();
         $prefs = [];
         foreach ($rawAnswers as $ra) {
@@ -336,17 +338,17 @@ class LeadPreferenceController extends Controller
     }
 
     public function getLeadRequest(Request $request)
-    {        
+    {
         $aVals = $request->all();
         $user_id = $request->user_id;
         //filters
         $filters['searchName'] = $aVals['name'] ?? null;
         $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
         $filters['lead_time'] = $aVals['lead_time'] ?? null;
-        $filters['services'] = $aVals['service_id'] ?? null;      
+        $filters['services'] = $aVals['service_id'] ?? null;
         $filters['creditFilter'] = $aVals['credits'] ?? null;
-       
-        $filters['unread'] = $aVals['unread'] ?? null; 
+
+        $filters['unread'] = $aVals['unread'] ?? null;
         $distanceFilter = $aVals['distance_filter'] ?? null;
         $requestMiles = null;
         $requestPostcode = null;
@@ -355,19 +357,19 @@ class LeadPreferenceController extends Controller
             $requestPostcode = strtoupper($matches[2]);
         }
         $baseQuery = $this->getBaseQuery($user_id, $requestPostcode, $requestMiles, $filters);
-        
+
         $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
         //Macting as per seller pref
         $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
-        
+
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
         return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
     }
 
-    
+
 
 
     private function addLeadViewCount($baseLeads){
@@ -376,8 +378,8 @@ class LeadPreferenceController extends Controller
         $customerIds = $baseLeads->pluck('customer_id')->toArray();
         $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
             ->whereIn('lead_id', $leadIds)
-            ->select('buyer_id', 
-                     'lead_id', 
+            ->select('buyer_id',
+                     'lead_id',
                      DB::raw('SUM(visitors_count) as total_views'),
                     //  DB::raw('SUM(random_count) as total_randoms')
                     )
@@ -401,7 +403,7 @@ class LeadPreferenceController extends Controller
             $leadId = $lead->id;
             $views = $leadMetricsMap[$buyerId][$leadId]['views'] ?? 0;
             $lead->view_count = $views >= 30 ? $views : rand(5, 30);
-           
+
             return $lead;
         });
 
@@ -427,7 +429,7 @@ class LeadPreferenceController extends Controller
     }
 
     public function getservices(Request $request){
-        $user_id = $request->user_id; 
+        $user_id = $request->user_id;
         $categories = self::getFilterservices($user_id);
         // $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
         // $categories = Category::whereIn('id', $serviceId)->get();
@@ -440,18 +442,18 @@ class LeadPreferenceController extends Controller
 
     public function questionAnswer(Request $request)
     {
-        $service_id = $request->service_id; 
-    
+        $service_id = $request->service_id;
+
         if (empty($service_id)) {
             return $this->sendResponse(__('Category Data'), []);
         }
-    
+
         // Fetch all records where 'category' matches the given service_id
         $categories = ServiceQuestion::where('category', $service_id)
                                  ->where('status', 1)
                                  ->orderBy('id', 'DESC')
                                  ->get();
-    
+
         return $this->sendResponse(__('Category Data'), $categories);
     }
 
@@ -471,8 +473,8 @@ class LeadPreferenceController extends Controller
 
     public function getleadpreferences(Request $request): JsonResponse
     {
-        $user_id = $request->user_id; 
-        $service_id = $request->service_id; 
+        $user_id = $request->user_id;
+        $service_id = $request->service_id;
         $leadPreference = ServiceQuestion::where('category', $service_id)->get();
         if(count($leadPreference)>0){
             $questions = [];
@@ -485,9 +487,9 @@ class LeadPreferenceController extends Controller
             $leadPreferences = $leadPreference;
         }else{
             $leadPreferences = ServiceQuestion::where('category', $service_id)->get();
-            
-        }                          
-        return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);                              
+
+        }
+        return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);
     }
 
     public function leadpreferences(Request $request): JsonResponse
@@ -530,19 +532,19 @@ class LeadPreferenceController extends Controller
             $insertedOrUpdatedData[] = $leadPreference;
         }
 
-     
-        return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);   
+
+        return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
     }
 
     public function removeService(Request $request){
-        $user_id = $request->user_id; 
-        $serviceid = $request->service_id; 
+        $user_id = $request->user_id;
+        $serviceid = $request->service_id;
         UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
-        return $this->sendResponse(__('Service deleted Sucessfully')); 
+        return $this->sendResponse(__('Service deleted Sucessfully'));
     }
 
-    
-    
+
+
     public function sortByCreditValue(Request $request)
     {
         $aVals = $request->all();
@@ -561,15 +563,15 @@ class LeadPreferenceController extends Controller
                 default  => $baseQuery,
             };
         }
-        
+
         // Sort by ID direction based on sort_type
         $orderDirection = ($sortType === 'Oldest') ? 'ASC' : 'DESC';
         // Strict matching on Questions & Answers
         $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
-        
+
         //Macting as per seller pref
         $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
-        
+
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
@@ -593,13 +595,13 @@ class LeadPreferenceController extends Controller
         })
         ->orderBy('id', 'DESC')
         ->get();
-        
+
         foreach ($allLeads as $key => $value) {
-            $isActivity = ActivityLog::where('to_user_id',$user_id) 
+            $isActivity = ActivityLog::where('to_user_id',$user_id)
                                  ->where('from_user_id',$value->customer_id)
                                  ->where('lead_id',$value->id)
-                                 ->latest() 
-                                 ->first(); 
+                                 ->latest()
+                                 ->first();
             if(!empty($isActivity)){
                 if($isActivity->activity_name == 'Requested a callback'){
                     $value['profile_view'] = "Requested a callback";
@@ -608,12 +610,12 @@ class LeadPreferenceController extends Controller
                     $value['profile_view'] = $value['customer']->name." viewed your profile";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
                 }
-                
+
             }else{
                 $value['profile_view'] = "";
                 $value['profile_view_time'] = "";
-            }                     
-           
+            }
+
         }
         return $this->sendResponse(__('Lead Request Data'), $allLeads);
     }
@@ -634,33 +636,33 @@ class LeadPreferenceController extends Controller
         })->where('status','hired')
         ->orderBy('id', 'DESC')
         ->get();
-        
+
         return $this->sendResponse(__('Lead Request Data'), $allLeads);
     }
 
-    
-    
-    
-    
+
+
+
+
 
 
     public function addHiredLeads(Request $request)
     {
         $aVals = $request->all();
         $lead = LeadRequest::where('id',$aVals['lead_id'])->first();
-        
+
         if(empty($lead)){
             return $this->sendError('Lead not found', 404);
         }
 
         $sellerId = $request->user_id;
         $buyerId = $lead->customer_id;
-        
+
         $users = User::where('id',$buyerId)->pluck('name')->first();
 
         $sellerName = User::where('id',$sellerId)->pluck('name')->first();
-        $buyerName = User::where('id',$leads->customer_id)->pluck('name')->first(); 
-        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
+        $buyerName = User::where('id',$leads->customer_id)->pluck('name')->first();
+        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $activityname = $sellerName . ' updated status to hired';
         $isActivity = self::getActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname);
 
@@ -682,7 +684,7 @@ class LeadPreferenceController extends Controller
         }else{
             $sendmessage = 'This lead is already hired!';
         }
-        
+
         return $this->sendResponse($sendmessage, []);
     }
 
@@ -695,9 +697,9 @@ class LeadPreferenceController extends Controller
         if(empty($lead)){
             return $this->sendError('Lead not found', 404);
         }
-        $buyerName = User::where('id',$buyerId)->pluck('name')->first(); 
-        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();            
-        
+        $buyerName = User::where('id',$buyerId)->pluck('name')->first();
+        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+
         $activityname = $buyerName . ' updated status to hired';
         $isActivity = self::getActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname);
 
@@ -719,16 +721,16 @@ class LeadPreferenceController extends Controller
         }else{
             $sendmessage = 'This lead is already hired!';
         }
-        
+
         return $this->sendResponse($sendmessage, []);
     }
     // ------------------------
 
-    
+
 
     // ------------------------
 
-    
+
 
     public function getDistance($postcode1, $postcode2)
     {
@@ -741,7 +743,7 @@ class LeadPreferenceController extends Controller
 
         $response = file_get_contents($url);
         $data = json_decode($response, true);
-        
+
         if ($data['status'] == 'OK' && isset($data['rows'][0]['elements'][0]['distance'])) {
             $distanceText = $data['rows'][0]['elements'][0]['distance']['text']; // e.g., "12.5 km"
             return floatval(str_replace(['km', ','], '', $distanceText)); // return distance as float (km)
@@ -750,7 +752,7 @@ class LeadPreferenceController extends Controller
         }
     }
 
-    
+
 
     public function pendingLeads(Request $request)
     {
@@ -761,7 +763,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Pending Leads', $leadcount);
     }
 
-    
+
 
     public function addUserService(Request $request): JsonResponse
     {
@@ -801,20 +803,20 @@ class LeadPreferenceController extends Controller
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
                     $defaultOptions = $question->answer ?? '';
-                
+
                     // Check if user already has a saved answer for this question
                     $existingAnswer = LeadPrefrence::where('question_id', $question->id)
                         ->where('user_id', $userId)
                         ->pluck('answers')
                         ->first();
-                
+
                     // Use existing answer or fall back to all options from ServiceQuestion.answer
                     $answerToUse = $existingAnswer ?? $defaultOptions;
-                
+
                     // Clean the format: remove extra spaces around commas and trailing commas
                     $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $answerToUse);
                     $cleanedAnswer = rtrim($cleanedAnswer, ',');
-                
+
                     // Insert or update the lead preference
                     LeadPrefrence::updateOrCreate(
                         [
@@ -894,7 +896,7 @@ class LeadPreferenceController extends Controller
                                             ->where('miles',$aVals['miles'])
                                             ->where('type',$aVals['type'])
                                             ->first();
-        
+
         if(isset($userlocations) && $userlocations !=''){
             return $this->sendError('Postcode with the same user already exists');
         }
@@ -919,14 +921,14 @@ class LeadPreferenceController extends Controller
                     if (!$userService) {
                         continue; // skip if user_service does not exist
                     }
-        
+
                     $userServiceId = $userService->id;
                     $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
 
                 $aLocation = UserServiceLocation::create(
-                    ['user_id' => $aVals['user_id'], 
+                    ['user_id' => $aVals['user_id'],
                     'service_id' => $serviceId,
-                    'user_service_id' => $userServiceId, 
+                    'user_service_id' => $userServiceId,
                     'postcode' => $aVals['postcode'],
                     'type'=>$aVals['type'],
                     'miles' => $aVals['miles'],
@@ -956,7 +958,7 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
-        
+
         if($aVals['type'] == "Nationwide"){
              $validator = Validator::make($aVals, [
                 'service_id' => ['required', 'exists:categories,id'],
@@ -979,12 +981,12 @@ class LeadPreferenceController extends Controller
                 'service_id.exists' => 'The selected service does not exist.',
             ]);
         }
-       
-    
+
+
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
-    
+
         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
         $travel_time = $aVals['travel_time'] ?? '';
         $travel_by = $aVals['travel_by'] ?? '';
@@ -998,19 +1000,19 @@ class LeadPreferenceController extends Controller
             $userService = UserService::where('user_id', $userId)
                 ->where('service_id', $serviceId)
                 ->first();
-    
+
             if (!$userService) {
                 continue;
             }
-    
+
             $userServiceId = $userService->id;
-    
+
             $isPostcodeChanged = ($aVals['postcode_old'] ?? '') != $aVals['postcode'];
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
-            
-             
 
-            
+
+
+
             // Only check for duplicates if postcode or miles are changed
             if ($aVals['type'] !== 'Nationwide' && $aVals['type'] !== 'Draw on Map') {
                 if ($isPostcodeChanged || $isMilesChanged) {
@@ -1019,12 +1021,12 @@ class LeadPreferenceController extends Controller
                         ->where('type', $aVals['type'])
                         ->where('postcode', $aVals['postcode'])
                         ->where('miles', $aVals['miles']);
-                        
+
                 // If this is an edit (not new insert), exclude the current location
                 if (!empty($aVals['location_id'])) {
                     $duplicateExists->where('id', '!=', $aVals['location_id']);
                 }
-        
+
                     $duplicateExists = $duplicateExists->exists();
 
                     if ($duplicateExists) {
@@ -1032,9 +1034,9 @@ class LeadPreferenceController extends Controller
                     }
                 }
             }
-    
-           
-    
+
+
+
             // Insert updated location
             UserServiceLocation::create([
                 'user_id' => $userId,
@@ -1050,11 +1052,11 @@ class LeadPreferenceController extends Controller
                 'coordinates' => $aVals['coordinates']
             ]);
         }
-    
+
         return $this->sendResponse(__('Location updated successfully'));
     }
-    
-    
+
+
     public function editUserLocation_08_05(Request $request): JsonResponse
     {
         $aVals = $request->all();
@@ -1170,14 +1172,14 @@ class LeadPreferenceController extends Controller
         }else{
             $travel_by = "";
         }
-        
+
         // Step 1: Remove entries not in the new list
         UserServiceLocation::where('user_id', $userId)
             ->whereIn('postcode', [$aVals['postcode_old']])
             ->where('type', $aVals['type'])
             ->where('miles', $aVals['miles'])
             ->delete();
-        
+
         // Step 2: Update or create the rest
         foreach ($serviceIds as $serviceId) {
             $userService = UserService::where('user_id', $userId)
@@ -1187,12 +1189,12 @@ class LeadPreferenceController extends Controller
             if (!$userService) {
                 continue; // skip if user_service does not exist
             }
-            
+
             $userServiceId = $userService->id;
             // $postcode = isset($aVals['postcode']) && $aVals['postcode'] !== '' ? $aVals['postcode'] : '000000';
             // $miles = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 0 : $aVals['miles'];
             $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
-           
+
             // $aLocations['service_id'] = $serviceId;
             // $aLocations['user_service_id'] = $userServiceId;
             // $aLocations['user_id'] = $aVals['user_id'];
@@ -1232,21 +1234,21 @@ class LeadPreferenceController extends Controller
                             ->where('user_id', $aValues['user_id'])
                             ->delete();
         }
-        
+
         return $this->sendResponse('Location deleted sucessfully', []);
     }
 
     public function leadsByFilter(Request $request){
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
-        
+
         $leadSpotlights = self::getSpotligths($user_id);
         $leadTimeCounts = self::getLeadTimeData($user_id);
         $services = self::getFilterservices1($user_id);
         $location = self::getFilterLocations1($user_id);
         $credits = self::getFilterCreditList1($user_id);
         $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
-        
+
         return $this->sendResponse(__('Filter Data'), [
             [
                 'leadSpotlights' => $leadSpotlights,
@@ -1297,7 +1299,7 @@ class LeadPreferenceController extends Controller
         $result = [];
         foreach ($timeFilters as $time) {
             $baseQuery = $this->getBaseQuery($user_id, null, null, ['lead_time' => $time]);
-            
+
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
 
             //Macting as per seller pref
@@ -1347,7 +1349,7 @@ class LeadPreferenceController extends Controller
     public function getFilterCreditList1($user_id = null)
     {
         $creditList = CreditList::get();
-    
+
         foreach ($creditList as $creditItem) {
             $baseQuery = $this->getBasequery($user_id, null, null, ['creditFilter' => $creditItem]);
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
@@ -1356,10 +1358,10 @@ class LeadPreferenceController extends Controller
             $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
             $creditItem['leadcount'] = count($allLeads);
         }
-    
+
         return $creditList;
     }
-    
+
 
     public function getFilterservices($user_id){
         $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
@@ -1404,10 +1406,10 @@ class LeadPreferenceController extends Controller
         return $finalRows;
     }
 
-    public function getLeadProfile(Request $request) 
+    public function getLeadProfile(Request $request)
     {
         $aVals = $request->all();
-        $users = User::find($aVals['customer_id']);  
+        $users = User::find($aVals['customer_id']);
 
         $myip = $request->ip();
         $visited_date = date("Y-m-d");
@@ -1469,7 +1471,7 @@ class LeadPreferenceController extends Controller
 
     public function getLeadProfile_22_05_2025(Request $request){
         $aVals = $request->all();
-        $users = User::where('id',$aVals['customer_id'])->first();  
+        $users = User::where('id',$aVals['customer_id'])->first();
 
         $myip = $request->ip();
         $visited_date = date("Y-m-d");
@@ -1490,12 +1492,12 @@ class LeadPreferenceController extends Controller
                 $visitor->visitors_count = 1;
                 $visitor->save();
         }
-        
+
 
         if ($users) {
             // Update is_read = 1 for all lead requests of this user (or filter as needed)
             LeadRequest::where('customer_id', $users->id)->update(['is_read' => 1]);
-        
+
             // Fetch updated lead request with relationships
             $leads = LeadRequest::with(['customer', 'category'])
                                 ->where('id', $aVals['lead_id'])
@@ -1505,28 +1507,28 @@ class LeadPreferenceController extends Controller
                                        ->where('buyer_id', $aVals['customer_id'])
                                        ->where('seller_id', $aVals['user_id'])
                                        ->pluck('purchase_type')
-                                       ->first();                   
+                                       ->first();
             // $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
             $users->leads = $leads;
         }
-        return $this->sendResponse('Profile Data', $users);                    
+        return $this->sendResponse('Profile Data', $users);
     }
 
     public function saveForLater(Request $request){
         $aVals = $request->all();
         $isDataExists = SaveForLater::where('seller_id',$aVals['user_id'])
-                                    ->where('user_id',$aVals['buyer_id'])    
-                                    ->where('lead_id',$aVals['lead_id'])   
+                                    ->where('user_id',$aVals['buyer_id'])
+                                    ->where('lead_id',$aVals['lead_id'])
                                     ->first();
         if(empty($isDataExists)){
             $bids = SaveForLater::create([
                 'seller_id' => $aVals['user_id'], //loggedin user id
                 'user_id' => $aVals['buyer_id'], //buyer
                 'lead_id' => $aVals['lead_id']
-            ]); 
-            return $this->sendResponse('Data added Sucessfully', []);   
-        }      
-        return $this->sendError('Data already added for this user');                                              
+            ]);
+            return $this->sendResponse('Data added Sucessfully', []);
+        }
+        return $this->sendError('Data already added for this user');
     }
 
     public function getSaveForLaterList(Request $request)
@@ -1563,42 +1565,42 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse(__('Saved Leads'), $savedLeads);
     }
 
-    public function onlineRemoteSwitch(Request $request){ 
+    public function onlineRemoteSwitch(Request $request){
         $aVals = $request->all();
-    
+
         $isDataExists = User::where('id',$aVals['user_id'])->first();
         if(!empty($isDataExists)){
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             $isonline  = $aVals['is_online'];
-            // return $this->sendResponse('Switched update', $isonline);   
+            // return $this->sendResponse('Switched update', $isonline);
             return $this->sendResponse(__('Switched update'), []);
-        }      
-        return $this->sendError('User not found');                                              
+        }
+        return $this->sendError('User not found');
     }
 
-    public function getOnlineRemoteSwitch(Request $request){ 
+    public function getOnlineRemoteSwitch(Request $request){
         $aVals = $request->all();
         $isDataExists = User::where('id',$aVals['user_id'])->first();
         if(!empty($isDataExists)){
             return $this->sendResponse(__('Online Switch Data'), [
                 'isonline' => $isDataExists->is_online
             ]);
-        }      
-        return $this->sendError('User not found');                                              
+        }
+        return $this->sendError('User not found');
     }
 
-    public function totalCredit(Request $request){ 
+    public function totalCredit(Request $request){
         $user_id = $request->user_id;
         $totalCredits = User::where('id',$user_id)->value('total_credit');
         $data['total_credit'] = !empty($totalCredits) ? $totalCredits : 0;
         $plan = PlanHistory::where('user_id',$user_id)->orderBy('id','desc')->first();
         $data['plan_purchased'] = !empty($plan)? 1 : 0;
-        return $this->sendResponse('Total credit', $data);                                               
+        return $this->sendResponse('Total credit', $data);
     }
 
     public function getSellerRecommendedLeads(Request $request)
     {
-        $seller_id = $request->user_id; 
+        $seller_id = $request->user_id;
         $result = [];
             // Fetch all matching bids
             $bids = RecommendedLead::where('seller_id', $seller_id)
@@ -1627,10 +1629,10 @@ class LeadPreferenceController extends Controller
                     ]
                 ]);
             }
-        
+
     }
 
-    public function sevenDaysAutobidPause(Request $request){ 
+    public function sevenDaysAutobidPause(Request $request){
         $aVals = $request->all();
         $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
         if(!empty($userdetails)){
@@ -1648,24 +1650,24 @@ class LeadPreferenceController extends Controller
                     'autobidpause' => $autobidpause
                 ]);
             }
-            return $this->sendError('Autobid is already off');   
+            return $this->sendError('Autobid is already off');
         }
-        return $this->sendError('User not found!');                                       
+        return $this->sendError('User not found!');
     }
 
-    public function getSevenDaysAutobidPause(Request $request){ 
+    public function getSevenDaysAutobidPause(Request $request){
         $aVals = $request->all();
         $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
         if(isset($userdetails) && $userdetails != ''){
             return $this->sendResponse('Seven Days autobid pause data', [
                 'autobidpause' => $userdetails->autobid_pause
-            ]);  
+            ]);
         }
-            return $this->sendResponse('Data not found', []);                                  
+            return $this->sendResponse('Data not found', []);
     }
 
     public function responseStatus(Request $request)
-    { 
+    {
         $aVals = $request->all();
         $type = $aVals['type'];
         // $sellers = User::where('id',$aVals['user_id'])->pluck('name')->first();
@@ -1683,7 +1685,7 @@ class LeadPreferenceController extends Controller
                 $activityname = $sellerName .' contacted '. $buyerName .' through Whatsapp';
             }
             if($type == 'email'){
-            $activityname = $sellerName.' contacted '. $buyerName .' through email'; 
+            $activityname = $sellerName.' contacted '. $buyerName .' through email';
             }
             if($type == 'mobile'){
                 $activityname = $sellerName .' contacted '. $buyerName .' through mobile';
@@ -1695,12 +1697,13 @@ class LeadPreferenceController extends Controller
             if(empty($isActivity)){
                 self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
             }
+
         }else{
             if($type == 'Whatsapp'){
                 $activityname = $buyerName .' contacted '. $sellerName .' through Whatsapp';
             }
             if($type == 'email'){
-            $activityname = $buyerName .' contacted '. $sellerName .' through email'; 
+            $activityname = $buyerName .' contacted '. $sellerName .' through email';
             }
             if($type == 'mobile'){
                 $activityname = $buyerName .' contacted '. $sellerName .' through mobile';
@@ -1712,11 +1715,20 @@ class LeadPreferenceController extends Controller
             if(empty($isActivity)){
                 self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, $type, $leadtime);
             }
+
+            $seller = User::where('id', $sellerId)->first();
+            $notificationDetails=NotificationSetting::where('user_id',$sellerId)->where('noti_value',1)->where('noti_name','buyer_browser_customer_sending_message')->where('user_type','buyer')->where('noti_type','browser')->first();
+
+            if ($notificationDetails && $sellerId) {
+                $seller->notify(new BrowserNotification($sellerId,$notificationDetails->noti_name,$notificationDetails->id));
+            }
+
+
         }
-        
-        
-        
-        return $this->sendResponse(__('Status Updated'), []);                                          
+
+
+
+        return $this->sendResponse(__('Status Updated'), []);
     }
 
     public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime)
@@ -1782,19 +1794,19 @@ class LeadPreferenceController extends Controller
     public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name)
     {
         $activities = ActivityLog::where('lead_id',$lead_id)
-                                          ->where('from_user_id',$from_user_id) 
-                                          ->where('to_user_id',$to_user_id) 
-                                          ->where('lead_id',$lead_id) 
-                                          ->where('activity_name',$activity_name) 
-                                          ->first(); 
-         return $activities;                                 
+                                          ->where('from_user_id',$from_user_id)
+                                          ->where('to_user_id',$to_user_id)
+                                          ->where('lead_id',$lead_id)
+                                          ->where('activity_name',$activity_name)
+                                          ->first();
+         return $activities;
     }
 
     public function sellerNotes(Request $request)
-    { 
+    {
         $aVals = $request->all();
         $isNotes = SellerNote::where('id',$aVals['note_id'])->first();
-        
+
         if(!empty($isNotes)){
             $isNotes->where('id',$aVals['note_id'])->update(['notes'=>$aVals['notes']]);
         }else{
@@ -1805,11 +1817,11 @@ class LeadPreferenceController extends Controller
                 'notes' => $aVals['notes'],
             ]);
         }
-        return $this->sendResponse(__('Notes Updated Sucessfully'), []);                                          
+        return $this->sendResponse(__('Notes Updated Sucessfully'), []);
     }
 
     public function getSellerNotes(Request $request)
-    { 
+    {
         $aVals = $request->all();
         $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
                              ->where('buyer_id',$aVals['buyer_id'])
@@ -1820,10 +1832,10 @@ class LeadPreferenceController extends Controller
         }else{
             $isNotes = "";
         }
-        
+
         return $this->sendResponse(__('No Notes added'), [
                 'notes' => $isNotes
-            ]);                                  
+            ]);
     }
 
     public function pendingPurchaseTypeFilter(Request $request){
@@ -1833,7 +1845,7 @@ class LeadPreferenceController extends Controller
                                              ->where('purchase_type',$aVals['purchase_type'])
                                              ->pluck('lead_id')
                                              ->toArray();
-      
+
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)
         ->whereHas('customer', function($query) {
@@ -1841,13 +1853,13 @@ class LeadPreferenceController extends Controller
         })->where('status','pending')
         ->orderBy('id', 'DESC')
         ->get();
-        
+
         foreach ($allLeads as $key => $value) {
-            $isActivity = ActivityLog::where('to_user_id',$user_id) 
+            $isActivity = ActivityLog::where('to_user_id',$user_id)
                                  ->where('from_user_id',$value->customer_id)
                                  ->where('lead_id',$value->id)
-                                 ->latest() 
-                                 ->first(); 
+                                 ->latest()
+                                 ->first();
             if(!empty($isActivity)){
                 if($isActivity->activity_name == 'Requested a callback'){
                     $value['profile_view'] = "Requested a callback";
@@ -1856,11 +1868,11 @@ class LeadPreferenceController extends Controller
                     $value['profile_view'] = $value['customer']->name." viewed your profile";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
                 }
-                
+
             }else{
                 $value['profile_view'] = "";
                 $value['profile_view_time'] = "";
-            }  
+            }
         }
         return $this->sendResponse(__('Pending Lead'), $allLeads);
     }
@@ -1881,7 +1893,7 @@ class LeadPreferenceController extends Controller
         })->where('status','hired')
         ->orderBy('id', 'DESC')
         ->get();
-        
+
         return $this->sendResponse(__('Hired Lead'), $allLeads);
     }
 
@@ -1971,8 +1983,8 @@ class LeadPreferenceController extends Controller
         $customerIds = $filteredLeads->pluck('customer_id')->toArray();
         $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
             ->whereIn('lead_id', $leadIds)
-            ->select('buyer_id', 
-                     'lead_id', 
+            ->select('buyer_id',
+                     'lead_id',
                      DB::raw('SUM(visitors_count) as total_views'),
                     //  DB::raw('SUM(random_count) as total_randoms')
                     )
@@ -2005,5 +2017,5 @@ class LeadPreferenceController extends Controller
                 ];
         // return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
     }
-   
+
 }
