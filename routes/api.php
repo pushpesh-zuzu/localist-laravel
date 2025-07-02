@@ -31,27 +31,27 @@ Route::get('/check_api', function () {
 
 Route::get('test_lead',[ApiController::class,'getLeadByPrefer']);
 
-
-
+Route::post('notification/fetch-all-notifications',[NotificationController::class,'getAllNotifications']);
+Route::post('notification/mark-as-read',[NotificationController::class,'markAllNotifications']);
 
 Route::prefix('notification')->group(function () {
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
         Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
     });
-    
+
 });
 
 Route::prefix('review')->group(function () {
     Route::post('submit-review',[ReviewController::class,'submitReview']);
     Route::get('get-reviews/{id}',[ReviewController::class,'getReviews']);
-    
+
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::get('get-customer-link',[ReviewController::class,'getCustomerLink']);
-        
+
     });
 
-    
+
 });
 Route::prefix('payment')->group(function () {
 
@@ -62,7 +62,7 @@ Route::prefix('payment')->group(function () {
         Route::post('/download-invoice', [PaymentController::class, 'downloadInvoice']);
     });
 
-    
+
 });
 
 
@@ -74,12 +74,12 @@ Route::prefix('customer')->group(function () {
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-        
+
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);
             Route::post('add-image-to-submitted-request',[MyRequestController::class,'addImageToSubmittedRequest']);
-            Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);           
+            Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);
         });
 
         Route::prefix('setting')->group(function () {
@@ -129,12 +129,12 @@ Route::prefix('users')->group(function () {
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
         Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
         Route::post('/submit-leads', [LeadPreferenceController::class, 'submitLeads']);
-        
+
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
         Route::post('/remove-service', [LeadPreferenceController::class, 'removeService']);
         Route::post('/add_location', [LeadPreferenceController::class, 'addUserLocation']);
-        
+
         Route::post('/add_service', [LeadPreferenceController::class, 'addUserService']);
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
         // Route::post('/sort-by-credit', [LeadPreferenceController::class, 'sortByCredit']);
@@ -149,9 +149,9 @@ Route::prefix('users')->group(function () {
         Route::post('/pending-purchase-type-filter', [LeadPreferenceController::class, 'pendingPurchaseTypeFilter']);
         Route::post('/hired-purchase-type-filter', [LeadPreferenceController::class, 'hiredPurchaseTypeFilter']);
         Route::post('/leads-enquiry', [LeadPreferenceController::class, 'leadsEnquiry']);
-        
 
-        //account details 
+
+        //account details
         Route::post('/update-profile-image', [UserController::class, 'updateProfileImage']);
         Route::post('/change-password', [UserController::class, 'changePassword']);
         Route::post('/update-profile', [UserController::class, 'updateProfile']);
@@ -175,9 +175,9 @@ Route::prefix('users')->group(function () {
         Route::post('/response-time-filter', [RecommendedLeadsController::class, 'responseTimeFilter']);
         Route::post('/rating-filter', [RecommendedLeadsController::class, 'ratingFilter']);
         Route::post('/get-rating-filter', [RecommendedLeadsController::class, 'getRatingFilter']);
-        
+
         //My Credits
-        
+
         Route::post('/add-coupon', [CreditPlanController::class, 'addCoupon']);
         Route::post('/get-coupon', [CreditPlanController::class, 'getCoupon']);
         Route::get('/get-plans', [CreditPlanController::class, 'getPlans']);
@@ -204,7 +204,7 @@ Route::prefix('users')->group(function () {
     // Route::put('/{id}', [UserController::class, 'update']);
     //Route::delete('/{id}', [UserController::class, 'destroy']);
 
-    // add services 
+    // add services
 
     // Route::post('/add_service', [UserController::class, 'addUserService']);
     // Route::post('/add_location', [UserController::class, 'addUserLocation']);

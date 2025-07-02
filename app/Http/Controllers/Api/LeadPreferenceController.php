@@ -381,7 +381,7 @@ class LeadPreferenceController extends Controller
                 $exists = NotificationLog::where('user_id', $user_id)
                 ->where('lead_id', $lead->id)
                 ->where('noti_name', 'buyer_browser_new_lead')
-                ->where('message', 'New Lead Request Arrived')
+                ->where('message', 'You have Received a New Lead')
                 ->where('status', 'unread')
                 ->where('type', 'browser')
                 ->exists();
@@ -393,7 +393,7 @@ class LeadPreferenceController extends Controller
                         'lead_id' => $lead->id,
                         'title' => 'New Lead',
                         'noti_name'  => 'buyer_browser_new_lead',
-                        'message'  => 'New Lead Request Arrived',
+                        'message'  => 'You have Received a New Lead',
                         'status' => 'unread',
                         'type' => 'browser'
                     ]
@@ -1756,7 +1756,7 @@ class LeadPreferenceController extends Controller
                     'user_id'  => $sellerId,
                     'lead_id' => 0,
                     'noti_name'  => 'buyer_browser_customer_sending_message',
-                    'message'  => 'Customers sending me a message',
+                    'message'  => 'You Received a New Message',
                     'title' => 'Customer Message',
                     'status' => 'unread',
                     'type' => 'browser'

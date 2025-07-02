@@ -18,6 +18,7 @@ use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Models\NotificationSetting;
+use App\Models\NotificationLog;
 use App\Events\NewNotificationEvent;
 
 class NotificationController extends Controller
@@ -187,6 +188,44 @@ class NotificationController extends Controller
         event(new NewNotificationEvent($message, $userId));
 
         return $this->sendResponse('Notification Sent');
+    }
+
+    public function getAllNotifications(Request $request){
+        $userId =$request->user_id;
+
+            if (!$userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User ID is required'
+                ], 400);
+            }
+
+            $notifications = NotificationLog::where('user_id', $userId)
+                ->where('status','unread')
+                ->orderBy('created_at', 'desc')
+                ->selectRaw("id, title, message, DATE_FORMAT(created_at, '%Y-%m-%d %I:%i %p') as created_at, status")
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $notifications
+            ]);
+    }
+
+    public function markAllNotifications(Request $request){
+        $userId =$request->user_id;
+        if (!$userId) {
+        return response()->json(['success' => false, 'message' => 'User ID is required'], 400);
+        }
+
+        NotificationLog::where('user_id', $userId)
+            ->where('status', 'unread')
+            ->update(['status' => 'read']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications marked as read.'
+        ]);
     }
 
 }
