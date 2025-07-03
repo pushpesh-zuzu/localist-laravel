@@ -1889,10 +1889,11 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-                                             ->where('purchase_type',$aVals['purchase_type'])
-                                             ->pluck('lead_id')
-                                             ->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
+        if($aVals['purchase_type'] !== 'All'){
+            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
+        }                                            
+        $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)
