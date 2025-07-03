@@ -653,7 +653,7 @@ class LeadPreferenceController extends Controller
         $users = User::where('id',$buyerId)->pluck('name')->first();
 
         $sellerName = User::where('id',$sellerId)->pluck('name')->first();
-        $buyerName = User::where('id',$leads->customer_id)->pluck('name')->first();
+        $buyerName = User::where('id',$lead->customer_id)->pluck('name')->first();
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $activityname = $sellerName . ' updated status to hired';
         $isActivity = self::getActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname);
