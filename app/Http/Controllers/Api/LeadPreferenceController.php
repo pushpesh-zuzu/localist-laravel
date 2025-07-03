@@ -443,7 +443,7 @@ class LeadPreferenceController extends Controller
         // Fetch all records where 'category' matches the given service_id
         $categories = ServiceQuestion::where('category', $service_id)
                                  ->where('status', 1)
-                                 ->orderBy('id', 'DESC')
+                                 ->orderBy('id', 'ASC')
                                  ->get();
 
         return $this->sendResponse(__('Category Data'), $categories);
