@@ -41,7 +41,7 @@ Route::prefix('notification')->group(function () {
         Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
         Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
         Route::post('fetch-all-notifications',[NotificationController::class,'getAllNotifications']);
-        //Route::post('mark-all-read',[NotificationController::class,'markAllNotifications']);
+        Route::post('mark-all-read',[NotificationController::class,'markAllNotifications']);
     });
 
 });

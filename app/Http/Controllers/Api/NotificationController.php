@@ -192,24 +192,27 @@ class NotificationController extends Controller
 
             $notifications = NotificationLog::where('user_id', $userId)
                 ->where('status','unread')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'asc')
                 ->selectRaw("id, title, message, DATE_FORMAT(created_at, '%Y-%m-%d %I:%i %p') as created_at, status")
                 ->get();
-
+            $lastId = $notifications->last()?->id ?? null;
             return response()->json([
                 'success' => true,
+                'last_id' => $lastId,
                 'data' => $notifications
             ]);
     }
 
     public function markAllNotifications(Request $request){
         $userId =$request->user_id;
+        $last_id =$request->last_id;
         if (!$userId) {
         return response()->json(['success' => false, 'message' => 'User ID is required'], 400);
         }
 
         NotificationLog::where('user_id', $userId)
             ->where('status', 'unread')
+            ->where('id', '<=', $last_id)
             ->update(['status' => 'read']);
 
         return response()->json([
