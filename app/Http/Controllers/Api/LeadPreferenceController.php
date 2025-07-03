@@ -1812,18 +1812,12 @@ class LeadPreferenceController extends Controller
     public function sellerNotes(Request $request)
     {
         $aVals = $request->all();
-        $isNotes = SellerNote::where('id',$aVals['note_id'])->first();
-
-        if(!empty($isNotes)){
-            $isNotes->where('id',$aVals['note_id'])->update(['notes'=>$aVals['notes']]);
-        }else{
-            $isNotes = SellerNote::create([
-                'seller_id'  => $aVals['user_id'],
-                'buyer_id'  => $aVals['buyer_id'],
-                'lead_id'  => $aVals['lead_id'],
-                'notes' => $aVals['notes'],
-            ]);
-        }
+        SellerNote::create([
+            'seller_id'  => $aVals['user_id'],
+            'buyer_id'  => $aVals['buyer_id'],
+            'lead_id'  => $aVals['lead_id'],
+            'notes' => $aVals['notes'],
+        ]);
         return $this->sendResponse(__('Notes Updated Sucessfully'), []);
     }
 
@@ -1833,14 +1827,14 @@ class LeadPreferenceController extends Controller
         $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
                              ->where('buyer_id',$aVals['buyer_id'])
                              ->where('lead_id',$aVals['lead_id'])
-                             ->first();
+                             ->get();
         if(!empty($isNotes)){
             $isNotes = $isNotes;
         }else{
             $isNotes = "";
         }
 
-        return $this->sendResponse(__('No Notes added'), [
+        return $this->sendResponse(__('Notes'), [
                 'notes' => $isNotes
             ]);
     }
