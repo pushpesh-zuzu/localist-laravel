@@ -6,26 +6,18 @@ class CreditScorePredictor{
 
     public static function predict($servie_id, $predict, $data){
         $rel = 0;
-        $url = "";
+        $url = "https://localist.pythonanywhere.com/predict/";
         switch($servie_id){
-            case 27:
-                $url = 'https://localist.pythonanywhere.com/predict/logo_design';
+            case 52:
+                $url .= 'patio_services';
                 break;
-            case 33:
-                $url = 'https://localist.pythonanywhere.com/predict/landscaping';
-                break;
-            case 34:
-                $url = 'https://localist.pythonanywhere.com/predict/garage_conversion';
-                break;
-            case 35:
-                $url = 'https://localist.pythonanywhere.com/predict/business_consulting';
-                break;
+                
             default:
                 $url = "";
         }
         $data = json_decode($data, true);
         foreach($data as $q){
-            $predict[$q['ques']] = !empty($q['ans']) ? preg_replace(['/^,/', '/\?$/'], '', trim($q['ans'])) : null;
+            $predict[$q['ques']] = !empty($q['ans']) ? preg_replace(['/^,/', '/\?$/'], '', trim($q['ans'])) : 'Unknown';
         }
         
         $output = self::getPrediction($url, $predict);

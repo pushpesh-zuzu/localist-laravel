@@ -517,7 +517,7 @@ class RecommendedLeadsController extends Controller
                 // logger("User Prefs: ", $userAnswers);
 
                 // Case 4: match if user pref contains "other"
-                if (in_array('other', $userAnswers)) {
+                if (in_array('Something else (please describe)', $userAnswers)) {
                     continue;
                 }
 

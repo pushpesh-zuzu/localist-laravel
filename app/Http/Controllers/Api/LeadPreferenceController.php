@@ -315,7 +315,7 @@ class LeadPreferenceController extends Controller
 
                 $intersect = array_intersect($expectedAnswers, $leadAnswers);
 
-                if (empty($intersect) && !in_array('Other', $expectedAnswers)) {
+                if (empty($intersect) && !in_array('Something else (please describe)', $expectedAnswers)) {
                     // logger("Lead ID {$lead->id} failed on question: $question");
                     // logger("Lead answers: " . json_encode($leadAnswers));
                     // logger("Expected answers: " . json_encode($expectedAnswers));
