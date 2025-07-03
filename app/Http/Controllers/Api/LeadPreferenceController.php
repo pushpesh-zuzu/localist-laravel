@@ -784,14 +784,37 @@ class LeadPreferenceController extends Controller
         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
         if ($serviceIds) {
             foreach ($serviceIds as $serviceId) {
-                //  $userService = UserService::where('user_id', $userId)
-                //                     ->where('service_id', $serviceId)
-                //                     ->first();
+                
+                $userService = UserService::createUserService($aVals['user_id'],$serviceId,0);
+                //get existing locations for this user
+                $userLocations = UserServiceLocation::where('user_id', $userId)->get();
+                
+                foreach($userLocations as $loc){
+                    $locData['user_id'] =  $userId;
+                    $locData['service_id'] =  $serviceId;
+                    $locData['user_service_id'] =  $userService->id;
+                    $locData['miles'] =  $loc->miles;
+                    $locData['nation_wide'] =  $loc->nation_wide;
+                    $locData['postcode'] =  $loc->postcode;
+                    $locData['city'] =  $loc->city;
+                    $locData['travel_time'] =  $loc->travel_time;
+                    $locData['travel_by'] =  $loc->travel_by;
+                    $locData['coordinates'] =  $loc->coordinates;
+                    $locData['type'] =  $loc->type;
+                    $locData['status'] =  1;
+                    $locData['created_at'] =  date('Y-m-d H:i:s');
+                    //add previous locations to this new service
+                    $locExists = UserServiceLocation::where('user_id',$userId)->where('service_id',$serviceId)
+                        ->where('user_service_id', $userService->id)->where('miles',$loc->miles)->where('nation_wide',$loc->nation_wide)
+                        ->where('postcode', $loc->postcode)->first();
+                    if(empty($locExists)){
+                        UserServiceLocation::create($locData);
+                    }
+                   
+                }               
 
-                UserService::createUserService($aVals['user_id'],$serviceId,0);
                 //save answer to preferences
                 $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
-
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
                     $defaultOptions = $question->answer ?? '';
@@ -822,7 +845,6 @@ class LeadPreferenceController extends Controller
                     );
                 }
             }
-        // $service = UserService::createUserService($aVals['user_id'],$aVals['service_id'],0);
             return $this->sendResponse(__('Service added to your profile successfully'));
         }else{
             return $this->sendResponse(__('Select Service to proceed'));
