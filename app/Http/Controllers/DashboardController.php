@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\UserService;
 use App\Models\Blog;
 use App\Models\Category;
+use App\Models\LeadRequest;
 use App\Helpers\CustomHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $now = Carbon::now()->toDateString();
          // CustomHelper::sendEmail(array("to" => "webplanetsoft@gmail.com","subject" => "test", "body" => "this is test body",'receiver' => "Ankit "));
 
         $totalusers = User::count();
@@ -60,11 +62,172 @@ class DashboardController extends Controller
             ];
         });
 
+        $categoriesWithAvgCredit = Category::withCount([
+            'leadRequests as lead_requests_count' => function ($query) {
+                $query->where('credit_score', '>', 0);
+            }
+        ])
+        ->withSum([
+            'leadRequests as total_credit_score' => function ($query) {
+                $query->where('credit_score', '>', 0);
+            }
+        ], 'credit_score')
+        ->get()
+        ->map(function ($category) {
+            $average = $category->lead_requests_count > 0
+                ? round($category->total_credit_score / $category->lead_requests_count, 2)
+                : 0;
+
+            return [
+                'category_name' => $category->name,
+                'average_credit_score' => $average,
+            ];
+        })
+        ->filter(fn ($cat) => $cat['average_credit_score'] > 0)
+        ->values();
+
+        $totalCreditsSold = LeadRequest::where('credit_score', '>', 0)
+        ->where('status', 'hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->sum('credit_score');
+
+       $leadBuyersCount = User::whereIn('user_type', [2, 3])
+        ->whereHas('hiredLeads')
+        ->count();
+
+
+        $abandonedSignUp = User::where('user_type',[2, 3])->where('form_status', 0)
+        ->count();
+
+        $valueleadsSold = LeadRequest::where('credit_score', '>', 0)
+        ->where('status','hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->sum('credit_score');
+
+
+        $leadsSold = LeadRequest::where('credit_score', '>', 0)
+        ->where('status','hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->count();
+
+        $leadsUnSold = LeadRequest::where('credit_score', '>', 0)
+        ->whereIn('status',['pending','new'])
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->count();
+        $totalLeads = $leadsSold + $leadsUnSold;
+
+        $percentageSold = $totalLeads > 0 ? round(($leadsSold / $totalLeads) * 100, 2) : 0;
+        $percentageUnSold = $totalLeads > 0 ? round(($leadsUnSold / $totalLeads) * 100, 2) : 0;
+
+        $valleadsUnSold = LeadRequest::where('credit_score', '>', 0)
+        ->whereIn('status',['pending','new'])
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->sum('credit_score');
+
+
+        $dailyCreditsSold = LeadRequest::whereDate('created_at', $now)
+        ->where('credit_score', '>', 0)
+        ->where('status','hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->count();
+
+
+
+        $monthlyCreditsSold = LeadRequest::whereBetween('created_at', [
+            Carbon::now()->startOfMonth()->toDateString(),
+            Carbon::now()->endOfMonth()->toDateString()
+        ])->where('credit_score', '>', 0)->where('status','hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })->count();
+
+        $quarterlyCreditsSold = LeadRequest::whereBetween('created_at', [
+            Carbon::now()->startOfQuarter()->toDateString(),
+            Carbon::now()->endOfQuarter()->toDateString()
+        ])->where('credit_score', '>', 0)->where('status','hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->count();
+
+        $yearlyCreditsSold = LeadRequest::whereBetween('created_at', [
+            Carbon::now()->startOfYear()->toDateString(),
+            Carbon::now()->endOfYear()->toDateString()
+        ])->where('credit_score', '>', 0)->where('status','hired')
+        ->whereHas('customer',function($query){
+            $query->whereIn('user_type',[2, 3]);
+        })
+        ->count();
+
+        $activeBuyers = $this->getActiveBuyers();
+        $dailyActiveBuyers = $activeBuyers['dailyActiveBuyers'] ?? 0;
+        $monthlyActiveBuyers = $activeBuyers['monthlyActiveBuyers'] ?? 0;
+        $quarterlyActiveBuyers = $activeBuyers['quarterlyActiveBuyers'] ?? 0;
+        $yearlyActiveBuyers = $activeBuyers['yearlyActiveBuyers'] ?? 0;
 
 
         return view('dashboard',get_defined_vars());
     }
 
+    /**
+     * Show Active Buyers
+     */
+
+    private function getActiveBuyers(){
+
+        $now = Carbon::now();
+        $startOfDay = $now->copy()->startOfDay();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $startOfQuarter = $now->copy()->firstOfQuarter();
+        $startOfYear = $now->copy()->startOfYear();
+
+
+        $dailyActiveBuyers = User::whereIn('user_type', [2, 3])
+            ->whereHas('hiredLeads', function ($q) use ($startOfDay) {
+                $q->where('created_at', '>=', $startOfDay);
+            })
+            ->count();
+
+
+        $monthlyActiveBuyers = User::whereIn('user_type', [2, 3])
+            ->whereHas('hiredLeads', function ($q) use ($startOfMonth) {
+                $q->where('created_at', '>=', $startOfMonth);
+            })
+            ->count();
+
+
+        $quarterlyActiveBuyers = User::whereIn('user_type', [2, 3])
+            ->whereHas('hiredLeads', function ($q) use ($startOfQuarter) {
+                $q->where('created_at', '>=', $startOfQuarter);
+            })
+            ->count();
+
+
+        $yearlyActiveBuyers = User::whereIn('user_type', [2, 3])
+            ->whereHas('hiredLeads', function ($q) use ($startOfYear) {
+                $q->where('created_at', '>=', $startOfYear);
+            })
+            ->count();
+
+             return [
+                'dailyActiveBuyers' => $dailyActiveBuyers,
+                'monthlyActiveBuyers' => $monthlyActiveBuyers,
+                'quarterlyActiveBuyers' => $quarterlyActiveBuyers,
+                'yearlyActiveBuyers' => $yearlyActiveBuyers,
+            ];
+        }
 
     /**
      * Show Active and Inactive  Sellers

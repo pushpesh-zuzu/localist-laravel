@@ -64,7 +64,7 @@ class User extends Authenticatable
         'form_status',
         'remember_token'
     ];
-    
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -91,7 +91,7 @@ class User extends Authenticatable
     public function userDetails()
     {
         return $this->belongsTo(UserDetail::class,'id','user_id');
-    }      
+    }
 
     public function accreditations()
     {
@@ -103,11 +103,16 @@ class User extends Authenticatable
         return $this->hasMany(UserServiceDetail::class,'id','user_id');
     }
 
+    public function hiredLeads()
+    {
+        return $this->hasMany(LeadRequest::class, 'hired_by');
+    }
+
     public function leadRequests()
     {
         return $this->hasMany(LeadRequest::class, 'customer_id', 'id');
     }
-    
+
     public function details()
     {
         return $this->hasOne(UserDetail::class, 'user_id', 'id');
@@ -117,7 +122,7 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserResponseTime::class, 'seller_id', 'id');
     }
-    
+
     public function serviceLocations()
     {
         return $this->hasMany(UserServiceLocation::class, 'user_id', 'id');
