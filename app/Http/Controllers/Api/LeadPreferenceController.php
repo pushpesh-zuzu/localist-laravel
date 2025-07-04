@@ -653,7 +653,7 @@ class LeadPreferenceController extends Controller
         $users = User::where('id',$buyerId)->pluck('name')->first();
 
         $sellerName = User::where('id',$sellerId)->pluck('name')->first();
-        $buyerName = User::where('id',$leads->customer_id)->pluck('name')->first();
+        $buyerName = User::where('id',$lead->customer_id)->pluck('name')->first();
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $activityname = $sellerName . ' updated status to hired';
         $isActivity = self::getActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname);
@@ -1812,18 +1812,23 @@ class LeadPreferenceController extends Controller
     public function sellerNotes(Request $request)
     {
         $aVals = $request->all();
-        $isNotes = SellerNote::where('id',$aVals['note_id'])->first();
 
-        if(!empty($isNotes)){
-            $isNotes->where('id',$aVals['note_id'])->update(['notes'=>$aVals['notes']]);
+        if(!empty($aVals['delete_note_id'])){
+            SellerNote::where('id', $aVals['delete_note_id'])->delete();
+        }else if(!empty($aVals['note_id'])){
+            SellerNote::where('id', $aVals['note_id'])->update([
+                'notes' => $aVals['notes'],
+                'updated_at' => date('Y-m-d H:i:d')
+            ]);
         }else{
-            $isNotes = SellerNote::create([
+            SellerNote::create([
                 'seller_id'  => $aVals['user_id'],
                 'buyer_id'  => $aVals['buyer_id'],
                 'lead_id'  => $aVals['lead_id'],
                 'notes' => $aVals['notes'],
             ]);
         }
+        
         return $this->sendResponse(__('Notes Updated Sucessfully'), []);
     }
 
@@ -1833,14 +1838,15 @@ class LeadPreferenceController extends Controller
         $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
                              ->where('buyer_id',$aVals['buyer_id'])
                              ->where('lead_id',$aVals['lead_id'])
-                             ->first();
+                             ->orderBy('updated_at', 'DESC')
+                             ->get();
         if(!empty($isNotes)){
             $isNotes = $isNotes;
         }else{
             $isNotes = "";
         }
 
-        return $this->sendResponse(__('No Notes added'), [
+        return $this->sendResponse(__('Notes'), [
                 'notes' => $isNotes
             ]);
     }
@@ -1848,10 +1854,11 @@ class LeadPreferenceController extends Controller
     public function pendingPurchaseTypeFilter(Request $request){
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-                                             ->where('purchase_type',$aVals['purchase_type'])
-                                             ->pluck('lead_id')
-                                             ->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
+        if($aVals['purchase_type'] !== 'All'){
+            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
+        }                                            
+        $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)
@@ -1888,10 +1895,11 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-                                             ->where('purchase_type',$aVals['purchase_type'])
-                                             ->pluck('lead_id')
-                                             ->toArray();
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
+        if($aVals['purchase_type'] !== 'All'){
+            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
+        }                                            
+        $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)

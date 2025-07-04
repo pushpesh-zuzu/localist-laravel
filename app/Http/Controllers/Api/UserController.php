@@ -82,6 +82,22 @@ class UserController extends Controller
         return $this->sendResponse('Seller Profile.', $user);
     }
 
+    public function checkEmailId(Request $request): JsonResponse{
+        if(empty($request->email)){
+            return $this->sendError('email: Email is required!');
+        }
+        $users = User::where('email',$request->email)->first();
+        if(!empty($users) && $users != ''){
+            return $this->sendError('Email already exists');
+        }
+        $result = $this->zeroBounceService->validateEmail($request->email);
+        if (isset($result['status']) && $result['status'] === 'invalid') {
+            return $this->sendError('Email is Invalid');
+        }
+
+        return $this->sendResponse('Valid Email');
+    }
+
     public function registration(Request $request): JsonResponse{
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;

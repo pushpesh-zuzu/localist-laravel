@@ -11,6 +11,9 @@ class CreditScorePredictor{
             case 52:
                 $url .= 'patio_services';
                 break;
+            case 54:
+                $url .= 'artificial_grass';
+                break;
                 
             default:
                 $url = "";
