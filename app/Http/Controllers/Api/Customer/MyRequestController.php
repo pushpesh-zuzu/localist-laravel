@@ -56,6 +56,7 @@ class MyRequestController extends Controller
 
     public function createNewRequest(Request $request){
 
+
         if($request->form_status == "1"){
             $validator = Validator::make($request->all(), [
                 'service_id' => 'required|integer|exists:categories,id',
@@ -102,7 +103,7 @@ class MyRequestController extends Controller
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
                     $user = User::where('id',$euId)->first();
-                    $this->zohoUserIntegration($user);
+                    //$this->zohoUserIntegration($user);
 
 
 
@@ -238,7 +239,7 @@ class MyRequestController extends Controller
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($dataUser);
             $user = User::where('id',$euId)->first();
-            $this->zohoUserIntegration($user);
+            //$this->zohoUserIntegration($user);
             return $this->sendResponse('Abodned user!');
         }
         return $this->sendError('Something went wrong, try again!');
