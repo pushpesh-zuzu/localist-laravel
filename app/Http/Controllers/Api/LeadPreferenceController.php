@@ -1812,12 +1812,23 @@ class LeadPreferenceController extends Controller
     public function sellerNotes(Request $request)
     {
         $aVals = $request->all();
-        SellerNote::create([
-            'seller_id'  => $aVals['user_id'],
-            'buyer_id'  => $aVals['buyer_id'],
-            'lead_id'  => $aVals['lead_id'],
-            'notes' => $aVals['notes'],
-        ]);
+
+        if(!empty($aVals['delete_note_id'])){
+            SellerNote::where('id', $aVals['delete_note_id'])->delete();
+        }else if(!empty($aVals['note_id'])){
+            SellerNote::where('id', $aVals['note_id'])->update([
+                'notes' => $aVals['notes'],
+                'updated_at' => date('Y-m-d H:i:d')
+            ]);
+        }else{
+            SellerNote::create([
+                'seller_id'  => $aVals['user_id'],
+                'buyer_id'  => $aVals['buyer_id'],
+                'lead_id'  => $aVals['lead_id'],
+                'notes' => $aVals['notes'],
+            ]);
+        }
+        
         return $this->sendResponse(__('Notes Updated Sucessfully'), []);
     }
 
@@ -1827,6 +1838,7 @@ class LeadPreferenceController extends Controller
         $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
                              ->where('buyer_id',$aVals['buyer_id'])
                              ->where('lead_id',$aVals['lead_id'])
+                             ->orderBy('updated_at', 'DESC')
                              ->get();
         if(!empty($isNotes)){
             $isNotes = $isNotes;
