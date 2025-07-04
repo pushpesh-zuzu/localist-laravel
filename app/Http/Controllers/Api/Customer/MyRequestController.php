@@ -102,7 +102,7 @@ class MyRequestController extends Controller
                     $phoneOtp = "1234"; //random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
-                    $user = User::where('id',$euId)->first();
+                    //$user = User::where('id',$euId)->first();
                     //$this->zohoUserIntegration($user);
 
 
@@ -238,7 +238,7 @@ class MyRequestController extends Controller
             $dataUser['created_at'] = date('y-m-d H:i:s');
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($dataUser);
-            $user = User::where('id',$euId)->first();
+            //$user = User::where('id',$euId)->first();
             //$this->zohoUserIntegration($user);
             return $this->sendResponse('Abodned user!');
         }
