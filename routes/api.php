@@ -110,6 +110,7 @@ Route::prefix('users')->group(function () {
     Route::get('/bottom-pages', [PagesController::class, 'bottomPages']);
     Route::get('/page-details/{slug}', [PagesController::class, 'pageDetails']);
     Route::post('/login', [UserController::class, 'login']);
+    Route::post('/check-email-id', [UserController::class, 'checkEmailId']);
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         Route::post('change-primary-service', [LeadPreferenceController::class, 'changePrimaryService']);
