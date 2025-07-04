@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
+// use App\Http\Controllers\Api\ZohoController;
+
 
 
 Route::get('/user', function (Request $request) {
@@ -30,6 +32,7 @@ Route::get('/check_api', function () {
 
 
 Route::get('test_lead',[ApiController::class,'getLeadByPrefer']);
+// Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 
 
 

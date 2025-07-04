@@ -21,6 +21,7 @@ use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
+use App\Helpers\ZohoHelper;
 
 class MyRequestController extends Controller
 {
@@ -54,8 +55,6 @@ class MyRequestController extends Controller
     }
 
     public function createNewRequest(Request $request){
-        
-        
 
         if($request->form_status == "1"){
             $validator = Validator::make($request->all(), [
@@ -69,20 +68,22 @@ class MyRequestController extends Controller
                 'service_id.exists' => 'Provided service id does not exists.',
                 'form_status.required' => 'Form Status is required.'
             ]);
-    
+
             if($validator->fails()){
                 return $this->sendError($validator->errors());
             }
-            
+
             $phoneOtp = "";
             $euId = "";
             $token = "";
             //check if it is registration request or not
+
             if(!empty($request->email)){
-                
+
                 //check if user exists for the given email or not
                 $password = "";
                 $euId = User::where('email',$request->email)->value('id');
+
                 if(empty($euId)){
                     $dataUser['name'] = $request->name;
                     $dataUser['email'] = $request->email;
@@ -100,14 +101,15 @@ class MyRequestController extends Controller
                     $phoneOtp = "1234"; //random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
+                    $user = User::where('id',$euId)->first();
+                    $this->zohoUserIntegration($user);
 
 
-                
-                    
+
                     $dataUser['template'] = 'emails.buyer_registration';
                     $dataUser['service'] = Category::where('id',$request->service_id)->value('name');
                     $dataUser['password'] = $password;
-                    
+
                     //send registration mail
                     // Mail::send($dataUser['template'], $dataUser, function ($message) use ($dataUser) {
                     //     $message->from('info@localists.com');
@@ -123,13 +125,14 @@ class MyRequestController extends Controller
                     // });
                 }
                 $user = User::where('id',$euId)->first();
+                //dd($user);
                 $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
                 $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
                 $user->remember_tokens = $token;
 
-            
 
             }else{
+
                 //take bearer token and extract user id from token
                 $token = $request->bearerToken();
                 if (!$token) {
@@ -165,8 +168,8 @@ class MyRequestController extends Controller
             $data['phone'] = $request->phone;
 
             $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
-            
-            
+
+
             $data['created_at'] = date('y-m-d H:i:s');
             $data['updated_at'] = date('y-m-d H:i:s');
 
@@ -196,18 +199,18 @@ class MyRequestController extends Controller
             if($sId){
                 $fUser = User::where('id',$euId)->first();
                 $rel['user_id'] = $euId;
-                
-                $rel['user_type'] = $fUser->user_type; 
-                $rel['form_status'] = $fUser->form_status; 
-                $rel['active_status'] = $fUser->active_status; 
-                $rel['remember_tokens'] = $token; 
-                $rel['name'] = $fUser->name; 
-                $rel['email'] = $fUser->email; 
-                $rel['phone'] = $fUser->phone; 
-                $rel['uuid'] = $fUser->uuid; 
-                $rel['is_online'] = $fUser->is_online; 
-                $rel['profile_image'] = $fUser->profile_image; 
-                $rel['total_credit'] = $fUser->total_credit; 
+
+                $rel['user_type'] = $fUser->user_type;
+                $rel['form_status'] = $fUser->form_status;
+                $rel['active_status'] = $fUser->active_status;
+                $rel['remember_tokens'] = $token;
+                $rel['name'] = $fUser->name;
+                $rel['email'] = $fUser->email;
+                $rel['phone'] = $fUser->phone;
+                $rel['uuid'] = $fUser->uuid;
+                $rel['is_online'] = $fUser->is_online;
+                $rel['profile_image'] = $fUser->profile_image;
+                $rel['total_credit'] = $fUser->total_credit;
                 $rel['nation_wide'] = $fUser->nation_wide;
                 $rel['request_id'] = $sId;
 
@@ -234,11 +237,40 @@ class MyRequestController extends Controller
             $dataUser['created_at'] = date('y-m-d H:i:s');
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($dataUser);
+            $user = User::where('id',$euId)->first();
+            $this->zohoUserIntegration($user);
             return $this->sendResponse('Abodned user!');
         }
         return $this->sendError('Something went wrong, try again!');
     }
+    private function zohoUserIntegration($user){
+        $access_token = ZohoHelper::getAccessToken();
+        if ($access_token) {
+            $zohoResponse = Http::withToken($access_token)
+                ->post('https://www.zohoapis.in/crm/v2/Quote_Customers', [
+                    'data' => [[
+                        'Name' => $user->name,
+                        'Email' => $user->email,
+                        'customer_phone'  => $user->phone,
+                        'zipcode' => $user->postcode,
+                        'city' => $user->city,
+                        'password' => $user->password,
+                        'user_type' => 2,
+                        'active_status' => 2,
+                        'form_status' => $user->form_status,
+                        'created_at' => now()->format('c'),
+                        'updated_at' => now()->format('c'),
+                        'otp' => $user->otp,
+                        'Lead_Source' => 'Laravel Registration'
+                    ]]
+                ]);
 
+            $result = $zohoResponse->json();
+
+            return $result;
+
+        }
+    }
     public function addImageToSubmittedRequest(Request $request){
         $user_id = $request->user_id;
 
@@ -292,12 +324,12 @@ class MyRequestController extends Controller
         if($sId){
             return $this->sendResponse('Details Added');
         }
-         
-        return $this->sendError('Something went wrong, try again!');
-    }  
-    
 
-    public function checkParagraphQuality(Request $request){       
+        return $this->sendError('Something went wrong, try again!');
+    }
+
+
+    public function checkParagraphQuality(Request $request){
 
         $validator = Validator::make($request->all(), [
             'text' => 'required',
@@ -316,18 +348,18 @@ class MyRequestController extends Controller
         ]);
 
         $data = $response->json();
-        
+
         if(!empty($data)){
 
             $baseScore = 100;
             $errorCount = count($data['matches']);
             $wordCount = str_word_count($text);
             $errorPenalty = $errorCount * 5;
-            $minParagraphWordLength = 20; 
+            $minParagraphWordLength = 20;
             if ($wordCount < $minParagraphWordLength) {
-                $lengthPenalty = ($minParagraphWordLength - $wordCount) * 5; 
+                $lengthPenalty = ($minParagraphWordLength - $wordCount) * 5;
             } else {
-                $lengthPenalty = 0; 
+                $lengthPenalty = 0;
             }
             $qualityScore = $baseScore - $errorPenalty - $lengthPenalty;
             $qualityScore = max(0, min(100, $qualityScore));
@@ -339,9 +371,9 @@ class MyRequestController extends Controller
             $rel['quality_score'] = $qualityScore;
             return $this->sendResponse('Quality Details',$rel);
         }
-                 
+
         return $this->sendError('Something went wrong, try again!',$data);
-    } 
+    }
 
 
     public function verifyPhoneNumber(Request $request){
