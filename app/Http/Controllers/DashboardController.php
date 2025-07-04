@@ -94,7 +94,7 @@ class DashboardController extends Controller
         ->sum('credit_score');
 
        $leadBuyersCount = User::whereIn('user_type', [2, 3])
-        ->whereHas('hiredLeads')
+        ->where('form_status',1) 
         ->count();
 
 

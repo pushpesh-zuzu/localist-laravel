@@ -21,6 +21,7 @@ use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Controllers\Api\LeadPreferenceController;
 use App\Helpers\ZohoHelper;
 
 class MyRequestController extends Controller
@@ -102,8 +103,8 @@ class MyRequestController extends Controller
                     $phoneOtp = "1234"; //random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
-                    //$user = User::where('id',$euId)->first();
-                    //$this->zohoUserIntegration($user);
+                    $user = User::where('id',$euId)->first();
+                    $this->zohoUserIntegration($user);
 
 
 
@@ -197,6 +198,33 @@ class MyRequestController extends Controller
 
             $sId = LeadRequest::insertGetId($data);
 
+            //create Notification on lead creation
+            $leadPref = new LeadPreferenceController();
+            User::where('form_status', 1)
+                ->whereIn('user_type', [1, 3])
+                ->select('id')
+                ->chunk(1000, function ($sellersChunk) use ($leadPref) {
+                    foreach ($sellersChunk as $seller) {
+                        $baseQuery = $leadPref->getBaseQuery($seller->id);
+                        $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+                        $allLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+                        foreach ($allLeads as $lead) {
+                            CustomHelper::logNotifications(
+                                $seller->id,
+                                $lead->id,
+                                'buyer_browser_new_lead',
+                                'New Lead',
+                                'You have got a new lead',
+                                true
+                            );
+                        }
+                    }
+                });
+
+            unset($leadPref);
+
             if($sId){
                 $fUser = User::where('id',$euId)->first();
                 $rel['user_id'] = $euId;
@@ -214,10 +242,6 @@ class MyRequestController extends Controller
                 $rel['total_credit'] = $fUser->total_credit;
                 $rel['nation_wide'] = $fUser->nation_wide;
                 $rel['request_id'] = $sId;
-
-                // $apiController = new ApiController();
-                // $bidRel = $apiController->autobid($request);
-                // unset($apiController);
 
 
                 return $this->sendResponse('Quote Submitted Sucessfully',$rel);
@@ -252,17 +276,11 @@ class MyRequestController extends Controller
                     'data' => [[
                         'Name' => $user->name,
                         'Email' => $user->email,
-                        'customer_phone'  => $user->phone,
-                        'zipcode' => $user->postcode,
+                        'Customer_Phone'  => $user->phone,
+                        'zipcode' => $user->zipcode,
                         'city' => $user->city,
-                        'password' => $user->password,
-                        'user_type' => 2,
-                        'active_status' => 2,
-                        'form_status' => $user->form_status,
                         'created_at' => now()->format('c'),
-                        'updated_at' => now()->format('c'),
-                        'otp' => $user->otp,
-                        'Lead_Source' => 'Laravel Registration'
+                        'updated_at' => now()->format('c')
                     ]]
                 ]);
 
