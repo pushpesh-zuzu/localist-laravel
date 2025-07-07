@@ -22,6 +22,7 @@ use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\LeadPreferenceController;
+use App\Services\ZohoService;
 
 
 class MyRequestController extends Controller
@@ -194,6 +195,9 @@ class MyRequestController extends Controller
             $data['credit_score'] = CreditScore::predict($data['service_id'],$predict,$request->questions);
 
             $sId = LeadRequest::insertGetId($data);
+            $leadsDetails = LeadRequest::where('id',$sId)->first();
+            $zohoService = new ZohoService();
+            $zohoService->integrateUser('lead',null,$leadsDetails);
 
             //create Notification on lead creation
             $leadPref = new LeadPreferenceController();
@@ -292,6 +296,9 @@ class MyRequestController extends Controller
             $data['images'] = $prevImages. $dir .'/' .$file_name;
             $data['updated_at'] = date('y-m-d H:i:s');
             $sId = LeadRequest::where('id',$request->request_id)->update($data);
+            $leadsDetails = LeadRequest::where('id',$request->request_id)->first();
+            $zohoService = new ZohoService();
+            $zohoService->integrateUser('lead',null,$leadsDetails);
             return $this->sendResponse('Image Uploaded');
         }
 
@@ -314,6 +321,9 @@ class MyRequestController extends Controller
         $data['professional_letin'] = !empty($request->professional_letin)? $request->professional_letin : '0';
         $data['has_additional_details'] = '1';
         $sId = LeadRequest::where('id',$request->request_id)->update($data);
+        $leadsDetails = LeadRequest::where('id',$request->request_id)->first();
+        $zohoService = new ZohoService();
+        $zohoService->integrateUser('lead',null,$leadsDetails);
         if($sId){
             return $this->sendResponse('Details Added');
         }
@@ -391,6 +401,9 @@ class MyRequestController extends Controller
             $dataLead['is_phone_verified'] = '1';
             $dataLead['updated_at'] = date('Y-m-d H:i:s');
             LeadRequest::where('customer_id', $request->user_id)->update($dataLead);
+            $leadsDetails = LeadRequest::where('customer_id',$request->user_id)->first();
+            $zohoService = new ZohoService();
+            $zohoService->integrateUser('lead',null,$leadsDetails);
             return $this->sendResponse('Phone number verified successfully!');
 
         }

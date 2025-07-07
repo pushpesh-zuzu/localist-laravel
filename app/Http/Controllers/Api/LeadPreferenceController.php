@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
+use App\Services\ZohoService;
 
 
 class LeadPreferenceController extends Controller
@@ -663,6 +664,9 @@ class LeadPreferenceController extends Controller
                 'status'=>'hired',
                 'hired_by' => $sellerId
             ]);
+            $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
+            $zohoService = new ZohoService();
+            $zohoService->integrateUser('lead',null,$leadsDetails);
             RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)
@@ -700,6 +704,9 @@ class LeadPreferenceController extends Controller
                 'status'=>'hired',
                 'hired_by' => $buyerId
             ]);
+            $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
+            $zohoService = new ZohoService();
+            $zohoService->integrateUser('lead',null,$leadsDetails);
             RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)
@@ -784,11 +791,11 @@ class LeadPreferenceController extends Controller
         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
         if ($serviceIds) {
             foreach ($serviceIds as $serviceId) {
-                
+
                 $userService = UserService::createUserService($aVals['user_id'],$serviceId,0);
                 //get existing locations for this user
                 $userLocations = UserServiceLocation::where('user_id', $userId)->get();
-                
+
                 foreach($userLocations as $loc){
                     $locData['user_id'] =  $userId;
                     $locData['service_id'] =  $serviceId;
@@ -810,8 +817,8 @@ class LeadPreferenceController extends Controller
                     if(empty($locExists)){
                         UserServiceLocation::create($locData);
                     }
-                   
-                }               
+
+                }
 
                 //save answer to preferences
                 $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
@@ -1731,7 +1738,7 @@ class LeadPreferenceController extends Controller
             }
 
             //Add Notification Log for new contact
-            CustomHelper::logNotifications($sellerId, $aVals['lead_id'], 'buyer_browser_customer_sending_message', 
+            CustomHelper::logNotifications($sellerId, $aVals['lead_id'], 'buyer_browser_customer_sending_message',
                 'New Message', 'You Received a New Message');
         }
 
@@ -1828,7 +1835,7 @@ class LeadPreferenceController extends Controller
                 'notes' => $aVals['notes'],
             ]);
         }
-        
+
         return $this->sendResponse(__('Notes Updated Sucessfully'), []);
     }
 
@@ -1857,7 +1864,7 @@ class LeadPreferenceController extends Controller
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
         if($aVals['purchase_type'] !== 'All'){
             $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
-        }                                            
+        }
         $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
@@ -1898,7 +1905,7 @@ class LeadPreferenceController extends Controller
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
         if($aVals['purchase_type'] !== 'All'){
             $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
-        }                                            
+        }
         $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])

@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\AutobidStatusLog;
 use Illuminate\Support\Carbon;
 use App\Services\ZohoService;
+use Illuminate\Support\Facades\Log;
+
 class User extends Authenticatable
 {
     use SoftDeletes; // Enable soft deletes
@@ -178,11 +180,16 @@ class User extends Authenticatable
 
     protected static function booted()
     {
+
         static::created(function ($user) {
+            Log::info('LeadRequest created - triggering Zoho sync', ['user_id' => $user->id]);
+
             app(ZohoService::class)->integrateUser('user', $user);
         });
 
         static::updated(function ($user) {
+            Log::info('LeadRequest updated - triggering Zoho sync', ['user_id' => $user->id]);
+
             app(ZohoService::class)->integrateUser('user', $user);
         });
     }

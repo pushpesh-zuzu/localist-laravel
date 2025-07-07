@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use App\Services\ZohoService;
+use Illuminate\Support\Facades\Log;
 
 class LeadRequest extends Model
 {
     use SoftDeletes; // Enable soft deletes
     use HasSlug;
 
-    protected $fillable = ['customer_id', 'service_id','postcode','questions','phone','should_autobid'];
+    protected $fillable = ['customer_id', 'service_id','postcode','questions','phone','should_autobid','city'];
 
     public function customer()
     {
@@ -30,14 +30,4 @@ class LeadRequest extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected static function booted()
-    {
-        static::created(function ($lead) {
-            app(ZohoService::class)->integrateUser('lead', null, $lead);
-        });
-
-        static::updated(function ($lead) {
-            app(ZohoService::class)->integrateUser('lead', null, $lead);
-        });
-    }
 }
