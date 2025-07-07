@@ -176,4 +176,15 @@ class User extends Authenticatable
     }
 
 
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            app(ZohoService::class)->integrateUser('user', $user);
+        });
+
+        static::updated(function ($user) {
+            app(ZohoService::class)->integrateUser('user', $user);
+        });
+    }
+
 }

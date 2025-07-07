@@ -22,7 +22,7 @@ use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\LeadPreferenceController;
-use App\Helpers\ZohoHelper;
+
 
 class MyRequestController extends Controller
 {
@@ -78,6 +78,7 @@ class MyRequestController extends Controller
             $phoneOtp = "";
             $euId = "";
             $token = "";
+
             //check if it is registration request or not
 
             if(!empty($request->email)){
@@ -103,10 +104,6 @@ class MyRequestController extends Controller
                     $phoneOtp = "1234"; //random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
-                    $user = User::where('id',$euId)->first();
-                    $this->zohoUserIntegration($user);
-
-
 
                     $dataUser['template'] = 'emails.buyer_registration';
                     $dataUser['service'] = Category::where('id',$request->service_id)->value('name');
@@ -262,34 +259,11 @@ class MyRequestController extends Controller
             $dataUser['created_at'] = date('y-m-d H:i:s');
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($dataUser);
-            //$user = User::where('id',$euId)->first();
-            //$this->zohoUserIntegration($user);
             return $this->sendResponse('Abodned user!');
         }
         return $this->sendError('Something went wrong, try again!');
     }
-    private function zohoUserIntegration($user){
-        $access_token = ZohoHelper::getAccessToken();
-        if ($access_token) {
-            $zohoResponse = Http::withToken($access_token)
-                ->post('https://www.zohoapis.in/crm/v2/Quote_Customers', [
-                    'data' => [[
-                        'Name' => $user->name,
-                        'Email' => $user->email,
-                        'Customer_Phone'  => $user->phone,
-                        'zipcode' => $user->zipcode,
-                        'city' => $user->city,
-                        'created_at' => now()->format('c'),
-                        'updated_at' => now()->format('c')
-                    ]]
-                ]);
 
-            $result = $zohoResponse->json();
-
-            return $result;
-
-        }
-    }
     public function addImageToSubmittedRequest(Request $request){
         $user_id = $request->user_id;
 

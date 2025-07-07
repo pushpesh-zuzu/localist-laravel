@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use App\Services\ZohoService;
 
 class LeadRequest extends Model
 {
@@ -27,5 +28,16 @@ class LeadRequest extends Model
     public function serializeDate(\DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
+    }
+
+    protected static function booted()
+    {
+        static::created(function ($lead) {
+            app(ZohoService::class)->integrateUser('lead', null, $lead);
+        });
+
+        static::updated(function ($lead) {
+            app(ZohoService::class)->integrateUser('lead', null, $lead);
+        });
     }
 }
