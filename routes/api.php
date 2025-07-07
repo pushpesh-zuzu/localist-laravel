@@ -160,6 +160,7 @@ Route::prefix('users')->group(function () {
 
 
         //account details
+        Route::get('/get-seller-dashboard-stats', [UserController::class, 'getSellerDashboardStats']);
         Route::post('/update-profile-image', [UserController::class, 'updateProfileImage']);
         Route::post('/change-password', [UserController::class, 'changePassword']);
         Route::post('/update-profile', [UserController::class, 'updateProfile']);

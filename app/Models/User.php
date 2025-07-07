@@ -88,9 +88,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function userDetails()
+    public function details()
     {
-        return $this->belongsTo(UserDetail::class,'id','user_id');
+        return $this->hasOne(UserDetail::class, 'user_id', 'id');
     }
 
     public function accreditations()
@@ -113,11 +113,7 @@ class User extends Authenticatable
         return $this->hasMany(LeadRequest::class, 'customer_id', 'id');
     }
 
-    public function details()
-    {
-        return $this->hasOne(UserDetail::class, 'user_id', 'id');
-    }
-
+    
     public function responseTime()
     {
         return $this->hasOne(UserResponseTime::class, 'seller_id', 'id');
@@ -128,43 +124,56 @@ class User extends Authenticatable
         return $this->hasMany(UserServiceLocation::class, 'user_id', 'id');
     }
 
-    public function getCurrentAutobidBatch(): ?array
+    public function profileQAs()
     {
-        $latestLog = $this->autobidStatusLogs()
-            ->latest('id')
-            ->first();
-
-        if (!$latestLog || !in_array($latestLog->action, ['enabled', 'resumed'])) {
-            return null;
-        }
-
-        $activeLog = $this->autobidStatusLogs()
-            ->whereIn('action', ['enabled', 'resumed'])
-            ->where('id', '<=', $latestLog->id)
-            ->latest('id')
-            ->first();
-
-        if (!$activeLog) {
-            return null;
-        }
-
-        $activeSince = Carbon::parse($activeLog->created_at);
-        $daysSinceStart = $activeSince->diffInDays(Carbon::today());
-        $batchNumber = intdiv($daysSinceStart, 7);
-
-        $batchStart = $activeSince->copy()->addDays($batchNumber * 7);
-        $batchEnd = $batchStart->copy()->addDays(6);
-
-        return [
-            'start' => $batchStart->format('d/m/Y'),
-            'end' => $batchEnd->format('d/m/Y'),
-            'batch_number' => $batchNumber + 1,
-        ];
+        return $this->hasMany(ProfileQA::class, 'user_id', 'id');
     }
 
-    public function autobidStatusLogs()
+    public function getProfileCompletionPercentage(): int
     {
-        return $this->hasMany(AutobidStatusLog::class);
+        // Fields directly in `users` table
+        $userFields = ['company_name', 'company_logo', 'name', 'profile_image', 'company_email', 
+            'company_phone', 'company_website', 'company_location', 'company_locaion_reason', 'company_size', 
+            'company_total_years', 'about_company'];
+
+        // Fields in `user_details` table
+        $detailsFields = ['company_photos', 'company_youtube_link', 'fb_link', 'twitter_link', 'tiktok_link', 
+            'insta_link', 'linkedin_link', 'extra_links'];
+
+        // Each Q&A counts individually (question's count)
+        $qaSlots = 4;
+
+        // Total field count
+        $totalFields = count($userFields) + count($detailsFields) + 1 + $qaSlots;
+        $completed = 0;
+
+        // User fields
+        foreach ($userFields as $field) {
+            if (!empty($this->{$field})) {
+                $completed++;
+            }
+        }
+
+        // User detail fields
+        if ($this->details) {
+            foreach ($detailsFields as $field) {
+                if (!empty($this->details->{$field})) {
+                    $completed++;
+                }
+            }
+        }
+
+        // Accreditations count as 1 if at least one exists
+        if ($this->accreditations()->exists()) {
+            $completed++;
+        }
+
+        // Profile Q&A
+        $qaCount = min($this->profileQAs()->count(), $qaSlots);
+        $completed += $qaCount;
+
+        return (int) round(($completed / $totalFields) * 100);
     }
+
 
 }
