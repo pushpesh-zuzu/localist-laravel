@@ -9,6 +9,7 @@ class ZohoService
 {
     public function integrateUser($type,$user=null,$lead=null)
     {
+
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
@@ -33,6 +34,7 @@ class ZohoService
         $searchData = $searchResponse->json();
 
         $zohoId = $searchData['data'][0]['id'] ?? null;
+
         if($type =='user' && $user){
             $payload = [
                 'data' => [[
@@ -57,21 +59,21 @@ class ZohoService
             $payload = [
                 'data' => [[
                     'Lead_auto_Id' => $lead->id,
-                    'Customer Id' => $user->customer_id,
-                    'Service Id' => $user->service_id,
-                    'City Name' => $user->city,
-                    'postcode' => $user->postcode,
-                    'questions' => $user->questions,
-                    'arrayed_questions' => $user->arrayed_questions,
-                    'Mobile Number' => $user->phone,
-                    'credit_score' => $user->credit_score,
-                    'recevive_online' => $user->recevive_online,
-                    'is_urgent' => $user->is_urgent,
-                    'is_high_hiring' => $user->is_high_hiring,
-                    'is_phone_verified' => $user->is_phone_verified,
-                    'is_frequent_user' => $user->is_frequent_user,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->created_at
+                    'CustomerId' => $lead->customer_id,
+                    'ServiceId' => $lead->service_id,
+                    'City Name' => $lead->city,
+                    'postcode' => $lead->postcode,
+                    'questions' => $lead->questions,
+                    'arrayed_questions' => $lead->arrayed_questions,
+                    'Mobile Number' => $lead->phone,
+                    'credit_score' => $lead->credit_score,
+                    'recevive_online' => $lead->recevive_online,
+                    'is_urgent' => $lead->is_urgent,
+                    'is_high_hiring' => $lead->is_high_hiring,
+                    'is_phone_verified' => $lead->is_phone_verified,
+                    'is_frequent_user' => $lead->is_frequent_user,
+                    'Last_Name' => "Nil",
+                    'updated_at' => now()->format('c')
                 ]]
             ];
         }
