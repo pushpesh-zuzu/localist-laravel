@@ -10,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\AutobidStatusLog;
 use Illuminate\Support\Carbon;
-
+use App\Services\ZohoService;
 class User extends Authenticatable
 {
     use SoftDeletes; // Enable soft deletes
@@ -113,7 +113,7 @@ class User extends Authenticatable
         return $this->hasMany(LeadRequest::class, 'customer_id', 'id');
     }
 
-    
+
     public function responseTime()
     {
         return $this->hasOne(UserResponseTime::class, 'seller_id', 'id');
@@ -132,12 +132,12 @@ class User extends Authenticatable
     public function getProfileCompletionPercentage(): int
     {
         // Fields directly in `users` table
-        $userFields = ['company_name', 'company_logo', 'name', 'profile_image', 'company_email', 
-            'company_phone', 'company_website', 'company_location', 'company_locaion_reason', 'company_size', 
+        $userFields = ['company_name', 'company_logo', 'name', 'profile_image', 'company_email',
+            'company_phone', 'company_website', 'company_location', 'company_locaion_reason', 'company_size',
             'company_total_years', 'about_company'];
 
         // Fields in `user_details` table
-        $detailsFields = ['company_photos', 'company_youtube_link', 'fb_link', 'twitter_link', 'tiktok_link', 
+        $detailsFields = ['company_photos', 'company_youtube_link', 'fb_link', 'twitter_link', 'tiktok_link',
             'insta_link', 'linkedin_link', 'extra_links'];
 
         // Each Q&A counts individually (question's count)
