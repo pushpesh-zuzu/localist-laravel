@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\AutobidStatusLog;
 use Illuminate\Support\Carbon;
 use App\Helpers\Zoho\ZohoQuoteCustomers;
+use App\Helpers\Zoho\ZohoLeadBuyers;
 
 use Illuminate\Support\Facades\Log;
 
@@ -183,12 +184,27 @@ class User extends Authenticatable
     {
 
         static::created(function ($user) {
-            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+            self::handleZohoIntegration($user);
         });
 
         static::updated(function ($user) {
-            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+            self::handleZohoIntegration($user);
         });
+    }
+    protected static function handleZohoIntegration($user)
+    {
+        try {
+            if ($user->user_type == 1) {
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user);
+            } elseif ($user->user_type == 2) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Zoho user integration failed', [
+                'user_id' => $user->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
 }
