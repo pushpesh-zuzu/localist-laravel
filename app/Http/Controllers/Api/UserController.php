@@ -73,17 +73,19 @@ class UserController extends Controller
                     'name' => optional($service->category)->name
                 ];
             });
-            //remaing services
-            $data['remaining_services'] = Category::whereNotIn('id', array_column($data['services']->toArray(), 'id'))
-                ->select(['id','name'])->get();
+            $data['service_locations'] = UserServiceLocation::where('user_id',$userId)
+                ->select(['miles','postcode','city'])->groupBy('miles', 'postcode', 'city')->get();
 
             //user plan
             $primaryCategory = $user->primary_category;
+            $planType = "None";
             $planHistory = PlanHistory::where('user_id',$userId)->orderBy('id','desc')->first();
             if(!empty($planHistory)){
                 $plans = Plan::where('category_id', $primaryCategory)->where('status',1)->where('plan_type','normal')->orderBy('id','DESC')->get();
+                $planType = "Elite Pro";
             }else{
                 $plans = Plan::where('category_id', $primaryCategory)->where('status',1)->where('plan_type','starter')->orderBy('id','DESC')->get();
+                $planType = "Standard";
             }
             $data['plans'] = $plans;
 
@@ -92,6 +94,12 @@ class UserController extends Controller
             $profileInfo['percentage_completed'] = $user->getProfileCompletionPercentage();
 
             $data['profile_info'] = $profileInfo;
+
+            //account details
+            $data['account_details'] = [
+                'plan_type' => $planType,
+                'credits' => $user->total_credit ?? 0
+            ];
 
             //response count prending list + hired list
             $pendingCount = RecommendedLead::where('seller_id', $userId)->where('status', '<>', 'hired')->count();
