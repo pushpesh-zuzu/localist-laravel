@@ -31,7 +31,7 @@ Route::get('/check_api', function () {
 });
 
 
-Route::get('test_lead',[ApiController::class,'getLeadByPrefer']);
+
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 
 
@@ -116,6 +116,9 @@ Route::prefix('users')->group(function () {
     Route::post('/check-email-id', [UserController::class, 'checkEmailId']);
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+
+        Route::post('test-api',[ApiController::class,'testApi']);
+
         Route::post('change-primary-service', [LeadPreferenceController::class, 'changePrimaryService']);
         Route::post('expand-radius',[LeadPreferenceController::class, 'expandRadius']);
 
