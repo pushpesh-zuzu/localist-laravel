@@ -29,6 +29,8 @@ use App\Models\UserResponseTime;
 use App\Models\PlanHistory;
 use App\Models\Plan;
 
+use App\Services\LeadService;
+
 class UserController extends Controller
 {
 
@@ -44,20 +46,36 @@ class UserController extends Controller
         return response()->json(User::all(), 200);
     }
 
-    public function getSellerDashboardStats(Request $request){
+    public function getSellerDashboardStats(Request $request, LeadService $ls){
         $userId = $request->user_id;
         $user = User::where('id', $userId)->first();
 
         if(!empty($user)){
-            $data['unread_leads_count'] = LeadRequest::where('status', 'new')->count();
+
+             $leadsBQ = $ls->getSellerLeadsBaseQuery($userId);
+            //unread leads
+            $unreadLeads = $leadsBQ->where('status','new')->get();
+            $unreadLeads = $ls->leadsAccordingTOSellerPref($userId, $unreadLeads);
+            $leads['unread_leads_count'] = count($unreadLeads);
+
+            //total leads
+            $totalLeads = $leadsBQ->get();
+            $totalLeads = $ls->leadsAccordingTOSellerPref($userId, $totalLeads);
+            $leads['total_leads_count'] = count($totalLeads);
+
+            $data['leads'] = $leads;
             //user services
             $services  = UserService::with(['category'])->where('user_id', $userId)->get();
             // Transform services to include only category name
             $data['services'] = $services->map(function ($service) {
                 return [
+                    'id' => optional($service->category)->id,
                     'name' => optional($service->category)->name
                 ];
             });
+            //remaing services
+            $data['remaining_services'] = Category::whereNotIn('id', array_column($data['services']->toArray(), 'id'))
+                ->select(['id','name'])->get();
 
             //user plan
             $primaryCategory = $user->primary_category;
@@ -75,6 +93,13 @@ class UserController extends Controller
 
             $data['profile_info'] = $profileInfo;
 
+            //response count prending list + hired list
+            $pendingCount = RecommendedLead::where('seller_id', $userId)->where('status', '<>', 'hired')->count();
+            $hiredCount = RecommendedLead::where('seller_id', $userId)->where('status', 'hired')->count();
+
+            $data['response'] = [
+                'response_count' => $pendingCount + $hiredCount
+            ];
             
 
 

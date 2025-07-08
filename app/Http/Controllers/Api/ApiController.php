@@ -136,41 +136,13 @@ class ApiController extends Controller
         return $this->sendResponse(__('Category Data'), $categories);
     }
 
-    // public function getLeadByPrefer()
-    // {
-    //      $userId = 53; // replace with your actual user ID
-        
-        
-    //     $userServices = DB::table('user_services')
-    //         ->where('user_id', $userId)
-    //         ->pluck('service_id')
-    //         ->toArray();
-        
-    //     // Step 2: Get flat list of all answers from lead_prefrences
-    //     $searchTerms = DB::table('lead_prefrences')
-    //         ->where('user_id', $userId)
-    //         ->pluck('answers')
-    //         ->toArray();
-            
-        
-    //     $leadrequest = LeadRequest::with(['customer', 'category'])
-    //     ->where('customer_id','!=',$userId)
-    //         ->whereIn('service_id', $userServices)
-            
-    //         ->where(function ($query) use ($searchTerms) {
-    //             foreach ($searchTerms as $term) {
-    //                 $query->orWhereRaw("JSON_SEARCH(questions, 'one', ?) IS NOT NULL", [$term]);
-    //             }
-    //         })
-    //         ->orderBy('id', 'DESC')
-    //         ->get();
-                
-        
-        
-        
-        
+    // 
 
-    //         dd($userServices,$searchTerms,$leadrequest);
-    // }
+    public function testApi(Request $request, \App\Services\LeadService $ls)
+    {
+        $sellerLeads = $ls->getSellerLeadsBaseQuery($request);
+        echo "<pre>";
+        print_r($sellerLeads->get()->toArray());
+    }
 
 }
