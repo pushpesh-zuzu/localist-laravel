@@ -18,7 +18,6 @@ class ZohoLeadBuyers
         $zohoId = $this->getZohoLeadBuyerId($access_token, $user->id);
         $payload = $this->buildLeadBuyerPayload($user, $zohoId);
         $response = $this->sendToZoho($access_token, $payload, $zohoId);
-       dd($response->json());
         return $response->json();
 
     }
