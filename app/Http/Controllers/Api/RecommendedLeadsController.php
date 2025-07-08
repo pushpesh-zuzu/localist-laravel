@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use App\Helpers\CustomHelper;
 use Illuminate\Support\Facades\Log;
-use App\Services\ZohoService;
+
 
 class RecommendedLeadsController extends Controller
 {
@@ -681,9 +681,6 @@ class RecommendedLeadsController extends Controller
                 'should_autobid'  => 0,
                 'closed_status' => 1
             ]);
-            $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
-            $zohoService = new ZohoService();
-            $zohoService->integrateUser('lead',null,$leadsDetails);
             $word = CustomHelper::numberToWords($leadSlotCount);
             return $this->sendError($word .' slots has been full! No more bids can be placed.', 404);
         }
@@ -726,9 +723,7 @@ class RecommendedLeadsController extends Controller
         CustomHelper::createTrasactionLog($sellerId, 0, $creditScore, $trInfo, 1, 1, $error_response='');
 
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
-        $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
-        $zohoService = new ZohoService();
-        $zohoService->integrateUser('lead',null,$leadsDetails);
+
         //remove from save for later
         SaveForLater::where('seller_id',$sellerId)
             ->where('user_id',$buyerId)

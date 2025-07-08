@@ -10,7 +10,8 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\AutobidStatusLog;
 use Illuminate\Support\Carbon;
-use App\Services\ZohoService;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
+
 use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
@@ -182,15 +183,11 @@ class User extends Authenticatable
     {
 
         static::created(function ($user) {
-            Log::info('LeadRequest created - triggering Zoho sync', ['user_id' => $user->id]);
-
-            app(ZohoService::class)->integrateUser('user', $user);
+            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
         });
 
         static::updated(function ($user) {
-            Log::info('LeadRequest updated - triggering Zoho sync', ['user_id' => $user->id]);
-
-            app(ZohoService::class)->integrateUser('user', $user);
+            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
         });
     }
 

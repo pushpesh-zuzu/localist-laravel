@@ -33,7 +33,6 @@ use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
-use App\Services\ZohoService;
 
 
 class LeadPreferenceController extends Controller
@@ -664,9 +663,9 @@ class LeadPreferenceController extends Controller
                 'status'=>'hired',
                 'hired_by' => $sellerId
             ]);
-            $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
-            $zohoService = new ZohoService();
-            $zohoService->integrateUser('lead',null,$leadsDetails);
+            // $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
+            // $zohoService = new ZohoService();
+            // $zohoService->integrateUser('lead',null,$leadsDetails);
             RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)
@@ -704,9 +703,9 @@ class LeadPreferenceController extends Controller
                 'status'=>'hired',
                 'hired_by' => $buyerId
             ]);
-            $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
-            $zohoService = new ZohoService();
-            $zohoService->integrateUser('lead',null,$leadsDetails);
+            // $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
+            // $zohoService = new ZohoService();
+            // $zohoService->integrateUser('lead',null,$leadsDetails);
             RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)

@@ -1,8 +1,9 @@
 <?php
-namespace App\Helpers;
+namespace App\Helpers\Zoho;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use App\Helpers\CustomHelper;
 
 class ZohoHelper
 {
