@@ -47,7 +47,41 @@ class ServiceQuestionsController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validateSave($request);   
+        $validator = Validator::make($request->all(), [
+            'category' => 'required|integer|exists:categories,id',
+            'questions' => 'required',
+            'answer' => 'required',
+            'option_type' => 'required'
+            ], [
+            'service_id.exists' => 'Provided service id does not exists.',
+            'option_type.required' => 'Option selection type is required.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $data['category'] = $request->category;
+        $data['questions'] = $request->questions;
+        $answer = "";
+        if (!empty($request->answer)) {
+            // Remove extra spaces around commas and entries
+            $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $request->answer);
+    
+            // Remove trailing comma if it exists
+            $cleanedAnswer = rtrim($cleanedAnswer, ',');
+    
+            // Filter out any empty values after splitting by comma
+            $answerArray = array_filter(explode(',', $cleanedAnswer), function($value) {
+                return trim($value) !== ''; // Ensure no empty entries
+            });
+    
+            // Rebuild the answer string
+            $answer = implode(',', $answerArray);
+        }
+        $data['answer'] = $request->answer;
+        $data['option_type'] = $request->option_type;
+        $id = ServiceQuestion::insertGetId($data);
         return redirect()->route('servicequestion.index')->with('success', 'Questions created successfully.');
     }
 
@@ -73,10 +107,7 @@ class ServiceQuestionsController extends Controller
     public function update(Request $request, string $id)
     {
         // dd($request->all());
-        $leads = ServiceQuestion::where('id',$id)->first();
-        $this->validateSave($request,$leads);      
-        return redirect()->route('servicequestion.index')
-                         ->with('success', 'Questions updated successfully.');
+       
     }
 
     /**
@@ -89,48 +120,5 @@ class ServiceQuestionsController extends Controller
                          ->with('success', 'Question deleted successfully.');
     }
 
-    protected function validateSave(Request $request,$isEdit = "")
-    {
-
-        $aValids['category'] =  'required';
-        $aValids['questions'] =  'required';
-        $aValids['answer'] =  'required';
-
-        // if($isEdit)
-        // {
-        //     $aValids['name'] =   'required|unique:categories,name,' . $isEdit->id . '|max:255';
-        // }
-
-        $request->validate($aValids);
-
- 
-        $aVals = $request->all();
-        if (!empty($aVals['answer'])) {
-            // Remove extra spaces around commas and entries
-            $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $aVals['answer']);
     
-            // Remove trailing comma if it exists
-            $cleanedAnswer = rtrim($cleanedAnswer, ',');
-    
-            // Filter out any empty values after splitting by comma
-            $answerArray = array_filter(explode(',', $cleanedAnswer), function($value) {
-                return trim($value) !== ''; // Ensure no empty entries
-            });
-    
-            // Rebuild the answer string
-            $aVals['answer'] = implode(',', $answerArray);
-        }
-
-        if($isEdit)
-        {
-            $isEdit->update($aVals);
-        }
-        else{
-            ServiceQuestion::create($aVals);
-        }
-
-       
-
-        
-    }
 }

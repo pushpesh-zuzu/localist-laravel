@@ -57,27 +57,22 @@
             </div>
           </div>
 
-          
-         
-
-          <!-- <h5 class="mt-5 mb-3">Seo Information</h5>
-
           <div class="row mb-3">
             <div class="col-md-12">
-              <label class="form-label" for="seo_title">{{ __('Seo Title') }}</label>
-              <input type="text" id="seo_title" class="form-control" name="seo_title" class="form-control{{ $errors->has('seo_title') ? ' is-invalid' : '' }}" 
-              value="{{ $aRow ? $aRow->seo_title : old('seo_title') }}" required placeholder="Seo Title">              
+              <label class="form-label" for="option_type">{{ __('Options Selection') }}</label>
+              <select name="option_type" class="form-control{{ $errors->has('option_type') ? ' is-invalid' : '' }}" required>
+                <option value="single" @if(isset($aRow->option_type) && $aRow->option_type == 'single') selected @endif> Single </option>
+                <option value="multiple" @if(isset($aRow->option_type) && $aRow->option_type == 'multiple') selected @endif> Multiple </option>
+            </select>
+            @if ($errors->has('option_type'))
+                <span class="invalid-feedback d-block" role="alert">
+                    <strong>{{ $errors->first('option_type') }}</strong>
+                </span>
+            @endif
             </div>
+            
           </div>
-
-          <div class="row mb-3">
-            <div class="col-md-12">
-              <label class="form-label" for="seo_description">{{ __('Seo Description') }}</label>
-              <textarea class="form-control" id="seo_description" rows="3" name="seo_description" class="form-control{{ $errors->has('seo_description') ? ' is-invalid' : '' }}" 
-              placeholder="Seo Description">{{ $aRow ? $aRow->seo_description : old('seo_description') }}</textarea>
-
-            </div>
-          </div> -->
+         
 
 
           <button type="submit" class="btn btn-dark mt-4">@if($aRow) Update @else Save @endif </button>

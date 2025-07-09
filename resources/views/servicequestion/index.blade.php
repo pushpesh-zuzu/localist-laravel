@@ -14,6 +14,7 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Category</th>
               <th scope="col">Questions</th>
+              <th scope="col">Sel. Type</th>
               <th scope="col">Status</th>
               <!-- <th scope="col">Action</th> -->
             </tr>
@@ -28,6 +29,7 @@
                     <span class="fw-bold">Ques:</span> {{$aRow->questions ?? '' }}<br/>
                     <span class="fw-bold">Soln:</span> {{$aRow->answer ?? ''}}</br/>
                </td>
+               <td>{{ $aRow->option_type ?? '' }}</td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <!-- <td>
                   <a href="{{ route('servicequestion.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></a>
