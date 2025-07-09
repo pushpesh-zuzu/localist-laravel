@@ -30,7 +30,7 @@ use App\Models\PlanHistory;
 use App\Models\Plan;
 
 use App\Services\LeadService;
-
+use App\Services\CompanyRegService;
 class UserController extends Controller
 {
 
@@ -108,7 +108,7 @@ class UserController extends Controller
             $data['response'] = [
                 'response_count' => $pendingCount + $hiredCount
             ];
-            
+
 
 
             return $this->sendResponse('Seller Profile.', $data);
@@ -131,7 +131,7 @@ class UserController extends Controller
         $sellerId = $request->seller_id;
         $buyerId = $request->buyer_id;
         $leadId = $request->lead_id;
-        
+
         $user = User::where('id',$sellerId)->first();
 
         //percentage completed
@@ -157,7 +157,7 @@ class UserController extends Controller
         $user['accreditations'] = UserAccreditation::where('user_id',$sellerId)->get();
         $user['services'] = UserService::where('user_id',$sellerId)->with(['userServices'])->get();
         $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$sellerId)->get();
-        
+
         return $this->sendResponse('Seller Profile.', $user);
     }
 
@@ -173,6 +173,7 @@ class UserController extends Controller
         if (isset($result['status']) && $result['status'] === 'invalid') {
             return $this->sendError('Email is Invalid');
         }
+
 
         return $this->sendResponse('Valid Email');
     }
@@ -195,6 +196,12 @@ class UserController extends Controller
             if (isset($result['status']) && $result['status'] === 'invalid') {
                 return $this->sendError('Email is Invalid');
             }
+
+            $companyRegService = new CompanyRegService();
+            $companyDetails = $companyRegService->getCompanyDetails($request->company_reg_number);
+            if (isset($companyDetails['status']) && $companyDetails['status'] === 404) {
+                return $this->sendError('Company is Invalid');
+            }
         }
         $randomString = '12345678';//Str::random(10);
         $aVals['password'] = Hash::make($randomString);
@@ -203,8 +210,8 @@ class UserController extends Controller
         $user = User::create($aVals);
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
-       
-        
+
+
         if(!empty($user))
         {
             $userdetails = UserDetail::where('user_id',$user->id)->first();
@@ -227,13 +234,13 @@ class UserController extends Controller
                     $data['action'] = 'enabled';
                     AutobidStatusLog::insertGetId($data);
                 }
-                
+
             }
               // Check if service_id is an array or convert it to one
             $cleanedServiceId = str_replace(' ', '', $aVals['service_id']);
             $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $cleanedServiceId);
 
-            if (!empty($serviceIds)) 
+            if (!empty($serviceIds))
             {
                 $user->primary_category = $serviceIds[0];
                 $user->save();
@@ -247,24 +254,24 @@ class UserController extends Controller
                     $aLocations['service_id'] = $serviceId;
                     $aLocations['user_service_id'] = $service->id;
                     $aLocations['user_id'] = $user->id;
-                    
+
                     if($index === 0){ // for primary category
                         $aLocations['miles'] = !empty($aVals['miles1']) ? $aVals['miles1'] : 0;
                         $aLocations['nation_wide'] = !empty($aVals['nation_wide']) ? $aVals['nation_wide'] : 0;
                         $aLocations['postcode'] = $aVals['postcode'];
                         $aLocations['city'] = $aVals['cities'];
-                        $aLocations['type'] = !empty($aVals['nation_wide']) ? "Nationwide" : "Distance";                        
+                        $aLocations['type'] = !empty($aVals['nation_wide']) ? "Nationwide" : "Distance";
                         $aLocations['coordinates'] = $aVals['coordinates'];
                     }else{
                         if(!empty($aVals['expanded_radius'])){
                             $aLocations['miles'] = $aVals['miles2'] + $aVals['expanded_radius'];
                         }else{
                             $aLocations['miles'] = $aVals['miles2'];
-                        }                        
+                        }
                         $aLocations['nation_wide'] = 0;
                         $aLocations['postcode'] = !empty($aVals['postcode2']) ? $aVals['postcode2'] : "000000";
                         $aLocations['city'] = null;
-                        $aLocations['type'] = "Distance";                        
+                        $aLocations['type'] = "Distance";
                         $aLocations['coordinates'] = "[]";
                     }
 
@@ -276,20 +283,20 @@ class UserController extends Controller
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
                     $defaultOptions = $question->answer ?? '';
-                
+
                     // Check if user already has a saved answer for this question
                     $existingAnswer = LeadPrefrence::where('question_id', $question->id)
                         ->where('user_id', $user->id)
                         ->pluck('answers')
                         ->first();
-                
+
                     // Use existing answer or fall back to all options from ServiceQuestion.answer
                     $answerToUse = $existingAnswer ?? $defaultOptions;
-                
+
                     // Clean the format: remove extra spaces around commas and trailing commas
                     $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $answerToUse);
                     $cleanedAnswer = rtrim($cleanedAnswer, ',');
-                
+
                     // Insert or update the lead preference
                     LeadPrefrence::updateOrCreate(
                         [
@@ -315,7 +322,7 @@ class UserController extends Controller
         return $this->sendResponse('Registration Sucessful.', $user);
 
     }
-    
+
 
     public function validators($data,$loggedUser){
         if($loggedUser == 1){
@@ -326,7 +333,26 @@ class UserController extends Controller
                 'service_id' => 'required',
                 'name' => 'required',
                 'email' => 'required|email|unique:users,email',
+                'phone' => [
+                    'required',
+                    'unique:users,phone',
+                    'regex:/^7\d{9}$/'
+                ],
+                'company_name' => 'required|unique:users,company_name',
+                'company_reg_number'  => 'required|unique:users,company_reg_number',
+                'address' => [
+                    'required',
+                    'min:10',
+                    'max:255',
+                    'regex:/^[A-Za-z0-9\s,.-]+$/'
+                ],
               ], [
+                'address.required' => 'Address is required.',
+                'address.min' => 'Address must be at least 10 characters.',
+                'address.regex' => 'Address can only contain letters, numbers, commas, periods, hyphens, and spaces.',
+                'phone.required' => 'Phone number is required.',
+                'phone.unique'   => 'This phone number is already registered.',
+                'phone.regex'    => 'Enter a valid  phone number ',
                 'password.min' => 'The new password must be at least 8 characters.',
                 'password.regex' => 'The new password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
             ]);
@@ -343,7 +369,7 @@ class UserController extends Controller
         return $validator;
     }
 
-    
+
     public function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -387,20 +413,20 @@ class UserController extends Controller
 
     }
 
-    
-    
+
+
     public function switchUser(Request $request): JsonResponse
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
         $userType = $aVals['user_type']; // 1 = buyer, 2 = seller
-    
+
         $user = User::find($userId);
-    
+
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-    
+
         // If user_type is already 3, don't change it again — only update active_status
         if ($user->user_type == 3) {
             if ($userType == 1) {
@@ -412,11 +438,11 @@ class UserController extends Controller
             } else {
                 return response()->json(['error' => 'Invalid user type'], 400);
             }
-    
+
             $user->save();
             return $this->sendResponse(__('Switched to ' . $mode));
         }
-    
+
         // Update user_type and active_status if user_type is not 3 yet
         if ($userType == 2) {
             if ($user->user_type == 1) {
@@ -437,13 +463,13 @@ class UserController extends Controller
         } else {
             return response()->json(['error' => 'Invalid user type'], 400);
         }
-    
+
         $user->save();
         return $this->sendResponse(__('Switched to ' . $mode));
     }
 
 
-    
+
     public function editProfile(Request $request): JsonResponse
     {
         $users = User::where('id',$request->user_id)->first();
@@ -495,21 +521,21 @@ class UserController extends Controller
     {
         try {
             $userId = $request->user_id;
-             $users = User::where('id',$userId)->first();   
-             
+             $users = User::where('id',$userId)->first();
+
                 if ($request->hasFile('image')) {
                     $imagePath =  CustomHelper::fileUpload($request->image,'users');
                     // $imagePath = $this->uploadImage($request->file('image'), 'users');
-                    $users->profile_image = $imagePath; 
+                    $users->profile_image = $imagePath;
                 }
-            
+
 
             if($users->save()){
                 return $this->sendResponse(__('Profile Image Updated Successfully'));
             }else{
                 return $this->sendError('Something went wrong. Please try again later!');
             }
-            
+
 
         } catch (\Throwable $th) {
             return $this->sendError($th->getMessage());
@@ -519,9 +545,15 @@ class UserController extends Controller
     public function changePassword(Request $request){
         $userId = $request->user_id;
         $password = $request->password;
-        $user = User::where('id',$userId)->first();  
+        $user = User::where('id',$userId)->first();
         $user->update(['password' => $password]);
         return $this->sendResponse(__('Password changed Successfully'));
+    }
+
+    public function fetch_company_details($regNumber){
+        $companyRegService = new CompanyRegService();
+        $companyDetails = $companyRegService->getCompanyDetails($regNumber);
+        return $companyDetails;
     }
 
 }

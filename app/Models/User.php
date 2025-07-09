@@ -30,6 +30,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'company_reg_number',
         'company_name',
         'company_website',
         'is_company_website',
