@@ -179,6 +179,7 @@ class UserController extends Controller
     }
 
     public function registration(Request $request): JsonResponse{
+
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;
         $loggedUser = $request->loggedUser;//For checking seller/buyer
@@ -187,20 +188,24 @@ class UserController extends Controller
             return $this->sendError('Email already exists');
         }
 
+
         if($aVals['form_status'] == 1){
             $validator = self::validators($aVals,$loggedUser);
+
             if ($validator->fails()) {
                 return $this->sendError($validator->errors());
             }
+
             $result = $this->zeroBounceService->validateEmail($request->email);
             if (isset($result['status']) && $result['status'] === 'invalid') {
                 return $this->sendError('Email is Invalid');
             }
-
-            $companyRegService = new CompanyRegService();
-            $companyDetails = $companyRegService->getCompanyDetails($request->company_reg_number);
-            if (isset($companyDetails['status']) && $companyDetails['status'] === 404) {
-                return $this->sendError('Company is Invalid');
+            if($request->company_reg_number){
+                $companyRegService = new CompanyRegService();
+                $companyDetails = $companyRegService->getCompanyDetails($request->company_reg_number);
+                if (isset($companyDetails['status']) && $companyDetails['status'] === 404) {
+                    return $this->sendError('Company is Invalid');
+                }
             }
         }
         $randomString = '12345678';//Str::random(10);
@@ -339,7 +344,6 @@ class UserController extends Controller
                     'regex:/^7\d{9}$/'
                 ],
                 'company_name' => 'required|unique:users,company_name',
-                'company_reg_number'  => 'required|unique:users,company_reg_number',
                 'address' => [
                     'required',
                     'min:10',
