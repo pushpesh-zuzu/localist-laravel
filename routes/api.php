@@ -101,7 +101,7 @@ Route::prefix('customer')->group(function () {
 
 Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
-    Route::get('fetch_company_details/{regNumber}',[UserController::class, 'fetch_company_details']);
+    Route::get('/fetch_company_details/{regNumber}',[UserController::class, 'fetch_company_details']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
     Route::get('/closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
