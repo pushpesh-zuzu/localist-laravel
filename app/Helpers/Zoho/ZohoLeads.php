@@ -26,7 +26,7 @@ class ZohoLeads
     protected function getZohoLeadId($accessToken, $leadId)
     {
         $response = Http::withToken($accessToken)
-           ->get('https://www.zohoapis.in/crm/v2/Leads/search', [
+           ->get('https://www.zohoapis.eu/crm/v2/Leads/search', [
                 'criteria' => "(Lead_auto_Id:equals:{$leadId})"
             ]);
 
@@ -70,8 +70,8 @@ class ZohoLeads
     protected function sendToZoho($accessToken, array $payload, $zohoId = null)
     {
         $url = $zohoId
-                ? "https://www.zohoapis.in/crm/v2/Leads/{$zohoId}"
-                : "https://www.zohoapis.in/crm/v2/Leads";
+                ? "https://www.zohoapis.eu/crm/v2/Leads/{$zohoId}"
+                : "https://www.zohoapis.eu/crm/v2/Leads";
 
         $method = $zohoId ? 'put' : 'post';
 

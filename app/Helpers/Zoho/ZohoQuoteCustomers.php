@@ -25,7 +25,7 @@ class ZohoQuoteCustomers
     protected function getZohoCustomerId($accessToken, $userId)
     {
         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.in/crm/v2/Quote_Customers/search', [
+            ->get('https://www.zohoapis.eu/crm/v2/Quote_Customers/search', [
                 'criteria' => "(User_auto_Id:equals:{$userId})"
             ]);
 
@@ -64,8 +64,8 @@ class ZohoQuoteCustomers
     protected function sendToZoho($accessToken, array $payload, $zohoId = null)
     {
         $url = $zohoId
-            ? "https://www.zohoapis.in/crm/v2/Quote_Customers/{$zohoId}"
-            : "https://www.zohoapis.in/crm/v2/Quote_Customers";
+            ? "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}"
+            : "https://www.zohoapis.eu/crm/v2/Quote_Customers";
 
         $method = $zohoId ? 'put' : 'post';
 

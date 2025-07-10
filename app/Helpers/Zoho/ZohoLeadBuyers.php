@@ -24,7 +24,7 @@ class ZohoLeadBuyers
     protected function getZohoLeadBuyerId($accessToken, $userId)
     {
         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.in/crm/v2/Lead_Buyer_Registration/search', [
+            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
                 'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
             ]);
 
@@ -97,8 +97,8 @@ class ZohoLeadBuyers
     protected function sendToZoho($accessToken, array $payload, $zohoId = null)
     {
         $url = $zohoId
-            ? "https://www.zohoapis.in/crm/v2/Lead_Buyer_Registration/{$zohoId}"
-            : "https://www.zohoapis.in/crm/v2/Lead_Buyer_Registration";
+            ? "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}"
+            : "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration";
 
         $method = $zohoId ? 'put' : 'post';
 
