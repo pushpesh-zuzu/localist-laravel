@@ -161,22 +161,7 @@ class UserController extends Controller
         return $this->sendResponse('Seller Profile.', $user);
     }
 
-    public function checkEmailId(Request $request): JsonResponse{
-        if(empty($request->email)){
-            return $this->sendError('email: Email is required!');
-        }
-        $users = User::where('email',$request->email)->first();
-        if(!empty($users) && $users != ''){
-            return $this->sendError('Email already exists');
-        }
-        $result = $this->zeroBounceService->validateEmail($request->email);
-        if (isset($result['status']) && $result['status'] === 'invalid') {
-            return $this->sendError('Email is Invalid');
-        }
-
-
-        return $this->sendResponse('Valid Email');
-    }
+    
 
     public function registration(Request $request): JsonResponse{
 
@@ -328,6 +313,91 @@ class UserController extends Controller
 
     }
 
+    public function checkEmailId(Request $request): JsonResponse{
+        if(empty($request->email)){
+            return $this->sendError('email: Email is required!');
+        }
+        $users = User::where('email',$request->email)->first();
+        if(!empty($users) && $users != ''){
+            return $this->sendError('your account is already registered with this email, 
+                    Please contact us if this is not correct.');
+        }
+        $result = $this->zeroBounceService->validateEmail($request->email);
+        if (isset($result['status']) && $result['status'] === 'invalid') {
+            return $this->sendError('Email is Invalid');
+        }
+
+
+        return $this->sendResponse('Valid Email');
+    }
+
+    public function checkPhoneNumber(Request $request): JsonResponse{
+        $validator = Validator::make($data, [
+                'phone' => [
+                    'required',
+                    'unique:users,phone',
+                    'regex:/^\d{10}$/'
+                ]
+              ], [
+                'phone.required' => 'Phone number is required.',
+                'phone.unique'   => 'your account is already registered with this phone number, 
+                    Please contact us if this is not correct.',
+                'phone.regex'    => 'Enter a valid  phone number ',
+                ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+        return $this->sendResponse('Valid Phone Number');
+    }
+
+    public function checkCompanyName(Request $request): JsonResponse{
+        $validator = Validator::make($data, [
+                'company_name' => 'required|unique:users,company_name',
+                'company_reg_number' => 'required|unique:users,company_reg_number',
+              ], [
+                'company_name.required' => 'Company Name is required.',
+                'company_name.unique'   => 'your account is already registered with this Company Name, 
+                    Please contact us if this is not correct.',
+                'company_reg_number.required' => 'Company Reg No. is required.',
+                'company_reg_number.unique'   => 'your account is already registered with this Company Reg No, 
+                    Please contact us if this is not correct.',
+                ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        if($request->company_reg_number){
+            $companyRegService = new CompanyRegService();
+            $companyDetails = $companyRegService->getCompanyDetails($request->company_reg_number);
+            if (isset($companyDetails['status']) && $companyDetails['status'] === 404) {
+                return $this->sendError('Company Reg No. is Invalid');
+            }
+        }
+        return $this->sendResponse('Valid Company Name');
+    }
+
+    public function checkAddress(Request $request): JsonResponse{
+        $validator = Validator::make($data, [
+                'address' => [
+                    'required',
+                    'min:10',
+                    'max:255',
+                    'regex:/^[A-Za-z0-9\s,.\-/:]+$/'
+                ]
+              ], [
+                'address.required' => 'Address is required.',
+                'address.unique'   => 'your account is already registered with this address, 
+                    Please contact us if this is not correct.',
+                'address.regex'    => 'Enter a valid address ',
+                ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+        return $this->sendResponse('Valid Address');
+    }
 
     public function validators($data,$loggedUser){
         if($loggedUser == 1){
@@ -341,21 +411,32 @@ class UserController extends Controller
                 'phone' => [
                     'required',
                     'unique:users,phone',
-                    'regex:/^7\d{9}$/'
+                    'regex:/^\d{10}$/'
                 ],
-                'company_name' => 'required|unique:users,company_name',
+                'company_reg_number' => 'sometimes|unique:users,company_reg_number',
+                'company_name' => 'sometimes|unique:users,company_name',
                 'address' => [
                     'required',
                     'min:10',
                     'max:255',
-                    'regex:/^[A-Za-z0-9\s,.-]+$/'
+                    'regex:/^[A-Za-z0-9\s,.\-/:]+$/'
                 ],
               ], [
+                'email.unique' => 'your account is already registered with this email, 
+                    Please contact us if this is not correct.',
+                'company_reg_number.required' => 'Company Reg No. is required.',
+                'company_reg_number.unique'   => 'your account is already registered with this Company Reg No, 
+                    Please contact us if this is not correct.',
+                'company_name.unique' => 'your account is already registered with this Company Name, 
+                    Please contact us if this is not correct.',
                 'address.required' => 'Address is required.',
+                'address.unique' => 'your account is already registered with this address, 
+                    Please contact us if this is not correct.',
                 'address.min' => 'Address must be at least 10 characters.',
                 'address.regex' => 'Address can only contain letters, numbers, commas, periods, hyphens, and spaces.',
                 'phone.required' => 'Phone number is required.',
-                'phone.unique'   => 'This phone number is already registered.',
+                'phone.unique'   => 'your account is already registered with this phone number, 
+                    Please contact us if this is not correct.',
                 'phone.regex'    => 'Enter a valid  phone number ',
                 'password.min' => 'The new password must be at least 8 characters.',
                 'password.regex' => 'The new password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
@@ -556,7 +637,8 @@ class UserController extends Controller
 
     public function fetch_company_details($regNumber){
         $companyRegService = new CompanyRegService();
-        $companyDetails = $companyRegService->getCompanyDetails($regNumber);
+        $companyDetailsText = $companyRegService->getCompanyDetails($regNumber);
+        $companyDetails = preg_replace('/^.*?:\s*/', '', $companyDetailsText);
         return $companyDetails;
     }
 
