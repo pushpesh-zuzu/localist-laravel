@@ -389,13 +389,13 @@ class UserController extends Controller
     }
 
     public function checkCompanyLocation(Request $request): JsonResponse{
-        $validator = Validator::make($data, [
+        $validator = Validator::make($request->all(), [
                 'company_location' => [
                     'required',
                     'unique:users,company_location',
                     'min:10',
                     'max:255',
-                    'regex:/^[A-Za-z0-9\s,.\-/:]+$/'
+                    'regex:/^[A-Za-z0-9\s,.\-]+$/'
                 ]
               ], [
                 'company_location.required' => 'Address is required.',
