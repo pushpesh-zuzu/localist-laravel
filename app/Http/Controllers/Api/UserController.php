@@ -617,9 +617,8 @@ class UserController extends Controller
 
     public function fetch_company_details($regNumber){
         $companyRegService = new CompanyRegService();
-        $companyDetailsText = $companyRegService->getCompanyDetails($regNumber);
-        // $companyDetails = preg_replace('/^.*?:\s*/', '', $companyDetailsText);
-        return $companyDetailsText;
+        $companyDetails = $companyRegService->getCompanyDetails($regNumber);
+        return $companyDetails;
     }
 
 }
