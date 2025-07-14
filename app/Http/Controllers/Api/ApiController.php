@@ -140,9 +140,8 @@ class ApiController extends Controller
 
     public function testApi(Request $request, \App\Services\LeadService $ls)
     {
-        $sellerLeads = $ls->getSellerLeadsBaseQuery($request);
-        echo "<pre>";
-        print_r($sellerLeads->get()->toArray());
+        $a = \App\Helpers\Zoho\ZohoEmails::sendWelcomeEmail(68);
+        print_r($a);
     }
 
 }

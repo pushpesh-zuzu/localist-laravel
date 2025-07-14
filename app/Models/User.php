@@ -12,6 +12,7 @@ use App\Models\AutobidStatusLog;
 use Illuminate\Support\Carbon;
 use App\Helpers\Zoho\ZohoQuoteCustomers;
 use App\Helpers\Zoho\ZohoLeadBuyers;
+use App\Helpers\Zoho\ZohoEmails;
 
 use Illuminate\Support\Facades\Log;
 
@@ -67,7 +68,8 @@ class User extends Authenticatable
         'user_type',
         'active_status',
         'form_status',
-        'remember_token'
+        'remember_token',
+        'zoho_record_id'
     ];
 
     /**
@@ -196,9 +198,9 @@ class User extends Authenticatable
     {
         try {
             if ($user->user_type == 1) {
-                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user);
+                return app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user);
             } elseif ($user->user_type == 2) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+                return app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
             }
         } catch (\Throwable $e) {
             Log::error('Zoho user integration failed', [

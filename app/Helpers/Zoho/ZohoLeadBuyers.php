@@ -18,10 +18,13 @@ class ZohoLeadBuyers
         $zohoId = $this->getZohoLeadBuyerId($access_token, $user->id);
         $payload = $this->buildLeadBuyerPayload($user, $zohoId);
         $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        $users->update([
+            'zoho_record_id' => $zohoId
+        ]);
         return $response->json();
 
     }
-    protected function getZohoLeadBuyerId($accessToken, $userId)
+    public static function getZohoLeadBuyerId($accessToken, $userId)
     {
         $response = Http::withToken($accessToken)
             ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [

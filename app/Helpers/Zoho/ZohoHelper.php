@@ -7,16 +7,27 @@ use App\Helpers\CustomHelper;
 
 class ZohoHelper
 {
+    public const  EMAIL_LEAD_BUYERS_API_URL = 'https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
+
+
+    public static function getUrl($key, $val){
+        $url = $key;
+        return str_replace('{ZOHO_ID}', $val, $url);
+    }
+
+
     public static function getAccessToken()
     {
+        // Cache::forget('zoho_access_token');
+
         if (Cache::has('zoho_access_token')) {
             return Cache::get('zoho_access_token');
         }
 
         $response = Http::asForm()->post('https://accounts.zoho.eu/oauth/v2/token', [
-            'refresh_token' => CustomHelper::setting_value('zoho_refresh_token','1000.e7b0d3c2cf8b7a9bde1293456904ea0d.9188ba6c06964f9e5b297d1b9b1b7794'),
-            'client_id' => CustomHelper::setting_value('zoho_client_id','1000.TC3V4D3YO89C2JM7UIOCJN0A1HB16N'),
-            'client_secret' => CustomHelper::setting_value('zoho_client_secret','f975b774a35f9d12f4db00dfb69559568b5d70adb8'),
+            'refresh_token' => CustomHelper::setting_value('zoho_refresh_token','1000.1a53f04d31321f900bae751ddeded56b.bbd05e59efd7bac8692024134c630438'),
+            'client_id' => CustomHelper::setting_value('zoho_client_id','1000.FJEIQ7MU0TDJVHYALND65YGXHACOBP'),
+            'client_secret' => CustomHelper::setting_value('zoho_client_secret','be2d92d7c7e894d377bfbcd68fd62ea54175b5a683'),
             'grant_type' => 'refresh_token'
         ]);
 

@@ -174,6 +174,14 @@ class CustomHelper
         return null;
     }
 
+    public static function update_setting_value($key, $value){
+        if(!empty($value)){
+            Setting::where('setting_name',$key)->update([
+                'setting_value' => $value
+            ]);
+        }
+    }
+
     public static function setting_value($key, $defaultValue=''){
         $val = Setting::where('setting_name',$key)->value('setting_value');
         $rel = !empty($val) ? $val : $defaultValue;

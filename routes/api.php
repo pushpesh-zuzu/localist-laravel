@@ -37,7 +37,7 @@ Route::prefix('check')->group(function () {
     Route::post('/email-id', [UserController::class, 'checkEmailId']);
     Route::post('/phone-number', [UserController::class, 'checkPhoneNumber']);
     Route::post('/company-name', [UserController::class, 'checkCompanyName']);
-    Route::post('/address', [UserController::class, 'checkAddress']);
+    Route::post('/company-location', [UserController::class, 'checkCompanyLocation']);
 });
 
 
@@ -80,8 +80,6 @@ Route::prefix('payment')->group(function () {
 
 
 Route::prefix('customer')->group(function () {
-    Route::get('test',[CustomerController::class,'test']);
-    Route::get('test',[InvoiceController::class,'test']);
 
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
@@ -121,10 +119,12 @@ Route::prefix('users')->group(function () {
     Route::get('/page-details/{slug}', [PagesController::class, 'pageDetails']);
     Route::post('/login', [UserController::class, 'login']);
    
+    Route::post('test-api',[ApiController::class,'testApi']);
+
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
 
-        Route::post('test-api',[ApiController::class,'testApi']);
+        
 
         Route::post('change-primary-service', [LeadPreferenceController::class, 'changePrimaryService']);
         Route::post('expand-radius',[LeadPreferenceController::class, 'expandRadius']);
