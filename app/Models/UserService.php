@@ -41,4 +41,9 @@ class UserService extends Model
         return $this->belongsTo(Category::class, 'service_id');
     }
 
+    public function locations()
+    {
+        return $this->hasMany(UserServiceLocation::class, 'user_service_id');
+    }
+
 }

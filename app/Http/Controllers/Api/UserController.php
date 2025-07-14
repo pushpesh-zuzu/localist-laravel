@@ -31,6 +31,9 @@ use App\Models\Plan;
 
 use App\Services\LeadService;
 use App\Services\CompanyRegService;
+use App\Helpers\Zoho\ZohoServiceLocations;
+
+
 class UserController extends Controller
 {
 
@@ -161,7 +164,7 @@ class UserController extends Controller
         return $this->sendResponse('Seller Profile.', $user);
     }
 
-    
+
 
     public function registration(Request $request): JsonResponse{
 
@@ -308,6 +311,9 @@ class UserController extends Controller
             // $data['password'] = $randomString;
             // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => "Seller Registration", "body" => "Thankyou for registration",'receiver' => $aVals['name']));
             $user->remember_tokens = $token;
+
+            $zoho = new ZohoServiceLocations();
+            $zoho->integrateServiceLocations($user);
         }
         return $this->sendResponse('Registration Sucessful.', $user);
 
@@ -382,9 +388,9 @@ class UserController extends Controller
                 return $this->sendError(['company_reg_number' => ['Company Reg No. is Invalid']]);
             }else if($companyDetails['company_name'] !== $request->company_name){
                 return $this->sendError(['company_name' => ['Company Name is mismatching!']]);
-            }            
+            }
         }
-        
+
         return $this->sendResponse('Valid Company Name');
     }
 
@@ -399,7 +405,7 @@ class UserController extends Controller
                 ]
               ], [
                 'company_location.required' => 'Address is required.',
-                'company_location.unique'   => 'your account is already registered with this address, 
+                'company_location.unique'   => 'your account is already registered with this address,
                     Please contact us if this is not correct.',
                 'company_location.regex'    => 'Enter a valid address ',
                 ]);

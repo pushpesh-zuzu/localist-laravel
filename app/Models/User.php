@@ -182,6 +182,15 @@ class User extends Authenticatable
         return (int) round(($completed / $totalFields) * 100);
     }
 
+    public function primaryCategory()
+    {
+        return $this->belongsTo(Category::class, 'primary_category');
+    }
+
+    public function userDetail()
+    {
+        return $this->hasOne(UserDetail::class, 'user_id', 'id');
+    }
 
     protected static function booted()
     {

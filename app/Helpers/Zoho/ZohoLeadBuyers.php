@@ -3,6 +3,7 @@ namespace App\Helpers\Zoho;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use App\Models\User;
 
 class ZohoLeadBuyers
 {
@@ -18,10 +19,19 @@ class ZohoLeadBuyers
         $zohoId = $this->getZohoLeadBuyerId($access_token, $user->id);
         $payload = $this->buildLeadBuyerPayload($user, $zohoId);
         $response = $this->sendToZoho($access_token, $payload, $zohoId);
-        $users->update([
-            'zoho_record_id' => $zohoId
-        ]);
-        return $response->json();
+
+        $responseData = $response->json();
+        if (
+            isset($responseData['data'][0]['status']) &&
+            $responseData['data'][0]['status'] === 'success' &&
+            isset($responseData['data'][0]['details']['id'])
+        ) {
+            $zohoRecordId = $responseData['data'][0]['details']['id'];
+            User::where('id', $user->id)->update([
+                'zoho_record_id' => $zohoRecordId,
+            ]);
+        }
+        return $responseData;
 
     }
     public static function getZohoLeadBuyerId($accessToken, $userId)
@@ -41,52 +51,31 @@ class ZohoLeadBuyers
         $payload = [
             'data' => [[
                 'Lead_buyer_auto_id'            => $user->id,
+                'Lead Buyer Registration Name'  => $user->name,
                 'Name'                          => $user->name,
-                'Email'                         => $user->email,
-                'email_verified_at'             => $user->email_verified_at,
-                'created_at'                    => $user->created_at,
-                'updated_at'                    => now()->format('c'),
-                'phone'                         => $user->phone,
-                'password'                      => $user->password,
-                'phone_verified'                => $user->phone_verified,
-                'about_company'                 => $user->about_company,
-                'company_locaion_reason'        => $user->company_locaion_reason,
-                'company_phone'                 => $user->company_phone,
-                'company_email'                 => $user->company_email,
-                'company_total_years'           => $user->company_total_years,
-                'country'                       => $user->country,
-                'is_online'                     => $user->is_online,
-                'sms_notification_no'           => $user->sms_notification_no,
-                'city'                          => $user->city,
-                'primary_category'              => $user->primary_category,
-                'last_login'                    => $user->last_login,
-                'zipcode'                       => $user->zipcode,
-                'stripe_payment_method_id'      => $user->stripe_payment_method_id,
-                'deleted_at'                    => $user->deleted_at,
-                'stripe_customer_id'            => $user->stripe_customer_id,
-                'company_location'              => $user->company_location,
-                'apartment'                     => $user->apartment,
-                'user_type'                     => $user->user_type,
-                'otp'                           => $user->otp,
-                'active_status'                 => $user->active_status,
-                'registration_type'             => $user->form_status  == 1 ? 'Completed' : 'Abandoned',
-                'company_logo'                  => $user->company_logo,
-                'uuid'                          => $user->uuid,
-                'lead_buyer_status'             => 'Added',
-                'remember_token'                => $user->remember_token,
-                'company_sales_team'            => $user->company_sales_team,
-                'total_credit'                  => $user->total_credit,
-                'company_size'                  => $user->company_size,
-                'social_media'                  => $user->social_media,
-                'company_name'                  => $user->company_name,
-                'new_jobs'                      => $user->new_jobs,
-                'avg_rating'                    => $user->avg_rating,
-                'country_code'                  => $user->country_code,
-                'company_website'               => $user->company_website,
-                'address'                       => $user->address,
-                'gender'                        => $user->gender,
-                'profile_image'                 => $user->profile_image,
-                'is_company_website'            => $user->is_company_website
+                'Company Registration Number'  => $user->company_reg_number,
+                'About company'                 => $user->about_company,
+                'Company Phone'                 => $user->company_phone,
+                'Company Email'                 => $user->company_email,
+                'Company Total Years'           => $user->company_total_years,
+                'Country'                       => $user->country,
+                'Online'                        => $user->is_online  == 1 ? 'Yes' : 'No',
+                'City'                          => $user->city,
+                'Primary Category'              => optional($user->primaryCategory)->name,
+                'Zipcode'                       => $user->zipcode,
+                'Company Location'              => $user->company_location,
+                'Apartment'                     => $user->apartment,
+                'Registration Type'             => $user->form_status  == 1 ? 'Completed' : 'Abandoned',
+                'Status'                        => $user->status  == 1 ? 'Added' : 'Rejected',
+                'Company Sales Team'            => $user->company_sales_team,
+                'Total Credit'                  => $user->total_credit,
+                'Company Size'                  => $user->company_size,
+                'Social Media'                  => optional($user->userDetail)->fb_link ?? 'Nil',
+                'Auto Bid'                      => optional($user->userDetail)->is_autobid == 1 ? 'Yes' : 'No',
+                'Company Name'                  => $user->company_name,
+                'Rating'                        => 'Nil',
+                'Company Website'               => $user->company_website,
+                'Address'                       => $user->address
             ]]
         ];
 

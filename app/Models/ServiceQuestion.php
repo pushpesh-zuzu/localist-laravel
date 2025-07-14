@@ -15,4 +15,9 @@ class ServiceQuestion extends Model
         return $this->belongsTo(Category::class, 'category','id');
     }
 
+    public function leadPreferences()
+    {
+        return $this->hasMany(LeadPrefrence::class, 'question_id', 'id');
+    }
+
 }

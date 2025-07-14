@@ -24,8 +24,13 @@ class Category extends Model
     }
 
     public function leadRequests()
-{
-    return $this->hasMany(\App\Models\LeadRequest::class, 'service_id');
-}
+    {
+        return $this->hasMany(\App\Models\LeadRequest::class, 'service_id');
+    }
+
+    public function serviceQuestions()
+    {
+        return $this->hasMany(ServiceQuestion::class, 'category', 'id');
+    }
 
 }
