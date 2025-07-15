@@ -2,6 +2,7 @@
 
 namespace App\Helpers\Zoho;
 
+use App\Models\User;
 use App\Models\UserDetail;
 use Illuminate\Support\Facades\Http;
 
@@ -30,7 +31,8 @@ class ZohoSocialMedia
 
     protected function buildSocialPayload($access_token,$userDetail)
     {
-        $lookUpId = $this->getZohoLeadBuyerId($access_token, $userDetail->user_id);
+
+        $lookUpId =User::find($userDetail->user_id)?->zoho_record_id;
         return [
             'data' => [[
                 'Social_Media_Id'          => $userDetail->id,

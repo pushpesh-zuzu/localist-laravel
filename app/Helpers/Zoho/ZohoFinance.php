@@ -3,6 +3,7 @@
 namespace App\Helpers\Zoho;
 
 use App\Models\PurchaseHistory;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 
 class ZohoFinance
@@ -46,7 +47,7 @@ class ZohoFinance
                 $statusText = 'Failed';
                 break;
         }
-        $lookUpId = $this->getZohoLeadBuyerId($accessToken, $log->user_id);
+        $lookUpId =User::find($log->user_id)?->zoho_record_id;
         return [
             'data' => [[
                 'Transaction_Id1' => $log->id,

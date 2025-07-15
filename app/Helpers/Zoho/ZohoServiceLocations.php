@@ -1,6 +1,7 @@
 <?php
 namespace App\Helpers\Zoho;
 
+use App\Models\User;
 use App\Models\UserService;
 use App\Models\UserServiceLocation;
 use Illuminate\Support\Facades\Http;
@@ -72,7 +73,7 @@ class ZohoServiceLocations
         $serviceDetails = UserService::with('user')
          ->find($location->user_service_id);
 
-        $lookUpId = $this->getZohoLeadBuyerId($access_token, $user->id);
+        $lookUpId =User::find($user->id)?->zoho_record_id;
 
         $payload = [
             'data' => [[
@@ -89,7 +90,7 @@ class ZohoServiceLocations
             ]]
         ];
 
-
+       //dd($payload);
         if (!$zohoServiceId) {
             $payload['data'][0]['created_at'] = now()->format('c');
         }
@@ -113,17 +114,7 @@ class ZohoServiceLocations
         return $data['data'][0]['id'] ?? null;
     }
 
-    protected function getZohoLeadBuyerId($accessToken, $userId)
-    {
-         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
-                'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
-            ]);
 
-        $data = $response->json();
-
-        return $data['data'][0]['id'] ?? null;
-    }
 
 
 

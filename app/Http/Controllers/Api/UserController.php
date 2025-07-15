@@ -171,9 +171,6 @@ class UserController extends Controller
 
     public function registration(Request $request): JsonResponse{
 
-        $zohoService =new ZohoServiceLocations();
-        $zohoQa = new ZohoQuestionAnswer();
-
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;
         $loggedUser = $request->loggedUser;//For checking seller/buyer
@@ -317,6 +314,9 @@ class UserController extends Controller
             // $data['password'] = $randomString;
             // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => "Seller Registration", "body" => "Thankyou for registration",'receiver' => $aVals['name']));
             $user->remember_tokens = $token;
+
+            $zohoService =new ZohoServiceLocations();
+            $zohoQa = new ZohoQuestionAnswer();
 
             $zohoService->integrateServiceLocations($user);
             $zohoQa->integrateServiceQa($user);

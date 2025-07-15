@@ -1,6 +1,7 @@
 <?php
 namespace App\Helpers\Zoho;
 
+use App\Models\User;
 use App\Models\UserService;
 use App\Models\UserServiceLocation;
 use Illuminate\Support\Facades\Http;
@@ -66,36 +67,48 @@ class ZohoQuestionAnswer
         }
     ])
     ->where('user_id', $userId)
-    ->when(52, fn($q) => $q->where('service_id', 52))
+    ->when($serviceId, fn($q) => $q->where('service_id', $serviceId))
     ->get();
 
     $payloadData = [];
 
     foreach ($userServices as $service) {
-        $questions = [];
-        $answers = [];
-        $leadPreferenceId = null;
-        foreach ($service->category->serviceQuestions as $question) {
-             $leadPref = $question->leadPreferences->first();
+    $questions = [];
+    $answers = [];
+    $formattedQA = '';
+    $leadPreferenceId = null;
+    $counter = 1;
+
+    foreach ($service->category->serviceQuestions as $question) {
+        $leadPref = $question->leadPreferences->first();
+
+        if ($leadPref) {
+            $leadPreferenceId = $leadPref->id;
+        }
+
+        $questionText = $question->questions;
+        $answerText = optional($leadPref)->answers;
+
+        $questions[] = $questionText;
+        $answers[] = $answerText;
 
 
-            if ($leadPref) {
-                $leadPreferenceId = $leadPref->id;
-            }
-            $questions[] = $question->questions;
-            $answers[] = optional($question->leadPreferences->first())->answers;
-        }
-        $lookUpId = $this->getZohoLeadBuyerId($access_token, $userId);
-        if ($leadPreferenceId !== null) {
-            $payloadData[] = [
-                'Question_Id'     => $leadPreferenceId,
-                'Lead_Questions_Lookup' =>$lookUpId,
-                'Name'   => $service->category->name,
-                'Questions'      => $questions,
-                'Answers'        => $answers,
-            ];
-        }
+        $formattedQA .= "Q{$counter}. {$questionText}\nAns: {$answerText}\n\n";
+        $counter++;
     }
+
+    $lookUpId = User::find($userId)?->zoho_record_id;
+
+    if ($leadPreferenceId !== null) {
+        $payloadData[] = [
+            'Question_Id'            => $leadPreferenceId,
+            'Lead_Questions_Lookup'  => $lookUpId,
+            'Name'                   => $service->category->name,
+            'QuestionAnswers'       => trim($formattedQA),
+        ];
+    }
+}
+
 
     return [
         'data' => $payloadData
