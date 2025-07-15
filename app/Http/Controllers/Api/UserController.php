@@ -33,9 +33,11 @@ use App\Models\Plan;
 use App\Services\LeadService;
 use App\Services\CompanyRegService;
 use App\Helpers\Zoho\ZohoServiceLocations;
+use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoSocialMedia;
+use App\Models\EmailSetting;
 
 class UserController extends Controller
 {
@@ -199,11 +201,12 @@ class UserController extends Controller
                 }
             }
         }
-        $randomString = '12345678';//Str::random(10);
-        $aVals['password'] = Hash::make($randomString);
+        $passwordRandomString = '12345678';//Str::random(10);
+        $aVals['password'] = Hash::make($passwordRandomString);
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = 0;
         $user = User::create($aVals);
+
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
 
@@ -307,14 +310,13 @@ class UserController extends Controller
                 }
 
             }
-            //Mail send
-            // $data = $user->toArray();
-            // $data['template'] = 'emails.seller_registration';
-            // $data['service'] = Category::whereIn('id', $serviceIds)->pluck('name')->implode(', ');
-            // $data['password'] = $randomString;
-            // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => "Seller Registration", "body" => "Thankyou for registration",'receiver' => $aVals['name']));
             $user->remember_tokens = $token;
 
+            $sendWelcomeEmail = EmailSetting::where('setting_name','Send Welcome Email')->value('setting_value');
+            
+            if($sendWelcomeEmail){
+                ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+            }
             $zohoService =new ZohoServiceLocations();
             $zohoQa = new ZohoQuestionAnswer();
 

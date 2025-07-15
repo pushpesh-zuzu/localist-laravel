@@ -128,6 +128,25 @@
                 {{ __('Coupons') }}
             </a>   
         </li>
+        <li class="nav-group" aria-expanded="false">
+            <a class="nav-link nav-group-toggle" href="#">
+            <i class="fa-solid fa-envelope nav-icon"></i> Emails</a>
+              <ul class="nav-group-items compact" style="height: 100px;">
+               
+                <li class="nav-item">
+                  <a href="{{ route('seller.incomplete') }}" class="nav-link {{ request()->routeIs('seller.incomplete') ? 'active' : '' }}">
+                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      Templates
+                  </a>   
+                </li>
+                <li class="nav-item">
+                  <a href="{{ route('email-settings.index') }}" class="nav-link {{ request()->routeIs('email-settings.index') ? 'active' : '' }}">
+                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      Settings
+                  </a>   
+                </li>
+              </ul>
+        </li>
       
       </ul>
 
