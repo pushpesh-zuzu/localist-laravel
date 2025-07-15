@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\{
 };
 use Illuminate\Validation\Rule;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoFinance;
 use App\Services\ZeroBounceService;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -32,7 +33,9 @@ use App\Models\Plan;
 use App\Services\LeadService;
 use App\Services\CompanyRegService;
 use App\Helpers\Zoho\ZohoServiceLocations;
-
+use App\Helpers\Zoho\ZohoLeadBuyers;
+use App\Helpers\Zoho\ZohoQuestionAnswer;
+use App\Helpers\Zoho\ZohoSocialMedia;
 
 class UserController extends Controller
 {
@@ -167,6 +170,9 @@ class UserController extends Controller
 
 
     public function registration(Request $request): JsonResponse{
+
+        $zohoService =new ZohoServiceLocations();
+        $zohoQa = new ZohoQuestionAnswer();
 
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;
@@ -312,8 +318,9 @@ class UserController extends Controller
             // CustomHelper::sendEmail(array("to" => $aVals['email'],"subject" => "Seller Registration", "body" => "Thankyou for registration",'receiver' => $aVals['name']));
             $user->remember_tokens = $token;
 
-            $zoho = new ZohoServiceLocations();
-            $zoho->integrateServiceLocations($user);
+            $zohoService->integrateServiceLocations($user);
+            $zohoQa->integrateServiceQa($user);
+
         }
         return $this->sendResponse('Registration Sucessful.', $user);
 

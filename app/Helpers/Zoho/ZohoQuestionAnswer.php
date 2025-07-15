@@ -1,0 +1,144 @@
+<?php
+namespace App\Helpers\Zoho;
+
+use App\Models\UserService;
+use App\Models\UserServiceLocation;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+
+class ZohoQuestionAnswer
+{
+    public function integrateServiceQa($user)
+    {
+
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $userId = $user->id;
+
+        $services = UserService::with('category')
+            ->where('user_id', $user->id)
+            ->get();
+        $responses = [];
+
+
+        foreach ($services as $service) {
+            $serviceId = $service->category->id;
+
+
+
+            $zohoServiceId = $this->getZohoBuyerQaId($access_token, $user->id, $serviceId);
+
+
+            $payload = $this->buildQaPayload($access_token,$user->id, $zohoServiceId, $serviceId);
+
+            if (!empty($payload['data'])) {
+                $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
+                $responses[] = [
+
+                    'status'      => $response->status(),
+                    'body'        => $response->json(),
+                    ];
+
+
+            }
+
+
+
+        }
+
+
+
+
+
+       return $responses;
+
+    }
+
+    protected function buildQaPayload($access_token,$userId, $zohoServiceId = null, $serviceId)
+    {
+        $userServices = UserService::with([
+        'category.serviceQuestions.leadPreferences' => function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        }
+    ])
+    ->where('user_id', $userId)
+    ->when(52, fn($q) => $q->where('service_id', 52))
+    ->get();
+
+    $payloadData = [];
+
+    foreach ($userServices as $service) {
+        $questions = [];
+        $answers = [];
+        $leadPreferenceId = null;
+        foreach ($service->category->serviceQuestions as $question) {
+             $leadPref = $question->leadPreferences->first();
+
+
+            if ($leadPref) {
+                $leadPreferenceId = $leadPref->id;
+            }
+            $questions[] = $question->questions;
+            $answers[] = optional($question->leadPreferences->first())->answers;
+        }
+        $lookUpId = $this->getZohoLeadBuyerId($access_token, $userId);
+        if ($leadPreferenceId !== null) {
+            $payloadData[] = [
+                'Question_Id'     => $leadPreferenceId,
+                'Lead_Questions_Lookup' =>$lookUpId,
+                'Name'   => $service->category->name,
+                'Questions'      => $questions,
+                'Answers'        => $answers,
+            ];
+        }
+    }
+
+    return [
+        'data' => $payloadData
+    ];
+}
+
+    protected function getZohoLeadBuyerId($accessToken, $userId)
+    {
+         $response = Http::withToken($accessToken)
+            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
+                'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
+            ]);
+
+        $data = $response->json();
+
+        return $data['data'][0]['id'] ?? null;
+    }
+
+    protected function getZohoBuyerQaId($accessToken, $serviceId)
+    {
+        $response = Http::withToken($accessToken)
+            ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
+                'criteria' => "(Service Id:equals:{$serviceId})"
+            ]);
+
+        $data = $response->json();
+
+        return $data['data'][0]['id'] ?? null;
+    }
+
+
+
+    protected function sendUserQaToZoho($accessToken, array $payload, $zohoServiceId = null)
+    {
+        $url = $zohoServiceId
+            ? "https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}"
+            : "https://www.zohoapis.eu/crm/v2/Question_Answers";
+
+        $method = $zohoServiceId ? 'put' : 'post';
+
+    return Http::withToken($accessToken)->$method($url, $payload);
+
+    }
+
+
+}

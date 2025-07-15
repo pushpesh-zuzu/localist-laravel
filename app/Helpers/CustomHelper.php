@@ -11,6 +11,7 @@ use App\Models\NotificationLog;
 use App\Models\Setting;
 use App\Models\Postcode;
 use Illuminate\Support\Carbon;
+use App\Helpers\Zoho\ZohoFinance;
 
 class CustomHelper
 {
@@ -22,12 +23,12 @@ class CustomHelper
             ->where('user_type',$userType)
             ->where('noti_type',$notiType)
             ->value('noti_value');
-        
+
         //check whether setting is turned on or not
         if(!$isSettingOn){
             $insertLog = false;
         }
-        
+
         // if checkExisting is true then check if the same lead exists or not
         if($checkExisting){
             $logExists = NotificationLog::where('user_id',$userId)
@@ -41,17 +42,17 @@ class CustomHelper
                 $insertLog = false;
             }
         }
-            
-        //insert if all conditions id fulfiled    
+
+        //insert if all conditions id fulfiled
         if ($insertLog && $userId) {
             NotificationLog::create([
                 'user_id'  => $userId,
                 'lead_id' => $leadId,
                 'noti_name'  => $notiName,
                 'title' => $title,
-                'message'  => $message,                
+                'message'  => $message,
                 'user_type' => $userType,
-                'noti_type' => $notiType                
+                'noti_type' => $notiType
             ]);
         }
     }
@@ -201,6 +202,11 @@ class CustomHelper
 
         $id = PurchaseHistory::insertGetId($data);
 
+        $zoho = new ZohoFinance();
+        $zoho->integratePurchaseHistory($userId);
+
+
+
         return $id;
     }
 
@@ -259,7 +265,7 @@ class CustomHelper
         }
         return  $imagename;
     }
-    
+
     public static function accfileUpload($image, $destinationFolder = '',$chkext = true)
     {
         $imageArray = array("png", "jpg", "jpeg", "gif", "bmp", "svg", "pdf");

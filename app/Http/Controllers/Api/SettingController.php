@@ -20,28 +20,29 @@ use Illuminate\Support\Facades\Storage;
 use Stripe\Stripe;
 use Stripe\Customer;
 use Stripe\PaymentMethod;
+use App\Helpers\Zoho\ZohoSocialMedia;
 
 class SettingController extends Controller
 {
     public function updateSellerProfile(Request $request): JsonResponse
     {
-        
-        $user_id = $request->user_id; 
+
+        $user_id = $request->user_id;
         $aValues = $request->all();
-        
+
         $users = User::where('id',$user_id)->first();
         $userdetails = UserDetail::where('user_id',$user_id)->first();
-        
+
         if($aValues['type'] == 'about'){
             if ($request->hasFile('company_logo')) {
                 $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');
-                $company_logo = $imagePath; 
+                $company_logo = $imagePath;
             }else{
                 $company_logo = "";
             }
             if ($request->hasFile('profile_image')) {
                 $profileimagePath =  CustomHelper::fileUpload($aValues['profile_image'],'users');
-                $profile_image = $profileimagePath; 
+                $profile_image = $profileimagePath;
             }else{
                 $profile_image = "";
             }
@@ -70,7 +71,7 @@ class SettingController extends Controller
                         $companyimgPaths[] = $companyimagePath; // Add filename to the array
                     }
                 }
-                
+
                 $company_photos = implode(',', $companyimgPaths); // Convert array to a comma-separated string
             }else{
                 $company_photos = "";
@@ -79,7 +80,7 @@ class SettingController extends Controller
                 $userdetails->update([
                     'company_photos' => $company_photos,
                     'company_youtube_link' => $aValues['company_youtube_link'],
-                ]);  
+                ]);
             }else{
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
@@ -102,8 +103,8 @@ class SettingController extends Controller
                     'insta_link' => $aValues['insta_link'],
                     'linkedin_link' => $aValues['linkedin_link'],
                     'extra_links' => str_replace("\n", ",", $aValues['extra_links'])
-                    
-                ]);  
+
+                ]);
             }else{
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
@@ -116,14 +117,16 @@ class SettingController extends Controller
                     'is_autobid' => 1
                 ]);
             }
+            $zoho = new ZohoSocialMedia();
+            $zoho->integrateSocialLinks($user_id);
         }
         if($aValues['type'] == 'accreditations'){
-           
+
             //uploading multiple accres
             $files = $request->file('accre_image');
-            $names = $request->input('accre_name', []); 
+            $names = $request->input('accre_name', []);
             foreach($files as $index => $img){
-                $imagePath =  CustomHelper::accfileUpload($img,'accreditations');                    
+                $imagePath =  CustomHelper::accfileUpload($img,'accreditations');
                 $accreditations = UserAccreditation::create([
                     'user_id'  => $user_id,
                     'name' => $names[$index],
@@ -146,24 +149,24 @@ class SettingController extends Controller
         $user_id = $request->user_id;
         $questions = $request->input('questions', []); // Get array of questions
         $answers = $request->input('answers', []); // Get array of answers
-    
+
         if (!is_array($questions) || !is_array($answers)) {
             return $this->sendError("Invalid data format");
         }
-    
+
         $data = [];
         foreach ($questions as $index => $question) {
             $answer = $answers[$index] ?? null;
-    
+
             if (empty($question) || empty($answer)) {
                 continue; // Skip if question or answer is empty
             }
-    
+
             // Check if the question already exists for this user
             $profileQues = ProfileQA::where('user_id', $user_id)
                 ->where('questions', $question)
                 ->first();
-    
+
             if ($profileQues) {
                 // Update existing record
                 $profileQues->update([
@@ -180,16 +183,16 @@ class SettingController extends Controller
                 $data[] = $newQnA;
             }
         }
-    
+
         if (empty($data)) {
             return $this->sendError("No valid data submitted");
         }
-    
+
         return $this->sendResponse(__('Data Submitted successfully'), $data);
     }
 
     public function sellerBillingDetails(Request $request){
-        $user_id = $request->user_id; 
+        $user_id = $request->user_id;
         $aValues = $request->all();
         $userdetails = UserDetail::where('user_id',$user_id)->first();
         if(isset($userdetails) && $userdetails != ''){
@@ -201,7 +204,7 @@ class SettingController extends Controller
                 'billing_postcode' => $aValues['billing_postcode'],
                 'billing_phone' => $aValues['billing_phone'],
                 'billing_vat_register' => $aValues['billing_vat_register'],
-            ]);  
+            ]);
         }else{
             $userdetails = UserDetail::create([
                 'user_id'  => $user_id,
@@ -233,7 +236,7 @@ class SettingController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $user_id = $request->user_id; 
+        $user_id = $request->user_id;
         $aValues = $request->all();
         $userdetails = UserCardDetail::where('user_id',$user_id)->first();
         $type = "";
@@ -243,7 +246,7 @@ class SettingController extends Controller
                 'expiry_date' => $aValues['expiry_date'],
                 'cvc' => encrypt($aValues['cvc'])
             ]);
-            $type = 'updated';  
+            $type = 'updated';
         }else{
             $userdetails = UserCardDetail::create([
                 'user_id'  => $user_id,
@@ -262,18 +265,18 @@ class SettingController extends Controller
         //check if customer exits in database or not
         $user = User::where('id',$user_id)->first();
         $stipeCustomerId = $user->stripe_customer_id;
-        
+
         Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
         if(empty($stipeCustomerId)){ //customer not exits in database
             $customer = Customer::create([
                 'name' => $user->name,
                 'email' => $user->email,
                 'payment_method' => $request->stripe_payment_method_id,
-                
+
             ]);
             if(!empty($customer)){
                 $stipeCustomerId = $customer['id'];
-                
+
                 $dataU['stripe_customer_id'] = $stipeCustomerId;
                 $dataU['updated_at'] = date('Y-m-d H:i:s');
                 User::where('id',$user_id)->update($dataU);
@@ -285,17 +288,17 @@ class SettingController extends Controller
                 if ($customer && isset($customer->id)) { // customer exists, attach new card to it
                     $card = PaymentMethod::retrieve($request->stripe_payment_method_id);
                     $card->attach(['customer' => $stipeCustomerId]);
-                    
+
                 }else{ //customer does not exits, create new customer and attach card to it
                     $customer2 = Customer::create([
                         'name' => $user->name,
                         'email' => $user->email,
                         'payment_method' => $request->stripe_payment_method_id,
-                        
+
                     ]);
                     if(!empty($customer2)){
                         $stipeCustomerId = $customer2['id'];
-                        
+
                         $dataU2['stripe_customer_id'] = $stipeCustomerId;
                         $dataU2['updated_at'] = date('Y-m-d H:i:s');
                         User::where('id',$user_id)->update($dataU2);
@@ -305,7 +308,7 @@ class SettingController extends Controller
                 return $this->sendError("Please add card again, ERROR: " .$e->getMessage());
             }
         }
-        
+
         return $this->sendResponse("Card $type successfully!");
     }
 

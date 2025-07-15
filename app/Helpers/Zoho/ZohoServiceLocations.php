@@ -5,6 +5,7 @@ use App\Models\UserService;
 use App\Models\UserServiceLocation;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ZohoServiceLocations
 {
@@ -30,7 +31,7 @@ class ZohoServiceLocations
 
                 $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
 
-                $payload = $this->buildServicePayload($user, $locationId, $zohoServiceId,$counter);
+                $payload = $this->buildServicePayload($access_token, $user, $locationId, $zohoServiceId,$counter);
 
                 $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
 
@@ -49,25 +50,29 @@ class ZohoServiceLocations
 
     }
 
-    protected function buildServicePayload($user, $locationId, $zohoServiceId = null,$counter)
+    protected function buildServicePayload($access_token, $user, $locationId, $zohoServiceId = null,$counter)
     {
         $location = UserServiceLocation::find($locationId);
 
-        $serviceDetails = UserService::with([
-            'category.serviceQuestions.leadPreferences' => function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            },
-            'user'
-        ])->find($location->user_service_id);
+        // $serviceDetails = UserService::with([
+        //     'category.serviceQuestions.leadPreferences' => function ($q) use ($user) {
+        //         $q->where('user_id', $user->id);
+        //     },
+        //     'user'
+        // ])->find($location->user_service_id);
 
-        $questions = [];
-        $answers = [];
+        // $questions = [];
+        // $answers = [];
 
-        foreach ($serviceDetails->category->serviceQuestions as $question) {
-            $questions[] = $question->questions;
-            $answers[] = optional($question->leadPreferences->first())->answers;
-        }
+        // foreach ($serviceDetails->category->serviceQuestions as $question) {
+        //     $questions[] = $question->questions;
+        //     $answers[] = optional($question->leadPreferences->first())->answers;
+        // }
 
+        $serviceDetails = UserService::with('user')
+         ->find($location->user_service_id);
+
+        $lookUpId = $this->getZohoLeadBuyerId($access_token, $user->id);
 
         $payload = [
             'data' => [[
@@ -75,13 +80,12 @@ class ZohoServiceLocations
                 'Service Name'    => $serviceDetails->category->name,
                 'Name'            => $serviceDetails->category->name,
                 'Lead_Buyer_Name1' => $serviceDetails->user->name,
+                'Lead_Buyer_Lookup' => $lookUpId,
                 'Miles'           => $location->miles,
                 'Postcode'        => $location->postcode,
                 'Nation_Wide'     => $location->nation_wide == 1 ? 'Yes' : 'No',
                 'City'            => $location->city,
-                'Status'          => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
-                'questions'       => $questions,
-                'Answers'         => $answers
+                'Status'          => $serviceDetails->status == 1 ? 'Added' : 'Rejected'
             ]]
         ];
 
@@ -109,6 +113,18 @@ class ZohoServiceLocations
         return $data['data'][0]['id'] ?? null;
     }
 
+    protected function getZohoLeadBuyerId($accessToken, $userId)
+    {
+         $response = Http::withToken($accessToken)
+            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
+                'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
+            ]);
+
+        $data = $response->json();
+
+        return $data['data'][0]['id'] ?? null;
+    }
+
 
 
     protected function sendUserServiceToZoho($accessToken, array $payload, $zohoServiceId = null)
@@ -118,6 +134,26 @@ class ZohoServiceLocations
             : "https://www.zohoapis.eu/crm/v2/Services_Locations";
 
         $method = $zohoServiceId ? 'put' : 'post';
+
+        //  $response = Http::withToken($accessToken)
+        //     ->get('https://www.zohoapis.eu/crm/v2/settings/fields', [
+        //         'module' => 'Services_Locations'
+        //     ]);
+
+        // $fields = $response->json();
+        // $formatted = collect($fields['fields'])->map(function ($field) {
+        //     return [
+        //         'api_name'    => $field['api_name'] ?? null,
+        //         'field_label' => $field['field_label'] ?? null,
+        //     ];
+        // });
+
+
+        // $formatted = $formatted->sortBy('field_label')->values()->all();
+
+        // Log::info('Zoho Lead_Buyer_Registration API Field Map:', $formatted);
+
+
         return  Http::withToken($accessToken)->$method($url, $payload);
     }
 
