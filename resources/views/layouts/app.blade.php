@@ -40,6 +40,18 @@
             display: flex !important;
             margin-right:20px;
           }
+
+          .form-check-input:hover{
+            cursor: pointer;
+          }
+          .form-check-input:checked {
+            background-color: #00bfff; /* light blue */
+            border-color: #00bfff;
+          }
+
+          .bg-light {
+            background-color: #e6f7fc !important; /* match image background */
+          }
         </style>
         
   </head>

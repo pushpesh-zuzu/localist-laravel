@@ -105,9 +105,9 @@ class User extends Authenticatable
         return $this->hasMany(UserAccreditation::class,'id','user_id');
     }
 
-    public function serviceDetails()
+    public function services()
     {
-        return $this->hasMany(UserServiceDetail::class,'id','user_id');
+        return $this->hasMany(UserService::class, 'user_id', 'id');
     }
 
     public function hiredLeads()

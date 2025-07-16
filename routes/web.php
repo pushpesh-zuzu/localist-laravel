@@ -17,6 +17,7 @@ use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\EmailSettingsController;
 
 
 Route::get('/clear-cache', function() {
@@ -92,7 +93,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('coupon', CouponController::class);
 
     Route::resource('request-list', RequestListController::class);
-    Route::get('request-list2', [RequestListController::class,'index2']);
+    Route::resource('email-settings', EmailSettingsController::class);
+    Route::post('email-settings/change-status', [EmailSettingsController::class,'changeSettingStatus'])->name('email-settings.change-status');
 
 });
 

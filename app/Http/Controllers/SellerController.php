@@ -97,6 +97,7 @@ class SellerController extends Controller
         \DB::table('suggested_questions')->where('user_id',$id)->delete();
         \DB::table('unique_visitors')->where('seller_id',$id)->orWhere('buyer_id',$id)->delete();
         \DB::table('autobid_status_logs')->where('user_id',$id)->delete();
+        \DB::table('email_logs')->where('user_id',$id)->delete();
         
         return redirect()->route('seller.index')
                          ->with('success', 'Seller deleted successfully.');
