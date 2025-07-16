@@ -54,7 +54,7 @@ class ZohoEmails
                 // exit;
 
 
-                $htmlView = view('emails.lead_buyers.lead_buyer_registration',  [
+                $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
                     'baseUrl' => 'https://locallists-react.vercel.app',
                     'name' => $user->name,
                     'email' => $user->email,
