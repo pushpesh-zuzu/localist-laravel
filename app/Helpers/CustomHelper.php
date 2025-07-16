@@ -11,7 +11,7 @@ use App\Models\NotificationLog;
 use App\Models\Setting;
 use App\Models\Postcode;
 use Illuminate\Support\Carbon;
-use App\Helpers\Zoho\ZohoFinance;
+use App\Jobs\IntegrateZohoPurchaseHistory;
 
 class CustomHelper
 {
@@ -202,9 +202,9 @@ class CustomHelper
 
         $id = PurchaseHistory::insertGetId($data);
 
-        $zoho = new ZohoFinance();
-        $zoho->integratePurchaseHistory($userId);
-
+        // $zoho = new ZohoFinance();
+        // $zoho->integratePurchaseHistory($userId);
+        IntegrateZohoPurchaseHistory::dispatch($userId);
 
 
         return $id;
