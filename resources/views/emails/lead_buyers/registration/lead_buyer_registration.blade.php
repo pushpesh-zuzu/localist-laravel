@@ -223,14 +223,14 @@
                   Secure your next customer by topping up your credits today.</p>
                 <a href="{{$baseUrl}}/mycredits" class="btn">Buy Credits</a>
                 <p>You can also call our customer support team at 
-                  <a href="tel:{{\App\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">{{\App\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}</a>
-                   or email <a href="mailto:{{\App\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">{{\App\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}</a>.</p>
+                  <a href="tel:{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}</a>
+                   or email <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}</a>.</p>
                 <p>Regards,<br>Localist Team</p>
             </div>
 
             <div class="footer">
                 Manage your email preferences <a href="{{$baseUrl}}/e-mail-notification">here</a>.<br>
-                {{\App\App\Helpers\CustomHelper::setting_value('website_address','')}}
+                {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
             </div>
 
         </div>
