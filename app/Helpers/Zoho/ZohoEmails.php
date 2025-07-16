@@ -3,9 +3,10 @@
 namespace App\Helpers\Zoho;
 
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
-use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\CustomHelper;
+use App\Models\User;
+use App\Models\EmailLog;
 
 class ZohoEmails
 {
@@ -63,28 +64,66 @@ class ZohoEmails
                     'services' => $services
                 ])->render();
                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);        
+                $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com'); 
+                $toEmail = $user->email;
+                $subject = 'Welcome to Localist';       
                 $response = Http::withToken($accessToken)
                     ->post($url, [
                         'data' => [
                             [
                                 'from' => [
-                                    'email' => CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com'),
+                                    'email' => $fromEmail,
                                     'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
                                 ],
                                 'to' => [
                                     [
-                                        'email' => $user->email
+                                        'email' => $toEmail
                                     ]
                                 ],
-                                'subject' => 'Welcome to Localist',
+                                'subject' => $subject,
                                 'content' => $htmlContent,
                                 'mail_format' => 'html'
                             ]
                         ]
                     ]);
+                
+                $rel = self::getZohoMailResponse($response);
+                $dataE['user_id'] = $user->id;
+                $dataE['from_email'] = $fromEmail;
+                $dataE['to_email'] = $toEmail;
+                $dataE['message_id'] = $rel['message_id'];
+                $dataE['subject'] = $subject;
+                $dataE['content'] = $htmlContent;
+                $dataE['zoho_url'] = $url;
+                $dataE['response'] = json_encode($rel);
+                EmailLog::insertGetId($dataE);
+
             }
             
         }
+    }
+
+
+    private static function getZohoMailResponse($response){
+        $zohoMailResult = [];
+        // print_r($response->json());
+        if ($response->successful()) {
+            $zohoMailResult = [
+                'status' => 'success',
+                'message_id' => $response->json()['data'][0]['details']['message_id'] ?? null,
+                'message' => $response->json()['data'][0]['message'] ?? 'Unknown',
+                'details' => $response->json(),
+            ];
+        } else {
+            $zohoMailResult = [
+                'status' => 'error',
+                'message_id' => '',
+                'message' => $response->json()['data'][0]['message'] ?? 'Unknown error',
+                'details' => $response->json(),
+            ];
+        }
+
+        return $zohoMailResult;
     }
 }
