@@ -40,20 +40,20 @@ class ZohoQuestionAnswer
     protected function buildQaPayload($access_token, $userId)
     {
         $leadPrefs = LeadPrefrence::with([
-            'question.category'
+            'question.categories'
         ])
         ->where('user_id', $userId)
         ->get();
 
         // Group preferences by category (service)
-        $grouped = $leadPrefs->groupBy(fn($pref) => $pref->question->category->id ?? null);
+        $grouped = $leadPrefs->groupBy(fn($pref) => $pref->question->categories->id ?? null);
 
         $payloadData = [];
 
         foreach ($grouped as $categoryId => $preferences) {
             if (!$categoryId) continue;
 
-            $categoryName = optional($preferences->first()->question->category)->name;
+            $categoryName = optional($preferences->first()->question->categories)->name;
             $formattedQA = '';
             $leadPreferenceId = null;
             $counter = 1;
