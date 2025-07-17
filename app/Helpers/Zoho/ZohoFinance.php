@@ -47,7 +47,7 @@ class ZohoFinance
                 $statusText = 'Failed';
                 break;
         }
-        $lookUpId =ZohoLeadBuyers::getZohoLeadBuyerId($accessToken, $userId);
+        $lookUpId =ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
         return [
             'data' => [[
                 'Transaction_Id1' => $log->id,

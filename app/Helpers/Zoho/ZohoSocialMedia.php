@@ -31,7 +31,7 @@ class ZohoSocialMedia
 
     protected function buildSocialPayload($access_token,$userDetail,$userId)
     {
-        $lookUpId = ZohoLeadBuyers::getZohoLeadBuyerId($access_token, $userId);
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
         return [
             'data' => [[
                 'Social_Media_Id'          => $userDetail->id,

@@ -68,7 +68,7 @@ class ZohoQuestionAnswer
                 $counter++;
             }
 
-            $lookUpId = ZohoLeadBuyers::getZohoLeadBuyerId($access_token, $userId);
+            $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
             $payloadData[] = [
                 'Question_Id'            => $leadPreferenceId,

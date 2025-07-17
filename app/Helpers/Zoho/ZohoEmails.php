@@ -11,7 +11,7 @@ use App\Models\EmailLog;
 class ZohoEmails
 {
     // protected string $accessToken;
-    
+
 
 
     public function __construct()
@@ -29,14 +29,14 @@ class ZohoEmails
         // $htmlContent = view('emails.welcome', ['user' => $user])->render();
         $accessToken = ZohoHelper::getAccessToken();
 
-        $zohoId = ZohoLeadBuyers::getZohoLeadBuyerId($accessToken, $userId);
-    
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
         if(!empty($zohoId)){
             $user = User::with(['services.category','services.locations'])->where('id', $userId)->first();
             // echo "<pre>";
             // print_r($user->toArray());
             // exit;
-            
+
             if(!empty($user)){
 
                 $services = [];
@@ -65,9 +65,9 @@ class ZohoEmails
                 ])->render();
                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com'); 
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                 $toEmail = $user->email;
-                $subject = 'Welcome to Localist';       
+                $subject = 'Welcome to Localist';
                 $response = Http::withToken($accessToken)
                     ->post($url, [
                         'data' => [
@@ -87,7 +87,7 @@ class ZohoEmails
                             ]
                         ]
                     ]);
-                
+
                 $rel = self::getZohoMailResponse($response);
                 $dataE['user_id'] = $user->id;
                 $dataE['from_email'] = $fromEmail;
@@ -100,7 +100,7 @@ class ZohoEmails
                 EmailLog::insertGetId($dataE);
 
             }
-            
+
         }
     }
 

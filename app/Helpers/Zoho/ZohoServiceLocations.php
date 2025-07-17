@@ -59,7 +59,7 @@ class ZohoServiceLocations
         $serviceDetails = UserService::with('user')
          ->find($location->user_service_id);
 
-        $lookUpId = ZohoLeadBuyers::getZohoLeadBuyerId($access_token, $user->id);
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $user->id);
 
         $payload = [
             'data' => [[

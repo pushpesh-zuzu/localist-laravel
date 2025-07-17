@@ -4,6 +4,7 @@ namespace App\Helpers\Zoho;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Helpers\CustomHelper;
+use App\Models\User;
 
 class ZohoHelper
 {
@@ -35,6 +36,28 @@ class ZohoHelper
             return $data['access_token'];
         }
 
+        return null;
+    }
+    public static function getZohoLeadBuyerId($accessToken, $userId)
+    {
+        $recId = User::where('id', $userId)->value('zoho_record_id');
+        if(!empty($recId)){
+            return $recId;
+        }
+
+        $response = Http::withToken($accessToken)
+            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
+                'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
+            ]);
+
+        $data = $response->json();
+
+        if(!empty($data['data'][0]['id'])){
+            $zohoId = User::where('id', $userId)->update([
+                'zoho_record_id' => $data['data'][0]['id']
+            ]);
+            return $data['data'][0]['id'];
+        }
         return null;
     }
 }
