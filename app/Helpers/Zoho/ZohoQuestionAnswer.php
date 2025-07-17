@@ -2,116 +2,86 @@
 
 namespace App\Helpers\Zoho;
 
-use App\Models\User;
-use App\Models\UserService;
-use App\Models\UserServiceLocation;
+use App\Models\LeadPrefrence;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ZohoQuestionAnswer
 {
     public function integrateServiceQa($user)
     {
-
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
             return null;
         }
 
+        $userId = $user->id;
+        $payload = $this->buildQaPayload($access_token, $userId);
 
-        $services = UserService::with('category')
-            ->where('user_id', $user->id)
-            ->get();
         $responses = [];
 
+        foreach ($payload['data'] as $dataBlock) {
+            $zohoServiceId = $this->getZohoBuyerQaId($access_token, $dataBlock['Question_Id']);
 
-        foreach ($services as $service) {
-            $serviceId = $service->category->id;
+            $response = $this->sendUserQaToZoho($access_token, [
+                'data' => [$dataBlock]
+            ], $zohoServiceId);
 
-
-
-            $zohoServiceId = $this->getZohoBuyerQaId($access_token, $user->id, $serviceId);
-
-
-            $payload = $this->buildQaPayload($access_token, $user->id, $zohoServiceId, $serviceId);
-
-            if (!empty($payload['data'])) {
-                $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
-                $responses[] = [
-
-                    'status'      => $response->status(),
-                    'body'        => $response->json(),
-                ];
-            }
+            $responses[] = [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ];
         }
-
-
-
-
 
         return $responses;
     }
 
-    protected function buildQaPayload($access_token, $userId, $zohoServiceId = null, $serviceId)
+    protected function buildQaPayload($access_token, $userId)
     {
-        $userServices = UserService::with([
-            'category.serviceQuestions.leadPreferences' => function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            }
+        $leadPrefs = LeadPrefrence::with([
+            'question.category'
         ])
-            ->where('user_id', $userId)
-            ->when($serviceId, fn($q) => $q->where('service_id', $serviceId))
-            ->get();
+        ->where('user_id', $userId)
+        ->get();
+
+        // Group preferences by category (service)
+        $grouped = $leadPrefs->groupBy(fn($pref) => $pref->question->category->id ?? null);
 
         $payloadData = [];
 
-        foreach ($userServices as $service) {
-            $questions = [];
-            $answers = [];
+        foreach ($grouped as $categoryId => $preferences) {
+            if (!$categoryId) continue;
+
+            $categoryName = optional($preferences->first()->question->category)->name;
             $formattedQA = '';
             $leadPreferenceId = null;
             $counter = 1;
 
-            foreach ($service->category->serviceQuestions as $question) {
-                $leadPref = $question->leadPreferences->first();
-
-                if ($leadPref) {
-                    $leadPreferenceId = $leadPref->id;
-                }
-
-                $questionText = $question->questions;
-                $answerText = optional($leadPref)->answers;
-
-                $questions[] = $questionText;
-                $answers[] = $answerText;
-
+            foreach ($preferences as $pref) {
+                $questionText = $pref->question->questions ?? '';
+                $answerText = $pref->answers ?? '';
 
                 $formattedQA .= "Q{$counter}. {$questionText}\nAns: {$answerText}\n\n";
+
+                $leadPreferenceId = $pref->id; // or first one if you prefer
                 $counter++;
             }
 
             $lookUpId = ZohoLeadBuyers::getZohoLeadBuyerId($access_token, $userId);
 
-            if ($leadPreferenceId !== null) {
-                $payloadData[] = [
-                    'Question_Id'            => $leadPreferenceId,
-                    'Lead_Questions_Lookup'  => $lookUpId,
-                    'Name'                   => $service->category->name,
-                    'QuestionAnswers'       => trim($formattedQA),
-                ];
-            }
+            $payloadData[] = [
+                'Question_Id'            => $leadPreferenceId,
+                'Lead_Questions_Lookup'  => $lookUpId,
+                'Name'                   => $categoryName,
+                'QuestionAnswers'        => trim($formattedQA),
+            ];
         }
 
-
-        return [
-            'data' => $payloadData
-        ];
+        return ['data' => $payloadData];
     }
 
-
-
-    protected function getZohoBuyerQaId($accessToken, $serviceId)
+   protected function getZohoBuyerQaId($accessToken, $serviceId)
     {
         $response = Http::withToken($accessToken)
             ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
@@ -122,8 +92,6 @@ class ZohoQuestionAnswer
 
         return $data['data'][0]['id'] ?? null;
     }
-
-
 
     protected function sendUserQaToZoho($accessToken, array $payload, $zohoServiceId = null)
     {
