@@ -23,16 +23,15 @@ class ZohoSocialMedia
         }
 
         $zohoId = $this->getZohoSocialId($accessToken, $userDetail->id);
-        $payload = $this->buildSocialPayload($accessToken, $userDetail);
+        $payload = $this->buildSocialPayload($accessToken, $userDetail,$userId);
 
         $response = $this->sendToZoho($accessToken, $payload, $zohoId);
         return $response->json();
     }
 
-    protected function buildSocialPayload($access_token,$userDetail)
+    protected function buildSocialPayload($access_token,$userDetail,$userId)
     {
-
-        $lookUpId =User::find($userDetail->user_id)?->zoho_record_id;
+        $lookUpId = ZohoLeadBuyers::getZohoLeadBuyerId($access_token, $userId);
         return [
             'data' => [[
                 'Social_Media_Id'          => $userDetail->id,
@@ -72,15 +71,4 @@ class ZohoSocialMedia
         return Http::withToken($accessToken)->$method($url, $payload);
     }
 
-    protected function getZohoLeadBuyerId($accessToken, $userId)
-    {
-         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
-                'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
-            ]);
-
-        $data = $response->json();
-
-        return $data['data'][0]['id'] ?? null;
-    }
 }

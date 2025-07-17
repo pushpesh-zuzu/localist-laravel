@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 
 class ZohoFinance
 {
-    public function integratePurchaseHistory($userId)
+    public function integratePurchaseHistory($userId,$logId)
     {
         $accessToken = ZohoHelper::getAccessToken();
 
@@ -16,24 +16,24 @@ class ZohoFinance
             return null;
         }
 
-        $logs = PurchaseHistory::where('user_id', $userId)
-               ->get();
+        $log = PurchaseHistory::where('id', $logId)
+               ->first();
 
-        foreach ($logs as $log) {
-            $zohoFinanceId = $this->getZohoFinanceId($accessToken, $log->id);
 
-            $payload = $this->buildFinancePayload($accessToken,$log);
+        $zohoFinanceId = $this->getZohoFinanceId($accessToken, $log->id);
 
-            $response = $this->sendFinanceToZoho($accessToken, $payload, $zohoFinanceId);
+        $payload = $this->buildFinancePayload($accessToken,$log,$userId);
 
-        }
+        $response = $this->sendFinanceToZoho($accessToken, $payload, $zohoFinanceId);
+
+
 
         return $response->json();
 
 
     }
 
-    protected function buildFinancePayload($accessToken, $log)
+    protected function buildFinancePayload($accessToken, $log,$userId)
     {
         $statusText = 'Unknown';
         switch ($log->status) {
@@ -47,7 +47,7 @@ class ZohoFinance
                 $statusText = 'Failed';
                 break;
         }
-        $lookUpId =User::find($log->user_id)?->zoho_record_id;
+        $lookUpId =ZohoLeadBuyers::getZohoLeadBuyerId($accessToken, $userId);
         return [
             'data' => [[
                 'Transaction_Id1' => $log->id,
@@ -62,17 +62,7 @@ class ZohoFinance
         ];
     }
 
-    protected function getZohoLeadBuyerId($accessToken, $userId)
-    {
-         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
-                'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
-            ]);
 
-        $data = $response->json();
-
-        return $data['data'][0]['id'] ?? null;
-    }
 
     protected function getZohoFinanceId($accessToken, $transactionId)
     {

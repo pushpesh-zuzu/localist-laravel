@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session, Http};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
+use App\Helpers\Zoho\ZohoFinance;
 use App\Models\PurchaseHistory;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
@@ -202,9 +203,10 @@ class CustomHelper
 
         $id = PurchaseHistory::insertGetId($data);
 
-        // $zoho = new ZohoFinance();
-        // $zoho->integratePurchaseHistory($userId);
-        IntegrateZohoPurchaseHistory::dispatch($userId);
+
+        $zoho = new ZohoFinance();
+        $zoho->integratePurchaseHistory($userId,$id);
+        //IntegrateZohoPurchaseHistory::dispatch($userId);
 
 
         return $id;
