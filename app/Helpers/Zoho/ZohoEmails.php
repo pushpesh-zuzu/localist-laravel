@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use App\Helpers\CustomHelper;
 use App\Models\User;
 use App\Models\EmailLog;
+use App\Models\EmailSetting;
 
 class ZohoEmails
 {
@@ -14,81 +15,68 @@ class ZohoEmails
 
     public static function sendWelcomeEmail($userId, $password)
     {
-        // $htmlContent = view('emails.welcome', ['user' => $user])->render();
-        $accessToken = ZohoHelper::getAccessToken();
-
-        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
-
-        if(!empty($zohoId)){
-            $user = User::with(['services.category','services.locations'])->where('id', $userId)->first();
-            // echo "<pre>";
-            // print_r($user->toArray());
-            // exit;
-
-            if(!empty($user)){
-
-                $services = [];
-                foreach($user->services as $s){
-                    $sl = $s->category->name .' - ';
-                    foreach($s->locations as $index => $l){
-                        if($index > 0){
-                            $sl .= ', ';
+        $sendWelcomeEmail = EmailSetting::where('setting_name','Send Welcome Email')->value('setting_value');
+        if($sendWelcomeEmail){
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+            if(!empty($zohoId)){
+                $user = User::with(['services.category','services.locations'])->where('id', $userId)->first();
+                if(!empty($user)){
+                    $services = [];
+                    foreach($user->services as $s){
+                        $sl = $s->category->name .' - ';
+                        foreach($s->locations as $index => $l){
+                            if($index > 0){
+                                $sl .= ', ';
+                            }
+                            $sl .= $l->miles .' miles from ' .$l->postcode;
                         }
-                        $sl .= $l->miles .' miles from ' .$l->postcode;
+                        array_push($services, $sl);
                     }
-                    array_push($services, $sl);
-                }
-                // echo "<pre>";
-                // print_r($services);
-                // exit;
-
-
-                $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
-                    'baseUrl' => env('REACT_BASE_URL'),
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'password' => $password,
-                    'jobs' => rand(1, 50),
-                    'services' => $services
-                ])->render();
-                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
-                $toEmail = $user->email;
-                $subject = 'Welcome to Localist';
-                $response = Http::withToken($accessToken)
-                    ->post($url, [
-                        'data' => [
-                            [
-                                'from' => [
-                                    'email' => $fromEmail,
-                                    'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
-                                ],
-                                'to' => [
-                                    [
-                                        'email' => $toEmail
-                                    ]
-                                ],
-                                'subject' => $subject,
-                                'content' => $htmlContent,
-                                'mail_format' => 'html'
+                    $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
+                        'baseUrl' => env('REACT_BASE_URL'),
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'password' => $password,
+                        'jobs' => rand(1, 50),
+                        'services' => $services
+                    ])->render();
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                    $toEmail = $user->email;
+                    $subject = 'Welcome to Localist';
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html'
+                                ]
                             ]
-                        ]
-                    ]);
-
-                $rel = self::getZohoMailResponse($response);
-                $dataE['user_id'] = $user->id;
-                $dataE['from_email'] = $fromEmail;
-                $dataE['to_email'] = $toEmail;
-                $dataE['message_id'] = $rel['message_id'];
-                $dataE['subject'] = $subject;
-                $dataE['content'] = $htmlContent;
-                $dataE['zoho_url'] = $url;
-                $dataE['response'] = json_encode($rel);
-                EmailLog::insertGetId($dataE);
-
-            }
-
+                        ]);
+                    $rel = self::getZohoMailResponse($response);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }    
         }
     }
 
