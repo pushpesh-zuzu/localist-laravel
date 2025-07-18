@@ -46,20 +46,30 @@ class SettingController extends Controller
             }else{
                 $profile_image = "";
             }
-            $users->update([
-                'company_name' => $aValues['company_name'],
-                'company_logo' => $company_logo,
-                'name' => $aValues['name'],
-                'profile_image' => $profile_image,
-                'company_email' => $aValues['company_email'],
-                'company_phone' => $aValues['company_phone'],
-                'company_website' => $aValues['company_website'],
-                'company_location' => $aValues['company_location'],
-                'company_locaion_reason' => $aValues['company_locaion_reason'],
-                'company_size' => $aValues['company_size'],
-                'company_total_years' => $aValues['company_total_years'],
-                'about_company' => $aValues['about_company'],
-            ]);
+
+            $userData = [
+                'company_reg_number'    => $aValues['company_reg_number'] ?? null,
+                'company_name'          => $aValues['company_name'] ?? null,
+                'company_logo'          => $company_logo ?? null,
+                'name'                  => $aValues['name'] ?? null,
+                'profile_image'         => $profile_image ?? null,
+                'company_email'         => $aValues['company_email'] ?? null,
+                'company_phone'         => $aValues['company_phone'] ?? null,
+                'company_website'       => $aValues['company_website'] ?? null,
+                'company_location'      => $aValues['company_location'] ?? null,
+                'company_locaion_reason'=> $aValues['company_locaion_reason'] ?? null,
+                'company_size'          => $aValues['company_size'] ?? null,
+                'company_total_years'   => $aValues['company_total_years'] ?? null,
+                'about_company'         => $aValues['about_company'] ?? null,
+            ];
+
+            // Filter out any field with null or empty string ("")
+            $filteredUserData = array_filter($userData, function ($value) {
+                return !is_null($value) && $value !== '';
+            });
+
+            // Now update only non-empty fields
+            $users->update($filteredUserData);
         }
 
         if($aValues['type'] == 'photos'){
