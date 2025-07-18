@@ -316,7 +316,12 @@ class UserController extends Controller
             $user->remember_tokens = $token;
 
             ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
-            
+
+            if($auto_bid == 0){
+                ZohoEmails::sendEncouragementEmail($user->id);
+
+            }
+
             // $zohoService =new ZohoServiceLocations();
             // $zohoQa = new ZohoQuestionAnswer();
 
