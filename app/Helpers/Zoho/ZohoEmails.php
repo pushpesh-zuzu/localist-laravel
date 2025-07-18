@@ -12,18 +12,6 @@ class ZohoEmails
 {
     // protected string $accessToken;
 
-
-
-    public function __construct()
-    {
-        // $this->
-    }
-
-    public static function sendCustomEmail($userId)
-    {
-        $accessToken = ZohoHelper::getAccessToken();
-    }
-
     public static function sendWelcomeEmail($userId, $password)
     {
         // $htmlContent = view('emails.welcome', ['user' => $user])->render();
@@ -56,7 +44,7 @@ class ZohoEmails
 
 
                 $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
-                    'baseUrl' => 'https://locallists-react.vercel.app',
+                    'baseUrl' => env('REACT_BASE_URL'),
                     'name' => $user->name,
                     'email' => $user->email,
                     'password' => $password,

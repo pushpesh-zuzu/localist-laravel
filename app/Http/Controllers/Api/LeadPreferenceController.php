@@ -969,9 +969,33 @@ class LeadPreferenceController extends Controller
     public function getUserLocations(Request $request): JsonResponse
     {
         $aVals = $request->all();
-        $userId = $aVals['user_id'];
-        $uniqueRows = self::getFilterLocations($userId);
-        return $this->sendResponse(__('User Service Data'), $uniqueRows);
+        $user_id = $aVals['user_id'];
+        $aRows = UserServiceLocation::where('user_id', $user_id)
+            ->orderBy('postcode')
+            ->get();
+            // echo "<pre>";print_r($aRows->toArray());exit;
+
+        // Group by postcode and miles
+        $grouped = $aRows->groupBy(function ($item) {
+            return $item->postcode . '_' . $item->miles;
+        });
+
+        $finalRows = collect();
+
+        foreach ($grouped as $items) {
+            $first = $items->first(); // representative row
+
+            // Clone the first row's attributes
+            $value = $first->toArray();
+
+            // Add custom fields
+            $value['total_services'] = $items->pluck('service_id')->unique()->count();
+            $value['leadcount'] = LeadRequest::where('postcode', $first->postcode)->count();
+            $value['service_ids'] = $items->pluck('service_id')->unique()->values();
+
+            $finalRows->push($value);
+        }
+        return $this->sendResponse(__('User Service Data'), $finalRows);
     }
 
     public function editUserLocation(Request $request): JsonResponse
@@ -1233,35 +1257,7 @@ class LeadPreferenceController extends Controller
         return $categories;
     }
 
-    public function getFilterLocations($user_id)
-    {
-        $aRows = UserServiceLocation::where('user_id', $user_id)
-            ->orderBy('postcode')
-            ->get();
-
-        // Group by postcode and miles
-        $grouped = $aRows->groupBy(function ($item) {
-            return $item->postcode . '_' . $item->miles;
-        });
-
-        $finalRows = collect();
-
-        foreach ($grouped as $items) {
-            $first = $items->first(); // representative row
-
-            // Clone the first row's attributes
-            $value = $first->toArray();
-
-            // Add custom fields
-            $value['total_services'] = $items->count();
-            $value['leadcount'] = LeadRequest::where('postcode', $first->postcode)->count();
-            $value['service_ids'] = $items->pluck('service_id')->unique()->values();
-
-            $finalRows->push($value);
-        }
-
-        return $finalRows;
-    }
+  
 
     public function getLeadProfile(Request $request)
     {
