@@ -315,15 +315,8 @@ class UserController extends Controller
             }
             $user->remember_tokens = $token;
 
-            $sendWelcomeEmail = EmailSetting::where('setting_name','Send Welcome Email')->value('setting_value');
-
-            if($sendWelcomeEmail){
-                ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
-            }
-            if($auto_bid == 0){
-                ZohoEmails::sendEncouragementEmail($user->id);
-
-            }
+            ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+            
             // $zohoService =new ZohoServiceLocations();
             // $zohoQa = new ZohoQuestionAnswer();
 
