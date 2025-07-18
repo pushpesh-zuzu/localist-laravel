@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoQuestionAnswer
 {
-    public function integrateServiceQa($user)
+    public function integrateServiceQa($userId,$questionId)
     {
         $access_token = ZohoHelper::getAccessToken();
 
@@ -16,69 +16,41 @@ class ZohoQuestionAnswer
             return null;
         }
 
-        $userId = $user->id;
-        $payload = $this->buildQaPayload($access_token, $userId);
+        $payload = $this->buildQaPayload($access_token,$questionId, $userId);
 
-        $responses = [];
+        if (!$payload) return null;
 
-        foreach ($payload['data'] as $dataBlock) {
-            $zohoServiceId = $this->getZohoBuyerQaId($access_token, $dataBlock['Question_Id']);
+        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+        $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
 
-            $response = $this->sendUserQaToZoho($access_token, [
-                'data' => [$dataBlock]
-            ], $zohoServiceId);
-
-            $responses[] = [
-                'status' => $response->status(),
-                'body'   => $response->json(),
-            ];
-        }
-
-        return $responses;
+        return $response->json();
     }
 
-    protected function buildQaPayload($access_token, $userId)
+    protected function buildQaPayload($access_token,$questionId,$userId)
     {
-        $leadPrefs = LeadPrefrence::with([
-            'question.categories'
-        ])
+        $pref = LeadPrefrence::with(['question.categories'])
         ->where('user_id', $userId)
-        ->get();
+        ->where('id', $questionId)
+        ->first();
 
-        // Group preferences by category (service)
-        $grouped = $leadPrefs->groupBy(fn($pref) => $pref->question->categories->id ?? null);
+        if (!$pref) return null;
 
-        $payloadData = [];
+            $questionText = $pref->question->questions ?? '';
+            $answerText = $pref->answers ?? '';
+            $category = optional($pref->question->categories);
 
-        foreach ($grouped as $categoryId => $preferences) {
-            if (!$categoryId) continue;
+            $formattedQA = "{$questionText}\nAns: {$answerText}";
 
-            $categoryName = optional($preferences->first()->question->categories)->name;
-            $formattedQA = '';
-            $leadPreferenceId = null;
-            $counter = 1;
-
-            foreach ($preferences as $pref) {
-                $questionText = $pref->question->questions ?? '';
-                $answerText = $pref->answers ?? '';
-
-                $formattedQA .= "Q{$counter}. {$questionText}\nAns: {$answerText}\n\n";
-
-                $leadPreferenceId = $pref->id; // or first one if you prefer
-                $counter++;
-            }
-
-            $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
-
-            $payloadData[] = [
-                'Question_Id'            => $leadPreferenceId,
-                'Lead_Questions_Lookup'  => $lookUpId,
-                'Name'                   => $categoryName,
-                'QuestionAnswers'        => trim($formattedQA),
+            $payload = [
+                'data' => [[
+                    'Question_Id'           => $pref->id,
+                    'Lead_Questions_Lookup' => ZohoHelper::getZohoLeadBuyerId($access_token, $userId),
+                    'Name'                  => $category->name,
+                    'QuestionAnswers'       => $formattedQA,
+                ]]
             ];
-        }
 
-        return ['data' => $payloadData];
+        return $payload;
     }
 
    protected function getZohoBuyerQaId($accessToken, $serviceId)

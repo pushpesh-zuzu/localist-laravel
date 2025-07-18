@@ -117,8 +117,7 @@ class SettingController extends Controller
                     'is_autobid' => 1
                 ]);
             }
-            $zoho = new ZohoSocialMedia();
-            $zoho->integrateSocialLinks($user_id);
+
         }
         if($aValues['type'] == 'accreditations'){
 

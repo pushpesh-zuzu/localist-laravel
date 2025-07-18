@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoServiceLocations
 {
-    public function integrateServiceLocations($user)
+    public function integrateServiceLocations($userId,$locationId)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -19,60 +19,40 @@ class ZohoServiceLocations
             return null;
         }
 
-        $services = UserService::with('locations')
-            ->where('user_id', $user->id)
-            ->get();
+        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
 
-        $responses = [];
-        $counter = 0;
-        $services->each(function ($service) use ($access_token, $user, &$responses, &$payloads, &$counter) {
-            foreach ($service->locations as $location) {
-                $counter ++;
-                $locationId = $location->id;
+        $payload = $this->buildServicePayload($access_token, $userId, $locationId, $zohoServiceId);
+        if (!$payload) return null;
 
-                $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
+        $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
 
-                $payload = $this->buildServicePayload($access_token, $user, $locationId, $zohoServiceId,$counter);
-
-                $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
-
-                $responses[] = [
-                'location_id' => $locationId,
-                'zoho_id'     => $zohoServiceId,
-                'status'      => $response->status(),
-                'body'        => $response->json(),
-                ];
-
-
-            }
-        });
-
-       return $responses;
+        return $response->json();
 
     }
 
-    protected function buildServicePayload($access_token, $user, $locationId, $zohoServiceId = null,$counter)
+    protected function buildServicePayload($access_token, $userId, $locationId, $zohoServiceId = null)
     {
         $location = UserServiceLocation::find($locationId);
+        if (!$location) return null;
 
+        $serviceDetails = UserService::with(['user', 'category'])
+            ->find($location->user_service_id);
+        if (!$serviceDetails) return null;
 
-        $serviceDetails = UserService::with('user')
-         ->find($location->user_service_id);
-
-        $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $user->id);
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
         $payload = [
             'data' => [[
-                'Service_Id'      => $location->id,
-                'Service Name'    => $serviceDetails->category->name,
-                'Name'            => $serviceDetails->category->name,
-                'Lead_Buyer_Name1' => $serviceDetails->user->name,
+                'Service_Id'        => $location->id,
+                'Service Name'      => $serviceDetails->category->name ?? '',
+                'Name'              => $serviceDetails->category->name ?? '',
+                'Lead_Buyer_Name1'  => $serviceDetails->user->name ?? '',
                 'Lead_Buyer_Lookup' => $lookUpId,
-                'Miles'           => $location->miles,
-                'Postcode'        => $location->postcode,
-                'Nation_Wide'     => $location->nation_wide == 1 ? 'Yes' : 'No',
-                'City'            => $location->city,
-                'Status'          => $serviceDetails->status == 1 ? 'Added' : 'Rejected'
+                'Miles'             => $location->miles,
+                'Postcode'          => $location->postcode,
+                'Nation_Wide'       => $location->nation_wide == 1 ? 'Yes' : 'No',
+                'City'              => $location->city,
+                'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
             ]]
         ];
 

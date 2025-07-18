@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
+use App\Helpers\Zoho\ZohoServiceLocations;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Log;
 class UserServiceLocation extends Model
 {
     protected $fillable = ['user_id', 'service_id','user_service_id','miles','postcode','nation_wide','city','travel_time','travel_by','type','is_default','status','coordinates'];
@@ -20,9 +21,47 @@ class UserServiceLocation extends Model
 
             return $aLocation;
     }
-    
+
     public function userServices()
     {
         return $this->hasMany(Category::class,'id','service_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+
+    protected static function booted()
+    {
+
+        static::created(function ($location) {
+
+            self::handleZohoIntegration($location);
+        });
+
+        static::updated(function ($location) {
+
+            self::handleZohoIntegration($location);
+        });
+    }
+
+    protected static function handleZohoIntegration($location)
+    {
+        try {
+            $user = $location->user_id; // assuming relation exists
+            $locationId = $location->id;
+            if ($user) {
+                app(ZohoServiceLocations::class)->integrateServiceLocations($user, $locationId);
+
+            }
+        } catch (\Throwable $e) {
+            Log::error('Zoho service location integration failed', [
+                'user_id' => $location->user_id ?? null,
+                'location_id' => $location->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }

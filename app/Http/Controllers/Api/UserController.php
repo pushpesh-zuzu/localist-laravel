@@ -214,6 +214,7 @@ class UserController extends Controller
         if(!empty($user))
         {
             $userdetails = UserDetail::where('user_id',$user->id)->first();
+
             if(empty($userdetails))
             {
                 UserDetail::create([
@@ -275,6 +276,7 @@ class UserController extends Controller
                     }
 
                     UserServiceLocation::createUserServiceLocation($aLocations);
+
                 }
                 //save answer to preferences
                 $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
@@ -307,21 +309,22 @@ class UserController extends Controller
                             'answers' => $cleanedAnswer,
                         ]
                     );
+
                 }
 
             }
             $user->remember_tokens = $token;
 
             $sendWelcomeEmail = EmailSetting::where('setting_name','Send Welcome Email')->value('setting_value');
-            
+
             if($sendWelcomeEmail){
                 ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
             }
-            $zohoService =new ZohoServiceLocations();
-            $zohoQa = new ZohoQuestionAnswer();
+            // $zohoService =new ZohoServiceLocations();
+            // $zohoQa = new ZohoQuestionAnswer();
 
-            $zohoService->integrateServiceLocations($user);
-            $zohoQa->integrateServiceQa($user);
+            // $zohoService->integrateServiceLocations($user);
+            // $zohoQa->integrateServiceQa($user);
 
         }
         return $this->sendResponse('Registration Sucessful.', $user);
