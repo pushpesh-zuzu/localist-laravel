@@ -207,7 +207,8 @@ class User extends Authenticatable
     {
         try {
             if ($user->user_type == 1) {
-                return app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user);
+                return app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+
             } elseif ($user->user_type == 2) {
                 return app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
             }

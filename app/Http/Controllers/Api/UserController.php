@@ -320,6 +320,10 @@ class UserController extends Controller
             if($sendWelcomeEmail){
                 ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
             }
+            if($auto_bid == 0){
+                ZohoEmails::sendEncouragementEmail($user->id);
+
+            }
             // $zohoService =new ZohoServiceLocations();
             // $zohoQa = new ZohoQuestionAnswer();
 

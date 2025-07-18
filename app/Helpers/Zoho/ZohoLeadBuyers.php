@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoLeadBuyers
 {
-    public function integrateZohoLeadBuyers($user)
+    public function integrateZohoLeadBuyers($userId)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -18,8 +18,8 @@ class ZohoLeadBuyers
             return null;
         }
 
-        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $user->id);
-        $payload = $this->buildLeadBuyerPayload($user, $zohoId);
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        $payload = $this->buildLeadBuyerPayload($userId, $zohoId);
         $response = $this->sendToZoho($access_token, $payload, $zohoId);
 
         $responseData = $response->json();
@@ -29,7 +29,7 @@ class ZohoLeadBuyers
             isset($responseData['data'][0]['details']['id'])
         ) {
             $zohoRecordId = $responseData['data'][0]['details']['id'];
-            User::where('id', $user->id)->update([
+            User::where('id', $userId)->update([
                 'zoho_record_id' => $zohoRecordId,
             ]);
         }
@@ -38,8 +38,9 @@ class ZohoLeadBuyers
     }
 
 
-    protected function buildLeadBuyerPayload($user, $zohoId = null)
+    protected function buildLeadBuyerPayload($userId, $zohoId = null)
     {
+        $user = User::with('details','primaryCategory')->findOrFail($userId);
         $payload = [
             'data' => [[
                 'Lead_buyer_auto_id'            => $user->id,
@@ -65,7 +66,7 @@ class ZohoLeadBuyers
                 'total_credit'                  => $user->total_credit,
                 'company_size'                  => $user->company_size,
                 'Social_Media'                  => $user->social_media == 1 ? 'Yes' : 'No',
-                'Auto_Bid'                      => optional($user->userDetail)->is_autobid == 1 ? 'Yes' : 'No',
+                'Auto_Bid'                      => optional($user->details)->is_autobid == 1 ? 'Yes' : 'No',
                 'company_name'                  => $user->company_name,
                 'avg_rating'                    => 'Nil',
                 'company_website'               => $user->company_website,
