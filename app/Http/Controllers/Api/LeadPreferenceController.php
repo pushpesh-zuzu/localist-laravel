@@ -131,7 +131,15 @@ class LeadPreferenceController extends Controller
 
     public function getservices(Request $request){
         $user_id = $request->user_id;
-        $categories = self::getFilterservices($user_id);
+        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
+        $categories = Category::whereIn('id', $serviceId)->get();
+        foreach ($categories as $key => $value) {
+            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
+
+            //for getting primary category in service list
+            $value['primaryService'] =  User::where('id', $user_id)->value('primary_category');
+        }
         return $this->sendResponse(__('Service Data'), $categories);
     }
 
@@ -447,33 +455,6 @@ class LeadPreferenceController extends Controller
         }
 
         return $this->sendResponse($sendmessage, []);
-    }
-    // ------------------------
-
-
-
-    // ------------------------
-
-
-
-    public function getDistance($postcode1, $postcode2)
-    {
-        $encodedPostcode1 = urlencode($postcode1);
-        $encodedPostcode2 = urlencode($postcode2);
-        //$apiKey = "AIzaSyDwAeV7juA_VpzLHqmKXACBtcZxR52TwoE"; //"AIzaSyB29PyyFmCsm_nw8ELavLskRzMPd3XEIac"; // Replace with your API key
-        $apiKey = CustomHelper::setting_value('google_maps_api');
-
-        $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$encodedPostcode1}&destinations={$encodedPostcode2}&key={$apiKey}";
-
-        $response = file_get_contents($url);
-        $data = json_decode($response, true);
-
-        if ($data['status'] == 'OK' && isset($data['rows'][0]['elements'][0]['distance'])) {
-            $distanceText = $data['rows'][0]['elements'][0]['distance']['text']; // e.g., "12.5 km"
-            return floatval(str_replace(['km', ','], '', $distanceText)); // return distance as float (km)
-        } else {
-            return null;
-        }
     }
 
 
@@ -980,19 +961,6 @@ class LeadPreferenceController extends Controller
     }
 
 
-    public function getFilterservices($user_id){
-        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
-        $categories = Category::whereIn('id', $serviceId)->get();
-        foreach ($categories as $key => $value) {
-            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
-            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
-
-            //for getting primary category in service list
-            $value['primaryService'] =  User::where('id', $user_id)->value('primary_category');
-        }
-        return $categories;
-    }
-
   
 
     public function getLeadProfile(Request $request)
@@ -1058,50 +1026,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Profile Data', $users);
     }
 
-    public function getLeadProfile_22_05_2025(Request $request){
-        $aVals = $request->all();
-        $users = User::where('id',$aVals['customer_id'])->first();
-
-        $myip = $request->ip();
-        $visited_date = date("Y-m-d");
-        $visitor = UniqueVisitor::where('seller_id',$aVals['user_id'])
-                                ->where('buyer_id',$aVals['customer_id'])
-                                ->where('ip_address',$myip)
-                                ->where('date',$visited_date)->first();
-        if(empty($visitor)){
-                // $visitor->visitors_count = $visitor->visitors_count +1;
-                // $visitor->save();
-        // }else{
-                $visitor = new UniqueVisitor;
-                $visitor->ip_address = $myip;
-                $visitor->date = $visited_date;
-                $visitor->seller_id = $aVals['user_id'];
-                $visitor->buyer_id = $aVals['customer_id'];
-                $visitor->lead_id = $aVals['lead_id'];
-                $visitor->visitors_count = 1;
-                $visitor->save();
-        }
-
-
-        if ($users) {
-            // Update is_read = 1 for all lead requests of this user (or filter as needed)
-            LeadRequest::where('customer_id', $users->id)->update(['is_read' => 1]);
-
-            // Fetch updated lead request with relationships
-            $leads = LeadRequest::with(['customer', 'category'])
-                                ->where('id', $aVals['lead_id'])
-                                ->where('customer_id', $users->id)
-                                ->first();
-            $leads->purchase_type = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                                       ->where('buyer_id', $aVals['customer_id'])
-                                       ->where('seller_id', $aVals['user_id'])
-                                       ->pluck('purchase_type')
-                                       ->first();
-            // $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
-            $users->leads = $leads;
-        }
-        return $this->sendResponse('Profile Data', $users);
-    }
+    
 
     public function saveForLater(Request $request){
         $aVals = $request->all();
