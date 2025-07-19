@@ -152,15 +152,25 @@ class MyRequestController extends Controller
             $data['service_id'] = $request->service_id;
             $data['city'] = $request->city;
             $data['postcode'] = $request->postcode;
-            $data['questions'] = $request->questions;
+
+            // remove null from question
+            $jQuestions = $request->questions;
+            $decodedQ = json_decode($jQuestions, true);
+            $filtered = array_filter($decodedQ, function($item) {
+                return !is_null($item);
+            });
+            $filtered = array_values($filtered);
+            $data['questions'] = json_encode($filtered);
 
             //make the answers in proper json array so that it can be used for strict macthing
             $arrQuesD = json_decode($request->questions, true);
             $arrQues = [];
             foreach ($arrQuesD as $aq) {
-                $temp['ques'] = $aq['ques'];
-                $temp['ans'] = array_map('trim', explode(',', $aq['ans']));
-                $arrQues[] = $temp;
+                if(!empty($aq)){
+                    $temp['ques'] = $aq['ques'];
+                    $temp['ans'] = array_map('trim', explode(',', $aq['ans']));
+                    $arrQues[] = $temp;
+                }
             }
             $data['arrayed_questions'] = json_encode($arrQues);
 
