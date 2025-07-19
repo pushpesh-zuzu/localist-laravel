@@ -132,6 +132,58 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new coreui.T
       <script> 
         let table = new DataTable('#dataTable');
       </script>
+      <script>
+        $(function () {
+          $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },isLocal: false
+          });
+        });
+      </script>
+      <script>
+        $(document).on('click', '[data-request="add-another"]', function() {
+              $('#popup').show();
+              $('.alert').remove();
+              $(".has-error").removeClass('has-error');
+              $('.error-message').remove();
+              var $formData = new FormData();
+              var $this = $(this);
+              var $target = $this.data('target');
+              var $url = $this.data('url');
+              var $type = $this.data('id');
+              var $count = parseInt($this.attr('data-count'));
+
+              $formData.append('count', $count);
+              $formData.append('type', $type);
+              $.ajax({
+                  url: $url,
+                  type: 'POST',
+                  data: $formData,
+                  dataType: 'JSON',
+                  processData: false,
+                  contentType: false,
+                  success: function($response) {
+                      if ($response.status == true) {
+                          $this.attr('data-count', $count + 1);
+                          $($response.html).hide().appendTo($target).fadeIn(1000);
+                          $('#popup').hide();
+                      } else {
+                          show_validation_error($response.html);
+                          $('#popup').hide();
+                      }
+                  },
+                  error: function(xhr, status, error) {
+                      console.log(xhr.responseText);
+                  }
+              });
+          });
+        $(document).on('click', '[data-request="remove"]', function() {
+              var $this = $(this);
+              var $target = $this.attr('data-target');
+              $($target).hide('slow', function() { $($target).remove(); });
+          });
+      </script>
 
   @stack('scripts')
   </body>

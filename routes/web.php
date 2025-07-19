@@ -89,6 +89,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('seller-profile-services/{userid}', [SellerController::class, 'sellerProfileServices'])->name('seller.sellerProfileServices');
     Route::get('suggested-questions/{userid}', [SellerController::class, 'suggestedQuestions'])->name('seller.suggestedQuestions');
     Route::resource('servicequestion', ServiceQuestionsController::class);
+    Route::POST('servicequestion/add-more-option',[ServiceQuestionsController::class, 'addMoreOption']);
     Route::resource('profilequestion', ProfileQuesController::class);
     Route::resource('coupon', CouponController::class);
 

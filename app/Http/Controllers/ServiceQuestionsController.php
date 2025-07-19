@@ -47,10 +47,12 @@ class ServiceQuestionsController extends Controller
      */
     public function store(Request $request)
     {
+        echo "<pre>";print_r($request->all());
         $validator = Validator::make($request->all(), [
             'category' => 'required|integer|exists:categories,id',
+            'question_no' => 'required',
             'questions' => 'required',
-            'answer' => 'required',
+            'ques_opt' => 'required',
             'option_type' => 'required'
             ], [
             'service_id.exists' => 'Provided service id does not exists.',
@@ -62,62 +64,33 @@ class ServiceQuestionsController extends Controller
         }
 
         $data['category'] = $request->category;
+        $data['question_no'] = $request->question_no;
         $data['questions'] = $request->questions;
-        $answer = "";
-        if (!empty($request->answer)) {
-            // Remove extra spaces around commas and entries
-            $cleanedAnswer = preg_replace('/\s*,\s*/', ',', $request->answer);
-    
-            // Remove trailing comma if it exists
-            $cleanedAnswer = rtrim($cleanedAnswer, ',');
-    
-            // Filter out any empty values after splitting by comma
-            $answerArray = array_filter(explode(',', $cleanedAnswer), function($value) {
-                return trim($value) !== ''; // Ensure no empty entries
-            });
-    
-            // Rebuild the answer string
-            $answer = implode(',', $answerArray);
+        $answer = [];
+        $ques_opt = $request->ques_opt;
+        $next_ques = $request->next_ques;
+        foreach($ques_opt as $i => $opt){
+            $temp['option'] = $opt;
+            $temp['next_question'] = $next_ques[$i];
+            array_push($answer, $temp);
         }
-        $data['answer'] = $request->answer;
+
+        
+        $data['answer'] = json_encode($answer);
         $data['option_type'] = $request->option_type;
+        print_r($data);
+        // exit;
         $id = ServiceQuestion::insertGetId($data);
         return redirect()->route('servicequestion.index')->with('success', 'Questions created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(ServiceQuestion $leads)
-    {
-        return $leads;
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $aRow = ServiceQuestion::where('id',$id)->first();
-        $categories = Category::where('status',1)->get();
-        return view('servicequestion.create',get_defined_vars());
-    }
 
-    // Update the specified Leads in storage
-    public function update(Request $request, string $id)
-    {
-        // dd($request->all());
-       
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        ServiceQuestion::where('id',$id)->delete();
-        return redirect()->route('servicequestion.index')
-                         ->with('success', 'Question deleted successfully.');
+    public function addMoreOption(Request $request){
+        return response()->json([
+            'status'    => true,
+            'html'      => view("servicequestion.add-more-option",['type'=>$request->type,'count'=>$request->count])->render()
+        ]);
     }
 
     

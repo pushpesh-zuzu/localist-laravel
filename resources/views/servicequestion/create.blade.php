@@ -39,6 +39,17 @@
           </div>
           <div class="row mb-3">
             <div class="col-md-12">
+              <label class="form-label" for="question_no">{{ __('Question Number') }}</label>
+              <input type="number" step="1" id="question_no" class="form-control" name="question_no" class="form-control{{ $errors->has('question_no') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->question_no : old('question_no') }}" required placeholder="Question Number">
+              @if ($errors->has('question_no'))
+              <span class="invalid-feedback d-block" role="alert">
+                <strong>{{ $errors->first('question_no') }}</strong>
+              </span>
+              @endif
+            </div>            
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-12">
               <label class="form-label" for="name">{{ __('Questions') }}</label>
               <input type="text" id="questions" class="form-control" name="questions" class="form-control{{ $errors->has('questions') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->questions : old('questions') }}" required placeholder="Questions">
               @if ($errors->has('questions'))
@@ -46,14 +57,23 @@
                 <strong>{{ $errors->first('questions') }}</strong>
               </span>
               @endif
-            </div>
-            
+            </div>            
           </div>
+          <h6>Options</h6>
           <div class="row mb-3">
             <div class="col-md-12">
-              <label class="form-label" for="answer">{{ __('Answer') }}</label>
-              <textarea class="form-control" id="answer" rows="3" name="answer" class="form-control{{ $errors->has('answer') ? ' is-invalid' : '' }}" 
-              placeholder="Answer">{{ $aRow ? $aRow->answer : old('answer') }}</textarea>
+              <div class="row">
+                <div class="col-md-8 d-flex align-items-center gap-2">
+                    {{-- <strong>1. </strong> --}}
+                    <input type="text" class="form-control" placeholder="Question Option" name="ques_opt[]" id="ques_opt" required>
+                </div>
+                <div class="col-md-2 d-flex align-items-center gap-2">
+                    <input type="text" class="form-control" placeholder="Next Question Number" name="next_ques[]" id="next_ques" pattern="^\d+$|^last$" title="Enter a number or the word 'last'" required>
+                </div>
+              </div>
+              <div id="consDiv" style="margin-top:10px;"></div>              
+              <hr />
+              <button  data-url="{{url('servicequestion/add-more-option')}}"   data-request="add-another" data-id="ques_opt" data-target="#consDiv" data-count="1" type="button" class="btn btn-info">Add More Option</button>
             </div>
           </div>
 

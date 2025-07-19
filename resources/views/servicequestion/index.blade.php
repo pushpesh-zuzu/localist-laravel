@@ -13,6 +13,7 @@
             <tr>
               <th scope="col" width="20px;">#</th>
               <th scope="col">Category</th>
+              <th scope="col">Que. No.</th>
               <th scope="col">Questions</th>
               <th scope="col">Sel. Type</th>
               <th scope="col">Status</th>
@@ -25,6 +26,7 @@
             <tr>
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->categories->name ?? '' }}</td>
+              <td>{{ $aRow->question_no ?? '' }}</td>
               <td>
                     <span class="fw-bold">Ques:</span> {{$aRow->questions ?? '' }}<br/>
                     <span class="fw-bold">Soln:</span> {{$aRow->answer ?? ''}}</br/>
