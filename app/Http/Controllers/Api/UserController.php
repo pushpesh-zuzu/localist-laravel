@@ -283,7 +283,15 @@ class UserController extends Controller
 
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
-                    $defaultOptions = $question->answer ?? '';
+                    $arrQues = json_decode( $question->answer, true);
+                    $catAns = "";
+                    foreach($arrQues as $q){
+                        if(!empty($catAns)){
+                            $catAns .= ',';
+                        }
+                        $catAns .= $q['option'];
+                    }
+                    $defaultOptions = $catAns ?? '';
 
                     // Check if user already has a saved answer for this question
                     $existingAnswer = LeadPrefrence::where('question_id', $question->id)
