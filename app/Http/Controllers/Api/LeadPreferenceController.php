@@ -463,11 +463,12 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('User Service Data'), $aRows);
     }
 
-    public function getleadpreferences(Request $request): JsonResponse
+    public function getleadpreferences(Request $request)
     {
         $user_id = $request->user_id;
         $service_id = $request->service_id;
         $leadPreference = ServiceQuestion::where('category', $service_id)->get();
+        // print_r($leadPreference->toArray());
         if(count($leadPreference)>0){
             $questions = [];
             foreach($leadPreference as $value){
@@ -475,10 +476,30 @@ class LeadPreferenceController extends Controller
                                                     ->where('user_id', $user_id)
                                                     ->pluck('answers')
                                                     ->first();
+                $catArrAns = json_decode($value['answer'], true);
+                $catAns = "";
+                foreach($catArrAns as $a){
+                    if(!empty($catAns)){
+                        $catAns .= ',';
+                    }
+                    $catAns .= $a['option'];
+                }
+                $value['answer'] = $catAns;
             }
             $leadPreferences = $leadPreference;
         }else{
             $leadPreferences = ServiceQuestion::where('category', $service_id)->get();
+            foreach($leadPreference as $value){
+                $catArrAns = json_decode($value['answer'], true);
+                $catAns = "";
+                foreach($catArrAns as $a){
+                    if(!empty($catAns)){
+                        $catAns .= ',';
+                    }
+                    $catAns .= $a['option'];
+                }
+                $value['answer'] = $catAns;
+            }
 
         }
         return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);
@@ -532,6 +553,8 @@ class LeadPreferenceController extends Controller
         $user_id = $request->user_id;
         $serviceid = $request->service_id;
         UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         return $this->sendResponse(__('Service deleted Sucessfully'));
     }
 
@@ -823,7 +846,15 @@ class LeadPreferenceController extends Controller
                 $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
-                    $defaultOptions = $question->answer ?? '';
+                    $arrQues = json_decode( $question->answer, true);
+                    $catAns = "";
+                    foreach($arrQues as $q){
+                        if(!empty($catAns)){
+                            $catAns .= ',';
+                        }
+                        $catAns .= $q['option'];
+                    }
+                    $defaultOptions = $catAns ?? '';
 
                     // Check if user already has a saved answer for this question
                     $existingAnswer = LeadPrefrence::where('question_id', $question->id)
