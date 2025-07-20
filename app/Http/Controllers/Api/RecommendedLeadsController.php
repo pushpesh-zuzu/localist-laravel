@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use App\Helpers\CustomHelper;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\LeadService;
 
 class RecommendedLeadsController extends Controller
 {
@@ -144,7 +144,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
 
-    public function getManualLeads(Request $request){
+    public function getManualLeads(Request $request, LeadService $leadService){
 
         $lead = LeadRequest::find($request->lead_id);
 
@@ -153,7 +153,7 @@ class RecommendedLeadsController extends Controller
         $responseTimeFilter = $request->responseTimeFilter ?? [];
         $ratingFilter = $request->rating ?? [];
 
-        $result = $this->getAllSellers($lead);
+        $result = $leadService->getAllSellers($lead);
 
         if(!empty($result['response']['sellers'])){
             // for weightage sorting
@@ -180,7 +180,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse('Your Matches List', [$result['response']]);
     }
 
-    public function closeLeads(Request $request){
+    public function closeLeads(Request $request, LeadService $leadService){
         // unpause auto bid after 7 days
         $this->unpauseAutobidAfter7Days();
         //close leads after 14 days
@@ -199,7 +199,7 @@ class RecommendedLeadsController extends Controller
         foreach($leads as $lead){
             $sellerInserted = 0;
 
-            $sellers = $this->getAllSellers($lead);
+            $sellers = $leadService->getAllSellers($lead);
             if(!empty($sellers['response']['sellers'])){
                 foreach($sellers['response']['sellers'] as $s){
                     $leadCreatedAt = Carbon::parse($lead->created_at);
@@ -223,7 +223,7 @@ class RecommendedLeadsController extends Controller
                                 $request['distance'] = $s->distance;
                                 $request['seller_id'] = $s->id;
                                 $request['user_id'] = $lead->customer_id;
-                                $this->addManualBid($request);
+                                $this->addManualBid($request, $leadService);
                             }
                         }
                     }
@@ -280,266 +280,7 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    private function getAllSellers($lead, $filters = []){
-        // echo "<pre>";print_r($lead->toArray());exit;
-
-        $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
-        $serviceId = $lead->service_id;
-        $leadCreditScore = $lead->credit_score;
-        $refPostcode = $lead->postcode;
-        $customerId = $lead->customer_id;
-        $question = $lead->arrayed_questions;
-        $serviceName = Category::find($serviceId)->name ?? '';
-
-        if (!is_array(json_decode($question, true))) {
-            return $this->sendError('Invalid or missing lead questions', 404);
-        }
-
-        // Step 1: Get lat/lng of reference postcode
-        $ref = DB::table('postcodes')
-            ->where('postcode', $refPostcode)
-            ->select('latitude', 'longitude')
-            ->first();
-
-        if (!$ref) {
-            throw new \Exception("Reference postcode not found: $refPostcode");
-        }
-
-        $refLat = $ref->latitude;
-        $refLng = $ref->longitude;
-
-        // users who have contacted this lead
-        $repliesUsers = RecommendedLead::where('lead_id', $lead->id)
-            ->where('service_id', $serviceId)
-            ->pluck('seller_id')->toArray();
-
-        // Step 2: Preselect user_service_locations using simplified logic
-        $rows = DB::table('user_service_locations as usl')
-            ->join('users', function ($join) use ($repliesUsers)  {
-                $join->on('users.id', '=', 'usl.user_id')
-                    ->where('users.form_status', 1)
-                    ->whereNotIn('users.id', $repliesUsers);
-
-            })
-            ->join('user_details', 'user_details.user_id', '=', 'users.id')
-            ->join('postcodes as p', 'p.postcode', '=', 'usl.postcode')
-            ->leftJoin('user_response_times as urt', 'urt.seller_id', '=', 'usl.user_id')
-            ->where('users.id' ,'<>', $lead->customer_id) //do not include self as seller
-            ->where('usl.service_id', $serviceId)
-            ->where('users.total_credit', '>=', (int) $leadCreditScore)
-            ->select(
-                'users.id as id',
-                'users.name',
-                'users.profile_image',
-                'users.total_credit',
-                'users.avg_rating',
-                'users.form_status',
-                'user_details.is_autobid',
-                'user_details.autobid_pause',
-                'usl.user_id',
-                'usl.service_id',
-                'usl.miles',
-                'usl.nation_wide',
-                'usl.postcode',
-                'urt.average as response_time',
-                'p.latitude as lat',
-                'p.longitude as lng',
-                'users.created_at as user_created_time'
-            );
-
-
-        if(!empty($filters['rating'])){
-            if($filters['rating'] === 'no_rating'){
-                $rows = $rows->where('users.avg_rating', 0);
-
-            }else if($filters['rating'] === 5){
-                $rows = $rows->where('users.avg_rating', '=', 5);
-            }else{
-                $rows = $rows->where('users.avg_rating', '>=', $filters['rating']);
-            }
-        }
-
-        //response_time filter
-        if(!empty($filters['response_time'])){
-            $timeThresholds = [
-                'Responds within 10 mins' => 10,
-                'Responds within 1 hour' => 60,
-                'Responds within 6 hours' => 360,
-                'Responds within 24 hours' => 1440,
-            ];
-            $maxAllowed = $timeThresholds[$filters['response_time']] ?? null;
-
-            $rows = $rows->where('urt.average','<>', null)
-                ->where('urt.average', '<=', $maxAllowed);
-        }
-
-        $rows = $rows->get();
-
-
-
-        // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
-        $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
-            ->map(function ($items) {
-                $nationwide = $items->firstWhere('nation_wide', 1);
-                return $nationwide ?: $items->sortByDesc('miles')->first();
-            })
-            ->map(function ($r) use($serviceName, $leadCreditScore){
-                $r->credit_score = $leadCreditScore;
-                $r->service_name= $serviceName;
-                $rpTime = !empty($r->response_time) ? $r->response_time : 15;
-                $r->response_time = $rpTime;
-                $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
-                return $r;
-            });
-
-
-        // Step 4: Filter by distance using Haversine Formula
-        $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
-            $distance = 3958.8 * acos(
-                cos(deg2rad($refLat)) * cos(deg2rad($row->lat)) * cos(deg2rad($row->lng) - deg2rad($refLng)) +
-                sin(deg2rad($refLat)) * sin(deg2rad($row->lat))
-            );
-
-            $row->distance = (double) round($distance, 2); // add distance field
-
-            return $row->nation_wide == 1
-                || $row->postcode == $refPostcode
-                || $row->miles >= $distance;
-        });
-
-
-        $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)->sortBy('distance');
-
-        if(!empty($filters['distance_order'])){
-            if($filters['distance_order'] === 'farthest to nearest'){
-                $final = $final->sortByDesc('distance');
-            }
-        }
-
-        // print_r($final);
-        // exit;
-
-        $seen = [];
-
-        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
-            // Check if this seller ID is already seen
-            if (isset($seen[$seller->id])) {
-                // Keep the one with lower distance
-                if ($seller->distance < $seen[$seller->id]->distance) {
-                    $seen[$seller->id] = $seller;
-                }
-            } else {
-                // First time seeing this seller
-                $seen[$seller->id] = $seller;
-            }
-
-            // Always return false, final result is built in pipe
-            return false;
-        })->pipe(function () use (&$seen) {
-            // Reindex to get a collection of just the lowest-distance sellers
-            return collect(array_values($seen));
-        });
-
-
-
-        return [
-            'empty' => empty($finalUniqueSellers) ? true : false,
-            'response' => [
-                'service_name' => $serviceName,
-                'sellers' => $finalUniqueSellers,
-                'displayCount' => $recommendedCount ?? 0,
-                'baseurl' => url('/') . Storage::url('app/public/images/users'),
-                'w80' => (int) ($recommendedCount * 0.8)
-            ]
-        ];
-    }
-    private function usersAccordingToPrefs($arrayed_questions, $filteredUsers, $serviceId){
-        $arrayedQuestions = json_decode($arrayed_questions, true);
-
-        $userIds = $filteredUsers->pluck('user_id')->all();
-
-        // Load preferences of filtered users
-        $rawAnswers = LeadPrefrence::with(['question'])
-            ->whereIn('user_id', $userIds)
-            ->where('service_id', $serviceId)
-            ->get();
-        $prefs = [];
-        foreach ($rawAnswers as $ra) {
-            $temp['user_id'] = $ra->user_id;
-            $temp['service_id'] = $ra->service_id;
-            $temp['question'] = $ra->question->questions;
-            $temp['answers'] = array_map('trim', explode(',', $ra->answers));
-            $prefs[] = $temp;
-        }
-
-        // Group by user_id
-        $groupedPrefs = collect($prefs)->groupBy('user_id')->toArray();
-
-        // Run match logic
-        $matchedUserIds = $this->filterMatchingUsers($arrayedQuestions, $groupedPrefs);
-
-        // Final filtered result
-        $final = $filteredUsers->filter(function ($row) use ($matchedUserIds) {
-            return in_array($row->user_id, $matchedUserIds);
-        });
-
-        return $final;
-    }
-
-    public function filterMatchingUsers(array $arrayedQuestions, array $groupedPrefs): array
-    {
-        $matchingUserIds = [];
-
-        foreach ($groupedPrefs as $userId => $prefs) {
-            $prefMap = [];
-
-            foreach ($prefs as $pref) {
-                $question = is_object($pref) ? $pref->question : ($pref['question'] ?? null);
-                $answers = is_object($pref) ? $pref->answers : ($pref['answers'] ?? []);
-
-                if (is_string($question)) {
-                    $normalizedQ = $this->normalizeQuestion($question);
-                    $prefMap[$normalizedQ] = array_map(function ($a) {
-                        return strtolower(trim($a));
-                    }, $answers);
-                }
-            }
-
-            $matchedAll = true;
-
-            foreach ($arrayedQuestions as $q) {
-                $question = $this->normalizeQuestion($q['ques']);
-                $leadAnswers = array_map('strtolower', array_map('trim', $q['ans']));
-                $userAnswers = $prefMap[$question] ?? [];
-
-                // Log for debugging
-                // logger("User ID: $userId | Question: {$q['ques']} => $question");
-                // logger("Lead Answers: ", $leadAnswers);
-                // logger("User Prefs: ", $userAnswers);
-
-                // Case 4: match if user pref contains "other"
-                if (in_array('Something else (please describe)', $userAnswers)) {
-                    continue;
-                }
-
-                // Case 3: exclude if no overlap
-                if (empty(array_intersect($leadAnswers, $userAnswers))) {
-                    // logger("❌ Mismatch on: {$q['ques']}");
-                    // logger("Lead Answers: ", $leadAnswers);
-                    // logger("User Prefs: ", $userAnswers);
-                    $matchedAll = false;
-                    break;
-                }
-            }
-
-            if ($matchedAll) {
-                // logger("✅ Matched user: $userId");
-                $matchingUserIds[] = $userId;
-            }
-        }
-
-        return $matchingUserIds;
-    }
+    
 
     private function normalizeQuestion(string $question): string{
         return strtolower(trim(preg_replace('/[^a-zA-Z0-9 ]/', '', $question)));
@@ -547,7 +288,7 @@ class RecommendedLeadsController extends Controller
 
 
 
-    public function getRatingFilter(Request $request)
+    public function getRatingFilter(Request $request, LeadService $leadService)
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
@@ -556,7 +297,7 @@ class RecommendedLeadsController extends Controller
 
         for ($i = 1; $i <= 5; $i++) {
             // Simulate rating filter exactly like the `ratingFilter` method
-            $result = $this->getAllSellers($lead, ['rating' => $i]);
+            $result = $leadService->getAllSellers($lead, ['rating' => $i]);
 
             $ratings[] = [
                 'label' => $i == 5 ? 'only' : '& up',
@@ -566,7 +307,7 @@ class RecommendedLeadsController extends Controller
         }
 
          // Handle sellers with no rating (avg_rating is null)
-        $resultNoRating = $this->getAllSellers($lead, ['rating' => 'no_rating']);
+        $resultNoRating = $leadService->getAllSellers($lead, ['rating' => 'no_rating']);
 
         $ratings[] = [
             'label' => 'No rating',
@@ -577,7 +318,7 @@ class RecommendedLeadsController extends Controller
         return $this->sendResponse(__('Filtered Data by Rating'), [$ratings]);
     }
 
-    public function ratingFilter(Request $request)
+    public function ratingFilter(Request $request, LeadService $leadService)
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
@@ -593,32 +334,32 @@ class RecommendedLeadsController extends Controller
         $selectedRating = is_numeric($rating) ? (int) $rating : $rating;
 
         // Pass to your filtering logic
-        $result = $this->getAllSellers($lead, ['rating' => $selectedRating]);
+        $result = $leadService->getAllSellers($lead, ['rating' => $selectedRating]);
         $result['response']['sellers'] = $result['response']['sellers']->values()->toArray();
 
         return $this->sendResponse(__('Filtered Data by Rating'), [$result['response']]);
     }
 
-    public function sortByLocation(Request $request)
+    public function sortByLocation(Request $request, LeadService $leadService)
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
 
         $distanceOrderRaw = $request->distance_order;
 
-        $result = $this->getAllSellers($lead, [ 'distance_order' => $distanceOrderRaw]);
+        $result = $leadService->getAllSellers($lead, [ 'distance_order' => $distanceOrderRaw]);
         $result['response']['sellers'] = $result['response']['sellers']->values()->toArray();
 
         return $this->sendResponse(__('Sorting by distance'), [$result['response']]);
     }
 
-    public function responseTimeFilter(Request $request)
+    public function responseTimeFilter(Request $request, LeadService $leadService)
     {
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
 
         $responseTimeFilter = $request->response_time; // Expected: '10_min', '1_hour', '6_hour', '24_hour'
-        $result = $this->getAllSellers($lead, ['response_time' => $responseTimeFilter]);
+        $result = $leadService->getAllSellers($lead, ['response_time' => $responseTimeFilter]);
         $result['response']['sellers'] = $result['response']['sellers']->values()->toArray();
 
         return $this->sendResponse(__('Filtered Data by Response Time'), [$result['response']]);
