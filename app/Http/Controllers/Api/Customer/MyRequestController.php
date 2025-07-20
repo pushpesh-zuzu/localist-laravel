@@ -21,8 +21,7 @@ use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
-use App\Http\Controllers\Api\LeadPreferenceController;
-
+use App\Services\LeadService;
 
 class MyRequestController extends Controller
 {
@@ -55,7 +54,7 @@ class MyRequestController extends Controller
 
     }
 
-    public function createNewRequest(Request $request){
+    public function createNewRequest(Request $request, LeadService $leadService){
 
 
         if($request->form_status == "1"){
@@ -210,16 +209,16 @@ class MyRequestController extends Controller
             // $zohoService->integrateUser('lead',null,$leadsDetails);
 
             //create Notification on lead creation
-            $leadPref = new LeadPreferenceController();
+            
             User::where('form_status', 1)
                 ->whereIn('user_type', [1, 3])
                 ->select('id')
-                ->chunk(1000, function ($sellersChunk) use ($leadPref) {
+                ->chunk(1000, function ($sellersChunk) use ($leadService) {
                     foreach ($sellersChunk as $seller) {
-                        $baseQuery = $leadPref->getBaseQuery($seller->id);
+                        $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
                         $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
-                        $allLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+                        $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
                         foreach ($allLeads as $lead) {
                             CustomHelper::logNotifications(
