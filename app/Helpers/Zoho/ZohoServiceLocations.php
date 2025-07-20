@@ -72,7 +72,7 @@ class ZohoServiceLocations
     {
         $response = Http::withToken($accessToken)
             ->get('https://www.zohoapis.eu/crm/v2/Services_Locations/search', [
-                'criteria' => "(Location Id:equals:{$serviceId})"
+                'criteria' => "(Location_Id:equals:{$serviceId})"
             ]);
 
         $data = $response->json();
@@ -93,6 +93,36 @@ class ZohoServiceLocations
         $method = $zohoServiceId ? 'put' : 'post';
 
         return  Http::withToken($accessToken)->$method($url, $payload);
+    }
+
+    public function deleteBuyerServiceLocation($serviceId)
+    {
+
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
+
+        if (!$zohoServiceId) {
+            Log::warning("Zoho Service delete failed: No Zoho ID found for service_id {$serviceId}");
+            return null;
+        }
+
+        $response = Http::withToken($access_token)
+            ->delete("https://www.zohoapis.eu/crm/v2/Services_Locations/{$zohoServiceId}");
+        // if ($response->successful()) {
+        //     Log::info("Zoho Service deleted for service_id {$serviceId}");
+        // } else {
+        //     Log::error("Zoho Service delete failed", [
+        //         'service_id' => $serviceId,
+        //         'response' => $response->json(),
+        //     ]);
+        // }
+
+        return $response->json();
     }
 
 

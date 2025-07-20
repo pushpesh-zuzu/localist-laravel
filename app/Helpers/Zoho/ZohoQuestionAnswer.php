@@ -96,12 +96,12 @@ class ZohoQuestionAnswer
 
     public function deleteServiceQa($questionId)
     {
+
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
             return null;
         }
-
         $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
 
         if (!$zohoServiceId) {
@@ -123,5 +123,35 @@ class ZohoQuestionAnswer
 
         return $response->json();
     }
+
+    public function deleteBuyerQa($serviceId)
+    {
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $serviceId);
+        if (!$zohoServiceId) {
+            Log::warning("Zoho Service delete failed: No Zoho ID found for service_id {$serviceId}");
+            return null;
+        }
+       dd($zohoServiceId);
+        $response = Http::withToken($access_token)
+            ->delete("https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}");
+
+        if ($response->successful()) {
+            Log::info("Zoho Service deleted for service_id {$serviceId}");
+        } else {
+            Log::error("Zoho Service delete failed", [
+                'service_id' => $serviceId,
+                'response' => $response->json(),
+            ]);
+        }
+
+        return $response->json();
+    }
+
 
 }

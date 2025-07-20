@@ -47,7 +47,7 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        
+
         //filters
         $filters['searchName'] = $aVals['name'] ?? null;
         $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
@@ -271,11 +271,21 @@ class LeadPreferenceController extends Controller
         $user_id = $request->user_id;
         $serviceid = $request->service_id;
         $user_service_id = UserService::where('user_id',$user_id)->where('service_id',$serviceid)->pluck('id')->first();
-
+        $user_service_locations = UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->pluck('id');
+        $user_lead_prefrences = LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->pluck('id');
         UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         app(ZohoService::class)->deleteBuyerService($user_service_id);
+        foreach ($user_service_locations as $location_id) {
+            app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($location_id);
+
+        }
+        foreach ($user_lead_prefrences as $user_lead_prefrence) {
+           app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrence);
+
+        }
+
 
         return $this->sendResponse(__('Service deleted Sucessfully'));
     }
@@ -1053,7 +1063,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Profile Data', $users);
     }
 
-    
+
 
     public function saveForLater(Request $request){
         $aVals = $request->all();
