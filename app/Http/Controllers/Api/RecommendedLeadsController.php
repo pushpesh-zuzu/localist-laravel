@@ -280,14 +280,6 @@ class RecommendedLeadsController extends Controller
         }
     }
 
-    
-
-    private function normalizeQuestion(string $question): string{
-        return strtolower(trim(preg_replace('/[^a-zA-Z0-9 ]/', '', $question)));
-    }
-
-
-
     public function getRatingFilter(Request $request, LeadService $leadService)
     {
         $lead = LeadRequest::find($request->lead_id);
