@@ -34,17 +34,26 @@ class ZohoQuestionAnswer
         ->first();
 
         if (!$pref) return null;
-            $expectedAnswers = array_map('trim', explode(',', $pref->question->answer ?? ''));
-            $userAnswers     = array_map('trim', explode(',', $pref->answers ?? ''));
 
+           $expectedArray = json_decode($pref->question->answer ?? '', true);
+
+            $expectedAnswers = [];
+            if (is_array($expectedArray)) {
+                foreach ($expectedArray as $item) {
+                    if (isset($item['option'])) {
+                        $expectedAnswers[] = trim($item['option']);
+                    }
+                }
+            }
+
+            $userAnswers = array_map('trim', explode(',', $pref->answers ?? ''));
 
             $commonAnswers = array_intersect($expectedAnswers, $userAnswers);
 
 
-
             $questionText = $pref->question->questions ?? '';
-            //$answerText = $pref->answers ?? '';
-             $answerText = implode(', ', $commonAnswers);
+           // $answerText = implode(', ', $commonAnswers);
+            $answerText = $pref->answers;
             $category = optional($pref->question->categories);
 
             $formattedQA = "{$questionText}\nAns: {$answerText}";
@@ -58,7 +67,7 @@ class ZohoQuestionAnswer
                 ]]
             ];
 
-        return $payload;
+            return $payload;
     }
 
    protected function getZohoBuyerQaId($accessToken, $serviceId)

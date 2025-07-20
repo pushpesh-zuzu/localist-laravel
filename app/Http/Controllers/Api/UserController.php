@@ -575,11 +575,14 @@ class UserController extends Controller
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
-        $user = User::where('id',$request->user_id)->update([
+        $userId = $request->user_id;
+        $user = User::where('id',$userId)->update([
             'email'=>$request->email,
             'phone'=>$request->phone,
             'sms_notification_no'=>$request->sms_notification_no,
         ]);
+
+        app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
         return $this->sendResponse(__('User Profile updated'));
     }
 
