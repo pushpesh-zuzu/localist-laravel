@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Helpers\Zoho\ZohoService as ZohoZohoService;
+use App\Helpers\Zoho\ZohoServiceLocations;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class UserService extends Model
 {
@@ -44,6 +47,55 @@ class UserService extends Model
     public function locations()
     {
         return $this->hasMany(UserServiceLocation::class, 'user_service_id');
+    }
+
+    protected static function booted()
+    {
+
+
+        static::created(function ($service) {
+
+            self::handleZohoIntegration($service);
+        });
+
+        static::updated(function ($service) {
+
+            self::handleZohoIntegration($service);
+        });
+
+        static::deleted(function ($service) {
+            self::handleZohoDeletion($service);
+        });
+    }
+
+    protected static function handleZohoIntegration($service)
+    {
+        try {
+            $user = $service->user_id; // assuming relation exists
+            $serviceId = $service->id;
+            if ($user) {
+                app(ZohoZohoService::class)->integrateService($user, $serviceId);
+
+            }
+        } catch (\Throwable $e) {
+            Log::error('Zoho service  integration failed', [
+                'user_id' => $location->user_id ?? null,
+                'service_id' => $service->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    protected static function handleZohoDeletion($service)
+    {
+        try {
+            app(ZohoZohoService::class)->deleteBuyerService($service->id);
+        } catch (\Throwable $e) {
+            Log::error('Zoho Service deletion failed', [
+                'service_id' => $service->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
 }

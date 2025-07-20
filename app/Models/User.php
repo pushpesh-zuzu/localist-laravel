@@ -207,6 +207,7 @@ class User extends Authenticatable
     {
         try {
             if ($user->user_type == 1) {
+
                 return app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
 
             } elseif ($user->user_type == 2) {
@@ -219,5 +220,11 @@ class User extends Authenticatable
             ]);
         }
     }
+
+    public function emailLogs()
+    {
+        return $this->hasMany(EmailLog::class, 'user_id', 'id');
+    }
+
 
 }

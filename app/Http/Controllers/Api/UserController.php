@@ -207,6 +207,7 @@ class UserController extends Controller
         $aVals['total_credit'] = 0;
         $user = User::create($aVals);
 
+
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
 
@@ -317,10 +318,6 @@ class UserController extends Controller
 
             ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
 
-            if($auto_bid == 0){
-                ZohoEmails::sendEncouragementEmail($user->id);
-
-            }
 
             // $zohoService =new ZohoServiceLocations();
             // $zohoQa = new ZohoQuestionAnswer();

@@ -27,7 +27,6 @@ class ZohoFinance
         $response = $this->sendFinanceToZoho($accessToken, $payload, $zohoFinanceId);
 
 
-
         return $response->json();
 
 
@@ -48,11 +47,12 @@ class ZohoFinance
                 break;
         }
         $lookUpId =ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        $userName=User::find($userId)->name;
         return [
             'data' => [[
                 'Transaction_Id1' => $log->id,
                 'Lead_Finance_Lookup' =>$lookUpId,
-                'Name'           => ''.$log->id,
+                'Name'           => $userName,
                 'Price'           => $log->price,
                 'Credits'         => $log->credits,
                 'Transaction_Date' => \Carbon\Carbon::parse($log->purchase_Date)->toDateString(),

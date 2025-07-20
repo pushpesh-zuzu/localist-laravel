@@ -20,6 +20,7 @@ use App\Models\LeadRequest;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
 use App\Events\NewNotificationEvent;
+use App\Helpers\Zoho\ZohoEmails;
 
 class NotificationController extends Controller
 {

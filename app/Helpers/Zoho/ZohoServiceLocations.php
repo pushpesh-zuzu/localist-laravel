@@ -43,7 +43,7 @@ class ZohoServiceLocations
 
         $payload = [
             'data' => [[
-                'Service_Id'        => $location->id,
+                'Location_Id'        => $location->id,
                 'Service Name'      => $serviceDetails->category->name ?? '',
                 'Name'              => $serviceDetails->category->name ?? '',
                 'Lead_Buyer_Name1'  => $serviceDetails->user->name ?? '',
@@ -72,7 +72,7 @@ class ZohoServiceLocations
     {
         $response = Http::withToken($accessToken)
             ->get('https://www.zohoapis.eu/crm/v2/Services_Locations/search', [
-                'criteria' => "(Service Id:equals:{$serviceId})"
+                'criteria' => "(Location Id:equals:{$serviceId})"
             ]);
 
         $data = $response->json();

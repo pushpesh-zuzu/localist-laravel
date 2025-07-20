@@ -17,26 +17,34 @@ class ZohoQuestionAnswer
         }
 
         $payload = $this->buildQaPayload($access_token,$questionId, $userId);
-
         if (!$payload) return null;
 
         $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
-        $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
 
+        $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
         return $response->json();
     }
 
     protected function buildQaPayload($access_token,$questionId,$userId)
     {
+
         $pref = LeadPrefrence::with(['question.categories'])
         ->where('user_id', $userId)
         ->where('id', $questionId)
         ->first();
 
         if (!$pref) return null;
+            $expectedAnswers = array_map('trim', explode(',', $pref->question->answer ?? ''));
+            $userAnswers     = array_map('trim', explode(',', $pref->answers ?? ''));
+
+
+            $commonAnswers = array_intersect($expectedAnswers, $userAnswers);
+
+
 
             $questionText = $pref->question->questions ?? '';
-            $answerText = $pref->answers ?? '';
+            //$answerText = $pref->answers ?? '';
+             $answerText = implode(', ', $commonAnswers);
             $category = optional($pref->question->categories);
 
             $formattedQA = "{$questionText}\nAns: {$answerText}";
@@ -57,7 +65,7 @@ class ZohoQuestionAnswer
     {
         $response = Http::withToken($accessToken)
             ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
-                'criteria' => "(Service Id:equals:{$serviceId})"
+                'criteria' => "(Question_Id:equals:{$serviceId})"
             ]);
 
         $data = $response->json();
@@ -73,6 +81,38 @@ class ZohoQuestionAnswer
 
         $method = $zohoServiceId ? 'put' : 'post';
 
-        return Http::withToken($accessToken)->$method($url, $payload);
+        return  Http::withToken($accessToken)->$method($url, $payload);
+
     }
+
+    public function deleteServiceQa($questionId)
+    {
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+
+        if (!$zohoServiceId) {
+            Log::warning("Zoho QA delete failed: No Zoho ID found for question_id {$questionId}");
+            return null;
+        }
+
+        $response = Http::withToken($access_token)
+            ->delete("https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}");
+
+        if ($response->successful()) {
+            Log::info("Zoho QA deleted for question_id {$questionId}");
+        } else {
+            Log::error("Zoho QA delete failed", [
+                'question_id' => $questionId,
+                'response' => $response->json(),
+            ]);
+        }
+
+        return $response->json();
+    }
+
 }

@@ -31,6 +31,9 @@ use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoQuestionAnswer;
+use App\Helpers\Zoho\ZohoService;
+use App\Helpers\Zoho\ZohoServiceLocations;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
 
@@ -420,9 +423,11 @@ class LeadPreferenceController extends Controller
         }
 
         $user_id = $request->user_id;
-        $data['primary_category'] = $request->service_id;
-        $data['updated_at'] = date('Y-m-d H:i:s');
-        User::where('id',$user_id)->update($data);
+
+        $user = User::find($user_id);
+        $user->primary_category = $request->service_id;
+        $user->updated_at = date('Y-m-d H:i:s');
+        $user->save();
         return $this->sendResponse("Primary service changed successfully");
     }
 
@@ -507,10 +512,12 @@ class LeadPreferenceController extends Controller
                 ->where('user_id', $request->user_id)
                 ->where('question_id', $questionId)
                 ->first();
-
+            $questionActualId = $leadPreference->id;
             if ($leadPreference) {
                 // Update existing record
                 $leadPreference->update(['answers' => $cleanedAnswer]);
+                app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
+                //dd($x);
             } else {
                 // Create a new record
                 $leadPreference = LeadPrefrence::create([
@@ -531,7 +538,11 @@ class LeadPreferenceController extends Controller
     public function removeService(Request $request){
         $user_id = $request->user_id;
         $serviceid = $request->service_id;
+        $user_service_id = UserService::where('user_id',$user_id)->where('service_id',$serviceid)->pluck('id')->first();
+
         UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        app(ZohoService::class)->deleteBuyerService($user_service_id);
+
         return $this->sendResponse(__('Service deleted Sucessfully'));
     }
 
@@ -959,6 +970,9 @@ class LeadPreferenceController extends Controller
                     'coordinates' => $aVals['coordinates']
                     ] // Fields to insert
                 );
+                $insertedId = $aLocation->id;
+                app(ZohoServiceLocations::class)->integrateServiceLocations($aVals['user_id'], $insertedId);
+
             }
             return $this->sendResponse(__('Location updated successfully'));
         }else{
@@ -1101,7 +1115,7 @@ class LeadPreferenceController extends Controller
     }
 
 
-    
+
 
     public function removeLocation(Request $request)
     {
@@ -1257,7 +1271,7 @@ class LeadPreferenceController extends Controller
         return $categories;
     }
 
-  
+
 
     public function getLeadProfile(Request $request)
     {

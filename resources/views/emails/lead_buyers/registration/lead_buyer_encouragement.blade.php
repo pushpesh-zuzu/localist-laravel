@@ -117,7 +117,7 @@
                     <li>✅ Hands-free lead purchases 24/7</li>
                 </ul>
                 <p>Don't miss out on high-intent customers. Enable Auto-Buy and let Localist do the work for you!</p>
-                <a href="{{$baseUrl}}/settings/auto-buy" class="btn">Enable Auto-Buy Now</a>
+                <a href="{{$baseUrl}}/mycredits" class="btn">Enable Auto-Buy Now</a>
             </div>
 
             <div class="card">

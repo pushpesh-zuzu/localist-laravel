@@ -12,6 +12,7 @@ class ZohoLeadBuyers
     public function integrateZohoLeadBuyers($userId)
     {
 
+
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
@@ -19,10 +20,13 @@ class ZohoLeadBuyers
         }
 
         $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+
         $payload = $this->buildLeadBuyerPayload($userId, $zohoId);
+
         $response = $this->sendToZoho($access_token, $payload, $zohoId);
 
         $responseData = $response->json();
+
         if (
             isset($responseData['data'][0]['status']) &&
             $responseData['data'][0]['status'] === 'success' &&
@@ -84,29 +88,30 @@ class ZohoLeadBuyers
 
     protected function sendToZoho($accessToken, array $payload, $zohoId = null)
     {
+
         $url = $zohoId
             ? "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}"
             : "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration";
 
         $method = $zohoId ? 'put' : 'post';
 
-        $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/settings/fields', [
-                'module' => 'Lead_Buyer_Registration'
-            ]);
+        // $response = Http::withToken($accessToken)
+        //     ->get('https://www.zohoapis.eu/crm/v2/settings/fields', [
+        //         'module' => 'Lead_Buyer_Registration'
+        //     ]);
 
-        $fields = $response->json();
-        $formatted = collect($fields['fields'])->map(function ($field) {
-            return [
-                'api_name'    => $field['api_name'] ?? null,
-                'field_label' => $field['field_label'] ?? null,
-            ];
-        });
+        // $fields = $response->json();
+        // $formatted = collect($fields['fields'])->map(function ($field) {
+        //     return [
+        //         'api_name'    => $field['api_name'] ?? null,
+        //         'field_label' => $field['field_label'] ?? null,
+        //     ];
+        // });
 
 
-        $formatted = $formatted->sortBy('field_label')->values()->all();
+        // $formatted = $formatted->sortBy('field_label')->values()->all();
 
-        Log::info('Zoho Lead_Buyer_Registration API Field Map:', $formatted);
+        // Log::info('Zoho Lead_Buyer_Registration API Field Map:', $formatted);
 
         return Http::withToken($accessToken)->$method($url, $payload);
     }

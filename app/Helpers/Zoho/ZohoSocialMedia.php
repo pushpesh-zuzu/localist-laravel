@@ -32,11 +32,14 @@ class ZohoSocialMedia
     protected function buildSocialPayload($access_token,$userDetail,$userId)
     {
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        $userName=User::find($userId)->name;
         return [
             'data' => [[
                 'Social_Media_Id'          => $userDetail->id,
                 'Lead_Social_Lookup'       => $lookUpId,
                 'Name'                     => ''.$userDetail->id,
+                'Lead_Buyer_Name'          => $userName,
+
                 //'User Id'       => $userDetail->user_id,
                 'Facebook'                => $userDetail->fb_link,
                 'Twitter'                 => $userDetail->twitter_link,
