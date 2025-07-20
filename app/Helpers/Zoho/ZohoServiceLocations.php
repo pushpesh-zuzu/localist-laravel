@@ -46,7 +46,7 @@ class ZohoServiceLocations
                 'Location_Id'        => $location->id,
                 'Service Name'      => $serviceDetails->category->name ?? '',
                 'Name'              => $serviceDetails->category->name ?? '',
-                'Lead_Buyer_Name1'  => $serviceDetails->user->name ?? '',
+                // 'Lead_Buyer_Name1'  => $serviceDetails->user->name ?? '',
                 'Lead_Buyer_Lookup' => $lookUpId,
                 'Miles'             => $location->miles,
                 'Postcode'          => $location->postcode,

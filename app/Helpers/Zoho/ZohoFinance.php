@@ -52,8 +52,8 @@ class ZohoFinance
             'data' => [[
                 'Transaction_Id1' => $log->id,
                 'Lead_Finance_Lookup' =>$lookUpId,
-                'Name'           => $userName,
-                'Price'           => $log->price,
+                 'Name'           => $log->price,
+                //'Price'           => $log->price,
                 'Credits'         => $log->credits,
                 'Transaction_Date' => \Carbon\Carbon::parse($log->purchase_Date)->toDateString(),
                 'Payment_Type'     => $log->payment_type == 0 ? 'credit' : 'debit',

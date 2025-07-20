@@ -38,7 +38,7 @@ class ZohoSocialMedia
                 'Social_Media_Id'          => $userDetail->id,
                 'Lead_Social_Lookup'       => $lookUpId,
                 'Name'                     => ''.$userDetail->id,
-                'Lead_Buyer_Name'          => $userName,
+                //'Lead_Buyer_Name'          => $userName,
 
                 //'User Id'       => $userDetail->user_id,
                 'Facebook'                => $userDetail->fb_link,

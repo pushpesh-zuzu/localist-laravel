@@ -69,13 +69,14 @@ class ZohoLeadBuyers
                 'company_sales_team'            => $user->company_sales_team,
                 'total_credit'                  => $user->total_credit,
                 'company_size'                  => $user->company_size,
-                'Social_Media'                  => $user->social_media == 1 ? 'Yes' : 'No',
+                //'Social_Media'                  => $user->social_media == 1 ? 'Yes' : 'No',
+                'phone'                         => $user->phone,
                 'Auto_Bid'                      => optional($user->details)->is_autobid == 1 ? 'Yes' : 'No',
                 'company_name'                  => $user->company_name,
                 'avg_rating'                    => 'Nil',
                 'company_website'               => $user->company_website,
                 'address'                       => $user->address,
-                'company_locaion_reason'       => $user->company_location_reason
+                'company_locaion_reason'       => $user->company_locaion_reason
             ]]
         ];
 

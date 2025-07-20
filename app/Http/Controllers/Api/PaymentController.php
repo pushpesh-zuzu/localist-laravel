@@ -46,7 +46,7 @@ class PaymentController extends Controller
 
         $paymentMethodId = $user->stripe_payment_method_id;
         if(empty($paymentMethodId)){
-            return $this->sendError("No saved card found!"); 
+            return $this->sendError("No saved card found!");
         }
         $total_amount = number_format($request->total_amount/100, 2);
         $credits = $request->credits;
@@ -66,14 +66,19 @@ class PaymentController extends Controller
                 'off_session' => true,
                 'confirm' => true,
             ]);
-            
+
             if ($paymentIntent->status === 'succeeded') {
                 //add up new credit in total credits
                 $prevCredits = intval(User::where('id',$user_id)->value('total_credit'));
 
-                $dataCr['total_credit'] = $prevCredits + intval($credits);
-                $dataCr['updated_at'] = date('Y-m-d H:i:s');
-                User::where('id',$user_id)->update($dataCr);
+                // $dataCr['total_credit'] = $prevCredits + intval($credits);
+                // $dataCr['updated_at'] = date('Y-m-d H:i:s');
+                // User::where('id',$user_id)->update($dataCr);
+
+                $user = User::find($user_id);
+                $user->total_credit =$prevCredits + intval($credits);
+                $user->updated_at = date('Y-m-d H:i:s');
+                $user->save();
 
                 //add plan purchase
                 $dataPh['user_id'] = $user_id;
@@ -85,11 +90,11 @@ class PaymentController extends Controller
                 $dataPh['total_amount'] = number_format($total_amount, 2);
                 $dataPh['created_at'] = date('Y-m-d H:i:s');
                 PlanHistory::insertGetId($dataPh);
-                
-                
+
+
                 //create transaction logs
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
-                
+
                 //Create invoice
                 $dataInv['user_id'] = $user_id;
                 $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
@@ -98,7 +103,7 @@ class PaymentController extends Controller
                 $dataInv['amount'] = number_format($request->amount, 2);
                 $dataInv['vat'] = number_format($request->vat, 2);
                 $dataInv['total_amount'] = number_format($total_amount, 2);
-                
+
                 $userDetails = UserDetail::where('user_id',$user_id)->first();
                 if(!empty($userDetails->billing_contact_name)){
                     $dataInv['name'] =$userDetails->billing_contact_name;
@@ -113,16 +118,16 @@ class PaymentController extends Controller
                 }
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
                 Invoice::insertGetId($dataInv);
-                                
+
                 return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');
             }
-            
+
         } catch (\Stripe\Exception\CardException $e) {
             $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
-            return $this->sendError($e->getMessage()); 
+            return $this->sendError($e->getMessage());
         }catch (InvalidRequestException $e) {
             $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
             return $this->sendError("Invalid request: " .$e->getMessage());
@@ -132,9 +137,9 @@ class PaymentController extends Controller
             return $this->sendError("Something went wrong: " .$e->getMessage());
         }
 
-        
-        
-        
+
+
+
     }
 
     public function getTransactionLogs(Request $request){

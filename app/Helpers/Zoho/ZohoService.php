@@ -44,8 +44,7 @@ class ZohoService
         $payload = [
             'data' => [[
                 'Service_Id'        => $service->id,
-                'Service_Name'      => $serviceDetails->category->name ?? '',
-                'Name'              => $serviceDetails->user->name ?? '',
+                'Name'              => $serviceDetails->category->name ?? '',
                 'Lead_Services_Lookup' => $lookUpId,
                 'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
             ]]
