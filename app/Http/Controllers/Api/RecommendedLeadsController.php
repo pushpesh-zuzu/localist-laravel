@@ -700,7 +700,7 @@ class RecommendedLeadsController extends Controller
         }else if($aVals['bidtype'] == 'purchase_leads'){
             $pType = "Manual Bid";
             $trInfo = $creditScore . " credit deducted for Contacting to Customer";
-            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$sellerName .' ontacted '. $buyerName, "Manual Bid", $leadTime);
+            self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$sellerName .' contacted '. $buyerName, "Manual Bid", $leadTime);
         }else{
             // for autobid
             $pType = "Autobid";
@@ -756,14 +756,6 @@ class RecommendedLeadsController extends Controller
             'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
         ]);
     }
-
-
-
-
-
-
-
-
 
    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
         $activity = ActivityLog::create([

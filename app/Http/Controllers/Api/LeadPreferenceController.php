@@ -37,314 +37,17 @@ use App\Helpers\Zoho\ZohoServiceLocations;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
 
+use App\Services\LeadService;
+
 
 class LeadPreferenceController extends Controller
 {
 
-
-    public function getBaseQuery($user_id, $requestPostcode = null, $requestMiles = null, $filters = []){
-        $userServices = UserService::where('user_id',$user_id)->select('service_id')->get();
-        //get all types of locations
-        $ulNationWide = UserServiceLocation::where('user_id', $user_id)->where('nation_wide','1')->get();
-        $ulDistance = UserServiceLocation::where('user_id', $user_id)->where('type','Distance')->get()->toArray();
-        $ulTravel = UserServiceLocation::where('user_id', $user_id)->where('type','Travel Time')->get()->toArray();
-        $ulMap = UserServiceLocation::where('user_id', $user_id)->where('type','Draw on Map')->get()->toArray();
-
-        //get Nation Wide services
-        $nwServices = [];
-        foreach($ulNationWide as $ul){
-            array_push($nwServices, $ul->service_id);
-        }
-
-        //remove duplicate services from array
-        $nwServices = array_unique($nwServices);
-
-        //remove location if it is nation wide
-        $ulDistance = array_filter($ulDistance, function($item) use ($nwServices) {
-            return !in_array($item['service_id'], $nwServices);
-        });
-        $ulTravel = array_filter($ulTravel, function($item) use ($nwServices) {
-            return !in_array($item['service_id'], $nwServices);
-        });
-        $ulMap = array_filter($ulMap, function($item) use ($nwServices) {
-            return !in_array($item['service_id'], $nwServices);
-        });
-
-
-        //add other services
-        $otherServices = [];
-        foreach($ulDistance as $d){
-            array_push($otherServices, $d['service_id']);
-        }
-        foreach($ulTravel as $t){
-            array_push($otherServices, $t['service_id']);
-        }
-        foreach($ulMap as $m){
-            array_push($otherServices, $m['service_id']);
-        }
-
-        //remove duplicate services from array
-        $otherServices = array_unique($otherServices);
-
-        //merge both arrays into one array
-        $allServices = array_merge($nwServices,$otherServices);
-
-        $baseQuery = LeadRequest::with(['customer', 'category'])
-            ->whereHas('customer', function ($query) {
-                $query->where('form_status', 1);
-            })
-            ->where('customer_id', '<>', $user_id) //do not include self request leads
-
-            //closure condition
-            ->where('status','!=','hired') // do not include hired leads
-            ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString()); // do not include leads which are orlder than 14 days
-        $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
-        $slotFullLeads = DB::table('recommended_leads')
-            ->select('lead_id')
-            ->groupBy('lead_id')
-            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
-            ->pluck('lead_id')
-            ->toArray();
-
-        $baseQuery = $baseQuery->whereNotIn('id', $slotFullLeads);
-
-        if($requestPostcode === null){ //select default condition for location
-            //include locations
-            $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, $ulTravel, $ulMap, $nwServices) {
-                //for distance type
-
-
-                foreach ($ulDistance as $item) {
-                    $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
-
-
-                    $query->orWhere(function ($q) use ($item, $radiusPostcode) {
-                        $q->where('service_id', $item['service_id'])
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
-                    });
-                }
-
-                //include nation wide services
-                if (!empty($nwServices)) {
-                    $query->orWhereIn('service_id', $nwServices);
-                }
-
-            });
-        }else{
-
-            $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
-                //for distance type
-                $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
-                foreach($allServices as $item){
-
-                    $quesPref = $this->getUserPreferenceMap($user_id, $item);
-                    print_r($quesPref);
-
-                    $query->orWhere(function ($q) use ($item, $radiusPostcode, $user_id) {
-                        $q->where('service_id', $item)
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
-                    });
-                }
-            });
-        }
-
-
-        // Exclude saved leads
-        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
-
-        // Exclude leads from recommended table starts as a bid has been placed
-        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-            ->pluck('lead_id')
-            ->toArray();
-
-        // Merge both exclusion arrays
-        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
-        if (!empty($excludedLeadIds)) {
-            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
-        }
-
-
-        //apply filters
-        if(!empty($filters['searchName'])){
-            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
-                $query->whereHas('customer', function ($q) use ($filters) {
-                    $q->where('name', 'like', '%' . $filters['searchName'] . '%');
-                    // ->orWhere('city', 'like', '%' . $searchTerm . '%');
-                })
-                ->orWhereHas('category', function ($q) use ($filters) {
-                    $q->where('name', 'like', '%' . $filters['searchName'] . '%');
-                })
-                ->orWhere('city', 'like', '%' .  $filters['searchName'] . '%')
-                ->orWhere('postcode', 'like', '%' .  $filters['searchName'] . '%')
-                ->orWhere('phone', 'like', '%' .  $filters['searchName'] . '%');
-            });
-        }
-
-        if(!empty($filters['spotlightFilter'])){
-            $splghts = explode(',', $filters['spotlightFilter']);
-            foreach($splghts as $sl){
-                if(strtolower(trim($sl)) === 'all lead spotlights'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('is_urgent', '=', '1')
-                                ->where('is_updated', '=', '1')
-                                ->where('has_additional_details', '=', '1');
-                        });
-                }else{
-                    if(strtolower(trim($sl)) === 'urgent requests'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('is_urgent', '=', '1');
-                        });
-                    }
-                    if(strtolower(trim($sl)) === 'updated requests'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('is_updated', '=', '1');
-                        });
-                    }
-                    if(strtolower(trim($sl)) === 'has additional details'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('has_additional_details', '=', '1');
-                        });
-                    }
-                }
-
-            }
-        }
-
-        if(!empty($filters['lead_time'])){
-            if(strtolower(trim($filters['lead_time'])) === 'today'){
-                $baseQuery = $baseQuery->where(function ($query){
-                    $query->whereDate('created_at', Carbon::now()->toDateString());
-                });
-            }
-            if(strtolower(trim($filters['lead_time'])) === 'yesterday'){
-                $baseQuery = $baseQuery->where(function ($query){
-                    $query->whereDate('created_at', Carbon::now()->subDay()->toDateString());
-                });
-            }
-            if(strtolower(trim($filters['lead_time'])) === 'last 2-3 days'){
-                $baseQuery = $baseQuery->where(function ($query){
-                    $query->whereDate('created_at', '>' , Carbon::now()->subDay(3)->toDateString());
-                });
-            }
-            if(strtolower(trim($filters['lead_time'])) === 'last 7 days'){
-                $baseQuery = $baseQuery->where(function ($query){
-                    $query->whereDate('created_at', '>', Carbon::now()->subDay(7)->toDateString());
-                });
-            }
-            if(strtolower(trim($filters['lead_time'])) === 'last 14+ days'){
-                $baseQuery = $baseQuery->where(function ($query){
-                    $query->whereDate('created_at', '<' ,Carbon::now()->subDay()->toDateString());
-                });
-            }
-        }
-        if(!empty($filters['services'])){
-            $sIds = explode(',', $filters['services']);
-            $baseQuery = $baseQuery->where(function ($query) use ($sIds){
-                $query->whereIn('service_id', $sIds);
-            });
-        }
-
-        if(!empty($filters['creditFilter'])){
-            $crFs = explode(',', str_replace('Credits','',$filters['creditFilter']));
-            $creditRanges = [];
-            foreach($crFs as $crf){
-                $cc1 = explode('-',str_replace(' ','',$crf));
-                $creditRanges[] = [ min($cc1),  max($cc1)];
-            }
-            $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
-                foreach ($creditRanges as $range) {
-                    $query->orWhereRaw('CAST(credit_score AS UNSIGNED) BETWEEN ? AND ?', [$range[0], $range[1]]);
-                }
-            });
-        }
-
-        return $baseQuery;
-
-    }
-
-    private function getUserPreferenceMap($user_id){
-        $rawAnswers = LeadPrefrence::with(['question'])
-            ->where('user_id', $user_id)
-            ->get();
-        $prefs = [];
-        foreach ($rawAnswers as $ra) {
-            $temp['service_id'] = $ra->service_id;
-            $temp['question'] = $ra->question->questions;
-            $temp['answers'] = array_map('trim', explode(',', $ra->answers));
-            $prefs[] = $temp;
-        }
-        return $prefs;
-
-    }
-
-    function normalizeQuestion(string $question): string
-    {
-        return strtolower(trim(preg_replace('/[^a-zA-Z0-9 ]/', '', $question)));
-    }
-    private function filterLeadsByGroupedPreferences(\Illuminate\Support\Collection $leads, array $groupedPrefs)
-    {
-        return $leads->filter(function ($lead) use ($groupedPrefs) {
-            $serviceId = $lead->service_id;
-
-            if (!isset($groupedPrefs[$serviceId])) {
-                // logger("No preferences for service_id: $serviceId");
-                return false;
-            }
-
-            $prefs = $groupedPrefs[$serviceId];
-            $leadQuestions = json_decode($lead->arrayed_questions, true);
-
-            if (!is_array($leadQuestions)) {
-                // logger("Invalid questions JSON for lead ID: {$lead->id}");
-                return false;
-            }
-
-            $leadMap = [];
-            foreach ($leadQuestions as $q) {
-                $normalized = $this->normalizeQuestion($q['ques']);
-                $leadMap[$normalized] = $q['ans'];
-            }
-
-            foreach ($prefs as $pref) {
-                $question = $this->normalizeQuestion($pref['question']);
-                $expectedAnswers = $pref['answers'];
-
-                if (!isset($leadMap[$question])) {
-                    // logger("Lead ID {$lead->id} missing question: $question");
-                    return false;
-                }
-
-                $leadAnswers = $leadMap[$question];
-
-                $intersect = array_intersect($expectedAnswers, $leadAnswers);
-
-                if (empty($intersect) && !in_array('Something else (please describe)', $expectedAnswers)) {
-                    // logger("Lead ID {$lead->id} failed on question: $question");
-                    // logger("Lead answers: " . json_encode($leadAnswers));
-                    // logger("Expected answers: " . json_encode($expectedAnswers));
-                    return false;
-                }
-            }
-
-            // logger("Matched Lead ID: {$lead->id}, Service ID: $serviceId");
-            return true;
-        });
-    }
-
-
-
-    public function leadsAccordingTOSellerPref($user_id, $leads){
-        $pref = $this->getUserPreferenceMap($user_id);
-        $leads  = collect($leads);
-        $groupedPrefs = collect($pref)->groupBy('service_id')->toArray();
-        $filteredLeads = $this->filterLeadsByGroupedPreferences($leads, $groupedPrefs);
-        return $filteredLeads;
-    }
-
-    public function getLeadRequest(Request $request)
+    public function getLeadRequest(Request $request, LeadService $leadService)
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
+        
         //filters
         $filters['searchName'] = $aVals['name'] ?? null;
         $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
@@ -360,12 +63,12 @@ class LeadPreferenceController extends Controller
             $requestMiles = (int)$matches[1];
             $requestPostcode = strtoupper($matches[2]);
         }
-        $baseQuery = $this->getBaseQuery($user_id, $requestPostcode, $requestMiles, $filters);
+        $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, $requestPostcode, $requestMiles, $filters);
 
         $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
         //Macting as per seller pref
-        $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
+        $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
@@ -433,7 +136,15 @@ class LeadPreferenceController extends Controller
 
     public function getservices(Request $request){
         $user_id = $request->user_id;
-        $categories = self::getFilterservices($user_id);
+        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
+        $categories = Category::whereIn('id', $serviceId)->get();
+        foreach ($categories as $key => $value) {
+            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
+
+            //for getting primary category in service list
+            $value['primaryService'] =  User::where('id', $user_id)->value('primary_category');
+        }
         return $this->sendResponse(__('Service Data'), $categories);
     }
 
@@ -468,11 +179,12 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('User Service Data'), $aRows);
     }
 
-    public function getleadpreferences(Request $request): JsonResponse
+    public function getleadpreferences(Request $request)
     {
         $user_id = $request->user_id;
         $service_id = $request->service_id;
         $leadPreference = ServiceQuestion::where('category', $service_id)->get();
+        // print_r($leadPreference->toArray());
         if(count($leadPreference)>0){
             $questions = [];
             foreach($leadPreference as $value){
@@ -480,10 +192,30 @@ class LeadPreferenceController extends Controller
                                                     ->where('user_id', $user_id)
                                                     ->pluck('answers')
                                                     ->first();
+                $catArrAns = json_decode($value['answer'], true);
+                $catAns = "";
+                foreach($catArrAns as $a){
+                    if(!empty($catAns)){
+                        $catAns .= ',';
+                    }
+                    $catAns .= $a['option'];
+                }
+                $value['answer'] = $catAns;
             }
             $leadPreferences = $leadPreference;
         }else{
             $leadPreferences = ServiceQuestion::where('category', $service_id)->get();
+            foreach($leadPreference as $value){
+                $catArrAns = json_decode($value['answer'], true);
+                $catAns = "";
+                foreach($catArrAns as $a){
+                    if(!empty($catAns)){
+                        $catAns .= ',';
+                    }
+                    $catAns .= $a['option'];
+                }
+                $value['answer'] = $catAns;
+            }
 
         }
         return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);
@@ -541,6 +273,8 @@ class LeadPreferenceController extends Controller
         $user_service_id = UserService::where('user_id',$user_id)->where('service_id',$serviceid)->pluck('id')->first();
 
         UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         app(ZohoService::class)->deleteBuyerService($user_service_id);
 
         return $this->sendResponse(__('Service deleted Sucessfully'));
@@ -548,14 +282,14 @@ class LeadPreferenceController extends Controller
 
 
 
-    public function sortByCreditValue(Request $request)
+    public function sortByCreditValue(Request $request, LeadService $leadService)
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
         $creditFilter = $request->credit_filter;//High, Medium, Low
         $sortType = $request->sort_type; //newest,oldest
 
-        $baseQuery = $this->getBaseQuery($user_id);
+        $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
 
         // Apply credit score filter using WHERE conditions
         if ($creditFilter) {
@@ -573,7 +307,7 @@ class LeadPreferenceController extends Controller
         $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
 
         //Macting as per seller pref
-        $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
+        $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
@@ -733,33 +467,6 @@ class LeadPreferenceController extends Controller
 
         return $this->sendResponse($sendmessage, []);
     }
-    // ------------------------
-
-
-
-    // ------------------------
-
-
-
-    public function getDistance($postcode1, $postcode2)
-    {
-        $encodedPostcode1 = urlencode($postcode1);
-        $encodedPostcode2 = urlencode($postcode2);
-        //$apiKey = "AIzaSyDwAeV7juA_VpzLHqmKXACBtcZxR52TwoE"; //"AIzaSyB29PyyFmCsm_nw8ELavLskRzMPd3XEIac"; // Replace with your API key
-        $apiKey = CustomHelper::setting_value('google_maps_api');
-
-        $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins={$encodedPostcode1}&destinations={$encodedPostcode2}&key={$apiKey}";
-
-        $response = file_get_contents($url);
-        $data = json_decode($response, true);
-
-        if ($data['status'] == 'OK' && isset($data['rows'][0]['elements'][0]['distance'])) {
-            $distanceText = $data['rows'][0]['elements'][0]['distance']['text']; // e.g., "12.5 km"
-            return floatval(str_replace(['km', ','], '', $distanceText)); // return distance as float (km)
-        } else {
-            return null;
-        }
-    }
 
 
 
@@ -834,7 +541,15 @@ class LeadPreferenceController extends Controller
                 $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
-                    $defaultOptions = $question->answer ?? '';
+                    $arrQues = json_decode( $question->answer, true);
+                    $catAns = "";
+                    foreach($arrQues as $q){
+                        if(!empty($catAns)){
+                            $catAns .= ',';
+                        }
+                        $catAns .= $q['option'];
+                    }
+                    $defaultOptions = $catAns ?? '';
 
                     // Check if user already has a saved answer for this question
                     $existingAnswer = LeadPrefrence::where('question_id', $question->id)
@@ -1133,15 +848,15 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Location deleted sucessfully', []);
     }
 
-    public function leadsByFilter(Request $request){
+    public function leadsByFilter(Request $request, LeadService $leadService){
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
 
-        $leadSpotlights = self::getSpotligths($user_id);
-        $leadTimeCounts = self::getLeadTimeData($user_id);
-        $services = self::getFilterservices1($user_id);
-        $location = self::getFilterLocations1($user_id);
-        $credits = self::getFilterCreditList1($user_id);
+        $leadSpotlights = self::getSpotligths($user_id, $leadService);
+        $leadTimeCounts = self::getLeadTimeData($user_id, $leadService);
+        $services = self::getFilterservices1($user_id, $leadService);
+        $location = self::getFilterLocations1($user_id, $leadService);
+        $credits = self::getFilterCreditList1($user_id, $leadService);
         $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
 
         return $this->sendResponse(__('Filter Data'), [
@@ -1157,7 +872,7 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse(__('Filter Data'),$datas);
     }
 
-    public function getSpotligths($user_id)
+    public function getSpotligths($user_id, $leadService)
     {
         $spotlights = [
             'All lead spotlights',
@@ -1167,10 +882,10 @@ class LeadPreferenceController extends Controller
         ];
         $leadSpotlights = [];
         foreach ($spotlights as $sp) {
-            $query = $this->getBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
+            $query = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
             $allLeads = $query->orderBy('id', 'asc')->get();
             //Macting as per seller pref
-            $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
+            $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
             $leadSpotlights[] = [
                 'spotlight' => $sp,
                 'count' => count($allLeads),
@@ -1181,7 +896,7 @@ class LeadPreferenceController extends Controller
     }
 
 
-    private function getLeadTimeData($user_id = null)
+    private function getLeadTimeData($user_id, $leadService)
     {
         $timeFilters = [
             'Today',
@@ -1193,12 +908,12 @@ class LeadPreferenceController extends Controller
 
         $result = [];
         foreach ($timeFilters as $time) {
-            $baseQuery = $this->getBaseQuery($user_id, null, null, ['lead_time' => $time]);
+            $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
 
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
 
             //Macting as per seller pref
-            $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
+            $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
             $result[] = [
                 'time' => $time,
                 'count' => count($allLeads),
@@ -1208,14 +923,14 @@ class LeadPreferenceController extends Controller
         return $result;
     }
 
-    public function getFilterservices1($user_id)
+    public function getFilterservices1($user_id, $leadService)
     {
         $serviceIds = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
         $categories = Category::whereIn('id', $serviceIds)->get();
 
         foreach ($categories as $category) {
             // Use basequery to get all lead IDs matching filters
-            $leads = $this->getBaseQuery($user_id)->where('service_id', $category->id)->get();
+            $leads = $leadService->getSellerLeadsBaseQuery($user_id)->where('service_id', $category->id)->get();
             $category['locations'] = UserServiceLocation::where('user_id', $user_id)->where('service_id', $category->id)->count();
             $category['leadcount'] = $leads->count();
         }
@@ -1223,14 +938,14 @@ class LeadPreferenceController extends Controller
         return $categories;
     }
 
-    public function getFilterLocations1($user_id)
+    public function getFilterLocations1($user_id, $leadService)
     {
         $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
         $uniqueRows = $aRows->unique('postcode')->values();
 
         foreach ($uniqueRows as $row) {
             // Use basequery and apply postcode match
-            $leadCount = $this->getBasequery($user_id)
+            $leadCount = $leadService->getSellerLeadsBaseQuery($user_id)
                             ->where('postcode', $row->postcode)
                             ->count();
 
@@ -1241,16 +956,18 @@ class LeadPreferenceController extends Controller
         return $uniqueRows;
     }
 
-    public function getFilterCreditList1($user_id = null)
+    public function getFilterCreditList1($user_id, $leadService)
     {
         $creditList = CreditList::get();
 
         foreach ($creditList as $creditItem) {
-            $baseQuery = $this->getBasequery($user_id, null, null, ['creditFilter' => $creditItem]);
+            // print_r($creditItem->credits);
+            // print_r("\n\n\n");
+            $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['creditFilter' => $creditItem->credits]);
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
 
             //Macting as per seller pref
-            $allLeads = $this->leadsAccordingTOSellerPref($user_id, $allLeads);
+            $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
             $creditItem['leadcount'] = count($allLeads);
         }
 
@@ -1336,50 +1053,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse('Profile Data', $users);
     }
 
-    public function getLeadProfile_22_05_2025(Request $request){
-        $aVals = $request->all();
-        $users = User::where('id',$aVals['customer_id'])->first();
-
-        $myip = $request->ip();
-        $visited_date = date("Y-m-d");
-        $visitor = UniqueVisitor::where('seller_id',$aVals['user_id'])
-                                ->where('buyer_id',$aVals['customer_id'])
-                                ->where('ip_address',$myip)
-                                ->where('date',$visited_date)->first();
-        if(empty($visitor)){
-                // $visitor->visitors_count = $visitor->visitors_count +1;
-                // $visitor->save();
-        // }else{
-                $visitor = new UniqueVisitor;
-                $visitor->ip_address = $myip;
-                $visitor->date = $visited_date;
-                $visitor->seller_id = $aVals['user_id'];
-                $visitor->buyer_id = $aVals['customer_id'];
-                $visitor->lead_id = $aVals['lead_id'];
-                $visitor->visitors_count = 1;
-                $visitor->save();
-        }
-
-
-        if ($users) {
-            // Update is_read = 1 for all lead requests of this user (or filter as needed)
-            LeadRequest::where('customer_id', $users->id)->update(['is_read' => 1]);
-
-            // Fetch updated lead request with relationships
-            $leads = LeadRequest::with(['customer', 'category'])
-                                ->where('id', $aVals['lead_id'])
-                                ->where('customer_id', $users->id)
-                                ->first();
-            $leads->purchase_type = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                                       ->where('buyer_id', $aVals['customer_id'])
-                                       ->where('seller_id', $aVals['user_id'])
-                                       ->pluck('purchase_type')
-                                       ->first();
-            // $leads->responsestatus = UserResponseTime::where('lead_id',$leads->id)->where('buyer_id',$leads->customer_id)->where('seller_id',$leads['customer']['id'])->first();
-            $users->leads = $leads;
-        }
-        return $this->sendResponse('Profile Data', $users);
-    }
+    
 
     public function saveForLater(Request $request){
         $aVals = $request->all();

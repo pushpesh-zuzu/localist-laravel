@@ -114,7 +114,7 @@ class LeadService
             ->pluck('lead_id')
             ->toArray();
 
-        $baseQuery = $baseQuery->whereNotIn('id', $slotFullLeads);
+        $baseQuery = $baseQuery->whereNotIn('id', $slotFullLeads); //do not include leads which 5 slot full
 
         if($requestPostcode === null){ //select default condition for location
             //include locations
@@ -145,7 +145,7 @@ class LeadService
                 $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
                 foreach($allServices as $item){
 
-                    $quesPref = $this->getUserPreferenceMap($user_id, $item);
+                    $quesPref = $this->getSellerPreferenceMap($user_id, $item);
                     print_r($quesPref);
 
                     $query->orWhere(function ($q) use ($item, $radiusPostcode, $user_id) {
@@ -190,32 +190,18 @@ class LeadService
 
         if(!empty($filters['spotlightFilter'])){
             $splghts = explode(',', $filters['spotlightFilter']);
-            foreach($splghts as $sl){
-                if(strtolower(trim($sl)) === 'all lead spotlights'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('is_urgent', '=', '1')
-                                ->where('is_updated', '=', '1')
-                                ->where('has_additional_details', '=', '1');
-                        });
-                }else{
-                    if(strtolower(trim($sl)) === 'urgent requests'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('is_urgent', '=', '1');
-                        });
-                    }
-                    if(strtolower(trim($sl)) === 'updated requests'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('is_updated', '=', '1');
-                        });
-                    }
-                    if(strtolower(trim($sl)) === 'has additional details'){
-                        $baseQuery = $baseQuery->where(function ($query){
-                            $query->where('has_additional_details', '=', '1');
-                        });
+            $baseQuery = $baseQuery->where(function ($query) use ($splghts) {
+                foreach ($splghts as $sl) {
+                    $sl = strtolower(trim($sl));
+                    if ($sl === 'urgent requests') {
+                        $query->orWhere('is_urgent', '=', '1');
+                    } elseif ($sl === 'updated requests') {
+                        $query->orWhere('is_updated', '=', '1');
+                    } elseif ($sl === 'has additional details') {
+                        $query->orWhere('has_additional_details', '=', '1');
                     }
                 }
-
-            }
+            });
         }
 
         if(!empty($filters['lead_time'])){
@@ -241,7 +227,7 @@ class LeadService
             }
             if(strtolower(trim($filters['lead_time'])) === 'last 14+ days'){
                 $baseQuery = $baseQuery->where(function ($query){
-                    $query->whereDate('created_at', '<' ,Carbon::now()->subDay()->toDateString());
+                    $query->whereDate('created_at', '<' ,Carbon::now()->subDay(14)->toDateString());
                 });
             }
         }
@@ -278,7 +264,7 @@ class LeadService
         return $filteredLeads;
     }
 
-    private function getSellerPreferenceMap($user_id){
+    public function getSellerPreferenceMap($user_id){
         $rawAnswers = LeadPrefrence::with(['question'])
             ->where('user_id', $user_id)
             ->get();
@@ -323,7 +309,8 @@ class LeadService
 
                 if (!isset($leadMap[$question])) {
                     // logger("Lead ID {$lead->id} missing question: $question");
-                    return false;
+                    // return false; if strict match (all questions) is required
+                    continue; // if want to include leads which has missing leads
                 }
 
                 $leadAnswers = $leadMap[$question];

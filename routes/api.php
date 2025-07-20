@@ -142,7 +142,6 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
-        // Route::post('/sort-by-leads-date', [LeadPreferenceController::class, 'sortByLeadsEntries']);
         Route::post('/get-pending-leads', [LeadPreferenceController::class, 'getPendingLeads']);
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
         Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
@@ -155,8 +154,6 @@ Route::prefix('users')->group(function () {
 
         Route::post('/add_service', [LeadPreferenceController::class, 'addUserService']);
         Route::post('/get-services', [LeadPreferenceController::class, 'getservices']);
-        // Route::post('/sort-by-credit', [LeadPreferenceController::class, 'sortByCredit']);
-        // Route::get('/get-credit-list', [LeadPreferenceController::class, 'getCreditList']);
         Route::post('/get-online-remote-switch', [LeadPreferenceController::class, 'getOnlineRemoteSwitch']);
         Route::post('/online-remote-switch', [LeadPreferenceController::class, 'onlineRemoteSwitch']);
         Route::post('/leads-by-filter', [LeadPreferenceController::class, 'leadsByFilter']);
