@@ -204,8 +204,8 @@ class CustomHelper
         $id = PurchaseHistory::insertGetId($data);
 
 
-        $zoho = new ZohoFinance();
-        $zoho->integratePurchaseHistory($userId,$id);
+        //$zoho = new ZohoFinance();
+        //$zoho->integratePurchaseHistory($userId,$id);
         //IntegrateZohoPurchaseHistory::dispatch($userId);
 
 

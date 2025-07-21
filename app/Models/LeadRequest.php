@@ -30,16 +30,16 @@ class LeadRequest extends Model
         return $date->format('Y-m-d H:i:s');
     }
 
-    protected static function booted()
-    {
-        static::created(function ($lead) {
-            app(ZohoLeads::class)->integrateLead($lead);
-        });
+    // protected static function booted()
+    // {
+    //     static::created(function ($lead) {
+    //         //app(ZohoLeads::class)->integrateLead($lead);
+    //     });
 
-        static::updated(function ($lead) {
-            // Log::info('LeadRequest updated - triggering Zoho sync', ['lead_id' => $lead->id]);
-            app(ZohoLeads::class)->integrateLead($lead);
-        });
-    }
+    //     static::updated(function ($lead) {
+    //         // Log::info('LeadRequest updated - triggering Zoho sync', ['lead_id' => $lead->id]);
+    //         //app(ZohoLeads::class)->integrateLead($lead);
+    //     });
+    // }
 
 }

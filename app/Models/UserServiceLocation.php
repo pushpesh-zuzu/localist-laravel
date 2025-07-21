@@ -33,35 +33,35 @@ class UserServiceLocation extends Model
     }
 
 
-    protected static function booted()
-    {
+    // protected static function booted()
+    // {
 
-        static::created(function ($location) {
+    //     static::created(function ($location) {
 
-            self::handleZohoIntegration($location);
-        });
+    //         self::handleZohoIntegration($location);
+    //     });
 
-        static::updated(function ($location) {
+    //     static::updated(function ($location) {
 
-            self::handleZohoIntegration($location);
-        });
-    }
+    //         self::handleZohoIntegration($location);
+    //     });
+    // }
 
-    protected static function handleZohoIntegration($location)
-    {
-        try {
-            $user = $location->user_id; // assuming relation exists
-            $locationId = $location->id;
-            if ($user) {
-                app(ZohoServiceLocations::class)->integrateServiceLocations($user, $locationId);
+    // protected static function handleZohoIntegration($location)
+    // {
+    //     try {
+    //         $user = $location->user_id; // assuming relation exists
+    //         $locationId = $location->id;
+    //         if ($user) {
+    //             //app(ZohoServiceLocations::class)->integrateServiceLocations($user, $locationId);
 
-            }
-        } catch (\Throwable $e) {
-            Log::error('Zoho service location integration failed', [
-                'user_id' => $location->user_id ?? null,
-                'location_id' => $location->id,
-                'message' => $e->getMessage(),
-            ]);
-        }
-    }
+    //         }
+    //     } catch (\Throwable $e) {
+    //         Log::error('Zoho service location integration failed', [
+    //             'user_id' => $location->user_id ?? null,
+    //             'location_id' => $location->id,
+    //             'message' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
 }

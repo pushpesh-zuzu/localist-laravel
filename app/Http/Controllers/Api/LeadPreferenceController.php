@@ -248,7 +248,7 @@ class LeadPreferenceController extends Controller
             if ($leadPreference) {
                 // Update existing record
                 $leadPreference->update(['answers' => $cleanedAnswer]);
-                app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
+                //app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
                 //dd($x);
             } else {
                 // Create a new record
@@ -276,15 +276,15 @@ class LeadPreferenceController extends Controller
         UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
-        app(ZohoService::class)->deleteBuyerService($user_service_id);
-        foreach ($user_service_locations as $location_id) {
-            app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($location_id);
+        //app(ZohoService::class)->deleteBuyerService($user_service_id);
+        // foreach ($user_service_locations as $location_id) {
+        //     app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($location_id);
 
-        }
-        foreach ($user_lead_prefrences as $user_lead_prefrence) {
-           app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrence);
+        // }
+        // foreach ($user_lead_prefrences as $user_lead_prefrence) {
+        //    app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrence);
 
-        }
+        // }
 
 
         return $this->sendResponse(__('Service deleted Sucessfully'));
@@ -696,7 +696,7 @@ class LeadPreferenceController extends Controller
                     ] // Fields to insert
                 );
                 $insertedId = $aLocation->id;
-                app(ZohoServiceLocations::class)->integrateServiceLocations($aVals['user_id'], $insertedId);
+                //app(ZohoServiceLocations::class)->integrateServiceLocations($aVals['user_id'], $insertedId);
 
             }
             return $this->sendResponse(__('Location updated successfully'));
@@ -771,15 +771,32 @@ class LeadPreferenceController extends Controller
         }
 
         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
+
+
         $travel_time = $aVals['travel_time'] ?? '';
         $travel_by = $aVals['travel_by'] ?? '';
         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
         // Delete old entry
-        UserServiceLocation::where('user_id', $userId)
-        ->whereIn('postcode', [$aVals['postcode_old']])
-        ->where('type', $aVals['type'])
-        ->delete();
+
+        // $locationIds = UserServiceLocation::where('user_id', $userId)
+        // ->whereIn('postcode', [$aVals['postcode_old']])
+        // ->where('type', $aVals['type'])
+        // ->pluck('id');
+
+        // foreach($locationIds as $locationId){
+
+        //     app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($locationId);
+
+        // }
+         UserServiceLocation::where('user_id', $userId)
+         ->whereIn('postcode', [$aVals['postcode_old']])
+         ->where('type', $aVals['type'])
+         ->delete();
+
+
+
         foreach ($serviceIds as $serviceId) {
+
             $userService = UserService::where('user_id', $userId)
                 ->where('service_id', $serviceId)
                 ->first();

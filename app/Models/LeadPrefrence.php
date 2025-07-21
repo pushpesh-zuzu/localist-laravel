@@ -22,37 +22,37 @@ class LeadPrefrence extends Model
 
 
 
-     protected static function booted()
-    {
+    //  protected static function booted()
+    // {
 
-        static::created(function ($question) {
+    //     static::created(function ($question) {
 
-            self::handleZohoIntegration($question);
-        });
+    //         self::handleZohoIntegration($question);
+    //     });
 
-        static::updated(function ($question) {
+    //     static::updated(function ($question) {
 
-            self::handleZohoIntegration($question);
-        });
-    }
+    //         self::handleZohoIntegration($question);
+    //     });
+    // }
 
 
-    protected static function handleZohoIntegration($question)
-    {
-        try {
-            $user = $question->user_id;
-            $questionId = $question->id;
+    // protected static function handleZohoIntegration($question)
+    // {
+    //     try {
+    //         $user = $question->user_id;
+    //         $questionId = $question->id;
 
-            if ($user) {
-                app(ZohoQuestionAnswer::class)->integrateServiceQa($user,$questionId);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Zoho question answer integration failed', [
-                'user_id' => $question->user_id ?? null,
-                'question_id' => $question->id,
-                'message' => $e->getMessage(),
-            ]);
-        }
-    }
+    //         if ($user) {
+    //             //app(ZohoQuestionAnswer::class)->integrateServiceQa($user,$questionId);
+    //         }
+    //     } catch (\Throwable $e) {
+    //         Log::error('Zoho question answer integration failed', [
+    //             'user_id' => $question->user_id ?? null,
+    //             'question_id' => $question->id,
+    //             'message' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
 
 }

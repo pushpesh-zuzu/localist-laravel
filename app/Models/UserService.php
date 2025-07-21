@@ -49,53 +49,53 @@ class UserService extends Model
         return $this->hasMany(UserServiceLocation::class, 'user_service_id');
     }
 
-    protected static function booted()
-    {
+    // protected static function booted()
+    // {
 
 
-        static::created(function ($service) {
+    //     static::created(function ($service) {
 
-            self::handleZohoIntegration($service);
-        });
+    //         self::handleZohoIntegration($service);
+    //     });
 
-        static::updated(function ($service) {
+    //     static::updated(function ($service) {
 
-            self::handleZohoIntegration($service);
-        });
+    //         self::handleZohoIntegration($service);
+    //     });
 
-        static::deleted(function ($service) {
-            self::handleZohoDeletion($service);
-        });
-    }
+    //     static::deleted(function ($service) {
+    //         self::handleZohoDeletion($service);
+    //     });
+    // }
 
-    protected static function handleZohoIntegration($service)
-    {
-        try {
-            $user = $service->user_id; // assuming relation exists
-            $serviceId = $service->id;
-            if ($user) {
-                app(ZohoZohoService::class)->integrateService($user, $serviceId);
+    // protected static function handleZohoIntegration($service)
+    // {
+    //     try {
+    //         $user = $service->user_id; // assuming relation exists
+    //         $serviceId = $service->id;
+    //         if ($user) {
+    //             //app(ZohoZohoService::class)->integrateService($user, $serviceId);
 
-            }
-        } catch (\Throwable $e) {
-            Log::error('Zoho service  integration failed', [
-                'user_id' => $location->user_id ?? null,
-                'service_id' => $service->id,
-                'message' => $e->getMessage(),
-            ]);
-        }
-    }
+    //         }
+    //     } catch (\Throwable $e) {
+    //         Log::error('Zoho service  integration failed', [
+    //             'user_id' => $location->user_id ?? null,
+    //             'service_id' => $service->id,
+    //             'message' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
 
-    protected static function handleZohoDeletion($service)
-    {
-        try {
-            app(ZohoZohoService::class)->deleteBuyerService($service->id);
-        } catch (\Throwable $e) {
-            Log::error('Zoho Service deletion failed', [
-                'service_id' => $service->id,
-                'message' => $e->getMessage(),
-            ]);
-        }
-    }
+    // protected static function handleZohoDeletion($service)
+    // {
+    //     try {
+    //         //app(ZohoZohoService::class)->deleteBuyerService($service->id);
+    //     } catch (\Throwable $e) {
+    //         Log::error('Zoho Service deletion failed', [
+    //             'service_id' => $service->id,
+    //             'message' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
 
 }

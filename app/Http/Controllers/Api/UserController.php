@@ -324,7 +324,7 @@ class UserController extends Controller
             }
             $user->remember_tokens = $token;
 
-            ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+            //ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
 
 
             // $zohoService =new ZohoServiceLocations();
@@ -582,7 +582,7 @@ class UserController extends Controller
             'sms_notification_no'=>$request->sms_notification_no,
         ]);
 
-        app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
+        //app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
         return $this->sendResponse(__('User Profile updated'));
     }
 
