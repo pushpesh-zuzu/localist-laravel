@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Helpers\CustomHelper;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class ZohoHelper
 {
@@ -60,4 +61,49 @@ class ZohoHelper
         }
         return null;
     }
+
+    public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
+    {
+
+        register_shutdown_function(function () use ($callback) {
+            try {
+                $callback();
+            } catch (\Throwable $e) {
+                Log::error('Zoho background task failed', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        });
+
+
+        $json = json_encode($responseData);
+
+
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+        header('Content-Type: application/json');
+        header('Content-Length: ' . strlen($json));
+        header('Connection: close');
+
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+
+        echo $json;
+
+
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } else {
+            flush();
+        }
+    }
+
+
+
+
 }

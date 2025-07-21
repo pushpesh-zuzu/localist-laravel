@@ -53,7 +53,7 @@ class UserServiceLocation extends Model
     //         $user = $location->user_id; // assuming relation exists
     //         $locationId = $location->id;
     //         if ($user) {
-    //             //app(ZohoServiceLocations::class)->integrateServiceLocations($user, $locationId);
+    //             app(ZohoServiceLocations::class)->integrateServiceLocations($user, $locationId);
 
     //         }
     //     } catch (\Throwable $e) {

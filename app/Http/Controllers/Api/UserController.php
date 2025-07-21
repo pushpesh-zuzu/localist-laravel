@@ -13,7 +13,7 @@ use App\Models\UserDetail;
 use App\Models\Category;
 use App\Models\Review;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator
+    Auth, Hash, DB , Log, Mail, Validator
 };
 use Illuminate\Validation\Rule;
 use App\Helpers\CustomHelper;
@@ -34,8 +34,11 @@ use App\Services\LeadService;
 use App\Services\CompanyRegService;
 use App\Helpers\Zoho\ZohoServiceLocations;
 use App\Helpers\Zoho\ZohoEmails;
+use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
+use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoSocialMedia;
 use App\Models\EmailSetting;
 
@@ -171,7 +174,7 @@ class UserController extends Controller
 
 
 
-    public function registration(Request $request): JsonResponse{
+    public function registration(Request $request){
 
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;
@@ -246,11 +249,14 @@ class UserController extends Controller
                 $user->primary_category = $serviceIds[0];
                 $user->save();
             }
-
+            $locationIds = [];
+            $questionIds = [];
+            $serviceAllIds = [];
             foreach ($serviceIds as $index => $serviceId) {
                 $aLocations = []; // Reset for each iteration
                 // Create a separate row for each service_id
                 $service = UserService::createUserService($user->id, $serviceId);
+                $serviceAllIds[] = $service->id;
                 if ($service) {
                     $aLocations['service_id'] = $serviceId;
                     $aLocations['user_service_id'] = $service->id;
@@ -276,7 +282,9 @@ class UserController extends Controller
                         $aLocations['coordinates'] = "[]";
                     }
 
-                    UserServiceLocation::createUserServiceLocation($aLocations);
+                    $location=UserServiceLocation::createUserServiceLocation($aLocations);
+
+                    $locationIds[] = $location->id;
 
                 }
                 //save answer to preferences
@@ -308,7 +316,7 @@ class UserController extends Controller
                     $cleanedAnswer = rtrim($cleanedAnswer, ',');
 
                     // Insert or update the lead preference
-                    LeadPrefrence::updateOrCreate(
+                    $leadPref=LeadPrefrence::updateOrCreate(
                         [
                             'user_id' => $user->id,
                             'service_id' => $serviceId,
@@ -318,6 +326,8 @@ class UserController extends Controller
                             'answers' => $cleanedAnswer,
                         ]
                     );
+
+                    $questionIds[] = $leadPref->id;
 
                 }
 
@@ -333,10 +343,65 @@ class UserController extends Controller
             // $zohoService->integrateServiceLocations($user);
             // $zohoQa->integrateServiceQa($user);
 
+
+            return $this->sendJsonAndSyncZoho([
+                'success' => true,
+                'message' => 'Registration successful',
+                'data' => $user,
+            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds);
+
+
         }
+
         return $this->sendResponse('Registration Sucessful.', $user);
 
     }
+
+    private function sendJsonAndSyncZoho($responseData, $user,$passwordRandomString, $serviceAllIds = [], $locationIds = [], $questionIds = []){
+        $json = json_encode($responseData);
+
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+        header('Content-Type: application/json');
+        header('Content-Length: ' . strlen($json));
+        header('Connection: close');
+
+        if (!ob_get_level()) {
+            ob_start();
+        }
+
+        echo $json;
+
+        if (ob_get_length()) {
+            ob_flush();
+            flush();
+            ob_end_clean();
+        }
+
+        register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString) {
+            try {
+                if ($user->user_type == 1) {
+                    ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+                    app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
+                    app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
+                    app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
+                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id, $questionIds);
+                } elseif ($user->user_type == 2) {
+                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Zoho background sync failed', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
+
+        return;
+    }
+
 
     public function checkEmailId(Request $request): JsonResponse{
         if(empty($request->email)){
@@ -580,6 +645,13 @@ class UserController extends Controller
             'email'=>$request->email,
             'phone'=>$request->phone,
             'sms_notification_no'=>$request->sms_notification_no,
+        ]);
+
+        ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+            app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
+        }, [
+            'success' => true,
+            'message' => 'User Profile updated'
         ]);
 
         //app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);

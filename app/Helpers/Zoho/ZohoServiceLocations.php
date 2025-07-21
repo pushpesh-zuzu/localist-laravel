@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoServiceLocations
 {
-    public function integrateServiceLocations($userId,$locationId)
+    public function integrateServiceLocations($userId,$locationIds)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -19,14 +19,35 @@ class ZohoServiceLocations
             return null;
         }
 
-        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
+        // $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
 
-        $payload = $this->buildServicePayload($access_token, $userId, $locationId, $zohoServiceId);
-        if (!$payload) return null;
+        // $payload = $this->buildServicePayload($access_token, $userId, $locationId, $zohoServiceId);
+        // if (!$payload) return null;
 
-        $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
+        // $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
 
-        return $response->json();
+        // return $response->json();
+
+        $results = [];
+
+        foreach ($locationIds as $locationId) {
+            try {
+                $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
+
+                $payload = $this->buildServicePayload($access_token, $userId, $locationId, $zohoServiceId);
+                if (!$payload) {
+                    $results[$locationId] = ['error' => 'Empty payload'];
+                    continue;
+                }
+
+                $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
+                $results[$locationId] = $response->json();
+            } catch (\Throwable $e) {
+                $results[$locationId] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return $results;
 
     }
 
@@ -40,7 +61,6 @@ class ZohoServiceLocations
         if (!$serviceDetails) return null;
 
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
-
         $payload = [
             'data' => [[
                 'Location_Id'        => $location->id,
@@ -95,7 +115,7 @@ class ZohoServiceLocations
         return  Http::withToken($accessToken)->$method($url, $payload);
     }
 
-    public function deleteBuyerServiceLocation($serviceId)
+    public function deleteBuyerServiceLocation($serviceIds)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -104,15 +124,22 @@ class ZohoServiceLocations
             return null;
         }
 
-        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
+        $results = [];
 
-        if (!$zohoServiceId) {
-            Log::warning("Zoho Service delete failed: No Zoho ID found for service_id {$serviceId}");
-            return null;
+        foreach ($serviceIds as $serviceId) {
+
+            $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
+
+            if (!$zohoServiceId) {
+                Log::warning("Zoho Service delete failed: No Zoho ID found for service_id {$serviceId}");
+                return null;
+            }
+
+            $response = Http::withToken($access_token)
+                ->delete("https://www.zohoapis.eu/crm/v2/Services_Locations/{$zohoServiceId}");
+            $results[$serviceId] = $response->json();
         }
-
-        $response = Http::withToken($access_token)
-            ->delete("https://www.zohoapis.eu/crm/v2/Services_Locations/{$zohoServiceId}");
+        return $results;
         // if ($response->successful()) {
         //     Log::info("Zoho Service deleted for service_id {$serviceId}");
         // } else {
@@ -122,7 +149,7 @@ class ZohoServiceLocations
         //     ]);
         // }
 
-        return $response->json();
+        //return $response->json();
     }
 
 

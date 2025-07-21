@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoQuestionAnswer
 {
-    public function integrateServiceQa($userId,$questionId)
+    public function integrateServiceQa($userId,$questionIds)
     {
         $access_token = ZohoHelper::getAccessToken();
 
@@ -16,13 +16,35 @@ class ZohoQuestionAnswer
             return null;
         }
 
-        $payload = $this->buildQaPayload($access_token,$questionId, $userId);
-        if (!$payload) return null;
+        // $payload = $this->buildQaPayload($access_token,$questionId, $userId);
+        // if (!$payload) return null;
 
-        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+        // $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
 
-        $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
-        return $response->json();
+        // $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
+        // return $response->json();
+
+        $results = [];
+
+        foreach ($questionIds as $questionId) {
+            try {
+                $payload = $this->buildQaPayload($access_token, $questionId, $userId);
+                if (!$payload) {
+                    $results[$questionId] = ['error' => 'Empty payload'];
+                    continue;
+                }
+
+                $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+                $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
+
+                $results[$questionId] = $response->json();
+            } catch (\Throwable $e) {
+                $results[$questionId] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return $results;
+
     }
 
     protected function buildQaPayload($access_token,$questionId,$userId)

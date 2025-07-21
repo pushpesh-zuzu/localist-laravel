@@ -13,6 +13,8 @@ use App\Models\UserDetail;
 use App\Models\ProfileQA;
 use App\Models\User;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoLeadBuyers;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator
 };
@@ -24,7 +26,7 @@ use App\Helpers\Zoho\ZohoSocialMedia;
 
 class SettingController extends Controller
 {
-    public function updateSellerProfile(Request $request): JsonResponse
+    public function updateSellerProfile(Request $request)
     {
 
         $user_id = $request->user_id;
@@ -144,6 +146,16 @@ class SettingController extends Controller
             }
 
         }
+
+
+        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+            app(ZohoSocialMedia::class)->integrateSocialLinks($user_id);
+            app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
+        }, [
+            'success' => true,
+            'message' => 'Profile updated successfully'
+        ]);
+
 
         return $this->sendResponse(__('Profile updated successfully'));
     }

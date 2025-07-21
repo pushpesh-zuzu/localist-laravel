@@ -192,34 +192,50 @@ class User extends Authenticatable
         return $this->hasOne(UserDetail::class, 'user_id', 'id');
     }
 
-    // protected static function booted()
-    // {
+//    protected static function booted()
+// {
+//     static::created(function ($user) {
+//         self::handleZohoIntegration($user);
+//     });
 
-    //     static::created(function ($user) {
-    //         self::handleZohoIntegration($user);
-    //     });
+//     static::updated(function ($user) {
+//         self::handleZohoIntegration($user);
+//     });
+// }
 
-    //     static::updated(function ($user) {
-    //         self::handleZohoIntegration($user);
-    //     });
-    // }
-    // protected static function handleZohoIntegration($user)
-    // {
-    //     try {
-    //         if ($user->user_type == 1) {
+// protected static $zohoIntegrationCalled = [];
 
-    //             //return app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+// protected static function handleZohoIntegration($user)
+// {
+//     // Prevent duplicate calls
+//     if (isset(self::$zohoIntegrationCalled[$user->id])) {
+//         return;
+//     }
+//     self::$zohoIntegrationCalled[$user->id] = true;
 
-    //         } elseif ($user->user_type == 2) {
-    //             //return app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
-    //         }
-    //     } catch (\Throwable $e) {
-    //         Log::error('Zoho user integration failed', [
-    //             'user_id' => $user->id,
-    //             'message' => $e->getMessage(),
-    //         ]);
-    //     }
-    // }
+//     // Only run for web requests (skip for tinker, queue etc.)
+//     if (app()->runningInConsole()) {
+//         return;
+//     }
+
+//     register_shutdown_function(function () use ($user) {
+//         try {
+//             if ($user->user_type == 1) {
+//                 app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+//             } elseif ($user->user_type == 2) {
+//                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+//             }
+
+
+//         } catch (\Throwable $e) {
+//             Log::error('Zoho user integration failed in shutdown', [
+//                 'user_id' => $user->id,
+//                 'message' => $e->getMessage(),
+//             ]);
+//         }
+//     });
+// }
+
 
     public function emailLogs()
     {

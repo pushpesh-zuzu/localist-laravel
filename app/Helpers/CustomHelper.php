@@ -191,6 +191,8 @@ class CustomHelper
     }
 
     public static function createTrasactionLog($userId, $amount, $credits, $detail, $status=1, $type=0, $error_response=''){
+
+        static $zohoRegistered = false;
         $data['user_id'] = $userId;
         $data['purchase_date'] = date('Y-m-d');
         $data['price'] = $amount;
@@ -204,9 +206,21 @@ class CustomHelper
         $id = PurchaseHistory::insertGetId($data);
 
 
-        //$zoho = new ZohoFinance();
-        //$zoho->integratePurchaseHistory($userId,$id);
-        //IntegrateZohoPurchaseHistory::dispatch($userId);
+        // if (!$zohoRegistered && $status === 1) {
+        //     $zohoRegistered = true;
+
+        //     register_shutdown_function(function () use ($userId, $id) {
+        //         try {
+        //             $zoho = new ZohoFinance();
+        //             $zoho->integratePurchaseHistory($userId, $id);
+        //         } catch (\Throwable $e) {
+        //             Log::error('Zoho shutdown integration failed: ' . $e->getMessage());
+        //         }
+        //     });
+
+
+        // }
+
 
 
         return $id;

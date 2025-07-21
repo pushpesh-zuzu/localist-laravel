@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoService
 {
-    public function integrateService($userId,$serviceId)
+    public function integrateService($userId,$serviceIds)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -19,14 +19,35 @@ class ZohoService
             return null;
         }
 
-        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
+        // $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
 
-        $payload = $this->buildServicePayload($access_token, $userId, $serviceId, $zohoServiceId);
-        if (!$payload) return null;
+        // $payload = $this->buildServicePayload($access_token, $userId, $serviceId, $zohoServiceId);
+        // if (!$payload) return null;
 
-        $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
+        // $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
 
-        return $response->json();
+        // return $response->json();
+
+        $results = [];
+
+        foreach ($serviceIds as $serviceId) {
+            $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
+
+            $payload = $this->buildServicePayload($access_token, $userId, $serviceId, $zohoServiceId);
+            if (!$payload) {
+                $results[$serviceId] = ['error' => 'Empty payload'];
+                continue;
+            }
+
+            try {
+                $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
+                $results[$serviceId] = $response->json();
+            } catch (\Throwable $e) {
+                $results[$serviceId] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return $results;
 
     }
 

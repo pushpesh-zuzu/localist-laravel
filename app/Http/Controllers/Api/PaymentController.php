@@ -9,6 +9,8 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Plan;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoFinance;
+use App\Helpers\Zoho\ZohoHelper;
 use App\Models\UserDetail;
 use App\Models\Invoice;
 use App\Models\PlanHistory;
@@ -94,6 +96,13 @@ class PaymentController extends Controller
 
                 //create transaction logs
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
+                ZohoHelper::dispatchAfterResponse(function () use ($user_id, $tId) {
+                    app(ZohoFinance::class)->integratePurchaseHistory($user_id, $tId);
+                }, [
+                    'success' => true,
+                    'message' => 'Payment successful!'
+                ]);
+
 
                 //Create invoice
                 $dataInv['user_id'] = $user_id;
