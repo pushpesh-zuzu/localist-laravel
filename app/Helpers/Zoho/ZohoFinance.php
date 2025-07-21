@@ -53,6 +53,7 @@ class ZohoFinance
                 'Transaction_Id1' => $log->id,
                 'Lead_Finance_Lookup' =>$lookUpId,
                  'Name'           => $log->price,
+                 'Details'        => $log->details,
                 //'Price'           => $log->price,
                 'Credits'         => $log->credits,
                 'Transaction_Date' => \Carbon\Carbon::parse($log->purchase_Date)->toDateString(),

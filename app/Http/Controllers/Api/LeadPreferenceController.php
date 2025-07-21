@@ -778,16 +778,12 @@ class LeadPreferenceController extends Controller
         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
         // Delete old entry
 
-        // $locationIds = UserServiceLocation::where('user_id', $userId)
-        // ->whereIn('postcode', [$aVals['postcode_old']])
-        // ->where('type', $aVals['type'])
-        // ->pluck('id');
+        $locationIds = UserServiceLocation::where('user_id', $userId)
+        ->whereIn('postcode', [$aVals['postcode_old']])
+        ->where('type', $aVals['type'])
+        ->pluck('id');
 
-        // foreach($locationIds as $locationId){
 
-        //     app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($locationId);
-
-        // }
          UserServiceLocation::where('user_id', $userId)
          ->whereIn('postcode', [$aVals['postcode_old']])
          ->where('type', $aVals['type'])
@@ -835,7 +831,9 @@ class LeadPreferenceController extends Controller
                 }
             }
 
-
+            // foreach($locationIds as $locationId){
+            //     app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($locationId);
+            // }
 
             // Insert updated location
             UserServiceLocation::create([
