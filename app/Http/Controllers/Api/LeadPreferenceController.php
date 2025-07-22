@@ -32,6 +32,7 @@ use \Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoServiceLocations;
@@ -132,6 +133,13 @@ class LeadPreferenceController extends Controller
         $user->primary_category = $request->service_id;
         $user->updated_at = date('Y-m-d H:i:s');
         $user->save();
+
+        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
+            }, [
+                'success' => true,
+                'message' => 'Primary service changed successfully'
+            ]);
         return $this->sendResponse("Primary service changed successfully");
     }
 
@@ -652,10 +660,23 @@ class LeadPreferenceController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $prevMile = UserServiceLocation::where('id',$request->location_id)->value('miles');
-        $data['miles'] = $prevMile + 10;
+        //$prevMile = UserServiceLocation::where('id',$request->location_id)->value('miles');
+
+        $location = UserServiceLocation::where('id', $request->location_id)->first();
+
+        $userId = $location->user_id;
+        $data['miles'] = $location->miles + 10;
         $data['updated_at'] = date('Y-m-d H:i:s');
+
         UserServiceLocation::where('id',$request->location_id)->update($data);
+
+        $locationId = $request->location_id;
+        ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationId) {
+                app(ZohoServiceLocations::class)->integrateServiceSingleLocations($userId, $locationId);
+            }, [
+                'success' => true,
+                'message' => 'Radius Expaned'
+            ]);
         return $this->sendResponse('Radius Expaned');
 
     }
@@ -1233,6 +1254,13 @@ class LeadPreferenceController extends Controller
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             $isonline  = $aVals['is_online'];
             // return $this->sendResponse('Switched update', $isonline);
+            $userId = $aVals['user_id'];
+            ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
+            }, [
+                'success' => true,
+                'message' => 'Switched update'
+            ]);
             return $this->sendResponse(__('Switched update'), []);
         }
         return $this->sendError('User not found');

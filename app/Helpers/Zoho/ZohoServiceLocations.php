@@ -51,6 +51,28 @@ class ZohoServiceLocations
 
     }
 
+    public function integrateServiceSingleLocations($userId,$locationId)
+    {
+
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
+
+        $payload = $this->buildServicePayload($access_token, $userId, $locationId, $zohoServiceId);
+        if (!$payload) return null;
+
+        $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
+
+        return $response->json();
+
+
+
+    }
+
     protected function buildServicePayload($access_token, $userId, $locationId, $zohoServiceId = null)
     {
         $location = UserServiceLocation::find($locationId);
