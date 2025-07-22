@@ -47,6 +47,25 @@ class ZohoQuestionAnswer
 
     }
 
+    public function integrateServiceQaSingle($userId,$questionId)
+    {
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $payload = $this->buildQaPayload($access_token,$questionId, $userId);
+        if (!$payload) return null;
+
+        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+
+        $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
+        return $response->json();
+
+
+    }
+
     protected function buildQaPayload($access_token,$questionId,$userId)
     {
 

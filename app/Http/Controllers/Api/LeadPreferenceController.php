@@ -249,6 +249,13 @@ class LeadPreferenceController extends Controller
             if ($leadPreference) {
                 // Update existing record
                 $leadPreference->update(['answers' => $cleanedAnswer]);
+                $userId=$request->user_id;
+                 ZohoHelper::dispatchAfterResponse(function () use ($userId, $questionActualId) {
+                    app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $questionActualId);
+            }, [
+                'success' => true,
+                'message' => 'Data processed successfully'
+            ]);
                 //app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
                 //dd($x);
             } else {
