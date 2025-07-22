@@ -234,18 +234,39 @@ class ZohoEmails
                 if(!empty($user)){
 
 
-                    $lead = LeadRequest::select('id', 'category_id', 'user_id', 'budget', 'description', 'created_at')
-                     ->with([
-                        'customer:name,email,total_credit',
-                        'category:name'
+                    $lead = LeadRequest::with([
+                        'category',
+                        'customer'
                     ])
                     ->where('id', $leadId)
                     ->first();
-                    dd($lead);
+
+                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                    ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                    ->map(fn($item) => [
+                        'question' => $item['ques'],
+                        'answer' => implode(', ', $item['ans'])
+                    ])
+                    ->toArray();
+
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
                         'baseUrl' => env('REACT_BASE_URL'),
-                        'name' => $user->name
+                        'name' => $user->name,
+                        'lead_name' => $lead->customer->name ?? '',
+                        'postcode' => $lead->customer->zipcode ?? '',
+                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2): 'N/A',
+                        'masked_email' => $lead->customer?->email ? (function ($email) {[$name, $domain] = explode('@', $email);$visible = substr($name, 0, 2);$masked = str_repeat('*', max(strlen($name) - 2, 0));return $visible . $masked . '@' . $domain;})($lead->customer->email): 'N/A',
+
+                        'service_name' => $lead->category->name ?? '',
+                        'has_additional_details' => $lead->has_additional_details ?? '',
+                        'credit_score' => $lead->credit_score ?? '',
+                        'is_frequent_user' => $lead->is_frequent_user ?? '',
+                        'is_urgent' => $lead->is_urgent ?? '',
+                        'is_high_hiring' => $lead->is_high_hiring ?? '',
+                        'phone_verified' => $lead->is_phone_verified ?? '',
+                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                        'questionsAndAnswers' => $questionsAndAnswers,
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -254,6 +275,204 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'New lead opportunity just for you!';
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html'
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['lead_id'] = $leadId;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Send New Lead Request Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+
+                }
+            }
+
+        }
+    }
+
+    public static function sendLeadEmailBidEnough($userId,$leadId)
+    {
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name','Send New Lead Request Email')->value('setting_value');
+
+        if($sendLeadRequestEmail){
+            $accessToken = ZohoHelper::getAccessToken();
+
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if(!empty($zohoId)){
+                $user = User::where('id', $userId)->first();
+
+                if(!empty($user)){
+
+
+                    $lead = LeadRequest::with([
+                        'category',
+                        'customer'
+                    ])
+                    ->where('id', $leadId)
+                    ->first();
+
+                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                    ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                    ->map(fn($item) => [
+                        'question' => $item['ques'],
+                        'answer' => implode(', ', $item['ans'])
+                    ])
+                    ->toArray();
+
+
+                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough',  [
+                        'baseUrl' => env('REACT_BASE_URL'),
+                        'name' => $user->name,
+                        'lead_name' => $lead->customer->name ?? '',
+                        'postcode' => $lead->customer->zipcode ?? '',
+                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2): 'N/A',
+                        'masked_email' => $lead->customer?->email ? (function ($email) {[$name, $domain] = explode('@', $email);$visible = substr($name, 0, 2);$masked = str_repeat('*', max(strlen($name) - 2, 0));return $visible . $masked . '@' . $domain;})($lead->customer->email): 'N/A',
+
+                        'service_name' => $lead->category->name ?? '',
+                        'has_additional_details' => $lead->has_additional_details ?? '',
+                        'credit_score' => $lead->credit_score ?? '',
+                        'is_frequent_user' => $lead->is_frequent_user ?? '',
+                        'is_urgent' => $lead->is_urgent ?? '',
+                        'is_high_hiring' => $lead->is_high_hiring ?? '',
+                        'phone_verified' => $lead->is_phone_verified ?? '',
+                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                        'remaining_credit' => intval($user->total_credit - $lead->credit_score),
+                        'questionsAndAnswers' => $questionsAndAnswers,
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                    $toEmail = $user->email;
+                    $subject = 'New lead opportunity just for you!';
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html'
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['lead_id'] = $leadId;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Send New Lead Request Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+
+                }
+            }
+
+        }
+    }
+
+    public static function sendLeadEmailBidNotEnough($userId,$leadId)
+    {
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name','Send New Lead Request Email')->value('setting_value');
+
+        if($sendLeadRequestEmail){
+            $accessToken = ZohoHelper::getAccessToken();
+
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if(!empty($zohoId)){
+                $user = User::where('id', $userId)->first();
+
+                if(!empty($user)){
+
+
+                    $lead = LeadRequest::with([
+                        'category',
+                        'customer'
+                    ])
+                    ->where('id', $leadId)
+                    ->first();
+
+                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                    ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                    ->map(fn($item) => [
+                        'question' => $item['ques'],
+                        'answer' => implode(', ', $item['ans'])
+                    ])
+                    ->toArray();
+
+
+                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
+                        'baseUrl' => env('REACT_BASE_URL'),
+                        'name' => $user->name,
+                        'lead_name' => $lead->customer->name ?? '',
+                        'postcode' => $lead->customer->zipcode ?? '',
+                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2): 'N/A',
+                        'masked_email' => $lead->customer?->email ? (function ($email) {[$name, $domain] = explode('@', $email);$visible = substr($name, 0, 2);$masked = str_repeat('*', max(strlen($name) - 2, 0));return $visible . $masked . '@' . $domain;})($lead->customer->email): 'N/A',
+
+                        'service_name' => $lead->category->name ?? '',
+                        'has_additional_details' => $lead->has_additional_details ?? '',
+                        'credit_score' => $lead->credit_score ?? '',
+                        'is_frequent_user' => $lead->is_frequent_user ?? '',
+                        'is_urgent' => $lead->is_urgent ?? '',
+                        'is_high_hiring' => $lead->is_high_hiring ?? '',
+                        'phone_verified' => $lead->is_phone_verified ?? '',
+                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                        'questionsAndAnswers' => $questionsAndAnswers,
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                    $toEmail = $user->email;
+                    $subject = 'New lead opportunity just for you!';
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [

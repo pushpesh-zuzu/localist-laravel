@@ -128,7 +128,7 @@ class PaymentController extends Controller
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
                 Invoice::insertGetId($dataInv);
 
-                return $this->sendResponse('Payment successful!');
+                //return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');

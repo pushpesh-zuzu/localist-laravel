@@ -46,7 +46,8 @@
 
               <!-- Contact Details -->
               <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
-                <strong>🏅</strong> {{ $credit_score }} credits to respond<br>
+                <strong>🏅</strong> {{ $credit_score }} credits deduct for this lead<br>
+                <strong>💸</strong> {{ $remaining_credit }} credits will remain after purchase.<br>
                 <strong>📍</strong> {{ $postcode }}<br>
                 <strong>📞</strong> {{ $masked_phone }}<br>
                 <strong>✉️</strong> {{ $masked_email }}<br>
