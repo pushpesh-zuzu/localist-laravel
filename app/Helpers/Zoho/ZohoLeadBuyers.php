@@ -50,7 +50,7 @@ class ZohoLeadBuyers
                 'Lead_buyer_auto_id'            => $user->id,
                 'Lead Buyer Registration Name'  => $user->name,
                 'Name'                          => $user->name,
-                'Company_Registration_Number'  => $user->company_reg_number,
+                'Company_Registration_Number'   => $user->company_reg_number,
                 'about_company'                 => $user->about_company,
                 'company_phone'                 => $user->company_phone,
                 'phone'                         => $user->phone,
@@ -58,10 +58,10 @@ class ZohoLeadBuyers
                 'company_email'                 => $user->company_email,
                 'company_total_years'           => $user->company_total_years,
                 'country'                       => $user->country,
-                'Onlines'                        => $user->is_online  == 1 ? 'Yes' : 'No',
+                'Onlines'                       => $user->is_online  == 1 ? 'Yes' : 'No',
                 'city'                          => $user->city,
                 'Single_Line_11'                => optional($user->primaryCategory)->name,
-                'zipcode'                       => $user->zipcode,
+                'zipcode'                       => ($user->zipcode) ? $user->zipcode : $user->details->billing_postcode,
                 'company_location'              => $user->company_location,
                 'apartment'                     => $user->apartment,
                 'registration_type'             => $user->form_status  == 1 ? 'Completed' : 'Abandoned',
@@ -69,14 +69,14 @@ class ZohoLeadBuyers
                 'company_sales_team'            => $user->company_sales_team,
                 'total_credit'                  => $user->total_credit,
                 'company_size'                  => $user->company_size,
-                //'Social_Media'                  => $user->social_media == 1 ? 'Yes' : 'No',
+                //'Social_Media'                => $user->social_media == 1 ? 'Yes' : 'No',
                 'phone'                         => $user->phone,
                 'Auto_Bid'                      => optional($user->details)->is_autobid == 1 ? 'Yes' : 'No',
                 'company_name'                  => $user->company_name,
-                'avg_rating'                    => 'Nil',
+                'Rating'                        => 0,
                 'company_website'               => $user->company_website,
                 'address'                       => $user->address,
-                'company_locaion_reason'       => $user->company_locaion_reason
+                'company_locaion_reason'        => $user->company_locaion_reason
             ]]
         ];
 

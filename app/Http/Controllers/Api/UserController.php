@@ -228,7 +228,7 @@ class UserController extends Controller
                     'billing_address1' => $request->apartment,
                     'billing_address2' => $request->address,
                     'billing_city' => $request->city,
-                    'billing_postcode' => $request->zipcode,
+                    'billing_postcode' => ($request->zipcode) ? $request->zipcode : $request->zipcode_old ,
                     'billing_phone' => $request->phone,
                     'billing_vat_register' => 1,
                 ]);

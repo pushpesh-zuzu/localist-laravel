@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\{
 };
 use Illuminate\Validation\Rule;
 use App\Helpers\CustomHelper;
-
+use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoLeadBuyers;
+use App\Helpers\Zoho\ZohoReview;
 use App\Models\User;
 use App\Models\UserService;
 use App\Models\UserServiceLocation;
@@ -55,6 +57,14 @@ class ReviewController extends Controller{
         $data['created_at'] = date('y-m-d H:i:s');
         $data['updated_at'] = date('y-m-d H:i:s');
         $aid = Review::insertGetId($data);
+
+        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+                    app(ZohoReview::class)->integrateZohoReview($user_id);
+                }, [
+                    'success' => true,
+                    'message' => 'Review submitted successfully!'
+                ]);
+
         if($aid){
             $avg_rating = Review::avg('ratings');
             $data2['avg_rating'] = number_format($avg_rating, 1);;
