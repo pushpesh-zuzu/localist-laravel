@@ -822,10 +822,10 @@ class ZohoEmails
         }
     }
 
-    public static function sendLeadsAfterDays($userId, $leadData)
+    public static function sendLeadsAfterDays($userId, $leadData, $settingValue)
     {
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send New Lead Request After 7 Days')->value('setting_value');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', $settingValue)->value('setting_value');
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -833,19 +833,21 @@ class ZohoEmails
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
             $totalLeadCount = $leadData['total_lead_count'];
+            $totalCreditSum = $leadData['total_credit_sum'];
             $leadDataList = $leadData['lead_data'];
+            $creditPurchase = isset($leadData['credit_purchase']) ?? $leadData['credit_purchase'];
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
 
+
                 if (!empty($user)) {
-
-
-
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
                         'baseUrl' => env('REACT_BASE_URL'),
                         'name' => $user->name,
                         'total_count' => $totalLeadCount,
+                        'total_credt_sum' => $totalCreditSum,
                         'leadDataList' => $leadDataList,
+                        'credit_purchase' => $creditPurchase
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -854,6 +856,10 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'New lead opportunity just for you!';
+                    if($creditPurchase){
+                        $subject = "You're Missing Out on Job Opportunities";
+                    }
+
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -882,7 +888,7 @@ class ZohoEmails
                     $dataE['to_email'] = $toEmail;
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'Send New Lead Request After 7 Days';
+                    $dataE['setting_name'] = $settingValue;
 
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;

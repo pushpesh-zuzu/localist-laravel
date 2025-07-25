@@ -192,6 +192,11 @@ class User extends Authenticatable
         return $this->hasOne(UserDetail::class, 'user_id', 'id');
     }
 
+    public function creditPurchases()
+    {
+        return $this->hasMany(UserCardDetail::class, 'user_id');
+    }
+
 //    protected static function booted()
 // {
 //     static::created(function ($user) {

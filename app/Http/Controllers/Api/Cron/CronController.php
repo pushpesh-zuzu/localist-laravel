@@ -20,7 +20,6 @@ class CronController extends Controller
         $newLead = $this->onceADayOne();
         $newLeadBidEnough = $this->onceADayTwo();
         $newLeadRequestReply = $this->onceADayThree();
-        $newLeadAfterdays = $this->onceADayFour();
         $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
@@ -30,7 +29,7 @@ class CronController extends Controller
                 'new_lead_request_autobid_off' => $newLead,
                 'new_lead_bid_enough' => $newLeadBidEnough,
                 'new_lead_request_reply' => $newLeadRequestReply,
-                'new_lead_after_days' => $newLeadAfterdays
+                'new_lead_bid_not_enough' => $newLeadBidNotEnough
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -40,13 +39,15 @@ class CronController extends Controller
 
      public function onceDayBidNotEnough()
     {
-        $newLeadBidNotEnough = $this->onceADayFive();
+        $newLeadAfterdays = $this->onceADayFour();
+        $newLeadAfterFewdays = $this->onceADaySix();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                'new_lead_bid_not_enough' => $newLeadBidNotEnough
+                'new_lead_after_days' => $newLeadAfterdays,
+                'new_lead_after_few_days' => $newLeadAfterFewdays
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -361,7 +362,7 @@ class CronController extends Controller
         ]);
     }
 
-    public function onceADayFour() //sendLeadsAfterDays
+    public function onceADayFour() //sendLeadsAfter7Days
     {
         $totalUnsentLeadEmails = 0;
         $leadPref = new LeadService();
@@ -372,21 +373,24 @@ class CronController extends Controller
         User::whereNotNull('zoho_record_id')
             ->where('form_status', 1)
             ->where('user_type', 1)
-            ->where('id', 61)
+
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
                     $groupedLeadStats = [];
-
+                    $nationwideLeadIds = [];
                     foreach ($serviceLocations as $location) {
                         $leadQuery = LeadRequest::with('category')
                             ->where('service_id', $location->service_id)
                             ->where('created_at', '<=', Carbon::now()->subDays(7));
 
                         if ($location->nation_wide != 1) {
-                            $leadQuery->where('postcode', $location->postcode);
+
                             $groupKey = $location->postcode;
+
+                            $leadQuery->whereNotIn('id', $nationwideLeadIds);
+                            $leadQuery->where('postcode', $location->postcode);
                         } else {
                             $groupKey = 'nationwide';
                         }
@@ -407,11 +411,16 @@ class CronController extends Controller
                             $serviceId = $location->service_id;
                             $categoryName = $lead->category?->name ?? 'N/A';
                             $groupedLeadStats[$serviceId][$groupKey]['category_name'] = $categoryName;
+                              $groupedLeadStats[$serviceId][$groupKey]['lead_ids'][] = $lead->id;
                             $groupedLeadStats[$serviceId][$groupKey]['count'] =
                                 ($groupedLeadStats[$serviceId][$groupKey]['count'] ?? 0) + 1;
 
                             $groupedLeadStats[$serviceId][$groupKey]['credit_sum'] =
                                 ($groupedLeadStats[$serviceId][$groupKey]['credit_sum'] ?? 0) + $lead->credit_score;
+
+                            if ($location->nation_wide == 1) {
+                                $nationwideLeadIds[] = $lead->id;
+                            }
                         }
                     }
 
@@ -423,8 +432,10 @@ class CronController extends Controller
             return !empty($summary);
         });
 
+
         foreach ($sellerLeadSummary as $sellerId => $leadStats) {
             $sellerTotalLeadCount = 0;
+            $sellerTotalLeadCredit = 0;
             $sellerLeadData = [];
 
             foreach ($leadStats as $serviceId => $locations) {
@@ -433,7 +444,8 @@ class CronController extends Controller
                     if ($count === 0) {
                         continue;
                     }
-
+                    $credit_sum = $leadData['credit_sum'] ?? 0;
+                    $sellerTotalLeadCredit += $credit_sum;
                     $sellerTotalLeadCount += $count;
                     $sellerLeadData[] = array_merge($leadData, [
                         'area' => $area,
@@ -445,8 +457,10 @@ class CronController extends Controller
             if (!empty($sellerLeadData)) {
                 $emailPayload = [
                     'total_lead_count' => $sellerTotalLeadCount,
+                    'total_credit_sum' => $sellerTotalLeadCredit,
                     'lead_data' => $sellerLeadData
                 ];
+                $settingValue = 'Send New Lead Request After 7 Days';
                 $alreadySent = EmailLog::where('user_id', $sellerId)
                             ->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'Send New Lead Request After 7 Days')
@@ -454,7 +468,7 @@ class CronController extends Controller
 
 
                 if (!$alreadySent) {
-                    ZohoEmails::sendLeadsAfterDays($sellerId, $emailPayload);
+                    ZohoEmails::sendLeadsAfterDays($sellerId, $emailPayload, $settingValue);
                 }
             }
         }
@@ -471,42 +485,127 @@ class CronController extends Controller
         ]);
     }
 
-    public function hourlyBasedTwo()
+    public function onceADaySix() //sendLeadsAfter5Days
     {
-        $leadPref = new LeadService();
         $totalUnsentLeadEmails = 0;
-        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->get();
+        $leadPref = new LeadService();
 
-        if ($leads->isEmpty()) {
-            return $this->sendError(__('No leads found older than 48 hours'), 404);
-        }
+        $sellerLeadSummary = [];
+
+            User::leftJoin('user_card_details', 'users.id', '=', 'user_card_details.user_id')
+            ->where('users.form_status', 1)
+            ->where('users.user_type', 1)
+            ->whereNotNull('users.zoho_record_id')
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                        $q->whereNull('user_card_details.id')
+                        ->where('users.created_at', '<=', Carbon::now()->subDays(5));
+                    })
+                    ->orWhere('users.total_credit', '<', 10);
+            })
+            ->where(function ($query) {
+                $query->whereNull('user_card_details.id') // no card details
+                    ->orWhere('users.total_credit', '<', 10); // or low credit
+            })
+            ->select('users.id', 'users.total_credit')
+            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+                foreach ($sellersChunk as $seller) {
+                    $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
+                    $groupedLeadStats = [];
+                    $nationwideLeadIds = [];
+                    foreach ($serviceLocations as $location) {
+                        $leadQuery = LeadRequest::with('category')
+                            ->where('service_id', $location->service_id)
+                            ->where('created_at', '<=', Carbon::now()->subDays(7));
+
+                        if ($location->nation_wide != 1) {
+
+                            $groupKey = $location->postcode;
+
+                            $leadQuery->whereNotIn('id', $nationwideLeadIds);
+                            $leadQuery->where('postcode', $location->postcode);
+                        } else {
+                            $groupKey = 'nationwide';
+                        }
+
+                        $leads = $leadQuery->get();
+
+                        foreach ($leads as $lead) {
+
+                            $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
+                                ->where('lead_id', $lead->id)
+                                ->exists();
+
+                            if ($alreadyRecommended) {
+                                continue;
+                            }
 
 
+                            $serviceId = $location->service_id;
+                            $categoryName = $lead->category?->name ?? 'N/A';
+                            $groupedLeadStats[$serviceId][$groupKey]['category_name'] = $categoryName;
+                              $groupedLeadStats[$serviceId][$groupKey]['lead_ids'][] = $lead->id;
+                            $groupedLeadStats[$serviceId][$groupKey]['count'] =
+                                ($groupedLeadStats[$serviceId][$groupKey]['count'] ?? 0) + 1;
 
-        foreach ($leads as $lead) {
+                            $groupedLeadStats[$serviceId][$groupKey]['credit_sum'] =
+                                ($groupedLeadStats[$serviceId][$groupKey]['credit_sum'] ?? 0) + $lead->credit_score;
 
-            $result = $leadPref->getAllSellers($lead, null, 2);
-
-            if (isset($result['response']['sellers'])) {
-
-                foreach ($result['response']['sellers'] as $seller) {
-
-                    $alreadySent = EmailLog::where('user_id', $seller->id)
-                        ->where('lead_id', $lead->id)
-                        ->where('setting_name', 'Send New Lead Request After 48hrs Email ')
-                        ->where('created_at', '>=', Carbon::now()->subHours(12))
-                        ->whereIn('step', [1, 2, 3])
-                        ->exists();
-
-
-                    if (!$alreadySent) {
-                        ZohoEmails::sendLeadsAfterTime($seller->id, $lead->id);
-                        $totalUnsentLeadEmails++;
+                            if ($location->nation_wide == 1) {
+                                $nationwideLeadIds[] = $lead->id;
+                            }
+                        }
                     }
+
+                    $sellerLeadSummary[$seller->id] = $groupedLeadStats;
+                }
+            });
+
+        $sellerLeadSummary = array_filter($sellerLeadSummary, function ($summary) {
+            return !empty($summary);
+        });
+
+
+        foreach ($sellerLeadSummary as $sellerId => $leadStats) {
+            $sellerTotalLeadCount = 0;
+            $sellerTotalLeadCredit = 0;
+            $sellerLeadData = [];
+
+            foreach ($leadStats as $serviceId => $locations) {
+                foreach ($locations as $area => $leadData) {
+                    $count = $leadData['count'] ?? 0;
+                    if ($count === 0) {
+                        continue;
+                    }
+                    $credit_sum = $leadData['credit_sum'] ?? 0;
+                    $sellerTotalLeadCredit += $credit_sum;
+                    $sellerTotalLeadCount += $count;
+                    $sellerLeadData[] = array_merge($leadData, [
+                        'area' => $area,
+                        'service_id' => $serviceId,
+                    ]);
+                }
+            }
+
+            if (!empty($sellerLeadData)) {
+                $emailPayload = [
+                    'total_lead_count' => $sellerTotalLeadCount,
+                    'total_credit_sum' => $sellerTotalLeadCredit,
+                    'lead_data' => $sellerLeadData,
+                    'credit_purchase' => 1
+                ];
+                $settingValue = 'Send New Purchase Request After 5 Days';
+                $alreadySent = EmailLog::where('user_id', $sellerId)
+                            ->whereDate('created_at', Carbon::today())
+                            ->where('setting_name', 'Send New Lead Request After 5 Days')
+                            ->exists();
+
+
+                if (!$alreadySent) {
+                    ZohoEmails::sendLeadsAfterDays($sellerId, $emailPayload, $settingValue);
                 }
             }
         }
-
         unset($leadPref);
         return response()->json([
             'status' => 'success',

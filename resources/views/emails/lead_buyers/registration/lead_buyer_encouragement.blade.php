@@ -117,14 +117,14 @@
                     <li>✅ Hands-free lead purchases 24/7</li>
                 </ul>
                 <p>Don't miss out on high-intent customers. Enable Auto-Buy and let Localist do the work for you!</p>
-                <a href="{{$baseUrl}}/mycredits" class="btn">Enable Auto-Buy Now</a>
+                <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Enable Auto-Buy Now</a>
             </div>
 
             <div class="card">
                 <div class="section-header">How Auto-Buy Works</div>
                 <p>Once enabled, Auto-Buy uses your service filters to automatically secure matching leads the moment they come in. No need to log in, no missed opportunities.</p>
                 <p>Just add credits and let the system keep your business ahead of the competition — even while you're offline.</p>
-                <a href="{{$baseUrl}}/mycredits" class="btn">Top Up Credits</a>
+                <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Top Up Credits</a>
             </div>
 
             <div class="card">

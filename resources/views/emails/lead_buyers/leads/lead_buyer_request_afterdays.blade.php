@@ -23,8 +23,11 @@
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
               <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">{{ $name }}, new jobs are waiting for you!</h1>
-              <p style="color: #61696d;">We’ve matched <strong>{{ $total_count }}</strong> potential job leads  for your  all service </p>
-
+              @if($credit_purchase)
+                <p style="color: #61696d;">You haven't purchased any credit pack for  5 days, and your current balance is below 10. There are <strong>{{ $total_count }}</strong> jobs matching your preferences waiting — but you can’t bid on them!</p>
+                @else
+                <p style="color: #61696d;">You’ve missed out on <strong>{{ $total_count }}</strong> potential jobs  for your  all service  with an average value of £ {{ $total_credt_sum }} in last 7 days</p>
+              @endif
               <!-- Stats -->
               @foreach ($leadDataList as $lead)
               <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
@@ -36,7 +39,12 @@
               @endforeach
 
               <!-- CTA -->
-              <a href="{{ $baseUrl }}/leads" style="display: block; background-color: #28c199; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Check Your Leads Now </a>
+              @if ($credit_purchase)
+                  <a href="{{ $baseUrl }}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Buy Credits Now to Start Bidding</a>
+              @else
+                  <a href="{{ $baseUrl }}/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Check Your Leads Now </a>
+              @endif
+
             </td>
           </tr>
 
