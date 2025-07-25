@@ -116,6 +116,36 @@ class ZohoLeadBuyers
 
         return Http::withToken($accessToken)->$method($url, $payload);
     }
+    public function integrateZohoDetails($userId){
+        $access_token = ZohoHelper::getAccessToken();
 
+        if (!$access_token) {
+            return null;
+        }
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        $user = User::with('details')->findOrFail($userId);
+
+         $payload = [
+            'data' => [[
+
+                'city'                          =>($user->city) ? $user->city : $user->details->billing_city,
+                'zipcode'                       =>($user->zipcode) ? $user->zipcode : $user->details->billing_postcode,
+                'phone'                         =>($user->phone) ? $user->phone : $user->details->billing_phone,
+                'address'                       => ($user->address) ? $user->address : $user->details->billing_address1,
+
+            ]]
+        ];
+        if($zohoId){
+            $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        }
+        else{
+            return false;
+        }
+
+
+        $responseData = $response->json();
+
+        return $responseData;
+    }
 
 }
