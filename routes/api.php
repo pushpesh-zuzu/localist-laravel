@@ -44,7 +44,7 @@ Route::prefix('check')->group(function () {
 //cron for lead buyer registration email
 Route::prefix('cron')->group(function () {
     Route::get('once-day-based', [CronController::class,'onceDayBased']);
-    Route::get('once-day-based-bid-not-enough', [CronController::class,'onceDayBidNotEnough']);
+    Route::get('once-day-based-after-days', [CronController::class,'onceDayBidAfterDays']);
     Route::get('per-minute-based', [CronController::class,'perMinuteBased']);
     Route::get('hourly-based', [CronController::class,'hourlyBased']);
 });

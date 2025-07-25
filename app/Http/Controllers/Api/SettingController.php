@@ -238,6 +238,14 @@ class SettingController extends Controller
                 'billing_vat_register' => $aValues['billing_vat_register'],
             ]);
         }
+
+        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+                    app(ZohoLeadBuyers::class)->integrateZohoDetails($user_id);
+                }, [
+                    'success' => true,
+                    'message' => 'Billing details submitted successfully!'
+                ]);
+
         return $userdetails;
     }
 

@@ -37,7 +37,7 @@ class CronController extends Controller
 
     }
 
-     public function onceDayBidNotEnough()
+     public function onceDayBidAfterDays()
     {
         $newLeadAfterdays = $this->onceADayFour();
         $newLeadAfterFewdays = $this->onceADaySix();
