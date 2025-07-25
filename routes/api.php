@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\CreditPlanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Controllers\Api\Cron\CronController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
@@ -40,7 +41,13 @@ Route::prefix('check')->group(function () {
     Route::post('/company-location', [UserController::class, 'checkCompanyLocation']);
 });
 
-
+//cron for lead buyer registration email
+Route::prefix('cron')->group(function () {
+    Route::get('once-day-based', [CronController::class,'onceDayBased']);
+    Route::get('once-day-based-bid-not-enough', [CronController::class,'onceDayBidNotEnough']);
+    Route::get('per-minute-based', [CronController::class,'perMinuteBased']);
+    Route::get('hourly-based', [CronController::class,'hourlyBased']);
+});
 
 Route::prefix('notification')->group(function () {
 
@@ -118,13 +125,13 @@ Route::prefix('users')->group(function () {
     Route::get('/bottom-pages', [PagesController::class, 'bottomPages']);
     Route::get('/page-details/{slug}', [PagesController::class, 'pageDetails']);
     Route::post('/login', [UserController::class, 'login']);
-   
+
     Route::post('test-api',[ApiController::class,'testApi']);
 
 
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
 
-        
+
 
         Route::post('change-primary-service', [LeadPreferenceController::class, 'changePrimaryService']);
         Route::post('expand-radius',[LeadPreferenceController::class, 'expandRadius']);

@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\{
 use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoFinance;
+use App\Helpers\Zoho\ZohoHelper;
 use Illuminate\Support\Facades\Log;
 use App\Services\LeadService;
 
@@ -453,7 +455,14 @@ class RecommendedLeadsController extends Controller
         //deduct credit
         DB::table('users')->where('id', $sellerId)->decrement('total_credit', $creditScore);
         //create transaction log
-        CustomHelper::createTrasactionLog($sellerId, 0, $creditScore, $trInfo, 1, 1, $error_response='');
+        $tId =CustomHelper::createTrasactionLog($sellerId, 0, $creditScore, $trInfo, 1, 1, $error_response='');
+
+         ZohoHelper::dispatchAfterResponse(function () use ($sellerId, $tId) {
+                    app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
+                }, [
+                    'success' => true,
+                    'message' => 'Bid placed successfully'
+                ]);
 
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
 
