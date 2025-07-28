@@ -345,24 +345,17 @@ class CronController extends Controller
                 foreach ($sellersChunk as $seller) {
 
 
-
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
-                        ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-                    dd($allLeads);
-
-                    $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
+                    $allLeads = RecommendedLead::where('seller_id', $seller->id)
+                                ->where('purchase_type', 'Request Reply')
+                                ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
+                                ->whereBetween('lead_requests.created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
+                                ->orderBy('lead_requests.id', 'desc')
+                                ->select('lead_requests.id')
+                                ->get();
 
 
 
-                    foreach ($filteredLeads as $lead) {
-
-                        $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('lead_id', $lead->id)
-                                ->where('purchase_type','Request Reply')
-                                ->exists();
+                    foreach ($allLeads as $lead) {
 
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
