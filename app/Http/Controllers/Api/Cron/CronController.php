@@ -351,11 +351,11 @@ class CronController extends Controller
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
-                    dd($allLeads);
+
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
 
-
+dd($filteredLeads);
                     foreach ($filteredLeads as $lead) {
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
