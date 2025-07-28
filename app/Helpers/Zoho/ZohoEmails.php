@@ -422,7 +422,6 @@ class ZohoEmails
     {
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')->value('setting_value');
-        dd($sendLeadRequestEmail);
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
 
