@@ -319,7 +319,7 @@ class ZohoEmails
     public static function sendLeadEmailBidEnough($userId, $leadId)
     {
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled- With Credits')->value('setting_value');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -408,7 +408,7 @@ class ZohoEmails
                     $dataE['to_email'] = $toEmail;
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'New Lead - Auto Bid Enabled- With Credits';
+                    $dataE['setting_name'] = 'New Lead - Auto Bid Enabled (With Credits)';
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
