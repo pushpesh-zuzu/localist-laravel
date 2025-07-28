@@ -18,18 +18,18 @@ class CronController extends Controller
     public function onceDayBased()
     {
         //$newLead = $this->onceADayOne();
-        $newLeadBidEnough = $this->onceADayTwo();
+        //$newLeadBidEnough = $this->onceADayTwo();
         //$newLeadRequestReply = $this->onceADayThree();
-        // $newLeadBidNotEnough = $this->onceADayFive();
+         $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
                 //'new_lead_request_autobid_off' => $newLead,
-                'new_lead_bid_enough' => $newLeadBidEnough,
+                //'new_lead_bid_enough' => $newLeadBidEnough,
                 //'new_lead_request_reply' => $newLeadRequestReply,
-                //'new_lead_bid_not_enough' => $newLeadBidNotEnough
+                'new_lead_bid_not_enough' => $newLeadBidNotEnough
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
