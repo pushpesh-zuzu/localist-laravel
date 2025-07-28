@@ -19,8 +19,8 @@ class CronController extends Controller
     {
         //$newLead = $this->onceADayOne();
         //$newLeadBidEnough = $this->onceADayTwo();
-        //$newLeadRequestReply = $this->onceADayThree();
-         $newLeadBidNotEnough = $this->onceADayFive();
+        $newLeadRequestReply = $this->onceADayThree();
+        // $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
             'status' => 'success',
@@ -28,8 +28,8 @@ class CronController extends Controller
             'details' => [
                 //'new_lead_request_autobid_off' => $newLead,
                 //'new_lead_bid_enough' => $newLeadBidEnough,
-                //'new_lead_request_reply' => $newLeadRequestReply,
-                'new_lead_bid_not_enough' => $newLeadBidNotEnough
+                'new_lead_request_reply' => $newLeadRequestReply,
+                //'new_lead_bid_not_enough' => $newLeadBidNotEnough
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -355,7 +355,7 @@ class CronController extends Controller
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
                             ->whereDate('created_at', Carbon::today())
-                            ->where('setting_name', 'Send New Lead Request Email')
+                            ->where('setting_name', 'New Lead - Request Reply')
                             ->exists();
 
 
