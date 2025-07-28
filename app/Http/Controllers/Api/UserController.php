@@ -334,7 +334,7 @@ class UserController extends Controller
             }
             $user->remember_tokens = $token;
 
-            //ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+
 
 
             // $zohoService =new ZohoServiceLocations();
@@ -382,8 +382,9 @@ class UserController extends Controller
         register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString) {
             try {
                 if ($user->user_type == 1) {
-                    ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+
                     app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+                    ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
                     app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
                     app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
                     app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
