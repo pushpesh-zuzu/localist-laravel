@@ -167,6 +167,8 @@ class CronController extends Controller
         $leadPref = new LeadService();
 
         User::whereNotNull('zoho_record_id')
+            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            ->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('user_type', 1)
             ->whereHas('details', function ($query) {
@@ -277,6 +279,8 @@ class CronController extends Controller
         $leadPref = new LeadService();
 
         User::whereNotNull('zoho_record_id')
+            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            ->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('user_type', 1)
             ->whereHas('details', function ($query) {
@@ -304,7 +308,7 @@ class CronController extends Controller
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
                             ->whereDate('created_at', Carbon::today())
-                            ->where('setting_name', 'Send New Lead Request Email')
+                            ->where('setting_name', 'New Lead- Auto Bid Enabled (Without Enough Credits)')
                             ->exists();
 
 
