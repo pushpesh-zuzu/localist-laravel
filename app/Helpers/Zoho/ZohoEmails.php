@@ -217,7 +217,8 @@ class ZohoEmails
     public static function sendLeadRequestEmail($userId, $leadId)
     {
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send New Lead Request Email')->value('setting_value');
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -275,7 +276,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'New lead opportunity just for you!';
+                    $subject = 'New Lead! Turn On Auto Bid Now !';
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -305,7 +306,7 @@ class ZohoEmails
                     $dataE['to_email'] = $toEmail;
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'Send New Lead Request Email';
+                    $dataE['setting_name'] = 'New Lead-Auto Bid Disable (Check Credit)';
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
