@@ -230,8 +230,8 @@ class CronController extends Controller
 
                 foreach ($sellersChunk as $seller) {
                     dump($seller);
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
-                       ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
+                       //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
                     dd($allLeads);
