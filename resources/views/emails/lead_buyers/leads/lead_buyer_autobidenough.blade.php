@@ -55,7 +55,7 @@
 
               <!-- CTA -->
               @if($hasEnoughCredits)
-                <a href="{{ $baseUrl }}/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Lead Now</a>
+                <a href="{{ $baseUrl }}/lead/save-later" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Lead Now</a>
               @else
                 <a href="{{ $baseUrl }}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Top Up Credits to Contact</a>
               @endif

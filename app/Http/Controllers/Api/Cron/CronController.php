@@ -18,8 +18,8 @@ class CronController extends Controller
     public function onceDayBased()
     {
         //$newLead = $this->onceADayOne();
-        $newLeadBidEnough = $this->onceADayTwo();
-        // $newLeadRequestReply = $this->onceADayThree();
+        //$newLeadBidEnough = $this->onceADayTwo();
+        $newLeadRequestReply = $this->onceADayThree();
         // $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
@@ -216,6 +216,8 @@ class CronController extends Controller
         $leadPref = new LeadService();
 
         User::whereNotNull('zoho_record_id')
+            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            ->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('total_credit', '>', 0)
             ->where('user_type', 1)
