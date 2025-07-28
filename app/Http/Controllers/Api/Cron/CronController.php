@@ -212,6 +212,7 @@ class CronController extends Controller
 
     public function onceADayTwo()  //sendLeadEmailBidEnough
     {
+
         $totalUnsentLeadEmails = 0;
         $leadPref = new LeadService();
 
@@ -221,22 +222,22 @@ class CronController extends Controller
             ->where('form_status', 1)
             ->where('total_credit', '>', 0)
             ->where('user_type', 1)
+            ->where('users.id', 4)
             ->whereHas('details', function ($query) {
                 $query->where('autobid_pause', 0)
                     ->where('is_autobid', 1);
             })
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-
                 foreach ($sellersChunk as $seller) {
-                    dump($seller);
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
-                       //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
+                       ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-                    dd($allLeads);
+                    dump($allLeads);
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
+dd($filteredLeads);
                     $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
                         return $lead->credit_score <= $seller->total_credit;
                     });
