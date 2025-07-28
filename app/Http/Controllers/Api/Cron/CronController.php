@@ -243,7 +243,7 @@ class CronController extends Controller
 
 
                     foreach ($finalLeads as $lead) {
-                        dd($lead);
+                        dd($lead->purchase_type);
                         if($lead->purchase_type=='Autobid'){
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
