@@ -244,7 +244,7 @@ class CronController extends Controller
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
                             ->whereDate('created_at', Carbon::today())
-                            ->where('setting_name', 'Send New Lead Request Email')
+                            ->where('setting_name', 'New Lead - Auto Bid Enabled- With Credits')
                             ->exists();
 
 
