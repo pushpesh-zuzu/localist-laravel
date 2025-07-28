@@ -170,7 +170,8 @@ class CronController extends Controller
             ->where('form_status', 1)
             ->where('user_type', 1)
             ->whereHas('details', function ($query) {
-                $query->where('autobid_pause', 1);
+                $query->where('autobid_pause', 1)
+                     ->orWhere('is_autobid', 0);
             })
             ->select('id')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
