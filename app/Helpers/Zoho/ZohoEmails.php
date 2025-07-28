@@ -251,7 +251,7 @@ class ZohoEmails
                         'baseUrl' => env('REACT_BASE_URL'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->customer->zipcode ?? '',
+                        'postcode' => $lead->postcode ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
                         'masked_email' => $lead->customer?->email ? (function ($email) {
                             [$name, $domain] = explode('@', $email);
@@ -555,7 +555,7 @@ class ZohoEmails
                         'baseUrl' => env('REACT_BASE_URL'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->customer->zipcode ?? '',
+                        'postcode' => $lead->postcode ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
                         'masked_email' => $lead->customer?->email ? (function ($email) {
                             [$name, $domain] = explode('@', $email);
@@ -656,7 +656,7 @@ class ZohoEmails
                         'baseUrl' => env('REACT_BASE_URL'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->customer->zipcode ?? '',
+                        'postcode' => $lead->postcode ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
                         'masked_email' => $lead->customer?->email ? (function ($email) {
                             [$name, $domain] = explode('@', $email);
@@ -757,7 +757,7 @@ class ZohoEmails
                         'baseUrl' => env('REACT_BASE_URL'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->customer->zipcode ?? '',
+                        'postcode' => $lead->postcode ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
                         'masked_email' => $lead->customer?->email ? (function ($email) {
                             [$name, $domain] = explode('@', $email);
