@@ -18,8 +18,8 @@ class CronController extends Controller
     public function onceDayBased()
     {
         //$newLead = $this->onceADayOne();
-        //$newLeadBidEnough = $this->onceADayTwo();
-        $newLeadRequestReply = $this->onceADayThree();
+        $newLeadBidEnough = $this->onceADayTwo();
+        //$newLeadRequestReply = $this->onceADayThree();
         // $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
@@ -243,7 +243,7 @@ class CronController extends Controller
 
 
                     foreach ($finalLeads as $lead) {
-                        dd($lead);
+                        dump($lead);
                         if($lead->purchase_type=='Autobid'){
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
