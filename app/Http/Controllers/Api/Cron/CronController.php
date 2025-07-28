@@ -229,13 +229,13 @@ class CronController extends Controller
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
                 foreach ($sellersChunk as $seller) {
-                    dump($seller);
+
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
                        ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
+                   dd($filteredLeads);
                     $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
                         return $lead->credit_score <= $seller->total_credit;
                     });
