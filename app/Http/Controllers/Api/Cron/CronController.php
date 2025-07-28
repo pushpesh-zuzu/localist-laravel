@@ -235,9 +235,9 @@ class CronController extends Controller
                        ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-                    dump($allLeads);
+
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-dd($filteredLeads);
+
                     $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
                         return $lead->credit_score <= $seller->total_credit;
                     });
@@ -245,8 +245,7 @@ dd($filteredLeads);
 
 
                     foreach ($finalLeads as $lead) {
-                        dd($lead->purchase_type);
-                        if($lead->purchase_type=='Autobid'){
+
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
                             ->whereDate('created_at', Carbon::today())
@@ -258,7 +257,7 @@ dd($filteredLeads);
                             ZohoEmails::sendLeadEmailBidEnough($seller->id, $lead->id);
                             $totalUnsentLeadEmails++;
                         }
-                    }
+
                     }
                 }
             });
