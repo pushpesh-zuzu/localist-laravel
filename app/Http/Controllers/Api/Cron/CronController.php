@@ -229,7 +229,7 @@ class CronController extends Controller
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
                 foreach ($sellersChunk as $seller) {
-                    dump($seller);
+                    //dump($seller);
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
                        ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
 
@@ -243,7 +243,7 @@ class CronController extends Controller
 
 
                     foreach ($finalLeads as $lead) {
-                        dump($lead);
+                        //dump($lead);
                         if($lead->purchase_type=='Autobid'){
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
