@@ -623,7 +623,7 @@ class ZohoEmails
     public static function sendLeadsAfterTime($userId, $leadId)
     {
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send New Lead Request After 48hrs Email')->value('setting_value');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Unsold Leads')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -681,7 +681,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'New lead opportunity just for you!';
+                    $subject = 'New Opportunity in Your Area – Lead Details Inside';
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -710,7 +710,7 @@ class ZohoEmails
                     $dataE['to_email'] = $toEmail;
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'Send New Lead Request After 48hrs Email';
+                    $dataE['setting_name'] = 'Unsold Leads';
                     $dataE['step'] = 1;
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
@@ -724,7 +724,7 @@ class ZohoEmails
     public static function sendLeadsAfterTimeNationWide($userId, $leadId)
     {
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send New Lead Request After 48hrs Email')->value('setting_value');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Unsold Leads (Nationwide)')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -782,7 +782,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'New lead opportunity just for you!';
+                    $subject = 'Last Chance: Nationwide Lead Still Open for Bids!';
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -811,7 +811,7 @@ class ZohoEmails
                     $dataE['to_email'] = $toEmail;
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'Send New Lead Request After 48hrs Email';
+                    $dataE['setting_name'] = 'Unsold Leads (Nationwide)';
                     $dataE['step'] = 2;
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;

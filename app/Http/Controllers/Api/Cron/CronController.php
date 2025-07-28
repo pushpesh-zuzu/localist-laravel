@@ -654,7 +654,7 @@ class CronController extends Controller
 
                     $alreadySent = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
-                        ->where('setting_name', 'Send New Lead Request After 48hrs Email ')
+                        ->where('setting_name', 'Unsold Leads')
                         ->whereIn('step', [1, 2, 3])
                         ->exists();
 
@@ -697,13 +697,13 @@ class CronController extends Controller
 
                     $hasStep1 = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
-                        ->where('setting_name', 'Send New Lead Request After 48hrs Email ')
+                        ->where('setting_name', 'Unsold Leads')
                         ->where('step', 1)
                         ->exists();
 
                     $hasStep2or3 = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
-                        ->where('setting_name', 'Send New Lead Request After 48hrs Email ')
+                        ->where('setting_name', 'Unsold Leads (Nationwide)')
                         ->where('created_at', '>=', Carbon::now()->subHours(12))
                         ->whereIn('step', [2, 3])
                         ->exists();
