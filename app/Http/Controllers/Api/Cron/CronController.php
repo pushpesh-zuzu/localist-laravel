@@ -17,19 +17,19 @@ class CronController extends Controller
 {
     public function onceDayBased()
     {
-        //$newLead = $this->onceADayOne();
-        //$newLeadBidEnough = $this->onceADayTwo();
+        $newLead = $this->onceADayOne();
+        $newLeadBidEnough = $this->onceADayTwo();
         $newLeadRequestReply = $this->onceADayThree();
-        // $newLeadBidNotEnough = $this->onceADayFive();
+        $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                //'new_lead_request_autobid_off' => $newLead,
-                //'new_lead_bid_enough' => $newLeadBidEnough,
+                'new_lead_request_autobid_off' => $newLead,
+                'new_lead_bid_enough' => $newLeadBidEnough,
                 'new_lead_request_reply' => $newLeadRequestReply,
-                //'new_lead_bid_not_enough' => $newLeadBidNotEnough
+                'new_lead_bid_not_enough' => $newLeadBidNotEnough
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -73,17 +73,17 @@ class CronController extends Controller
 
     public function hourlyBased()
     {
-        $encouragement = $this->hourlyBasedOne();
+        //$encouragement = $this->hourlyBasedOne();
         $newLeadAfterTime = $this->hourlyBasedTwo();
-        $newLeadAfterTimeNationWide = $this->hourlyBasedThree();
+        //$newLeadAfterTimeNationWide = $this->hourlyBasedThree();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                'encouragement_sent' => $encouragement,
+                //'encouragement_sent' => $encouragement,
                 'new_lead_after_time' => $newLeadAfterTime,
-                'new_lead_after_time_nationwide' => $newLeadAfterTimeNationWide,
+                //'new_lead_after_time_nationwide' => $newLeadAfterTimeNationWide,
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
