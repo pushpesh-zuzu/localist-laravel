@@ -74,16 +74,16 @@ class CronController extends Controller
     public function hourlyBased()
     {
         //$encouragement = $this->hourlyBasedOne();
-        $newLeadAfterTime = $this->hourlyBasedTwo();
-        //$newLeadAfterTimeNationWide = $this->hourlyBasedThree();
+        //$newLeadAfterTime = $this->hourlyBasedTwo();
+        $newLeadAfterTimeNationWide = $this->hourlyBasedThree();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
                 //'encouragement_sent' => $encouragement,
-                'new_lead_after_time' => $newLeadAfterTime,
-                //'new_lead_after_time_nationwide' => $newLeadAfterTimeNationWide,
+                //'new_lead_after_time' => $newLeadAfterTime,
+                'new_lead_after_time_nationwide' => $newLeadAfterTimeNationWide,
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
