@@ -279,8 +279,8 @@ class CronController extends Controller
         $leadPref = new LeadService();
 
         User::whereNotNull('zoho_record_id')
-            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-            ->where('recommended_leads.purchase_type', 'Autobid')
+            //->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            //->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('user_type', 1)
             ->whereHas('details', function ($query) {
