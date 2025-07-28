@@ -350,13 +350,20 @@ class CronController extends Controller
                         ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
+                    dd($allLeads);
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
 
-dd($filteredLeads);
+
+
                     foreach ($filteredLeads as $lead) {
+
+                        $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
+                                ->where('lead_id', $lead->id)
+                                ->where('purchase_type','Request Reply')
+                                ->exists();
+
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
                             ->whereDate('created_at', Carbon::today())
