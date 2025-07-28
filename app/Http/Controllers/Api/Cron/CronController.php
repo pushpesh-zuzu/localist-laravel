@@ -614,6 +614,49 @@ class CronController extends Controller
         ]);
     }
 
+    public function hourlyBasedTwo()
+    {
+        $leadPref = new LeadService();
+        $totalUnsentLeadEmails = 0;
+        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->get();
+
+        if ($leads->isEmpty()) {
+            return $this->sendError(__('No leads found older than 48 hours'), 404);
+        }
+
+
+
+        foreach ($leads as $lead) {
+
+            $result = $leadPref->getAllSellers($lead, null, 2);
+
+            if (isset($result['response']['sellers'])) {
+
+                foreach ($result['response']['sellers'] as $seller) {
+
+                    $alreadySent = EmailLog::where('user_id', $seller->id)
+                        ->where('lead_id', $lead->id)
+                        ->where('setting_name', 'Send New Lead Request After 48hrs Email ')
+                        ->whereIn('step', [1, 2, 3])
+                        ->exists();
+
+
+                    if (!$alreadySent) {
+                        ZohoEmails::sendLeadsAfterTime($seller->id, $lead->id);
+                        $totalUnsentLeadEmails++;
+                    }
+                }
+            }
+        }
+
+        unset($leadPref);
+        return response()->json([
+            'status' => 'success',
+            'unsent_lead_emails' => $totalUnsentLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
     public function hourlyBasedThree()
     {
         $leadPref = new LeadService();
