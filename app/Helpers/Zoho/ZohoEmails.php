@@ -276,7 +276,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'New Lead! Turn On Auto Bid Now !';
+                    $subject = 'Don’t Let This Lead Slip – Enable Auto Bid Today ';
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
