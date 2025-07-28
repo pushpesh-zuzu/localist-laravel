@@ -341,7 +341,10 @@ class CronController extends Controller
             ->where('recommended_leads.purchase_type', 'Request Reply')
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+                 dd($sellersChunk);
                 foreach ($sellersChunk as $seller) {
+
+
 
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
                         ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
