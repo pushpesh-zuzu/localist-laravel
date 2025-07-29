@@ -39,15 +39,15 @@ class CronController extends Controller
 
      public function onceDayBidAfterDays()
     {
-        $newLeadAfterdays = $this->onceADayFour();
-        $newLeadAfterFewdays = $this->onceADaySix();
+       $newLeadAfterdays = $this->onceADayFour();
+       // $newLeadAfterFewdays = $this->onceADaySix();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
                 'new_lead_after_days' => $newLeadAfterdays,
-                'new_lead_after_few_days' => $newLeadAfterFewdays
+                //'new_lead_after_few_days' => $newLeadAfterFewdays
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -478,10 +478,10 @@ class CronController extends Controller
                     'total_credit_sum' => $sellerTotalLeadCredit,
                     'lead_data' => $sellerLeadData
                 ];
-                $settingValue = 'Send New Lead Request After 7 Days';
+                $settingValue = 'No Lead Purchased In 7 Days';
                 $alreadySent = EmailLog::where('user_id', $sellerId)
                             ->whereDate('created_at', Carbon::today())
-                            ->where('setting_name', 'Send New Lead Request After 7 Days')
+                            ->where('setting_name', 'No Lead Purchased In 7 Days')
                             ->exists();
 
 

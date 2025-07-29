@@ -57,7 +57,7 @@ class ZohoFinance
                 //'Price'           => $log->price,
                 'Credits'         => $log->credits,
                 'Transaction_Date' => \Carbon\Carbon::parse($log->purchase_Date)->toDateString(),
-                'Payment_Type'     => $log->payment_type == 0 ? 'credit' : 'debit',
+                'Payment_Type'     => $log->payment_type == 0 ? 'Credit' : 'Debit',
                 'Payment_Status'   => $statusText,
             ]]
         ];

@@ -855,9 +855,9 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'New lead opportunity just for you!';
+                    $subject = "7 Days, 0 Leads – Let’s Fix That";
                     if($creditPurchase){
-                        $subject = "You're Missing Out on Job Opportunities";
+                        $subject = "7 Days, 0 Leads – Let’s Fix That";
                     }
 
 
