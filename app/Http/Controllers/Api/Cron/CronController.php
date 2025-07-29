@@ -391,9 +391,9 @@ class CronController extends Controller
         User::whereNotNull('zoho_record_id')
             ->where('form_status', 1)
             ->where('user_type', 1)
-
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
                     $groupedLeadStats = [];
@@ -418,8 +418,8 @@ class CronController extends Controller
                         foreach ($leads as $lead) {
 
                             $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('lead_id', $lead->id)
-                                ->exists();
+                            ->where('created_at', '>=', Carbon::now()->subDays(7))
+                            ->exists();
 
                             if ($alreadyRecommended) {
                                 continue;
