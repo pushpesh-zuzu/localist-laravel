@@ -44,11 +44,11 @@
             margin: 0 0 10px;
         }
         .highlight {
-            color: #28c199;
+            color: #00afe3;
             margin-bottom: 16px;
         }
         p {
-            color: #61696d;
+            color: #4a4a4a;
         }
         .btn {
             display: inline-block;
@@ -108,21 +108,21 @@
 
             <div class="card">
                 <h1>Hi {{ $name }}, ready to unlock more sales?</h1>
-                <div class="highlight">Auto-Buy is helping Localist sellers increase sales by up to <strong>35%</strong>!</div>
-                <p>Right now, Auto-Buy is turned <strong>off</strong> on your account — which means you might be missing out on top leads.</p>
-                <p>Sellers using Auto-Buy get:</p>
+                <div class="highlight">Auto-Bid is helping Localist sellers increase sales by up to <strong>35%</strong>!</div>
+                <p>Right now, Auto-Bid is turned <strong>off</strong> on your account — which means you might be missing out on top leads.</p>
+                <p>Sellers using Auto-Bid get:</p>
                 <ul>
                     <li>✅ Up to 35% more sales</li>
                     <li>✅ Faster conversions with automatic matching</li>
                     <li>✅ Hands-free lead purchases 24/7</li>
                 </ul>
-                <p>Don't miss out on high-intent customers. Enable Auto-Buy and let Localist do the work for you!</p>
-                <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Enable Auto-Buy Now</a>
+                <p>Don't miss out on high-intent customers. Enable Auto-Bid and let Localist do the work for you!</p>
+                <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Enable Auto-Bid Now</a>
             </div>
 
             <div class="card">
-                <div class="section-header">How Auto-Buy Works</div>
-                <p>Once enabled, Auto-Buy uses your service filters to automatically secure matching leads the moment they come in. No need to log in, no missed opportunities.</p>
+                <div class="section-header">How Auto-Bid Works</div>
+                <p>Once enabled, Auto-Bid uses your service filters to automatically secure matching leads the moment they come in. No need to log in, no missed opportunities.</p>
                 <p>Just add credits and let the system keep your business ahead of the competition — even while you're offline.</p>
                 <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Top Up Credits</a>
             </div>

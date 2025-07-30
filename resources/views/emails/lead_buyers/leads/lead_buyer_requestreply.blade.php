@@ -22,8 +22,9 @@
           <!-- Main Card -->
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }}, you've got a new lead!</h1>
-              <p style="color: #61696d;">{{ $lead_name }} is looking for <strong>{{ $service_name }}</strong>.</p>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }},</h1>
+
+              <p style="color: #61696d;">{{ $lead_name }} requested reply from you on <strong>{{ $service_name }}</strong> </p>
 
               <!-- Tags -->
               <div style="margin: 10px 0;">
@@ -46,8 +47,8 @@
 
               <!-- Contact Details -->
               <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
-                <strong>🏅</strong> {{ $credit_score }} credits deduct for this lead<br>
-                <strong>💸</strong> {{ $remaining_credit }} credits will remain after purchase.<br>
+                <strong>🏅</strong> {{ $credit_score }} credits already deducted<br>
+                <strong>💸</strong> {{ $remaining_credit }} credits left<br>
                 <strong>📍</strong> {{ $postcode }}<br>
                 <strong>📞</strong> {{ $masked_phone }}<br>
                 <strong>✉️</strong> {{ $masked_email }}<br>
@@ -55,9 +56,9 @@
 
               <!-- CTA -->
               @if($hasEnoughCredits)
-                <a href="{{ $baseUrl }}/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Lead Now</a>
+                <a href="{{ $baseUrl }}/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact {{ $lead_name }} now</a>
               @else
-                <a href="{{ $baseUrl }}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Lead Now</a>
+                <a href="{{ $baseUrl }}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact {{ $lead_name }} now</a>
               @endif
             </td>
           </tr>

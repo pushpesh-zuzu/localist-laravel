@@ -51,13 +51,13 @@
         }
 
         .highlight {
-            color: #28c199;
+            color: #00afe3;
             margin-bottom: 16px;
         }
 
         p {
             color: ##61696d;
-            
+
         }
 
         .btn {
@@ -151,7 +151,7 @@
                 </ul>
                 <p>You can change anytime form <a href="{{$baseUrl}}/leads/settings">My Services</a> page</p>
             </div>
-            
+
             <div class="card">
                 <div class="section-header">How We Work</div>
                 <table style="width: 100%; font-size: 16px; color: #4a4a4a;">
@@ -207,7 +207,7 @@
                 </table>
             </div>
 
-            
+
             <div class="card">
                 <div class="section-header">Important Pages</div>
                 <ol>
@@ -222,7 +222,7 @@
                 <p><strong>Credits unlock opportunities. Don’t miss out!</strong><br>
                   Secure your next customer by topping up your credits today.</p>
                 <a href="{{$baseUrl}}/mycredits" class="btn">Buy Credits</a>
-                <p>You can also call our customer support team at 
+                <p>You can also call our customer support team at
                   <a href="tel:{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}</a>
                    or email <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}</a>.</p>
                 <p>Regards,<br>Localist Team</p>

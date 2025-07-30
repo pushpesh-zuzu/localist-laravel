@@ -30,8 +30,12 @@ use Illuminate\Support\Facades\{
 use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoFinance;
 use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoLeads;
+use App\Helpers\Zoho\ZohoPurchasedLeads;
+use App\Models\EmailLog;
 use Illuminate\Support\Facades\Log;
 use App\Services\LeadService;
 
@@ -380,6 +384,8 @@ class RecommendedLeadsController extends Controller
 
 
     public function addManualBid(Request $request){
+
+
         $aVals = $request->all();
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
@@ -452,17 +458,14 @@ class RecommendedLeadsController extends Controller
             'purchase_type' => $pType
         ]);
 
+
+
         //deduct credit
         DB::table('users')->where('id', $sellerId)->decrement('total_credit', $creditScore);
         //create transaction log
         $tId =CustomHelper::createTrasactionLog($sellerId, 0, $creditScore, $trInfo, 1, 1, $error_response='');
 
-         ZohoHelper::dispatchAfterResponse(function () use ($sellerId, $tId) {
-                    app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
-                }, [
-                    'success' => true,
-                    'message' => 'Bid placed successfully'
-                ]);
+
 
         LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
 
@@ -473,7 +476,75 @@ class RecommendedLeadsController extends Controller
             ->delete();
 
 
+        $bidId = $bids->id;
+        ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$bidId,$tId) {
+                    app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
+                    app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
+                }, [
+                    'success' => true,
+                    'message' => 'Bid placed successfully'
+                ]);
+
+        if($aVals['bidtype'] == 'reply'){
+            ZohoHelper::dispatchAfterResponse([$this, 'sendLeadRequestReply'], [
+                    'success' => true,
+                    'message' => 'Bid placed successfully',
+                ]);
+        }
+
         return $this->sendResponse('Bid placed successfully');
+    }
+
+
+    public function sendLeadRequestReply() //sendLeadRequestReply
+    {
+        $totalUnsentLeadEmails = 0;
+        $leadPref = new LeadService();
+
+        User::whereNotNull('zoho_record_id')
+            ->where('form_status', 1)
+            ->where('user_type', 1)
+            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            ->where('recommended_leads.purchase_type', 'Request Reply')
+            ->select('users.id', 'total_credit')
+            ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+
+                foreach ($sellersChunk as $seller) {
+
+
+                    $allLeads = RecommendedLead::where('seller_id', $seller->id)
+                                ->where('purchase_type', 'Request Reply')
+                                ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
+                                //->whereBetween('lead_requests.created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
+                                ->orderBy('lead_requests.id', 'desc')
+                                ->select('lead_requests.id')
+                                ->get();
+
+
+
+                    foreach ($allLeads as $lead) {
+
+                        $alreadySent = EmailLog::where('user_id', $seller->id)
+                            ->where('lead_id', $lead->id)
+                            ->whereDate('created_at', Carbon::today())
+                            ->where('setting_name', 'New Lead - Request Reply')
+                            ->exists();
+
+
+                        if (!$alreadySent) {
+                            ZohoEmails::sendLeadRequestReply($seller->id, $lead->id);
+                            $totalUnsentLeadEmails++;
+                        }
+                    }
+                }
+            });
+
+        unset($leadPref);
+        return response()->json([
+            'status' => 'success',
+            'unsent_lead_emails' => $totalUnsentLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
     }
 
     public function addMultipleManualBid(Request $request){

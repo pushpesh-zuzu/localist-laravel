@@ -66,7 +66,7 @@ class ZohoLeadBuyers
                 'apartment'                     => $user->apartment,
                 'registration_type'             => $user->form_status  == 1 ? 'Completed' : 'Abandoned',
                 'Active_Status'                 => $user->status  == 2 ? 'Rejected' : 'Accepted',
-                'company_sales_team'            => $user->company_sales_team  == 1 ? 'Yes' : 'No',
+                'Company_Sales_Team'            => $user->company_sales_team  == 1 ? 'Yes' : 'No',
                 'total_credit'                  => $user->total_credit,
                 'company_size'                  => $user->company_size,
                 'New_Jobs_Per_Month'            => $user->new_jobs,

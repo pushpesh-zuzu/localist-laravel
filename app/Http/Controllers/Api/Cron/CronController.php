@@ -6,20 +6,22 @@ use App\Helpers\Zoho\ZohoEmails;
 use App\Http\Controllers\Controller;
 use App\Models\EmailLog;
 use App\Models\LeadRequest;
+use App\Models\PlanHistory;
 use App\Models\RecommendedLead;
 use App\Models\User;
 use App\Models\UserServiceLocation;
 use App\Services\LeadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CronController extends Controller
 {
-    public function onceDayBased()
+    public function autoBidBased()
     {
         $newLead = $this->onceADayOne();
         $newLeadBidEnough = $this->onceADayTwo();
-        $newLeadRequestReply = $this->onceADayThree();
+
         $newLeadBidNotEnough = $this->onceADayFive();
 
         return response()->json([
@@ -28,7 +30,6 @@ class CronController extends Controller
             'details' => [
                 'new_lead_request_autobid_off' => $newLead,
                 'new_lead_bid_enough' => $newLeadBidEnough,
-                'new_lead_request_reply' => $newLeadRequestReply,
                 'new_lead_bid_not_enough' => $newLeadBidNotEnough
             ],
             'timestamp' => now()->toDateTimeString(),
@@ -37,10 +38,22 @@ class CronController extends Controller
 
     }
 
+    public function newLeadRequestReply(){
+        $newLeadRequestReply = $this->onceADayThree();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Zoho email cron ran successfully.',
+            'details' => [
+                'new_lead_request_reply' => $newLeadRequestReply
+            ],
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
      public function onceDayBidAfterDays()
     {
        $newLeadAfterdays = $this->onceADayFour();
-       // $newLeadAfterFewdays = $this->onceADaySix();
+       //$newLeadAfterFewdays = $this->onceADaySix();
 
         return response()->json([
             'status' => 'success',
@@ -510,23 +523,25 @@ class CronController extends Controller
 
         $sellerLeadSummary = [];
 
-            User::leftJoin('user_card_details', 'users.id', '=', 'user_card_details.user_id')
-            ->where('users.form_status', 1)
-            ->where('users.user_type', 1)
-            ->whereNotNull('users.zoho_record_id')
-            ->where(function ($query) {
-                $query->where(function ($q) {
-                        $q->whereNull('user_card_details.id')
-                        ->where('users.created_at', '<=', Carbon::now()->subDays(5));
-                    })
-                    ->orWhere('users.total_credit', '<', 10);
-            })
-            ->where(function ($query) {
-                $query->whereNull('user_card_details.id') // no card details
-                    ->orWhere('users.total_credit', '<', 10); // or low credit
-            })
-            ->select('users.id', 'users.total_credit')
-            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+        $latestPlanHistory = PlanHistory::select('user_id', DB::raw('MAX(created_at) as last_plan_date'))
+            ->groupBy('user_id')
+            ->toBase();
+
+           User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
+                    $join->on('users.id', '=', 'latest_plan.user_id');
+                })
+                ->where('users.form_status', 1)
+                ->where('users.user_type', 1)
+                ->where('users.id', 61)
+                ->whereNotNull('users.zoho_record_id')
+                ->where(function ($query) {
+                    $query->where(function ($q) {
+                            $q->where('latest_plan.last_plan_date', '<=', Carbon::now()->subDays(5));
+                        })
+                        ->where('users.total_credit', '<', 10);
+                })
+                ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
+                ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
                     $groupedLeadStats = [];
@@ -605,6 +620,7 @@ class CronController extends Controller
                 }
             }
 
+
             if (!empty($sellerLeadData)) {
                 $emailPayload = [
                     'total_lead_count' => $sellerTotalLeadCount,
@@ -612,15 +628,15 @@ class CronController extends Controller
                     'lead_data' => $sellerLeadData,
                     'credit_purchase' => 1
                 ];
-                $settingValue = 'Send New Purchase Request After 5 Days';
+                $settingValue = 'No Credit Purchased In 5 Days';
                 $alreadySent = EmailLog::where('user_id', $sellerId)
                             ->whereDate('created_at', Carbon::today())
-                            ->where('setting_name', 'Send New Lead Request After 5 Days')
+                            ->where('setting_name', $settingValue)
                             ->exists();
 
 
                 if (!$alreadySent) {
-                    ZohoEmails::sendLeadsAfterDays($sellerId, $emailPayload, $settingValue);
+                    ZohoEmails::creditsAfter5Days($sellerId, $emailPayload, $settingValue);
                 }
             }
         }
@@ -679,10 +695,10 @@ class CronController extends Controller
     {
         $leadPref = new LeadService();
         $totalUnsentLeadEmails = 0;
-        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->get();
+        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(84))->get();
 
         if ($leads->isEmpty()) {
-            return $this->sendError(__('No leads found older than 48 hours'), 404);
+            return $this->sendError(__('No leads found older than 84 hours'), 404);
         }
 
 
@@ -704,7 +720,7 @@ class CronController extends Controller
                     $hasStep2or3 = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
                         ->where('setting_name', 'Unsold Leads (Nationwide)')
-                        ->where('created_at', '>=', Carbon::now()->subHours(12))
+                        //->where('created_at', '>=', Carbon::now()->subHours(12))
                         ->whereIn('step', [2, 3])
                         ->exists();
 

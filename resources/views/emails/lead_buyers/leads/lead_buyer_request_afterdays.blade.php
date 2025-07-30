@@ -32,7 +32,9 @@
               @foreach ($leadDataList as $lead)
               <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
                 <strong>📊 Total Jobs:</strong> {{ $lead['count'] }}<br>
-                <strong>💼 Job Value:</strong> £{{ $lead['credit_sum'] }}<br>
+                @if(!$credit_value)
+                    <strong>💼 Job Value:</strong> £{{ number_format($lead['credit_sum'] / max($lead['count'], 1), 2) }}<br>
+                @endif
                 <strong>📍 Location:</strong> {{ ucfirst($lead['area']) }}<br>
                 <strong>🛠 Service:</strong> {{ $lead['category_name'] }}
               </div>
