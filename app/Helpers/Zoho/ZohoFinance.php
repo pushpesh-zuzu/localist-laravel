@@ -69,7 +69,7 @@ class ZohoFinance
     {
         $response = Http::withToken($accessToken)
             ->get('https://www.zohoapis.eu/crm/v2/Purchase_History/search', [
-                'criteria' => "(Transaction_Id:equals:$transactionId)"
+                'criteria' => "(Transaction_Id1:equals:$transactionId)"
             ]);
 
         $data = $response->json();
