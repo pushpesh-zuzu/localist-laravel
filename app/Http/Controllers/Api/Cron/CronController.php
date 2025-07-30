@@ -86,7 +86,7 @@ class CronController extends Controller
 
     public function hourlyBased()
     {
-        $encouragement = $this->hourlyBasedOne();
+        //$encouragement = $this->hourlyBasedOne();
         $newLeadAfterTime = $this->hourlyBasedTwo();
         $newLeadAfterTimeNationWide = $this->hourlyBasedThree();
 
@@ -94,7 +94,7 @@ class CronController extends Controller
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                'encouragement_sent' => $encouragement,
+                //'encouragement_sent' => $encouragement,
                 'new_lead_after_time' => $newLeadAfterTime,
                 'new_lead_after_time_nationwide' => $newLeadAfterTimeNationWide,
             ],

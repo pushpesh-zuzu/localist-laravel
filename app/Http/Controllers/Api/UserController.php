@@ -343,12 +343,12 @@ class UserController extends Controller
             // $zohoService->integrateServiceLocations($user);
             // $zohoQa->integrateServiceQa($user);
 
-
             return $this->sendJsonAndSyncZoho([
                 'success' => true,
                 'message' => 'Registration successful',
                 'data' => $user,
-            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds);
+            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid);
+
 
 
         }
@@ -357,7 +357,7 @@ class UserController extends Controller
 
     }
 
-    private function sendJsonAndSyncZoho($responseData, $user,$passwordRandomString, $serviceAllIds = [], $locationIds = [], $questionIds = []){
+    private function sendJsonAndSyncZoho($responseData, $user,$passwordRandomString, $serviceAllIds = [], $locationIds = [], $questionIds = [],$auto_bid){
         $json = json_encode($responseData);
 
         header("Access-Control-Allow-Origin: *");
@@ -379,7 +379,7 @@ class UserController extends Controller
             ob_end_clean();
         }
 
-        register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString) {
+        register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString,$auto_bid) {
             try {
                 if ($user->user_type == 1) {
 
@@ -389,9 +389,20 @@ class UserController extends Controller
                     app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
                     app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
                     app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id, $questionIds);
+
+                    if ($auto_bid == 0) {
+                        app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
+                    }
+
+                     if ($user->form_status == 0) {
+                        app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
+                    }
+
                 } elseif ($user->user_type == 2) {
                     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
                 }
+
+
             } catch (\Throwable $e) {
                 Log::error('Zoho background sync failed', [
                     'user_id' => $user->id,
@@ -403,7 +414,50 @@ class UserController extends Controller
         return;
     }
 
+    public function sendEncouragementEmail($payload)
+    {
+        $userId = $payload['userId'] ?? null;
+        $sentCount = 0;
+        $users = User::whereNotNull('zoho_record_id')
+            ->where('id',$userId)
+            ->whereHas('details', function ($q) {
+                $q->where('is_autobid', 0);
+            })
+            ->with(['details', 'emailLogs' => function ($q) {
+                $q->where('setting_name', 'Send Autobid Encouragement Email')
+                    ->latest();
+            }])
+            ->get();
 
+        ZohoEmails::sendEncouragementEmail($userId);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "$sentCount encouragement email(s) sent.",
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    }
+
+    public function sendIncompleteRegEmail($payload)  // sendIncompleteRegEmail
+    {
+        $sentCount = 0;
+        $userId = $payload['userId'] ?? null;
+        $users = User::whereNotNull('zoho_record_id')
+            ->whereNull('form_status')
+            ->where('id',$userId)
+            ->with(['emailLogs' => function ($q) {
+                $q->where('setting_name', 'Send Incomplete Registration Email')->latest();
+            }])
+            ->get();
+
+        ZohoEmails::sendIncompleteRegistrationEmail($userId);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "$sentCount incomplete registration email(s) sent.",
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    }
     public function checkEmailId(Request $request): JsonResponse{
         if(empty($request->email)){
             return $this->sendError('email: Email is required!');
@@ -439,6 +493,25 @@ class UserController extends Controller
         }
         return $this->sendResponse('Valid Phone Number');
     }
+
+    public function checkCompanyNameWithoutReg(Request $request): JsonResponse
+    {
+        $companyName = trim($request->input('companyname'));
+
+        if (!$companyName) {
+            return $this->sendError('Company name is required.');
+        }
+
+        $exists = User::where('company_name', $companyName)
+            ->exists();
+
+        if ($exists) {
+            return $this->sendError('Your account is already registered with this Company Name. Please contact us if this is not correct.');
+        }
+
+        return $this->sendResponse(true, 'Valid Company Name');
+    }
+
 
     public function checkCompanyName(Request $request): JsonResponse{
         $validator = Validator::make($request->all(), [
