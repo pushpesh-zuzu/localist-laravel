@@ -19,7 +19,7 @@ use App\Helpers\CustomHelper;
 class CronController extends Controller
 {
     public function onHourlyBasis(Request $request, LeadService $leadService){
-        
+
         $this->UnsoldLeadsStep1($request, $leadService);
         $this->unSoldLeadsStep2($request, $leadService);
         $this->unSoldLeadsStep3($request, $leadService);
@@ -329,7 +329,7 @@ class CronController extends Controller
 
     private function UnsoldLeadsStep1(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
-        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->get();
+        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->where('status', 'new')->get();
 
         if ($leads->isEmpty()) {
             return $this->sendError(__('No leads found older than 48 hours'), 404);
@@ -366,7 +366,7 @@ class CronController extends Controller
                         $dataU1['setting_name'] = 'Unsold Leads';
                         $dataU1['subject'] = 'New Opportunity in Your Area – Lead Details Inside';
                         $dataU1['step'] = 1;
-                        ZohoEmails::unsoldLeadEmail($dataU2);
+                        ZohoEmails::unsoldLeadEmail($dataU1);
                         $totalUnsentLeadEmails++;
                     }
                 }
@@ -382,7 +382,7 @@ class CronController extends Controller
 
     private function unSoldLeadsStep2(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
-        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(84))->get();
+        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(84))->where('status', 'new')->get();
 
         if ($leads->isEmpty()) {
             return $this->sendError(__('No leads found older than 84 hours'), 404);
@@ -442,7 +442,7 @@ class CronController extends Controller
 
     private function unSoldLeadsStep3(Request $request, LeadService $leadService){
         $totalLeadEmails = 0;
-        
+
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
         if ($now->minute === 0) {
@@ -468,7 +468,7 @@ class CronController extends Controller
             $allSellers = $localSellers->merge($nationSellers)
                 ->unique('user_id')
                 ->values();
-            
+
             foreach($allSellers as $seller){
                 $hasStep1 = EmailLog::where('user_id', $seller->id)
                     ->where('lead_id', $l->id)
@@ -487,8 +487,8 @@ class CronController extends Controller
                     ->where('setting_name', 'Unsold Leads (Discount)')
                     ->where('step', 3)
                     ->exists();
-                
-                
+
+
                 if($hasStep1 && $hasStep2 && !$hasStep3){
                     $dataU3['userId'] = $seller->id;
                     $dataU3['leadId'] = $l->id;
@@ -498,7 +498,7 @@ class CronController extends Controller
                     ZohoEmails::unsoldLeadEmail($dataU3);
                     $totalLeadEmails++;
                 }
-            }            
+            }
         }
         return response()->json([
             'status' => 'success',
