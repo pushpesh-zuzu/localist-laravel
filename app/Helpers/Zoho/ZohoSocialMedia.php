@@ -41,6 +41,7 @@ class ZohoSocialMedia
                 //'Lead_Buyer_Name'          => $userName,
 
                 //'User Id'       => $userDetail->user_id,
+                'YouTube'                 => $userDetail->company_youtube_link,
                 'Facebook'                => $userDetail->fb_link,
                 'Twitter'                 => $userDetail->twitter_link,
                 'TikTok'                  => $userDetail->tiktok_link,
