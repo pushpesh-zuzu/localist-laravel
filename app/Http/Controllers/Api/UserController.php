@@ -383,7 +383,7 @@ class UserController extends Controller
             try {
                 if ($user->user_type == 1) {
 
-                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+                    //app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
                     ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
                     app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
                     app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
@@ -792,7 +792,23 @@ class UserController extends Controller
     public function fetch_company_details($regNumber){
         $companyRegService = new CompanyRegService();
         $companyDetails = $companyRegService->getCompanyDetails($regNumber);
+        if(isset($companyDetails['company_name'])){
+            try {
+                $this->checkCompanyExists($companyDetails['company_name']);
+            } catch (\Exception $e) {
+                return $this->sendError($e->getMessage()); // returns a JsonResponse
+            }
+        }
         return $companyDetails;
+    }
+
+    private function checkCompanyExists(string $companyName): void
+    {
+        $exists = User::where('company_name', trim($companyName))->exists();
+
+        if ($exists) {
+            throw new \Exception('Your account is already registered with this Company Name. Please contact us if this is not correct.');
+        }
     }
 
 }
