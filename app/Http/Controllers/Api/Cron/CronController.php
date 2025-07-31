@@ -14,10 +14,22 @@ use App\Services\LeadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\CustomHelper;
 
 class CronController extends Controller
 {
+    public function onHourlyBasis(Request $request, LeadService $leadService){
+        
+        $this->UnsoldLeadsStep1($request, $leadService);
+        $this->unSoldLeadsStep2($request, $leadService);
+        $this->unSoldLeadsStep3($request, $leadService);
 
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Zoho email cron ran successfully.',
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
 
     public function cronAfter7Days()
     {
@@ -47,33 +59,6 @@ class CronController extends Controller
         ]);
     }
 
-    public function unSoldLeadsAfter48hr()
-    {
-        $newLeadAfterTime = $this->UnsoldLeadsStep1();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Zoho email cron ran successfully.',
-            'details' => [
-                'new_lead_after_time' => $newLeadAfterTime
-            ],
-            'timestamp' => now()->toDateTimeString(),
-        ]);
-    }
-
-    public function unSoldLeadsAfter84hr()
-    {
-        $newLeadAfterTimeNationWide = $this->unSoldLeadsStep2();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Zoho email cron ran successfully.',
-            'details' => [
-                'new_lead_after_time_nationwide' => $newLeadAfterTimeNationWide,
-            ],
-            'timestamp' => now()->toDateTimeString(),
-        ]);
-    }
 
 
     public function sendLeadsAfter7Days()
@@ -331,9 +316,18 @@ class CronController extends Controller
         ]);
     }
 
-    public function UnsoldLeadsStep1()
-    {
-        $leadPref = new LeadService();
+
+
+
+
+
+##################################################################################################################################################
+################################################       CRON FUNCTIONS       ######################################################################
+##################################################################################################################################################
+
+
+
+    private function UnsoldLeadsStep1(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
         $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->get();
 
@@ -345,7 +339,7 @@ class CronController extends Controller
 
         foreach ($leads as $lead) {
 
-            $result = $leadPref->getAllSellers($lead, null, 2);
+            $result = $leadService->getAllSellers($lead, null, 2);
 
             if (isset($result['response']['sellers'])) {
 
@@ -354,7 +348,7 @@ class CronController extends Controller
                     $alreadySent = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
                         ->where('setting_name', 'Unsold Leads')
-                        ->whereIn('step', [1, 2, 3])
+                        ->whereIn('step', [1])
                         ->exists();
 
                     $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
@@ -367,14 +361,18 @@ class CronController extends Controller
 
 
                     if (!$alreadySent) {
-                        ZohoEmails::sendLeadsAfterTime($seller->id, $lead->id);
+                        $dataU1['userId'] = $seller->id;
+                        $dataU1['leadId'] = $lead->id;
+                        $dataU1['setting_name'] = 'Unsold Leads';
+                        $dataU1['subject'] = 'New Opportunity in Your Area – Lead Details Inside';
+                        $dataU1['step'] = 1;
+                        ZohoEmails::unsoldLeadEmail($dataU2);
                         $totalUnsentLeadEmails++;
                     }
                 }
             }
         }
 
-        unset($leadPref);
         return response()->json([
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
@@ -382,9 +380,7 @@ class CronController extends Controller
         ]);
     }
 
-    public function unSoldLeadsStep2()
-    {
-        $leadPref = new LeadService();
+    private function unSoldLeadsStep2(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
         $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(84))->get();
 
@@ -396,7 +392,7 @@ class CronController extends Controller
 
         foreach ($leads as $lead) {
 
-            $result = $leadPref->getAllSellersNationList($lead, null, 1);
+            $result = $leadService->getAllSellersNationList($lead, null, 1);
 
             if (isset($result['response']['sellers'])) {
 
@@ -416,24 +412,26 @@ class CronController extends Controller
                         ->where('step', 1)
                         ->exists();
 
-                    $hasStep2or3 = EmailLog::where('user_id', $seller->id)
+                    $hasStep2 = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
                         ->where('setting_name', 'Unsold Leads (Nationwide)')
                         //->where('created_at', '>=', Carbon::now()->subHours(12))
-                        ->whereIn('step', [2, 3])
+                        ->where('step', 2)
                         ->exists();
 
-
-
-                    if ($hasStep1 && !$hasStep2or3) {
-                        ZohoEmails::sendLeadsAfterTimeNationWide($seller->id, $lead->id);
+                    if ($hasStep1 && !$hasStep2) {
+                        $dataU2['userId'] = $seller->id;
+                        $dataU2['leadId'] = $lead->id;
+                        $dataU2['setting_name'] = 'Unsold Leads (Nationwide)';
+                        $dataU2['subject'] = 'Last Chance: Nationwide Lead Still Open for Bids!';
+                        $dataU2['step'] = 2;
+                        ZohoEmails::unsoldLeadEmail($dataU2);
                         $totalUnsentLeadEmails++;
                     }
                 }
             }
         }
 
-        unset($leadPref);
         return response()->json([
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
@@ -441,349 +439,73 @@ class CronController extends Controller
         ]);
     }
 
-    // public function newLeadRequestReply()
-    // {
-    //     $newLeadRequestReply = $this->onceADayThree();
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Zoho email cron ran successfully.',
-    //         'details' => [
-    //             'new_lead_request_reply' => $newLeadRequestReply
-    //         ],
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
 
-    // public function autoBidBased()
-    // {
-    //     $newLead = $this->onceADayOne();
-    //     $newLeadBidEnough = $this->onceADayTwo();
-
-    //     $newLeadBidNotEnough = $this->onceADayFive();
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Zoho email cron ran successfully.',
-    //         'details' => [
-    //             'new_lead_request_autobid_off' => $newLead,
-    //             'new_lead_bid_enough' => $newLeadBidEnough,
-    //             'new_lead_bid_not_enough' => $newLeadBidNotEnough
-    //         ],
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-
-
-    // }
-
-
-    // public function perMinuteBased()
-    // {
-
-    //     $incompleteReg = $this->perMinuteBasedOne();
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Zoho email cron ran successfully.',
-    //         'details' => [
-    //             'incomplete_reg_sent' => $incompleteReg
-    //         ],
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
-
-
-
-
-
-    // public function hourlyBasedOne() //sendEncouragementEmail
-    // {
-
-    //     $sentCount = 0;
-    //     $users = User::whereNotNull('zoho_record_id')
-    //         ->whereHas('details', function ($q) {
-    //             $q->where('is_autobid', 0);
-    //         })
-    //         ->with(['details', 'emailLogs' => function ($q) {
-    //             $q->where('setting_name', 'Send Autobid Encouragement Email')
-    //                 ->latest();
-    //         }])
-    //         ->get();
-
-    //     foreach ($users as $user) {
-    //         $latestLog = $user->emailLogs->first();
-
-    //         if ($latestLog) {
-    //             $hoursSinceLastEmail = Carbon::parse($latestLog->created_at)->diffInHours(now());
-
-    //             if ($hoursSinceLastEmail >= 12) {
-    //                 ZohoEmails::sendEncouragementEmail($user->id);
-    //                 $sentCount++;
-    //             }
-    //         } else {
-
-    //             ZohoEmails::sendEncouragementEmail($user->id);
-    //             $sentCount++;
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => "$sentCount encouragement email(s) sent.",
-    //         'timestamp' => now()->toDateTimeString()
-    //     ]);
-    // }
-    // public function perMinuteBasedOne()  // sendIncompleteRegEmail
-    // {
-    //     $sentCount = 0;
-
-    //     $users = User::whereNotNull('zoho_record_id')
-    //         ->whereNull('form_status')
-    //         ->with(['emailLogs' => function ($q) {
-    //             $q->where('setting_name', 'Send Incomplete Registration Email')->latest();
-    //         }])
-    //         ->get();
-
-    //     foreach ($users as $user) {
-    //         $log = $user->emailLogs->first();
-
-    //         // If no log entry exists
-    //         if (!$log) {
-    //             $minutesSinceUserCreated = Carbon::parse($user->created_at)->diffInMinutes(now());
-
-    //             if ($minutesSinceUserCreated >= 15) {
-    //                 ZohoEmails::sendIncompleteRegistrationEmail($user->id);
-    //                 $sentCount++;
-    //             }
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => "$sentCount incomplete registration email(s) sent.",
-    //         'timestamp' => now()->toDateTimeString()
-    //     ]);
-    // }
-
-
-    // public function onceADayOne()  //sendNewLeadRequestAutoBidOff
-    // {
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         ->where('recommended_leads.purchase_type', 'Autobid')
-    //         ->where('form_status', 1)
-    //         ->where('user_type', 1)
-    //         ->whereHas('details', function ($query) {
-    //             $query->where('autobid_pause', 1)
-    //                  ->orWhere('is_autobid', 0);
-    //         })
-    //         ->select('id')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-
-    //             foreach ($sellersChunk as $seller) {
-
-    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
-    //                     ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-    //                 foreach ($filteredLeads as $lead) {
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         ->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'Send New Lead Request Email')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadRequestEmail($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-    //                 }
-    //             }
-    //         });
-
-
-
-    //     unset($leadPref);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
-
-    // public function onceADayTwo()  //sendLeadEmailBidEnough
-    // {
-
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         ->where('recommended_leads.purchase_type', 'Autobid')
-    //         ->where('form_status', 1)
-    //         ->where('total_credit', '>', 0)
-    //         ->where('user_type', 1)
-    //         ->whereHas('details', function ($query) {
-    //             $query->where('autobid_pause', 0)
-    //                 ->where('is_autobid', 1);
-    //         })
-    //         ->select('users.id', 'total_credit')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-    //             foreach ($sellersChunk as $seller) {
-
-
-
-    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
-    //                    ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
-    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-    //                 $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
-    //                     return $lead->credit_score <= $seller->total_credit;
-    //                 });
-
-
-
-    //                 foreach ($finalLeads as $lead) {
-
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         ->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadEmailBidEnough($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
-
-    // public function onceADayFive() //sendLeadEmailBidNotEnough
-    // {
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         //->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         //->where('recommended_leads.purchase_type', 'Autobid')
-    //         ->where('id',4)
-    //         ->where('form_status', 1)
-    //         ->where('user_type', 1)
-    //         ->whereHas('details', function ($query) {
-    //             $query->where('autobid_pause', 0)
-    //                 ->where('is_autobid', 1);
-    //         })
-    //         ->select('id', 'total_credit')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-
-    //             foreach ($sellersChunk as $seller) {
-
-    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id)
-    //                     ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-    //                 $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
-    //                     return $lead->credit_score > $seller->total_credit;
-    //                 });
-
-
-
-    //                 foreach ($finalLeads as $lead) {
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         ->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadEmailBidNotEnough($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
-
-    // public function onceADayThree() //sendLeadRequestReply
-    // {
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         ->where('form_status', 1)
-    //         ->where('user_type', 1)
-    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         ->where('recommended_leads.purchase_type', 'Request Reply')
-    //         ->select('users.id', 'total_credit')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-
-    //             foreach ($sellersChunk as $seller) {
-
-
-    //                 $allLeads = RecommendedLead::where('seller_id', $seller->id)
-    //                             ->where('purchase_type', 'Request Reply')
-    //                             ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
-    //                             ->whereBetween('lead_requests.created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
-    //                             ->orderBy('lead_requests.id', 'desc')
-    //                             ->select('lead_requests.id')
-    //                             ->get();
-
-
-
-    //                 foreach ($allLeads as $lead) {
-
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         ->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead - Request Reply')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadRequestReply($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
-
+    private function unSoldLeadsStep3(Request $request, LeadService $leadService){
+        $totalLeadEmails = 0;
+        
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(96); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(96); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
+        $leads = LeadRequest::whereBetween('created_at', [$from, $to])
+            ->where('status', 'new')
+            ->get();
+        $discountPercent = CustomHelper::setting_value('discount_percent_of_unsold_leads',20);
+
+        foreach($leads as $l){
+            $newCredit = floor($l->credit_score - (($discountPercent/100) * $l->credit_score));
+            $l->credit_score = $newCredit;
+
+            $dataUC['credit_score'] = $newCredit;
+            LeadRequest::where('id', $l->id)->update($dataUC);
+
+            $localSellers = $leadService->getAllSellers($l, null, 2)['response']['sellers'];
+            $nationSellers = $leadService->getAllSellersNationList($l, null, 1)['response']['sellers'];
+            $allSellers = $localSellers->merge($nationSellers)
+                ->unique('user_id')
+                ->values();
+            
+            foreach($allSellers as $seller){
+                $hasStep1 = EmailLog::where('user_id', $seller->id)
+                    ->where('lead_id', $l->id)
+                    ->where('setting_name', 'Unsold Leads')
+                    ->where('step', 1)
+                    ->exists();
+
+                $hasStep2 = EmailLog::where('user_id', $seller->id)
+                    ->where('lead_id', $l->id)
+                    ->where('setting_name', 'Unsold Leads (Nationwide)')
+                    ->where('step', 2)
+                    ->exists();
+
+                $hasStep3 = EmailLog::where('user_id', $seller->id)
+                    ->where('lead_id', $l->id)
+                    ->where('setting_name', 'Unsold Leads (Discount)')
+                    ->where('step', 3)
+                    ->exists();
+                
+                
+                if($hasStep1 && $hasStep2 && !$hasStep3){
+                    $dataU3['userId'] = $seller->id;
+                    $dataU3['leadId'] = $l->id;
+                    $dataU3['setting_name'] = 'Unsold Leads (Discount)';
+                    $dataU3['subject'] = 'Exclusive Offer: 20% Discount on Lead Credits – Act Now!';
+                    $dataU3['step'] = 3;
+                    ZohoEmails::unsoldLeadEmail($dataU3);
+                    $totalLeadEmails++;
+                }
+            }            
+        }
+        return response()->json([
+            'status' => 'success',
+            'total_lead_emails' => $totalLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
 
 
 }
