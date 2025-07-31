@@ -46,10 +46,10 @@ Route::prefix('check')->group(function () {
 //cron for lead buyer registration email
 //Route::post('users/registration', [UserController::class, 'registration']);
 Route::prefix('cron')->group(function () {
-    Route::get('once-day-based', [CronController::class,'onceDayBased']);
-    Route::get('once-day-based-after-days', [CronController::class,'onceDayBidAfterDays']);
-    Route::get('per-minute-based', [CronController::class,'perMinuteBased']);
-    Route::get('hourly-based', [CronController::class,'hourlyBased']);
+    Route::get('after-7-days', [CronController::class,'cronAfter7Days']);
+    Route::get('after-5-days', [CronController::class,'cronAfter5Days']);
+    Route::get('after-48-hrs', [CronController::class,'unSoldLeadsAfter48hr']);
+    Route::get('after-84-hrs', [CronController::class,'unSoldLeadsAfter84hr']);
 });
 
 Route::prefix('notification')->group(function () {
