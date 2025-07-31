@@ -357,6 +357,14 @@ class CronController extends Controller
                         ->whereIn('step', [1, 2, 3])
                         ->exists();
 
+                    $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
+                                ->where('lead_id', $lead->id)
+                                ->exists();
+
+                    if ($alreadyRecommended) {
+                        continue;
+                    }
+
 
                     if (!$alreadySent) {
                         ZohoEmails::sendLeadsAfterTime($seller->id, $lead->id);
@@ -394,6 +402,14 @@ class CronController extends Controller
 
                 foreach ($result['response']['sellers'] as $seller) {
 
+                    $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
+                                ->where('lead_id', $lead->id)
+                                ->exists();
+
+                    if ($alreadyRecommended) {
+                        continue;
+                    }
+
                     $hasStep1 = EmailLog::where('user_id', $seller->id)
                         ->where('lead_id', $lead->id)
                         ->where('setting_name', 'Unsold Leads')
@@ -406,6 +422,8 @@ class CronController extends Controller
                         //->where('created_at', '>=', Carbon::now()->subHours(12))
                         ->whereIn('step', [2, 3])
                         ->exists();
+
+
 
                     if ($hasStep1 && !$hasStep2or3) {
                         ZohoEmails::sendLeadsAfterTimeNationWide($seller->id, $lead->id);
