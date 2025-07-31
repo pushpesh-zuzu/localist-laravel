@@ -39,9 +39,12 @@ Route::prefix('check')->group(function () {
     Route::post('/phone-number', [UserController::class, 'checkPhoneNumber']);
     Route::post('/company-name', [UserController::class, 'checkCompanyName']);
     Route::post('/company-location', [UserController::class, 'checkCompanyLocation']);
+    Route::post('/company-name-without-reg', [UserController::class, 'checkCompanyNameWithoutReg']);
+
 });
 
 //cron for lead buyer registration email
+//Route::post('users/registration', [UserController::class, 'registration']);
 Route::prefix('cron')->group(function () {
     Route::get('once-day-based', [CronController::class,'onceDayBased']);
     Route::get('once-day-based-after-days', [CronController::class,'onceDayBidAfterDays']);
