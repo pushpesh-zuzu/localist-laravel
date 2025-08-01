@@ -31,7 +31,7 @@ Route::get('/check_api', function () {
     return "check api";
 });
 
-
+Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
 
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 Route::prefix('check')->group(function () {
@@ -46,7 +46,7 @@ Route::prefix('check')->group(function () {
 //cron for lead buyer registration email
 //Route::post('users/registration', [UserController::class, 'registration']);
 Route::prefix('cron')->group(function () {
-    Route::get('test', [CronController::class,'unSoldLeadsStep3']);
+    Route::get('test', [CronController::class,'leadPurchaseStatusUpdate48hrs']);
     Route::get('after-7-days', [CronController::class,'cronAfter7Days']);
     Route::get('after-5-days', [CronController::class,'cronAfter5Days']);
     Route::get('on-hourly-basis', [CronController::class,'onHourlyBasis']);

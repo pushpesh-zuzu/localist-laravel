@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use App\Models\ServiceQuestion;
 use App\Models\LeadPrefrence;
 use App\Models\UserDetail;
+use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Review;
 use Illuminate\Support\Facades\{
@@ -809,6 +810,40 @@ class UserController extends Controller
         if ($exists) {
             throw new \Exception('Your account is already registered with this Company Name. Please contact us if this is not correct.');
         }
+    }
+
+
+
+
+    // ActivityLog
+    public function leadPurchaseStatusUpdateLog(Request $request, $lead_id, $seller_id, $buyer_id, $log){
+        // echo $lead_id .'; ' .$seller_id .'; ' .$buyer_id .'; ' .$log;
+
+        $leadTime = LeadRequest::where('id',$lead_id)->pluck('created_at')->first();
+
+        $leadtime = Carbon::parse($leadTime)->setTimezone('Asia/Kolkata');
+        $createdAt = Carbon::parse(date('Y-m-d H:i:s'))->setTimezone('Asia/Kolkata');
+
+        $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
+        if ($diffInMinutes < 60) {
+            $duration = $diffInMinutes;
+        } else {
+            $hours = round($diffInMinutes / 60);
+            $duration = $hours;
+        }
+
+        $data['lead_id'] = $lead_id;
+        $data['from_user_id'] = $seller_id;
+        $data['to_user_id'] = $buyer_id;
+        $data['activity_name'] = $log;
+        $data['contact_type'] = 'email';
+        $data['duration'] = $duration;
+        $data['duration_minutes'] = $diffInMinutes;
+        $data['created_at'] = date('Y-m-d H:i:s');
+        
+        ActivityLog::insertGetId($data);
+
+        return 'Thank you, <br> Your response has been logged!';
     }
 
 }

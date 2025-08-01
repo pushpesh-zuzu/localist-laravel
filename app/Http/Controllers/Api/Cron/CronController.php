@@ -19,11 +19,15 @@ use App\Helpers\CustomHelper;
 class CronController extends Controller
 {
     public function onHourlyBasis(Request $request, LeadService $leadService){
-
+        set_time_limit(0);
+        
         $this->UnsoldLeadsStep1($request, $leadService);
         $this->unSoldLeadsStep2($request, $leadService);
         $this->unSoldLeadsStep3($request, $leadService);
-
+        
+        $this->leadPurchaseStatusUpdate48hrs($request);
+        $this->leadPurchaseStatusUpdate96hrs($request);
+        
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
@@ -541,6 +545,79 @@ class CronController extends Controller
             'total_lead_emails' => $totalLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ]);
+    }
+
+
+    public function leadPurchaseStatusUpdate48hrs(Request $request){
+        $totalLeadEmails = 0;
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(48); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(48); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
+
+        $leads = RecommendedLead::whereBetween('created_at', [$from, $to])
+            ->where('status', '<>', 'hired')
+            ->get();
+        
+            foreach($leads as $lead){
+                $emailSent = EmailLog::where('user_id', $lead->seller_id)
+                    ->where('lead_id', $lead->lead_id)
+                    ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
+                    ->exists();
+
+                if(!$emailSent){
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
+                    $totalLeadEmails++;
+                }
+            }
+
+        return response()->json([
+            'status' => 'success',
+            'total_lead_emails' => $totalLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+
+
+    }
+
+    public function leadPurchaseStatusUpdate96hrs(Request $request){
+        $totalLeadEmails = 0;
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(96); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(96); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
+
+        $leads = RecommendedLead::whereBetween('created_at', [$from, $to])
+            ->where('status', '<>', 'hired')
+            ->get();
+        
+            foreach($leads as $lead){
+                $emailSent = EmailLog::where('user_id', $lead->seller_id)
+                    ->where('lead_id', $lead->lead_id)
+                    ->where('setting_name', 'Lead Purchase Status Update (96 hrs)')
+                    ->exists();
+
+                if(!$emailSent){
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, 'Lead Purchase Status Update (96 hrs)', 'Confirmation! Update your lead status');
+                    $totalLeadEmails++;
+                }
+            }
+
+        return response()->json([
+            'status' => 'success',
+            'total_lead_emails' => $totalLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+
+
     }
 
 
