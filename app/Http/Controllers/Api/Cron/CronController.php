@@ -31,15 +31,16 @@ class CronController extends Controller
         ]);
     }
 
-    public function cronAfter7Days()
+    public function onDayBasis()
     {
         $newLeadAfter7days = $this->sendLeadsAfter7Days();
-
+        $newLeadAfter5days = $this->checkCreditAfter5Days();
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                'new_lead_after_7_days' => $newLeadAfter7days
+                'new_lead_after_7_days' => $newLeadAfter7days,
+                'new_lead_after_5_days' => $newLeadAfter5days
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -65,7 +66,15 @@ class CronController extends Controller
     {
         $totalUnsentLeadEmails = 0;
         $leadPref = new LeadService();
+        $now = Carbon::now();
 
+
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(168);
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(168);
+        }
+        $from = $to->copy()->subMinutes(59);
 
         $sellerLeadSummary = [];
 
@@ -73,7 +82,7 @@ class CronController extends Controller
             ->where('form_status', 1)
             ->where('user_type', 1)
             ->select('users.id', 'total_credit')
-            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
@@ -82,7 +91,7 @@ class CronController extends Controller
                     foreach ($serviceLocations as $location) {
                         $leadQuery = LeadRequest::with('category')
                             ->where('service_id', $location->service_id)
-                            ->where('created_at', '<=', Carbon::now()->subDays(7));
+                            ->whereBetween('created_at', [$from, $to]);
 
                         if ($location->nation_wide != 1) {
 
@@ -187,6 +196,16 @@ class CronController extends Controller
     public function checkCreditAfter5Days()
     {
         $totalUnsentLeadEmails = 0;
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(120); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(120); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59);
+
+
         $leadPref = new LeadService();
 
         $sellerLeadSummary = [];
@@ -202,11 +221,11 @@ class CronController extends Controller
             ->where('users.user_type', 1)
             ->where('users.id', 61)
             ->whereNotNull('users.zoho_record_id')
-            ->where(function ($query) {
-                $query->where(function ($q) {
-                    $q->where('latest_plan.last_plan_date', '<=', Carbon::now()->subDays(5));
+            ->where(function ($query) use ($from, $to) {
+                $query->where(function ($q) use ($from, $to) {
+                    $q->whereBetween('latest_plan.last_plan_date', [$from, $to]);
                 })
-                    ->where('users.total_credit', '<', 10);
+                ->where('users.total_credit', '<', 10);
             })
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
@@ -216,8 +235,7 @@ class CronController extends Controller
                     $nationwideLeadIds = [];
                     foreach ($serviceLocations as $location) {
                         $leadQuery = LeadRequest::with('category')
-                            ->where('service_id', $location->service_id)
-                            ->where('created_at', '<=', Carbon::now()->subDays(7));
+                            ->where('service_id', $location->service_id);
 
                         if ($location->nation_wide != 1) {
 
@@ -329,13 +347,21 @@ class CronController extends Controller
 
     private function UnsoldLeadsStep1(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
-        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(48))->where('status', 'new')->get();
+
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(48); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(48); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59);
+
+        $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
 
         if ($leads->isEmpty()) {
             return $this->sendError(__('No leads found older than 48 hours'), 404);
         }
-
-
 
         foreach ($leads as $lead) {
 
@@ -382,7 +408,17 @@ class CronController extends Controller
 
     private function unSoldLeadsStep2(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
-        $leads = LeadRequest::where('created_at', '<', Carbon::now()->subHours(84))->where('status', 'new')->get();
+
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(84); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(84); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59);
+
+        $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
 
         if ($leads->isEmpty()) {
             return $this->sendError(__('No leads found older than 84 hours'), 404);
