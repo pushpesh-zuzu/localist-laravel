@@ -236,8 +236,6 @@ class MyRequestController extends Controller
                     }
                 });
 
-            unset($leadPref);
-
             if($sId){
                 $fUser = User::where('id',$euId)->first();
                 $rel['user_id'] = $euId;
@@ -256,13 +254,36 @@ class MyRequestController extends Controller
                 $rel['nation_wide'] = $fUser->nation_wide;
                 $rel['request_id'] = $sId;
 
+
+                //code to sent email on new lead
+                $lead = LeadRequest::find($sId);
+                $sellers = $leadService->getAllSellers($lead);
+                if(!empty($sellers['response']['sellers'])){
+                    $sortedSellers = $result['response']['sellers']
+                        ->sortByDesc('total_credit')
+                        ->values()
+                        ->take(7);
+                    foreach($sortedSellers as $seller){
+                        ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
+                    }
+                }
+
                 ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
                     'success' => true,
                     'message' => 'Quote Submitted Successfully',
                     'data' => $rel
                 ]);
 
-                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+                // ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
+                //     'success' => true,
+                //     'message' => 'Quote Submitted Successfully',
+                //     'data' => $rel
+                // ]);
+
+
+
+
+                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
             $euId = User::where('email',$request->email)->value('id');
