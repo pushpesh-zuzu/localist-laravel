@@ -235,7 +235,7 @@ class MyRequestController extends Controller
                         }
                     }
                 });
-
+            unset($leadPref);
             if($sId){
                 $fUser = User::where('id',$euId)->first();
                 $rel['user_id'] = $euId;
