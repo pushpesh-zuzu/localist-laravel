@@ -20,15 +20,17 @@ class CreditScorePredictor{
             case 54:
                 $url .= 'artificial_grass';
                 break;
-                
+
             default:
                 $url = "";
         }
         $data = json_decode($data, true);
-        foreach($data as $q){
-            $predict[$q['ques']] = !empty($q['ans']) ? preg_replace(['/^,/', '/\?$/'], '', trim($q['ans'])) : 'Unknown';
+        foreach ($data as $q) {
+            if (is_array($q) && isset($q['ques'])) {
+                $predict[$q['ques']] = !empty($q['ans']) ? preg_replace(['/^,/', '/\?$/'], '', trim($q['ans'])) : 'Unknown';
+            }
         }
-        
+
         $output = self::getPrediction($url, $predict);
         if(!empty($output['success'])){
             if($output['success'] == 1){
@@ -36,7 +38,7 @@ class CreditScorePredictor{
                 $rel = ceil($tRel);
             }else{
                 print_r($output);
-            }            
+            }
         }else{
             print_r($output);
         }
@@ -57,5 +59,5 @@ class CreditScorePredictor{
         curl_close($ch);
         return json_decode($response, true);
     }
-    
+
 }
