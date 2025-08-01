@@ -83,20 +83,25 @@ class ZohoServiceLocations
         if (!$serviceDetails) return null;
 
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
-        $payload = [
-            'data' => [[
-                'Location_Id'        => $location->id,
-                'Service Name'      => $serviceDetails->category->name ?? '',
-                'Name'              => $serviceDetails->category->name ?? '',
-                // 'Lead_Buyer_Name1'  => $serviceDetails->user->name ?? '',
-                'Lead_Buyer_Lookup' => $lookUpId,
-                'Miles'             => $location->miles,
-                'Postcode'          => $location->postcode,
-                'Nation_Wide'       => $location->nation_wide == 1 ? 'Yes' : 'No',
-                'City'              => $location->city,
-                'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
-            ]]
-        ];
+        if($lookUpId){
+            $payload = [
+                'data' => [[
+                    'Location_Id'        => $location->id,
+                    'Service Name'      => $serviceDetails->category->name ?? '',
+                    'Name'              => $serviceDetails->category->name ?? '',
+                    // 'Lead_Buyer_Name1'  => $serviceDetails->user->name ?? '',
+                    'Lead_Buyer_Lookup' => $lookUpId,
+                    'Miles'             => $location->miles,
+                    'Postcode'          => $location->postcode,
+                    'Nation_Wide'       => $location->nation_wide == 1 ? 'Yes' : 'No',
+                    'City'              => $location->city,
+                    'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
+                ]]
+            ];
+        }
+        else{
+            return false;
+        }
 
        //dd($payload);
         if (!$zohoServiceId) {

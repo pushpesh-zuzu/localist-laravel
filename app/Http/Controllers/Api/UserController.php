@@ -424,14 +424,13 @@ class UserController extends Controller
             ->whereHas('details', function ($q) {
                 $q->where('is_autobid', 0);
             })
-            ->with(['details', 'emailLogs' => function ($q) {
-                $q->where('setting_name', 'Send Autobid Encouragement Email')
-                    ->latest();
-            }])
+            // ->with(['details', 'emailLogs' => function ($q) {
+            //     $q->where('setting_name', 'Send Autobid Encouragement Email')
+            //         ->latest();
+            // }])
             ->get();
 
         ZohoEmails::sendEncouragementEmail($userId);
-
         return response()->json([
             'status' => 'success',
             'message' => "$sentCount encouragement email(s) sent.",
@@ -446,11 +445,10 @@ class UserController extends Controller
         $users = User::whereNotNull('zoho_record_id')
             ->whereNull('form_status')
             ->where('id',$userId)
-            ->with(['emailLogs' => function ($q) {
-                $q->where('setting_name', 'Send Incomplete Registration Email')->latest();
-            }])
+            // ->with(['emailLogs' => function ($q) {
+            //     $q->where('setting_name', 'Send Incomplete Registration Email')->latest();
+            // }])
             ->get();
-
         ZohoEmails::sendIncompleteRegistrationEmail($userId);
 
         return response()->json([

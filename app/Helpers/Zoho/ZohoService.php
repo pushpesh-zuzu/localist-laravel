@@ -61,15 +61,20 @@ class ZohoService
         if (!$serviceDetails) return null;
 
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        if($lookUpId){
+            $payload = [
+                'data' => [[
+                    'Service_Id'        => $service->id,
+                    'Name'              => $serviceDetails->category->name ?? '',
+                    'Lead_Services_Lookup' => $lookUpId,
+                    'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
+                ]]
+            ];
+        }
+        else{
+            return false;
+        }
 
-        $payload = [
-            'data' => [[
-                'Service_Id'        => $service->id,
-                'Name'              => $serviceDetails->category->name ?? '',
-                'Lead_Services_Lookup' => $lookUpId,
-                'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
-            ]]
-        ];
 
        //dd($payload);
         if (!$zohoServiceId) {

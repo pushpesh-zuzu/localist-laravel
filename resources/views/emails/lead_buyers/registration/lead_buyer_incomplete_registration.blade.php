@@ -95,7 +95,7 @@
 
       <div class="card">
         <h1>Hello {{ $name }}, complete your registration</h1>
-        <p class="highlight">You're just one step away from connecting with more buyers on Localist!</p>
+        <p class="highlight" style="color:#00afe3">You're just one step away from connecting with more buyers on Localist!</p>
         <p>We noticed you started signing up but didn't finish. Sellers who complete their profile can:</p>
         <ul>
           <li>✅ Access premium leads instantly</li>
@@ -103,7 +103,7 @@
           <li>✅ Track engagement and conversions</li>
         </ul>
         <p>Finish registering and unlock your full potential on Localist.</p>
-        <a href="{{$baseUrl}}/resume-registration?email={{$email}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Complete My Registration</a>
+        <a href="{{$baseUrl}}/sellers/create/" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Join as a Professional</a>
       </div>
 
       <div class="card">
