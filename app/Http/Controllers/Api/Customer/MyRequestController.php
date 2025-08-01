@@ -256,13 +256,13 @@ class MyRequestController extends Controller
                 $rel['nation_wide'] = $fUser->nation_wide;
                 $rel['request_id'] = $sId;
 
-                ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
-                    'success' => true,
-                    'message' => 'Quote Submitted Successfully',
-                    'data' => $rel
-                ]);
+                // ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
+                //     'success' => true,
+                //     'message' => 'Quote Submitted Successfully',
+                //     'data' => $rel
+                // ]);
 
-                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
             $euId = User::where('email',$request->email)->value('id');
