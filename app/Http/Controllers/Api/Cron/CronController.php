@@ -20,14 +20,14 @@ class CronController extends Controller
 {
     public function onHourlyBasis(Request $request, LeadService $leadService){
         set_time_limit(0);
-        
+
         $this->UnsoldLeadsStep1($request, $leadService);
         $this->unSoldLeadsStep2($request, $leadService);
         $this->unSoldLeadsStep3($request, $leadService);
-        
+
         $this->leadPurchaseStatusUpdate48hrs($request);
         $this->leadPurchaseStatusUpdate96hrs($request);
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
@@ -50,28 +50,11 @@ class CronController extends Controller
         ]);
     }
 
-    public function cronAfter5Days()
-    {
-        $newLeadAfter5days = $this->checkCreditAfter5Days();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Zoho email cron ran successfully.',
-            'details' => [
-                'new_lead_after_5_days' => $newLeadAfter5days
-            ],
-            'timestamp' => now()->toDateTimeString(),
-        ]);
-    }
-
-
-
     public function sendLeadsAfter7Days()
     {
         $totalUnsentLeadEmails = 0;
-        $leadPref = new LeadService();
-        $now = Carbon::now();
 
+        $now = Carbon::now();
 
         if ($now->minute === 0) {
             $to = $now->copy()->subHours(168);
@@ -185,11 +168,6 @@ class CronController extends Controller
             }
         }
 
-
-
-
-
-        unset($leadPref);
         return response()->json([
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
@@ -210,7 +188,6 @@ class CronController extends Controller
         $from = $to->copy()->subMinutes(59);
 
 
-        $leadPref = new LeadService();
 
         $sellerLeadSummary = [];
 
@@ -218,12 +195,12 @@ class CronController extends Controller
             ->groupBy('user_id')
             ->toBase();
 
+
         User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
             $join->on('users.id', '=', 'latest_plan.user_id');
         })
             ->where('users.form_status', 1)
             ->where('users.user_type', 1)
-            ->where('users.id', 61)
             ->whereNotNull('users.zoho_record_id')
             ->where(function ($query) use ($from, $to) {
                 $query->where(function ($q) use ($from, $to) {
@@ -233,6 +210,7 @@ class CronController extends Controller
             })
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
                     $groupedLeadStats = [];
@@ -330,7 +308,7 @@ class CronController extends Controller
                 }
             }
         }
-        unset($leadPref);
+
         return response()->json([
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
@@ -422,6 +400,8 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59);
 
+
+
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
 
         if ($leads->isEmpty()) {
@@ -491,6 +471,8 @@ class CronController extends Controller
             $to = $now->copy()->subMinutes($now->minute)->subHours(96); // Not a full hour, roll back to previous full hour
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
+
+
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'new')
             ->get();
@@ -562,7 +544,7 @@ class CronController extends Controller
         $leads = RecommendedLead::whereBetween('created_at', [$from, $to])
             ->where('status', '<>', 'hired')
             ->get();
-        
+
             foreach($leads as $lead){
                 $emailSent = EmailLog::where('user_id', $lead->seller_id)
                     ->where('lead_id', $lead->lead_id)
@@ -598,7 +580,7 @@ class CronController extends Controller
         $leads = RecommendedLead::whereBetween('created_at', [$from, $to])
             ->where('status', '<>', 'hired')
             ->get();
-        
+
             foreach($leads as $lead){
                 $emailSent = EmailLog::where('user_id', $lead->seller_id)
                     ->where('lead_id', $lead->lead_id)

@@ -54,6 +54,7 @@ class ZohoEmails
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendWelcomeEmail',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -120,6 +121,7 @@ class ZohoEmails
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendEncouragementEmail',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
@@ -195,6 +197,7 @@ class ZohoEmails
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendIncompleteRegistrationEmail',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -235,7 +238,7 @@ class ZohoEmails
         }
     }
 
-    public static function sendLeadRequestEmail($userId, $leadId)
+    public static function sendLeadNotBid($userId, $leadId)
     {
 
 
@@ -301,7 +304,8 @@ class ZohoEmails
 
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
-                        'function_name' => 'sendLeadRequestEmail',
+                        'function_name' => 'sendLeadNotBid',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -409,6 +413,7 @@ class ZohoEmails
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendLeadEmailBidEnough',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -515,6 +520,7 @@ class ZohoEmails
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendLeadEmailBidNotEnough',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -625,6 +631,7 @@ class ZohoEmails
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendLeadRequestReply',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -731,6 +738,7 @@ class ZohoEmails
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'unsoldLeadEmail',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -816,6 +824,7 @@ class ZohoEmails
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendLeadsAfterDays',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -899,6 +908,7 @@ class ZohoEmails
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'creditsAfter5Days',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 
@@ -991,6 +1001,7 @@ class ZohoEmails
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'leadPuchaseStatusUpdateEmail',
+                        'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
 

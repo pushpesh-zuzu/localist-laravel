@@ -256,13 +256,13 @@ class MyRequestController extends Controller
                 $rel['nation_wide'] = $fUser->nation_wide;
                 $rel['request_id'] = $sId;
 
-                // ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
-                //     'success' => true,
-                //     'message' => 'Quote Submitted Successfully',
-                //     'data' => $rel
-                // ]);
+                ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
+                    'success' => true,
+                    'message' => 'Quote Submitted Successfully',
+                    'data' => $rel
+                ]);
 
-                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
             $euId = User::where('email',$request->email)->value('id');
@@ -287,10 +287,18 @@ class MyRequestController extends Controller
 
     public function autoBidBased()
     {
+
         $newLead = $this->sendNewLeadRequestAutoBidOff();
         $newLeadBidEnough = $this->sendLeadEmailCreditEnough();
-
         $newLeadBidNotEnough = $this->sendLeadEmailCreditNotEnough();
+
+
+        return response()->json([
+            'step1' => $newLead,
+            'step2' => $newLeadBidEnough,
+            'step3' => $newLeadBidNotEnough,
+            'summary' => 'All steps completed'
+        ]);
 
 
     }
@@ -330,7 +338,7 @@ class MyRequestController extends Controller
 
 
                         if (!$alreadySent) {
-                            ZohoEmails::sendLeadRequestEmail($seller->id, $lead->id);
+                            ZohoEmails::sendLeadNotBid($seller->id, $lead->id);
 
                             $totalUnsentLeadEmails++;
                         }
@@ -339,16 +347,15 @@ class MyRequestController extends Controller
             });
 
         unset($leadPref);
-        return response()->json([
+         return [
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
             'timestamp' => now()->toDateTimeString(),
-        ]);
+        ];
     }
 
     public function sendLeadEmailCreditEnough()
     {
-
         $totalUnsentLeadEmails = 0;
         $leadPref = new LeadService();
 
@@ -366,7 +373,7 @@ class MyRequestController extends Controller
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
                 foreach ($sellersChunk as $seller) {
 
-
+                   dd($seller);
 
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
                        //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
@@ -400,11 +407,11 @@ class MyRequestController extends Controller
             });
 
         unset($leadPref);
-        return response()->json([
+        return [
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
             'timestamp' => now()->toDateTimeString(),
-        ]);
+        ];
     }
 
     public function sendLeadEmailCreditNotEnough()
@@ -415,7 +422,6 @@ class MyRequestController extends Controller
         User::whereNotNull('zoho_record_id')
             //->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
             //->where('recommended_leads.purchase_type', 'Autobid')
-            ->where('id',4)
             ->where('form_status', 1)
             ->where('user_type', 1)
             ->whereHas('details', function ($query) {
@@ -456,11 +462,12 @@ class MyRequestController extends Controller
             });
 
         unset($leadPref);
-        return response()->json([
+
+        return [
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
             'timestamp' => now()->toDateTimeString(),
-        ]);
+        ];
     }
 
     public function addImageToSubmittedRequest(Request $request){
