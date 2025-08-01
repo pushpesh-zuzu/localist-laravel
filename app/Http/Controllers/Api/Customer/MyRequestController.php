@@ -262,7 +262,7 @@ class MyRequestController extends Controller
                     'data' => $rel
                 ]);
 
-                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
             $euId = User::where('email',$request->email)->value('id');
