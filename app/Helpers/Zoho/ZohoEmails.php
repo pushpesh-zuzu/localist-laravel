@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\EmailLog;
 use App\Models\EmailSetting;
 use App\Models\LeadRequest;
+use Illuminate\Support\Facades\DB;
 
 class ZohoEmails
 {
@@ -20,6 +21,7 @@ class ZohoEmails
         if ($sendWelcomeEmail) {
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
             if (!empty($zohoId)) {
                 $user = User::with(['services.category', 'services.locations'])->where('id', $userId)->first();
                 if (!empty($user)) {
@@ -44,9 +46,17 @@ class ZohoEmails
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localist';
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendWelcomeEmail',
+                        'created_at' => now(),
+                    ]);
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -107,6 +117,11 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
+                     DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendEncouragementEmail',
+                        'created_at' => now(),
+                    ]);
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'Boost Your Sales with Auto-Buy !';
@@ -133,7 +148,6 @@ class ZohoEmails
 
 
                     $rel = self::getZohoMailResponse($response);
-
                     $dataE['user_id'] = $user->id;
                     $dataE['from_email'] = $fromEmail;
                     $dataE['to_email'] = $toEmail;
@@ -177,6 +191,13 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'Complete your registration!';
+
+                     DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendIncompleteRegistrationEmail',
+                        'created_at' => now(),
+                    ]);
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -277,6 +298,12 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'Don’t Let This Lead Slip – Enable Auto Bid Today ';
+
+                     DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendLeadRequestEmail',
+                        'created_at' => now(),
+                    ]);
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -379,6 +406,12 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'New Lead Secured – Auto Bid Active & Contact Details Inside';
 
+                     DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendLeadEmailBidEnough',
+                        'created_at' => now(),
+                    ]);
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -478,6 +511,13 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
                     $subject = 'Auto Bid Missed – Not Enough Credits to Secure New Lead';
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendLeadEmailBidNotEnough',
+                        'created_at' => now(),
+                    ]);
+
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -582,6 +622,12 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'New Lead Request – Prompt Reply Appreciated';
 
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendLeadRequestReply',
+                        'created_at' => now(),
+                    ]);
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -682,6 +728,12 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = $data['subject'];
 
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'unsoldLeadEmail',
+                        'created_at' => now(),
+                    ]);
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -720,7 +772,7 @@ class ZohoEmails
         }
     }
 
-    
+
 
     public static function sendLeadsAfterDays($userId, $leadData, $settingValue)
     {
@@ -761,6 +813,11 @@ class ZohoEmails
                         $subject = "7 Days, 0 Leads – Let’s Fix That";
                     }
 
+                     DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendLeadsAfterDays',
+                        'created_at' => now(),
+                    ]);
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -839,6 +896,11 @@ class ZohoEmails
                         $subject = "Jobs Matching Your Preferences Are Waiting – You're Just 1 Top-Up Away";
                     }
 
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'creditsAfter5Days',
+                        'created_at' => now(),
+                    ]);
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
@@ -926,6 +988,13 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
 
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'leadPuchaseStatusUpdateEmail',
+                        'created_at' => now(),
+                    ]);
+
+
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -956,7 +1025,7 @@ class ZohoEmails
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);                    
+                    EmailLog::insertGetId($dataE);
                 }
             }
         }
