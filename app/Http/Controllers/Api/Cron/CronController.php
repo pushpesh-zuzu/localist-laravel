@@ -544,6 +544,7 @@ class CronController extends Controller
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'pending')
             ->get();
+        print_r($leads->toArray());
 
             foreach($leads as $lead){
                 $emailSent = EmailLog::where('user_id', $lead->seller_id)
@@ -557,11 +558,11 @@ class CronController extends Controller
                 }
             }
 
-        return response()->json([
-            'status' => 'success',
-            'total_lead_emails' => $totalLeadEmails,
-            'timestamp' => now()->toDateTimeString(),
-        ]);
+        // return response()->json([
+        //     'status' => 'success',
+        //     'total_lead_emails' => $totalLeadEmails,
+        //     'timestamp' => now()->toDateTimeString(),
+        // ]);
 
 
     }
