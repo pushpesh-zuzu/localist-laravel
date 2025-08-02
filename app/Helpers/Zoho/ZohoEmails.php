@@ -953,7 +953,7 @@ class ZohoEmails
     public static function leadPurchaseStatusUpdateEmail($rlead, $setting_name, $subject){
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $setting_name)->value('setting_value');
         if ($sendLeadRequestEmail) {
-            $userId = $rLead->seller_id;
+            $userId = $rlead->seller_id;
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
