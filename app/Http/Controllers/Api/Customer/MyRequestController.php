@@ -256,10 +256,11 @@ class MyRequestController extends Controller
 
 
                 //code to sent email on new lead
+
                 $lead = LeadRequest::find($sId);
                 $sellers = $leadService->getAllSellers($lead);
                 if(!empty($sellers['response']['sellers'])){
-                    $sortedSellers = $result['response']['sellers']
+                    $sortedSellers = $sellers['response']['sellers']
                         ->sortByDesc('total_credit')
                         ->values()
                         ->take(7);
