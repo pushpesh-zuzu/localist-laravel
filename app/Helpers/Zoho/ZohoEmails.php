@@ -962,7 +962,7 @@ class ZohoEmails
                 if(!empty($user)){
 
                     $lead = LeadRequest::with(['category','customer'])
-                        ->where('id', $rlead->id)
+                        ->where('id', $rlead->lead_id)
                         ->first();
 
                     $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
@@ -1034,6 +1034,7 @@ class ZohoEmails
                     $dataE['subject'] = $subject;
                     $dataE['setting_name'] = $setting_name;
                     $dataE['content'] = $htmlContent;
+                    $dataE['lead_id'] = $rlead->lead_id;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
                     EmailLog::insertGetId($dataE);
