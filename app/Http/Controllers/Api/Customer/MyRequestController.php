@@ -256,7 +256,6 @@ class MyRequestController extends Controller
 
 
                 //code to sent email on new lead
-
                 $lead = LeadRequest::find($sId);
                 $sellers = $leadService->getAllSellers($lead);
                 if(!empty($sellers['response']['sellers'])){
@@ -284,7 +283,7 @@ class MyRequestController extends Controller
 
 
 
-                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
             $euId = User::where('email',$request->email)->value('id');
