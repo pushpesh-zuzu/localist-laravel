@@ -384,7 +384,8 @@ class UserController extends Controller
             try {
                 if ($user->user_type == 1) {
 
-                    //app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+
                     ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
                     app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
                     app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
@@ -838,7 +839,7 @@ class UserController extends Controller
         $data['duration'] = $duration;
         $data['duration_minutes'] = $diffInMinutes;
         $data['created_at'] = date('Y-m-d H:i:s');
-        
+
         ActivityLog::insertGetId($data);
 
         return 'Thank you, <br> Your response has been logged!';
