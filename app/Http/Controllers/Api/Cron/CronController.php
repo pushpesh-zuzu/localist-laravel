@@ -546,17 +546,16 @@ class CronController extends Controller
             ->get();
         
         foreach($leads as $lead){
-            $sellers = RecommendedLead::where('lead_id', $lead->id)
-                ->select('seller_id')
+            $rLeads = RecommendedLead::where('lead_id', $lead->id)
                 ->get();
             
-            foreach($sellers as $s){
-                $emailSent = EmailLog::where('user_id', $s->seller_id)
+            foreach($rLeads as $rLead){
+                $emailSent = EmailLog::where('user_id', $rLead->seller_id)
                     ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
                     ->exists();
 
                 if(!$emailSent){
-                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s->seller_id, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($rLead, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
                     $totalLeadEmails++;
                 }
             }
@@ -588,17 +587,16 @@ class CronController extends Controller
             ->get();
         
         foreach($leads as $lead){
-            $sellers = RecommendedLead::where('lead_id', $lead->id)
-                ->select('seller_id')
+           $rLeads = RecommendedLead::where('lead_id', $lead->id)
                 ->get();
             
-            foreach($sellers as $s){
-                $emailSent = EmailLog::where('user_id', $s->seller_id)
+            foreach($rLeads as $rLead){
+                $emailSent = EmailLog::where('user_id', $rLead->seller_id)
                     ->where('setting_name', 'Lead Purchase Status Update (96 hrs)')
                     ->exists();
 
                 if(!$emailSent){
-                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s->seller_id, 'Lead Purchase Status Update (96 hrs)', 'Confirmation! Update your lead status');
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($rLead, 'Lead Purchase Status Update (96 hrs)', 'Confirmation! Update your lead status');
                     $totalLeadEmails++;
                 }
             }
