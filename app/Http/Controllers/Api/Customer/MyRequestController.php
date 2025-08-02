@@ -268,19 +268,11 @@ class MyRequestController extends Controller
                     }
                 }
 
-                ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
+                return ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
                     'success' => true,
                     'message' => 'Quote Submitted Successfully',
                     'data' => $rel
                 ]);
-
-                // ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
-                //     'success' => true,
-                //     'message' => 'Quote Submitted Successfully',
-                //     'data' => $rel
-                // ]);
-
-
 
 
                 //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
@@ -303,7 +295,7 @@ class MyRequestController extends Controller
             $euId = User::insertGetId($dataUser);
             return $this->sendResponse('Abodned user!');
         }
-        return $this->sendError('Something went wrong, try again!');
+       return $this->sendError('Something went wrong, try again!');
     }
 
     public function autoBidBased()
