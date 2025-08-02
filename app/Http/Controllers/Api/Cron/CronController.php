@@ -544,30 +544,30 @@ class CronController extends Controller
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'pending')
             ->get();
-        print_r($leads->toArray());
+        
+        foreach($leads as $lead){
+            $sellers = RecommendedLead::where('lead_id', $lead->id)
+                ->select('seller_id')
+                ->get();
+            
+            foreach($sellers as $s){
+                $emailSent = EmailLog::where('user_id', $s->seller_id)
+                    ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
+                    ->exists();
 
-            foreach($leads as $lead){
-                $sellers = RecommendedLead::where('lead_id', $lead->id)
-                    ->select('seller_id')
-                    ->get();
-                foreach($sellers as $s){
-                    $emailSent = EmailLog::where('user_id', $s)
-                        ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
-                        ->exists();
-
-                    if(!$emailSent){
-                        ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
-                        $totalLeadEmails++;
-                    }
+                if(!$emailSent){
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s->seller_id, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
+                    $totalLeadEmails++;
                 }
-                
             }
+            
+        }
 
-        // return response()->json([
-        //     'status' => 'success',
-        //     'total_lead_emails' => $totalLeadEmails,
-        //     'timestamp' => now()->toDateTimeString(),
-        // ]);
+        return response()->json([
+            'status' => 'success',
+            'total_lead_emails' => $totalLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
 
 
     }
@@ -586,19 +586,19 @@ class CronController extends Controller
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'pending')
             ->get();
-        print_r($leads->toArray());
-
+        
         foreach($leads as $lead){
             $sellers = RecommendedLead::where('lead_id', $lead->id)
                 ->select('seller_id')
                 ->get();
+            
             foreach($sellers as $s){
-                $emailSent = EmailLog::where('user_id', $s)
-                    ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
+                $emailSent = EmailLog::where('user_id', $s->seller_id)
+                    ->where('setting_name', 'Lead Purchase Status Update (96 hrs)')
                     ->exists();
 
                 if(!$emailSent){
-                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s->seller_id, 'Lead Purchase Status Update (96 hrs)', 'Confirmation! Update your lead status');
                     $totalLeadEmails++;
                 }
             }
