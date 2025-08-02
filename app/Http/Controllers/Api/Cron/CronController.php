@@ -547,15 +547,20 @@ class CronController extends Controller
         print_r($leads->toArray());
 
             foreach($leads as $lead){
-                $emailSent = EmailLog::where('user_id', $lead->seller_id)
-                    ->where('lead_id', $lead->lead_id)
-                    ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
-                    ->exists();
+                $sellers = RecommendedLead::where('lead_id', $lead->id)
+                    ->select('seller_id')
+                    ->get();
+                foreach($sellers as $s){
+                    $emailSent = EmailLog::where('user_id', $s)
+                        ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
+                        ->exists();
 
-                if(!$emailSent){
-                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
-                    $totalLeadEmails++;
+                    if(!$emailSent){
+                        ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
+                        $totalLeadEmails++;
+                    }
                 }
+                
             }
 
         // return response()->json([
@@ -578,21 +583,27 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
 
-        $leads = $leads = LeadRequest::whereBetween('created_at', [$from, $to])
+        $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'pending')
             ->get();
+        print_r($leads->toArray());
 
-            foreach($leads as $lead){
-                $emailSent = EmailLog::where('user_id', $lead->seller_id)
-                    ->where('lead_id', $lead->lead_id)
-                    ->where('setting_name', 'Lead Purchase Status Update (96 hrs)')
+        foreach($leads as $lead){
+            $sellers = RecommendedLead::where('lead_id', $lead->id)
+                ->select('seller_id')
+                ->get();
+            foreach($sellers as $s){
+                $emailSent = EmailLog::where('user_id', $s)
+                    ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
                     ->exists();
 
                 if(!$emailSent){
-                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, 'Lead Purchase Status Update (96 hrs)', 'Confirmation! Update your lead status');
+                    ZohoEmails::leadPurchaseStatusUpdateEmail($lead, $s, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
                     $totalLeadEmails++;
                 }
             }
+            
+        }
 
         return response()->json([
             'status' => 'success',
