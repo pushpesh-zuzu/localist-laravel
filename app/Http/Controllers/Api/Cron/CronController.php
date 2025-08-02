@@ -541,8 +541,8 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
 
-        $leads = RecommendedLead::whereBetween('created_at', [$from, $to])
-            ->where('status', '<>', 'hired')
+        $leads = LeadRequest::whereBetween('created_at', [$from, $to])
+            ->where('status', 'pending')
             ->get();
 
             foreach($leads as $lead){
@@ -577,8 +577,8 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
 
-        $leads = RecommendedLead::whereBetween('created_at', [$from, $to])
-            ->where('status', '<>', 'hired')
+        $leads = $leads = LeadRequest::whereBetween('created_at', [$from, $to])
+            ->where('status', 'pending')
             ->get();
 
             foreach($leads as $lead){
