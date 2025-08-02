@@ -551,6 +551,7 @@ class CronController extends Controller
             
             foreach($rLeads as $rLead){
                 $emailSent = EmailLog::where('user_id', $rLead->seller_id)
+                    ->where('lead_id', $rLead->lead_id)
                     ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
                     ->exists();
 
@@ -592,6 +593,7 @@ class CronController extends Controller
             
             foreach($rLeads as $rLead){
                 $emailSent = EmailLog::where('user_id', $rLead->seller_id)
+                    ->where('lead_id', $rLead->lead_id)
                     ->where('setting_name', 'Lead Purchase Status Update (96 hrs)')
                     ->exists();
 
