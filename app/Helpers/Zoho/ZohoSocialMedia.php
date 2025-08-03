@@ -22,12 +22,11 @@ class ZohoSocialMedia
             return null;
         }
 
-        $zohoId = $this->getZohoSocialId($accessToken, $userDetail->id);
-        $payload = $this->buildSocialPayload($accessToken, $userDetail,$userId);
-        $result = [];
-        if($payload){
-            $response = $this->sendToZoho($accessToken, $payload, $zohoId);
-            $result = $response->json();
+        $payload = $this->buildSocialPayload($accessToken, $userDetail, $userId);
+        $result=[];
+        if ($payload) {
+            $response = $this->upsertToZohoSocial($accessToken, $payload);
+            $result=$response->json();
         }
 
         return $result;
@@ -39,22 +38,32 @@ class ZohoSocialMedia
         $userName=User::find($userId)->name;
 
         if($lookUpId){
-            return [
-                'data' => [[
-                    'Social_Media_Id'          => $userDetail->id,
-                    'Lead_Social_Lookup'       => $lookUpId,
-                    'Name'                     => ''.$userDetail->id,
-                    //'Lead_Buyer_Name'          => $userName,
 
-                    //'User Id'       => $userDetail->user_id,
-                    'YouTube'                 => $userDetail->company_youtube_link,
-                    'Facebook'                => $userDetail->fb_link,
-                    'Twitter'                 => $userDetail->twitter_link,
-                    'TikTok'                  => $userDetail->tiktok_link,
-                    'Instagram'               => $userDetail->insta_link,
-                    'LinkedIn'                => $userDetail->linkedin_link,
-                    'Extra_Links'             => $userDetail->extra_links
-                ]]
+            $socialFields = [
+                'YouTube'     => $userDetail->company_youtube_link,
+                'Facebook'    => $userDetail->fb_link,
+                'Twitter'     => $userDetail->twitter_link,
+                'TikTok'      => $userDetail->tiktok_link,
+                'Instagram'   => $userDetail->insta_link,
+                'LinkedIn'    => $userDetail->linkedin_link,
+                'Extra_Links' => $userDetail->extra_links,
+            ];
+
+            $filteredSocialFields = array_filter($socialFields, function ($value) {
+                return !empty($value);
+            });
+
+            if (empty($filteredSocialFields)) {
+                return false;
+            }
+
+           return [
+                'data' => [[
+                    'Social_Media_Id'    => $userDetail->id,
+                    'Lead_Social_Lookup' => $lookUpId,
+                    'Name'               => (string)$userDetail->id,
+                ] + $filteredSocialFields],
+                'duplicate_check_fields' => ['Social_Media_Id']
             ];
         }
         else{
@@ -62,27 +71,34 @@ class ZohoSocialMedia
         }
     }
 
-    protected function getZohoSocialId($accessToken, $userId)
+    protected function upsertToZohoSocial($accessToken, array $payload)
     {
-        $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Social_Media/search', [
-                'criteria' => "(Social_Media_Id:equals:{$userId})"
-            ]);
-
-        $data = $response->json();
-
-        return $data['data'][0]['id'] ?? null;
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Social_Media/upsert', $payload);
     }
 
-    protected function sendToZoho($accessToken, array $payload, $zohoId = null)
-    {
-        $url = $zohoId
-            ? "https://www.zohoapis.eu/crm/v2/Social_Media/{$zohoId}"
-            : "https://www.zohoapis.eu/crm/v2/Social_Media";
 
-        $method = $zohoId ? 'put' : 'post';
+    // protected function getZohoSocialId($accessToken, $userId)
+    // {
+    //     $response = Http::withToken($accessToken)
+    //         ->get('https://www.zohoapis.eu/crm/v2/Social_Media/search', [
+    //             'criteria' => "(Social_Media_Id:equals:{$userId})"
+    //         ]);
 
-        return Http::withToken($accessToken)->$method($url, $payload);
-    }
+    //     $data = $response->json();
+
+    //     return $data['data'][0]['id'] ?? null;
+    // }
+
+    // protected function sendToZoho($accessToken, array $payload, $zohoId = null)
+    // {
+    //     $url = $zohoId
+    //         ? "https://www.zohoapis.eu/crm/v2/Social_Media/{$zohoId}"
+    //         : "https://www.zohoapis.eu/crm/v2/Social_Media";
+
+    //     $method = $zohoId ? 'put' : 'post';
+
+    //     return Http::withToken($accessToken)->$method($url, $payload);
+    // }
 
 }

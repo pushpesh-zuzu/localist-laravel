@@ -348,7 +348,7 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'Registration successful',
                 'data' => $user,
-            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid);
+            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
 
 
 
@@ -358,7 +358,7 @@ class UserController extends Controller
 
     }
 
-    private function sendJsonAndSyncZoho($responseData, $user,$passwordRandomString, $serviceAllIds = [], $locationIds = [], $questionIds = [],$auto_bid){
+    private function sendJsonAndSyncZoho($responseData, $user,$passwordRandomString, $serviceAllIds = [], $locationIds = [], $questionIds = [],$auto_bid,$serviceIds){
         $json = json_encode($responseData);
 
         header("Access-Control-Allow-Origin: *");
@@ -380,17 +380,27 @@ class UserController extends Controller
             ob_end_clean();
         }
 
-        register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString,$auto_bid) {
+        register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString,$auto_bid,$serviceIds) {
             try {
                 if ($user->user_type == 1) {
 
-                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
 
+                    // Log::info('Integrating service locations for user', [
+                    //     'user_id' => $user->id,
+                    //     'location_ids' => $locationIds,
+                    // ]);
+
+                    // Log::info('Integrating questions for user', [
+                    //     'user_id' => $user->id,
+                    //     'question_ids' => $questionIds,
+                    // ]);
+
+                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
                     ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
                     app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
                     app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
                     app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
-                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id, $questionIds);
+                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);
 
                     if ($auto_bid == 0) {
                         app(self::class)->sendEncouragementEmail(['userId' => $user->id]);

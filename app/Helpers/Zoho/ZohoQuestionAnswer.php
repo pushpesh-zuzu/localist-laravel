@@ -8,46 +8,114 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoQuestionAnswer
 {
-    public function integrateServiceQa($userId,$questionIds)
+    public function integrateServiceQa($userId,$serviceIds)
     {
         $access_token = ZohoHelper::getAccessToken();
+        if (!$access_token) return null;
 
-        if (!$access_token) {
-            return null;
-        }
-
-        // $payload = $this->buildQaPayload($access_token,$questionId, $userId);
-        // if (!$payload) return null;
-
-        // $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
-
-        // $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
-        // return $response->json();
+        //$serviceIds = LeadPrefrence::where('user_id', $userId)->pluck('service_id')->unique();
 
         $results = [];
+        $totalCreditsUsed = 0;
 
-        foreach ($questionIds as $questionId) {
+        foreach ($serviceIds as $serviceId) {
             try {
-                $payload = $this->buildQaPayload($access_token, $questionId, $userId);
+                 Log::info('response question details', [
+                        'user_id' => $userId,
+                        'serviceId' => $serviceId,
+                    ]);
+
+                $payload = $this->buildQaPayloadByServiceId($access_token, $userId, $serviceId);
                 if (!$payload) {
-                    $results[$questionId] = ['error' => 'Empty payload'];
+                    $results[$serviceId] = ['error' => 'Empty or invalid payload'];
                     continue;
                 }
 
-                $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
-                $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
+                $response = $this->upsertToZohoService($access_token, $payload);
+                $responseData = $response->json();
 
-                $results[$questionId] = $response->json();
+                if (
+                    isset($responseData['data'][0]['status']) &&
+                    $responseData['data'][0]['status'] === 'success' &&
+                    isset($responseData['data'][0]['details']['id'])
+                ) {
+                    $zohoRecordId = $responseData['data'][0]['details']['id'];
+
+                    LeadPrefrence::where('user_id', $userId)->where('service_id', $serviceId)->update([
+                        'zoho_question_id' => $zohoRecordId,
+                    ]);
+                }
+
+                $usedCredits = (int) $response->header('X-API-COST');
+                $totalCreditsUsed += $usedCredits;
+
+                $results[$serviceId] = [
+                    'response' => $response->json(),
+                    'credits_used' => $usedCredits
+                ];
             } catch (\Throwable $e) {
-                $results[$questionId] = ['error' => $e->getMessage()];
+                $results[$serviceId] = ['error' => $e->getMessage()];
             }
         }
+
+        Log::info('Reduced credit Zoho QA sync by service_id', [
+            'user_id' => $userId,
+            'total_credits_used' => $totalCreditsUsed,
+            'results' => $results
+        ]);
+
+        Log::info('response question for user', [
+                        'user_id' => $userId,
+                        'response' => $results,
+                    ]);
 
         return $results;
 
     }
 
-    public function integrateServiceQaSingle($userId,$questionId)
+    protected function buildQaPayloadByServiceId($access_token, $userId, $serviceId)
+    {
+        $prefs = LeadPrefrence::with(['question.categories'])
+            ->where('user_id', $userId)
+            ->where('service_id', $serviceId)
+            ->get();
+
+        if ($prefs->isEmpty()) return null;
+
+        $questionBlocks = [];
+        $category = null;
+
+        foreach ($prefs as $pref) {
+            $questionText = $pref->question->questions ?? '';
+            $answerText = $pref->answers ?? '';
+
+            if (!$questionText || !$answerText) continue;
+
+            $questionBlocks[] = "{$questionText}\nAns: {$answerText}";
+            $category = optional($pref->question->categories);
+        }
+
+        if (empty($questionBlocks)) return null;
+
+        $formattedQA = implode("\n\n", $questionBlocks);
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+
+        if (!$lookUpId) return null;
+
+        return [
+            'data' => [[
+                'Question_Id' => $serviceId,
+                'Lead_Questions_Lookup' => $lookUpId,
+                'Unique_QA_Key' => "{$lookUpId}_{$serviceId}",
+                'Name' => $category->name ?? 'Service Q&A',
+                'QuestionAnswers' => $formattedQA,
+            ]],
+            'duplicate_check_fields' => ['Unique_QA_Key']
+        ];
+    }
+
+
+    public function integrateServiceQaSingle($userId,$serviceId)
     {
         $access_token = ZohoHelper::getAccessToken();
 
@@ -55,13 +123,41 @@ class ZohoQuestionAnswer
             return null;
         }
 
-        $payload = $this->buildQaPayload($access_token,$questionId, $userId);
+        Log::info('response question siingle details', [
+                        'user_id' => $userId,
+                        'serviceId' => $serviceId,
+                    ]);
+
+        $payload = $this->buildQaPayloadByServiceId($access_token,$userId,$serviceId);
         if (!$payload) return null;
 
-        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+        //$zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
 
-        $response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
-        return $response->json();
+        //$response = $this->sendUserQaToZoho($access_token, $payload, $zohoServiceId);
+
+         $response = $this->upsertToZohoService($access_token, $payload);
+
+        $responseData = $response->json();
+
+        if (
+            isset($responseData['data'][0]['status']) &&
+            $responseData['data'][0]['status'] === 'success' &&
+            isset($responseData['data'][0]['details']['id'])
+        ) {
+            $zohoRecordId = $responseData['data'][0]['details']['id'];
+
+            LeadPrefrence::where('user_id', $userId)->where('service_id', $serviceId)->update([
+                'zoho_question_id' => $zohoRecordId,
+            ]);
+        }
+
+
+        Log::info('response question for user', [
+            'user_id' => $userId,
+            'response' => $responseData,
+        ]);
+
+        return $responseData;
 
 
     }
@@ -98,44 +194,57 @@ class ZohoQuestionAnswer
             $category = optional($pref->question->categories);
 
             $formattedQA = "{$questionText}\nAns: {$answerText}";
+            $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
-            $payload = [
-                'data' => [[
-                    'Question_Id'           => $pref->id,
-                    'Lead_Questions_Lookup' => ZohoHelper::getZohoLeadBuyerId($access_token, $userId),
-                    'Name'                  => $category->name,
-                    'QuestionAnswers'       => $formattedQA,
-                ]]
-            ];
+            if($lookUpId){
+                $payload = [
+                    'data' => [[
+                        'Question_Id'           => $pref->id,
+                        'Lead_Questions_Lookup' => ZohoHelper::getZohoLeadBuyerId($access_token, $userId),
+                        'Name'                  => $category->name,
+                        'QuestionAnswers'       => $formattedQA,
+                    ]],
+                    'duplicate_check_fields' => ['Question_Id']
+                ];
+            }
+            else{
+                return false;
+            }
 
             return $payload;
     }
 
-   protected function getZohoBuyerQaId($accessToken, $serviceId)
+    protected function upsertToZohoService($accessToken, array $payload)
     {
-        $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
-                'criteria' => "(Question_Id:equals:{$serviceId})"
-            ]);
-
-        $data = $response->json();
-
-        return $data['data'][0]['id'] ?? null;
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Question_Answers/upsert', $payload);
     }
 
-    protected function sendUserQaToZoho($accessToken, array $payload, $zohoServiceId = null)
-    {
-        $url = $zohoServiceId
-            ? "https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}"
-            : "https://www.zohoapis.eu/crm/v2/Question_Answers";
+//    protected function getZohoBuyerQaId($accessToken, $serviceId)
+//     {
+//         $response = Http::withToken($accessToken)
+//             ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
+//                 'criteria' => "(Question_Id:equals:{$serviceId})"
+//             ]);
 
-        $method = $zohoServiceId ? 'put' : 'post';
+//         $data = $response->json();
 
-        return  Http::withToken($accessToken)->$method($url, $payload);
+//         return $data['data'][0]['id'] ?? null;
+//     }
 
-    }
+//     protected function sendUserQaToZoho($accessToken, array $payload, $zohoServiceId = null)
+//     {
+//         $url = $zohoServiceId
+//             ? "https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}"
+//             : "https://www.zohoapis.eu/crm/v2/Question_Answers";
 
-    public function deleteServiceQa($questionId)
+//         $method = $zohoServiceId ? 'put' : 'post';
+
+//         return  Http::withToken($accessToken)->$method($url, $payload);
+
+//     }
+
+    public function deleteServiceQa($zohoServiceIds,$userId,$serviceId)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -143,26 +252,49 @@ class ZohoQuestionAnswer
         if (!$access_token) {
             return null;
         }
-        $zohoServiceId = $this->getZohoBuyerQaId($access_token, $questionId);
+        foreach ($zohoServiceIds as $zohoServiceId) {
 
-        if (!$zohoServiceId) {
-            Log::warning("Zoho QA delete failed: No Zoho ID found for question_id {$questionId}");
+                $response = Http::withToken($access_token)
+                    ->delete("https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}");
+
+                if ($response->successful()) {
+                    Log::info("Zoho QA deleted for serviceId {$zohoServiceId}");
+                } else {
+                    Log::error("Zoho QA delete failed", [
+                        'serviceId' => $zohoServiceId,
+                        'response' => $response->json(),
+                    ]);
+                }
+        }
+
+        $payload = $this->buildQaPayloadByServiceId($access_token, $userId, $serviceId);
+
+        if (!$payload) {
+            Log::warning("Payload is empty or invalid for user_id {$userId}, service_id {$serviceId}");
             return null;
         }
 
-        $response = Http::withToken($access_token)
-            ->delete("https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}");
+        $insertResponse = $this->upsertToZohoService($access_token, $payload);
 
-        if ($response->successful()) {
-            Log::info("Zoho QA deleted for question_id {$questionId}");
+        if ($insertResponse->successful()) {
+            $newZohoId = $insertResponse->json()['data'][0]['details']['id'] ?? null;
+
+            if ($newZohoId) {
+                LeadPrefrence::where('user_id', $userId)
+                    ->where('service_id', $serviceId)
+                    ->update(['zoho_question_id' => $newZohoId]);
+            }
+
+            Log::info("Zoho QA upserted successfully for service_id {$serviceId}");
         } else {
-            Log::error("Zoho QA delete failed", [
-                'question_id' => $questionId,
-                'response' => $response->json(),
+            Log::error("Zoho QA upsert failed", [
+                'service_id' => $serviceId,
+                'response' => $insertResponse->json(),
             ]);
         }
 
-        return $response->json();
+
+        return $insertResponse->json();
     }
 
     public function deleteBuyerQa($serviceId)
@@ -178,7 +310,6 @@ class ZohoQuestionAnswer
             Log::warning("Zoho Service delete failed: No Zoho ID found for service_id {$serviceId}");
             return null;
         }
-       dd($zohoServiceId);
         $response = Http::withToken($access_token)
             ->delete("https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}");
 

@@ -19,11 +19,11 @@ class ZohoLeadBuyers
             return null;
         }
 
-        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        //$zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
-        $payload = $this->buildLeadBuyerPayload($userId, $zohoId);
+        $payload = $this->buildLeadBuyerPayload($userId);
 
-        $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        $response = $this->upsertToZohoService($access_token, $payload);
 
         $responseData = $response->json();
 
@@ -37,12 +37,19 @@ class ZohoLeadBuyers
                 'zoho_record_id' => $zohoRecordId,
             ]);
         }
+        $usedCredits = $response->header('X-API-COST'); // this may return 24
+
+        Log::info('Zoho API Credit Used for LeadBuyer Sync', [
+            'user_id' => $userId,
+            'credits_used' => $response->headers()
+        ]);
+
         return $responseData;
 
     }
 
 
-    protected function buildLeadBuyerPayload($userId, $zohoId = null)
+    protected function buildLeadBuyerPayload($userId)
     {
         $user = User::with('details','primaryCategory')->findOrFail($userId);
         $payload = [
@@ -78,53 +85,62 @@ class ZohoLeadBuyers
                 'company_website'               => $user->company_website,
                 'address'                       => $user->address,
                 'company_locaion_reason'        => $user->company_locaion_reason
-            ]]
+            ]],
+            'duplicate_check_fields' => ['Lead_buyer_auto_id']
         ];
-
-        if (!$zohoId) {
-            $payload['data'][0]['created_at'] = now()->format('c');
-        }
 
         return $payload;
     }
 
-    protected function sendToZoho($accessToken, array $payload, $zohoId = null)
+    protected function upsertToZohoService($accessToken, array $payload)
     {
-
-        $url = $zohoId
-            ? "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}"
-            : "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration";
-
-        $method = $zohoId ? 'put' : 'post';
-
-        // $response = Http::withToken($accessToken)
-        //     ->get('https://www.zohoapis.eu/crm/v2/settings/fields', [
-        //         'module' => 'Lead_Buyer_Registration'
-        //     ]);
-
-        // $fields = $response->json();
-        // $formatted = collect($fields['fields'])->map(function ($field) {
-        //     return [
-        //         'api_name'    => $field['api_name'] ?? null,
-        //         'field_label' => $field['field_label'] ?? null,
-        //     ];
-        // });
-
-
-        // $formatted = $formatted->sortBy('field_label')->values()->all();
-
-        // Log::info('Zoho Lead_Buyer_Registration API Field Map:', $formatted);
-
-        return Http::withToken($accessToken)->$method($url, $payload);
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/upsert', $payload);
     }
+
+    // protected function sendToZoho($accessToken, array $payload, $zohoId = null)
+    // {
+
+    //     $url = $zohoId
+    //         ? "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}"
+    //         : "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration";
+
+    //     $method = $zohoId ? 'put' : 'post';
+
+    //     // $response = Http::withToken($accessToken)
+    //     //     ->get('https://www.zohoapis.eu/crm/v2/settings/fields', [
+    //     //         'module' => 'Lead_Buyer_Registration'
+    //     //     ]);
+
+    //     // $fields = $response->json();
+    //     // $formatted = collect($fields['fields'])->map(function ($field) {
+    //     //     return [
+    //     //         'api_name'    => $field['api_name'] ?? null,
+    //     //         'field_label' => $field['field_label'] ?? null,
+    //     //     ];
+    //     // });
+
+
+    //     // $formatted = $formatted->sortBy('field_label')->values()->all();
+
+    //     // Log::info('Zoho Lead_Buyer_Registration API Field Map:', $formatted);
+
+    //     return Http::withToken($accessToken)->$method($url, $payload);
+    // }
     public function integrateZohoDetails($userId){
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
             return null;
         }
-        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        // $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
         $user = User::with('details')->findOrFail($userId);
+        $zohoId = $user->zoho_record_id;
+
+        if (!$zohoId) {
+            Log::warning("Zoho ID not found for user {$userId}");
+            return false;
+        }
 
          $payload = [
             'data' => [[
@@ -136,12 +152,16 @@ class ZohoLeadBuyers
 
             ]]
         ];
-        if($zohoId){
-            $response = $this->sendToZoho($access_token, $payload, $zohoId);
-        }
-        else{
-            return false;
-        }
+
+        $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}";
+        $response = Http::withToken($access_token)->put($url, $payload);
+
+        // if($zohoId){
+        //     $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        // }
+        // else{
+        //     return false;
+        // }
 
 
         $responseData = $response->json();

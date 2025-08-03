@@ -20,13 +20,22 @@ class ZohoReview
             return null;
         }
 
-        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        // $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
-        $payload = $this->buildLeadBuyerPayload($userId, $zohoId);
+        $payload = $this->buildLeadBuyerPayload($userId);
 
-        $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        // $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        if (!$payload) return null;
 
+        $response = $this->upsertToZohoService($access_token, $payload);
         $responseData = $response->json();
+
+        $usedCredits = $response->header('X-API-COST'); // this may return 24
+
+        Log::info('Zoho API Credit Used for Review Sync', [
+            'user_id' => $userId,
+            'credits_used' => $usedCredits,
+        ]);
 
         if (
             isset($responseData['data'][0]['status']) &&
@@ -43,32 +52,37 @@ class ZohoReview
     }
 
 
-    protected function buildLeadBuyerPayload($userId, $zohoId = null)
+    protected function buildLeadBuyerPayload($userId)
     {
         $rating = Review::where('user_id', $userId)->avg('ratings');
         $rating = max(1, min(5, round($rating)));
         $payload = [
             'data' => [[
                 'Rating' => $rating
-            ]]
-        ];
+            ]],
+            'duplicate_check_fields' => ['Lead_buyer_auto_id']
 
-        if (!$zohoId) {
-            $payload['data'][0]['created_at'] = now()->format('c');
-        }
+        ];
 
         return $payload;
     }
 
-    protected function sendToZoho($accessToken, array $payload, $zohoId = null)
+
+    protected function upsertToZohoService($accessToken, array $payload)
     {
-
-        $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}";
-
-        $method = 'put';
-
-        return Http::withToken($accessToken)->$method($url, $payload);
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/upsert', $payload);
     }
+
+    // protected function sendToZoho($accessToken, array $payload, $zohoId = null)
+    // {
+
+    //     $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}";
+
+    //     $method = 'put';
+
+    //     return Http::withToken($accessToken)->$method($url, $payload);
+    // }
 
 
 }

@@ -31,27 +31,42 @@ class ZohoService
         $results = [];
 
         foreach ($serviceIds as $serviceId) {
-            $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
 
-            $payload = $this->buildServicePayload($access_token, $userId, $serviceId, $zohoServiceId);
-            if (!$payload) {
-                $results[$serviceId] = ['error' => 'Empty payload'];
-                continue;
+            $payload = $this->buildServicePayload($access_token, $userId, $serviceId);
+
+            if ($payload) {
+                $response = $this->upsertToZohoService($access_token, $payload);
+                $results=$response->json();
+
+                if (
+                    isset($results['data'][0]['status']) &&
+                    $results['data'][0]['status'] === 'success' &&
+                    isset($results['data'][0]['details']['id'])
+                ) {
+                    $zohoRecordId = $results['data'][0]['details']['id'];
+                    UserService::where('id', $serviceId)->update([
+                        'zoho_service_id' => $zohoRecordId,
+                    ]);
+
+                }
+
+
             }
 
-            try {
-                $response = $this->sendUserServiceToZoho($access_token, $payload, $zohoServiceId);
-                $results[$serviceId] = $response->json();
-            } catch (\Throwable $e) {
-                $results[$serviceId] = ['error' => $e->getMessage()];
-            }
         }
+
+        $usedCredits = $response->header('X-API-COST'); // this may return 24
+
+        Log::info('Zoho API Credit Used for service Sync', [
+            'user_id' => $userId,
+            'credits_used' => $usedCredits,
+        ]);
 
         return $results;
 
     }
 
-    protected function buildServicePayload($access_token, $userId, $serviceId, $zohoServiceId = null)
+    protected function buildServicePayload($access_token, $userId, $serviceId)
     {
         $service = UserService::find($serviceId);
         if (!$service) return null;
@@ -68,54 +83,42 @@ class ZohoService
                     'Name'              => $serviceDetails->category->name ?? '',
                     'Lead_Services_Lookup' => $lookUpId,
                     'Status'            => $serviceDetails->status == 1 ? 'Added' : 'Rejected',
-                ]]
+                ]],
+                'duplicate_check_fields' => ['Service_Id']
             ];
         }
         else{
             return false;
         }
 
-
-       //dd($payload);
-        if (!$zohoServiceId) {
-            $payload['data'][0]['created_at'] = now()->format('c');
-        }
-
-
-
         return $payload;
     }
 
-
-
-    protected function getZohoBuyerServiceId($accessToken, $serviceId)
+    protected function upsertToZohoService($accessToken, array $payload)
     {
-        $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/search', [
-                'criteria' => "(Service_Id:equals:{$serviceId})"
-            ]);
-
-        $data = $response->json();
-
-        return $data['data'][0]['id'] ?? null;
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/upsert', $payload);
     }
 
 
 
 
 
-    protected function sendUserServiceToZoho($accessToken, array $payload, $zohoServiceId = null)
-    {
-        $url = $zohoServiceId
-            ? "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/{$zohoServiceId}"
-            : "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services";
 
-        $method = $zohoServiceId ? 'put' : 'post';
 
-        return  Http::withToken($accessToken)->$method($url, $payload);
-    }
 
-     public function deleteBuyerService($serviceId)
+    // protected function sendUserServiceToZoho($accessToken, array $payload, $zohoServiceId = null)
+    // {
+    //     $url = $zohoServiceId
+    //         ? "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/{$zohoServiceId}"
+    //         : "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services";
+
+    //     $method = $zohoServiceId ? 'put' : 'post';
+
+    //     return  Http::withToken($accessToken)->$method($url, $payload);
+    // }
+
+    public function deleteBuyerService($zohoServiceId)
     {
         $access_token = ZohoHelper::getAccessToken();
 
@@ -123,9 +126,8 @@ class ZohoService
             return null;
         }
 
-        $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $serviceId);
         if (!$zohoServiceId) {
-            Log::warning("Zoho Service delete failed: No Zoho ID found for service_id {$serviceId}");
+
             return null;
         }
 
@@ -133,10 +135,10 @@ class ZohoService
             ->delete("https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/{$zohoServiceId}");
 
         if ($response->successful()) {
-            Log::info("Zoho Service deleted for service_id {$serviceId}");
+            Log::info("Zoho Service deleted for service_id {$zohoServiceId}");
         } else {
             Log::error("Zoho Service delete failed", [
-                'service_id' => $serviceId,
+                'service_id' => $zohoServiceId,
                 'response' => $response->json(),
             ]);
         }
