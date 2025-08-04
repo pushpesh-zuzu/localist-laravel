@@ -346,7 +346,7 @@ class MyRequestController extends Controller
                     foreach ($filteredLeads as $lead) {
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
-                            ->whereDate('created_at', Carbon::today())
+                            //->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')
                             ->exists();
 
@@ -404,7 +404,7 @@ class MyRequestController extends Controller
 
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
-                            ->whereDate('created_at', Carbon::today())
+                            //->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
                             ->exists();
 
@@ -460,7 +460,7 @@ class MyRequestController extends Controller
                     foreach ($finalLeads as $lead) {
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
-                            ->whereDate('created_at', Carbon::today())
+                            //->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
                             ->exists();
 
