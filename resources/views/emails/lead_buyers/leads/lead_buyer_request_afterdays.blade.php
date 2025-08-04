@@ -26,7 +26,7 @@
               @if($credit_purchase)
                 <p style="color: #61696d;">You haven't purchased any credit pack for  5 days, and your current balance is below 10. There are <strong>{{ $total_count }}</strong> jobs matching your preferences waiting — but you can’t bid on them!</p>
                 @else
-                <p style="color: #61696d;">You’ve missed out on <strong>{{ $total_count }}</strong> potential jobs  for your  all service  with an average value of £ {{ $total_credt_sum }} in last 7 days</p>
+                <p style="color: #61696d;">You’ve missed out on <strong>{{ $total_count }}</strong> potential jobs  for your  all service  with an average credit value of £ {{ $total_credt_sum }} in last 7 days</p>
               @endif
               <!-- Stats -->
               @foreach ($leadDataList as $lead)

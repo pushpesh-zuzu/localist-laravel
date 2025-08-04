@@ -47,7 +47,7 @@
 
               <!-- Contact Details -->
               <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
-                <strong>🏅</strong> {{ $credit_score }} credits already deducted<br>
+                <strong>🏅</strong> {{ $credit_score }} credits deducted<br>
                 <strong>💸</strong> {{ $remaining_credit }} credits left<br>
                 <strong>📍</strong> {{ $postcode }}<br>
                 <strong>📞</strong> {{ $masked_phone }}<br>

@@ -333,6 +333,7 @@ class MyRequestController extends Controller
             })
             ->select('users.id')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+                //dd($sellersChunk);
                 foreach ($sellersChunk as $seller) {
 
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
@@ -378,15 +379,13 @@ class MyRequestController extends Controller
             ->where('form_status', 1)
             ->where('total_credit', '>', 0)
             ->where('user_type', 1)
-            ->whereHas('details', function ($query) {
-                $query->where('autobid_pause', 0)
-                    ->where('is_autobid', 1);
-            })
+            // ->whereHas('details', function ($query) {
+            //     $query->where('autobid_pause', 0)
+            //         ->where('is_autobid', 1);
+            // })
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
                 foreach ($sellersChunk as $seller) {
-
-                   dd($seller);
 
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
                        //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
@@ -437,10 +436,10 @@ class MyRequestController extends Controller
             //->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('user_type', 1)
-            ->whereHas('details', function ($query) {
-                $query->where('autobid_pause', 0)
-                    ->where('is_autobid', 1);
-            })
+            // ->whereHas('details', function ($query) {
+            //     $query->where('autobid_pause', 0)
+            //         ->where('is_autobid', 1);
+            // })
             ->select('id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
