@@ -720,6 +720,8 @@ class ZohoEmails
                         'service_name' => $lead->category->name ?? '',
                         'has_additional_details' => $lead->has_additional_details ?? '',
                         'credit_score' => $lead->credit_score ?? '',
+                        'old_credit_score' => $lead->old_credit ?? '',
+                        'step' => $data['step'],
                         'is_frequent_user' => $lead->is_frequent_user ?? '',
                         'is_urgent' => $lead->is_urgent ?? '',
                         'is_high_hiring' => $lead->is_high_hiring ?? '',
@@ -771,6 +773,7 @@ class ZohoEmails
                     $dataE['subject'] = $subject;
                     $dataE['setting_name'] = $data['setting_name'];
                     $dataE['step'] = $data['step'];
+                    $dataE['lead_id'] = $data['leadId'];
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
@@ -1135,6 +1138,7 @@ class ZohoEmails
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;
                     $dataE['setting_name'] = 'New Lead Pool of 7 Lead Buyer';
+                    $dataE['lead_id'] = $leadId;
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);

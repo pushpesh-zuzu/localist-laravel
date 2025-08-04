@@ -24,6 +24,9 @@
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
               <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }}, you've got a new lead!</h1>
               <p style="color: #61696d;">{{ $lead_name }} is looking for <strong>{{ $service_name }}</strong>.</p>
+               @if($step == 3)
+                <p style="color: #61696d;">Great news — the lead you’re interested in has been specially discounted for a limited time! This is a rare chance to grab it at a reduced price before the offer expires.</p>
+               @endif
 
               <!-- Tags -->
               <div style="margin: 10px 0;">
@@ -46,7 +49,12 @@
 
               <!-- Contact Details -->
               <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
-                <strong>🏅</strong> {{ $credit_score }} credits to respond<br>
+                @if($step == 3)
+                  <strong>🏅</strong><del>{{ $old_credit_score }}</del> {{ $credit_score }} credits to respond<br>
+                @else
+                  <strong>🏅</strong> {{ $credit_score }} credits to respond<br>
+                @endif
+                
                 <strong>📍</strong> {{ $postcode }}<br>
                 <strong>📞</strong> {{ $masked_phone }}<br>
                 <strong>✉️</strong> {{ $masked_email }}<br>

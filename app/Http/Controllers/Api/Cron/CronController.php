@@ -460,9 +460,9 @@ class CronController extends Controller
     }
 
 
-    private function unSoldLeadsStep3(Request $request, LeadService $leadService){
+    public function unSoldLeadsStep3(Request $request, LeadService $leadService){
         $totalLeadEmails = 0;
-
+        $sentEmails = [];
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
         if ($now->minute === 0) {
@@ -479,18 +479,26 @@ class CronController extends Controller
         $discountPercent = CustomHelper::setting_value('discount_percent_of_unsold_leads',20);
 
         foreach($leads as $l){
-            $newCredit = floor($l->credit_score - (($discountPercent/100) * $l->credit_score));
-            $l->credit_score = $newCredit;
+            $discount_applied = $l->discount_applied;
+            if(!$discount_applied){
+                $curCredit = $l->credit_score;
+                $newCredit = floor($curCredit - (($discountPercent/100) * $curCredit));
+                
+                $dataUC['credit_score'] = $newCredit;
+                $dataUC['discount_applied'] = 1;
+                $dataUC['old_credit'] =$curCredit;
+                LeadRequest::where('id', $l->id)->update($dataUC);
 
-            $dataUC['credit_score'] = $newCredit;
-            LeadRequest::where('id', $l->id)->update($dataUC);
+                $l->discount_applied = 1;
+                $l->old_credit = $curCredit;
+                $l->credit_score = $newCredit;
+            }
 
             $localSellers = $leadService->getAllSellers($l, null, 2)['response']['sellers'];
             $nationSellers = $leadService->getAllSellersNationList($l, null, 1)['response']['sellers'];
             $allSellers = $localSellers->merge($nationSellers)
                 ->unique('user_id')
                 ->values();
-
             foreach($allSellers as $seller){
                 $hasStep1 = EmailLog::where('user_id', $seller->id)
                     ->where('lead_id', $l->id)
@@ -510,14 +518,15 @@ class CronController extends Controller
                     ->where('step', 3)
                     ->exists();
 
-
                 if($hasStep1 && $hasStep2 && !$hasStep3){
                     $dataU3['userId'] = $seller->id;
                     $dataU3['leadId'] = $l->id;
                     $dataU3['setting_name'] = 'Unsold Leads (Discount)';
-                    $dataU3['subject'] = 'Exclusive Offer: 20% Discount on Lead Credits – Act Now!';
+                    $dataU3['subject'] = 'Exclusive Offer: '.$discountPercent.'% Discount on Lead Credits – Act Now!';
                     $dataU3['step'] = 3;
                     ZohoEmails::unsoldLeadEmail($dataU3);
+                    $e = User::where('id', $seller->id)->value('email');
+                    array_push($sentEmails, $e);
                     $totalLeadEmails++;
                 }
             }
@@ -525,6 +534,7 @@ class CronController extends Controller
         return response()->json([
             'status' => 'success',
             'total_lead_emails' => $totalLeadEmails,
+            'emails' => $sentEmails,
             'timestamp' => now()->toDateTimeString(),
         ]);
     }
