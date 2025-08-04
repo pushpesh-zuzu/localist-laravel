@@ -852,7 +852,7 @@ class UserController extends Controller
 
         ActivityLog::insertGetId($data);
 
-        return 'Thank you, <br> Your response has been logged!';
+        return redirect(env('REACT_BASE_URL') .'/lead/save-later');
     }
 
 }
