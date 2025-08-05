@@ -32,6 +32,7 @@ class ZohoReview
 
         Log::info('Zoho Review Response', [
             'user_id' => $userId,
+            'payload' => $payload,
             'response' => $responseData,
         ]);
 
