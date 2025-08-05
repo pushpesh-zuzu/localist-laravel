@@ -149,7 +149,7 @@ class SettingController extends Controller
 
 
         ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
-            app(ZohoSocialMedia::class)->integrateSocialLinks($user_id);
+            //app(ZohoSocialMedia::class)->integrateSocialLinks($user_id);
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
         }, [
             'success' => true,

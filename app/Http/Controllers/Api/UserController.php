@@ -397,7 +397,7 @@ class UserController extends Controller
 
                     app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
                     ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
-                    app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
+                    //app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
                     app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
                     app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
                     app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);

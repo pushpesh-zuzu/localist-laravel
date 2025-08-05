@@ -72,7 +72,7 @@ class ZohoLeadBuyers
                 'company_location'              => $user->company_location,
                 'apartment'                     => $user->apartment,
                 'registration_type'             => $user->form_status  == 1 ? 'Completed' : 'Abandoned',
-                'Active_Status'                 => $user->status  == 2 ? 'Rejected' : 'Accepted',
+                //'Active_Status'                 => $user->status  == 2 ? 'Rejected' : 'Accepted',
                 'Company_Sales_Team'            => $user->company_sales_team  == 1 ? 'Yes' : 'No',
                 'total_credit'                  => $user->total_credit,
                 'company_size'                  => $user->company_size,
@@ -84,7 +84,14 @@ class ZohoLeadBuyers
                 'Rating'                        => 0,
                 'company_website'               => $user->company_website,
                 'address'                       => $user->address,
-                'company_locaion_reason'        => $user->company_locaion_reason
+                'company_locaion_reason'        => $user->company_locaion_reason,
+                'YouTube'                       => $user->details->company_youtube_link,
+                'Facebook'                      => $user->details->fb_link,
+                'Twitter'                       => $user->details->twitter_link,
+                'TikTok'                        => $user->details->tiktok_link,
+                'Instagram'                     => $user->details->insta_link,
+                'LinkedIn'                      => $user->details->linkedin_link,
+                'Extra_Links'                   => $user->details->extra_links,
             ]],
             'duplicate_check_fields' => ['Lead_buyer_auto_id']
         ];
@@ -127,6 +134,53 @@ class ZohoLeadBuyers
 
     //     return Http::withToken($accessToken)->$method($url, $payload);
     // }
+
+
+    public function integrateZohoSocialMediaDetails($userId){
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+        // $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        $user = User::with('details')->findOrFail($userId);
+        $zohoId = $user->zoho_record_id;
+
+        if (!$zohoId) {
+            Log::warning("Zoho ID not found for user {$userId}");
+            return false;
+        }
+
+         $payload = [
+            'data' => [[
+
+               'YouTube'     => $user->details->company_youtube_link,
+                'Facebook'    => $user->details->fb_link,
+                'Twitter'     => $user->details->twitter_link,
+                'TikTok'      => $user->details->tiktok_link,
+                'Instagram'   => $user->details->insta_link,
+                'LinkedIn'    => $user->details->linkedin_link,
+                'Extra_Links' => $user->details->extra_links,
+
+            ]]
+        ];
+
+        $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}";
+        $response = Http::withToken($access_token)->put($url, $payload);
+
+        // if($zohoId){
+        //     $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        // }
+        // else{
+        //     return false;
+        // }
+
+
+        $responseData = $response->json();
+
+        return $responseData;
+    }
+
     public function integrateZohoDetails($userId){
         $access_token = ZohoHelper::getAccessToken();
 
@@ -168,5 +222,7 @@ class ZohoLeadBuyers
 
         return $responseData;
     }
+
+
 
 }
