@@ -10,6 +10,7 @@ use App\Models\EmailLog;
 use App\Models\EmailSetting;
 use App\Models\LeadRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ZohoEmails
 {
@@ -238,439 +239,797 @@ class ZohoEmails
         }
     }
 
-    public static function sendLeadNotBid($userId, $leadId)
-    {
+    // public static function sendLeadNotBid($userId, $leadId)
+    // {
 
+
+    //     $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')->value('setting_value');
+
+    //     if ($sendLeadRequestEmail) {
+    //         $accessToken = ZohoHelper::getAccessToken();
+
+    //         $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+    //         if (!empty($zohoId)) {
+    //             $user = User::where('id', $userId)->first();
+
+    //             if (!empty($user)) {
+
+
+    //                 $lead = LeadRequest::with([
+    //                     'category',
+    //                     'customer'
+    //                 ])
+    //                     ->where('id', $leadId)
+    //                     ->first();
+
+    //                 $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+    //                     ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+    //                     ->map(fn($item) => [
+    //                         'question' => $item['ques'],
+    //                         'answer' => implode(', ', $item['ans'])
+    //                     ])
+    //                     ->toArray();
+
+
+    //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
+    //                     'baseUrl' => env('REACT_BASE_URL'),
+    //                     'name' => $user->name,
+    //                     'lead_name' => $lead->customer->name ?? '',
+    //                     'postcode' => $lead->postcode ?? '',
+    //                     'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+    //                     'masked_email' => $lead->customer?->email ? (function ($email) {
+    //                         [$name, $domain] = explode('@', $email);
+    //                         $visible = substr($name, 0, 2);
+    //                         $masked = str_repeat('*', max(strlen($name) - 2, 0));
+    //                         return $visible . $masked . '@' . $domain;
+    //                     })($lead->customer->email) : 'N/A',
+
+    //                     'service_name' => $lead->category->name ?? '',
+    //                     'has_additional_details' => $lead->has_additional_details ?? '',
+    //                     'credit_score' => $lead->credit_score ?? '',
+    //                     'is_frequent_user' => $lead->is_frequent_user ?? '',
+    //                     'is_urgent' => $lead->is_urgent ?? '',
+    //                     'is_high_hiring' => $lead->is_high_hiring ?? '',
+    //                     'phone_verified' => $lead->is_phone_verified ?? '',
+    //                     'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+    //                     'questionsAndAnswers' => $questionsAndAnswers,
+    //                 ])->render();
+
+    //                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+    //                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+    //                 $toEmail = $user->email;
+    //                 $subject = 'Don’t Let This Lead Slip – Enable Auto Bid Today ';
+
+    //                  DB::table('zoho_logs')->insert([
+    //                     'url' => $url,
+    //                     'function_name' => 'sendLeadNotBid',
+    //                     'ipaddress' => request()->ip(),
+    //                     'created_at' => now(),
+    //                 ]);
+
+    //                 $response = Http::withToken($accessToken)
+    //                     ->post($url, [
+    //                         'data' => [
+    //                             [
+    //                                 'from' => [
+    //                                     'email' => $fromEmail,
+    //                                     'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+    //                                 ],
+    //                                 'to' => [
+    //                                     [
+    //                                         'email' => $toEmail
+    //                                     ]
+    //                                 ],
+    //                                 'subject' => $subject,
+    //                                 'content' => $htmlContent,
+    //                                 'mail_format' => 'html'
+    //                             ]
+    //                         ]
+    //                     ]);
+
+    //                 $rel = self::getZohoMailResponse($response);
+    //                 $dataE['user_id'] = $user->id;
+    //                 $dataE['from_email'] = $fromEmail;
+    //                 $dataE['lead_id'] = $leadId;
+    //                 $dataE['to_email'] = $toEmail;
+    //                 $dataE['message_id'] = $rel['message_id'];
+    //                 $dataE['subject'] = $subject;
+    //                 $dataE['setting_name'] = 'New Lead-Auto Bid Disable (Check Credit)';
+    //                 $dataE['content'] = $htmlContent;
+    //                 $dataE['zoho_url'] = $url;
+    //                 $dataE['response'] = json_encode($rel);
+    //                 EmailLog::insertGetId($dataE);
+    //             }
+    //         }
+    //     }
+    // }
+
+    public static function sendLeadNotBidMultiple($userId, $leads)
+    {
+        if (empty($leads)) return;
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')->value('setting_value');
 
-        if ($sendLeadRequestEmail) {
-            $accessToken = ZohoHelper::getAccessToken();
+        if (!$sendLeadRequestEmail) return;
 
-            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        $accessToken = ZohoHelper::getAccessToken();
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
-            if (!empty($zohoId)) {
-                $user = User::where('id', $userId)->first();
+        if (empty($zohoId)) return;
 
-                if (!empty($user)) {
+        $user = User::find($userId);
+        if (!$user) return;
+
+        $formattedLeads = [];
+
+        foreach ($leads as $lead) {
+            $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                ->map(fn($item) => [
+                    'question' => $item['ques'],
+                    'answer' => implode(', ', $item['ans']),
+                ])
+                ->toArray();
+
+            $formattedLeads[] = [
+                'lead_name' => $lead->customer->name ?? '',
+                'postcode' => $lead->postcode ?? '',
+                'masked_phone' => $lead->customer?->phone
+                    ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2)
+                    : 'N/A',
+                'masked_email' => $lead->customer?->email
+                    ? (function ($email) {
+                        [$name, $domain] = explode('@', $email);
+                        $visible = substr($name, 0, 2);
+                        $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                        return $visible . $masked . '@' . $domain;
+                    })($lead->customer->email)
+                    : 'N/A',
+                'service_name' => $lead->category->name ?? '',
+                'has_additional_details' => $lead->has_additional_details ?? '',
+                'credit_score' => $lead->credit_score ?? '',
+                'is_frequent_user' => $lead->is_frequent_user ?? '',
+                'is_urgent' => $lead->is_urgent ?? '',
+                'is_high_hiring' => $lead->is_high_hiring ?? '',
+                'phone_verified' => $lead->is_phone_verified ?? '',
+                'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                'questionsAndAnswers' => $questionsAndAnswers,
+            ];
+        }
 
 
-                    $lead = LeadRequest::with([
-                        'category',
-                        'customer'
-                    ])
-                        ->where('id', $leadId)
-                        ->first();
 
-                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
-                        ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
-                        ->map(fn($item) => [
-                            'question' => $item['ques'],
-                            'answer' => implode(', ', $item['ans'])
-                        ])
-                        ->toArray();
+        // Email view for multiple leads
+        $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
+            'baseUrl' => env('REACT_BASE_URL'),
+            'name' => $user->name,
+            'leads' => $formattedLeads,
+        ])->render();
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+        $toEmail = $user->email;
+        $subject = 'You Have New Leads – Enable Auto Bid to Save Time!';
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'sendLeadNotBidMultiple',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
 
 
-                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
-                        'baseUrl' => env('REACT_BASE_URL'),
-                        'name' => $user->name,
-                        'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->postcode ?? '',
-                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
-                        'masked_email' => $lead->customer?->email ? (function ($email) {
-                            [$name, $domain] = explode('@', $email);
-                            $visible = substr($name, 0, 2);
-                            $masked = str_repeat('*', max(strlen($name) - 2, 0));
-                            return $visible . $masked . '@' . $domain;
-                        })($lead->customer->email) : 'N/A',
 
-                        'service_name' => $lead->category->name ?? '',
-                        'has_additional_details' => $lead->has_additional_details ?? '',
-                        'credit_score' => $lead->credit_score ?? '',
-                        'is_frequent_user' => $lead->is_frequent_user ?? '',
-                        'is_urgent' => $lead->is_urgent ?? '',
-                        'is_high_hiring' => $lead->is_high_hiring ?? '',
-                        'phone_verified' => $lead->is_phone_verified ?? '',
-                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
-                        'questionsAndAnswers' => $questionsAndAnswers,
-                    ])->render();
+        $response = Http::withToken($accessToken)
+            ->post($url, [
+                'data' => [[
+                    'from' => [
+                        'email' => $fromEmail,
+                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist')
+                    ],
+                    'to' => [[ 'email' => $toEmail ]],
+                    'subject' => $subject,
+                    'content' => $htmlContent,
+                    'mail_format' => 'html'
+                ]]
+            ]);
 
-                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $rel = self::getZohoMailResponse($response);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
-                    $toEmail = $user->email;
-                    $subject = 'Don’t Let This Lead Slip – Enable Auto Bid Today ';
+        Log::info('Zoho Email for autobidoff', [
+            'user_id' => $userId,
+            'response' => $response->json(),
+        ]);
 
-                     DB::table('zoho_logs')->insert([
-                        'url' => $url,
-                        'function_name' => 'sendLeadNotBid',
-                        'ipaddress' => request()->ip(),
-                        'created_at' => now(),
-                    ]);
-
-                    $response = Http::withToken($accessToken)
-                        ->post($url, [
-                            'data' => [
-                                [
-                                    'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
-                                    ],
-                                    'to' => [
-                                        [
-                                            'email' => $toEmail
-                                        ]
-                                    ],
-                                    'subject' => $subject,
-                                    'content' => $htmlContent,
-                                    'mail_format' => 'html'
-                                ]
-                            ]
-                        ]);
-
-                    $rel = self::getZohoMailResponse($response);
-                    $dataE['user_id'] = $user->id;
-                    $dataE['from_email'] = $fromEmail;
-                    $dataE['lead_id'] = $leadId;
-                    $dataE['to_email'] = $toEmail;
-                    $dataE['message_id'] = $rel['message_id'];
-                    $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'New Lead-Auto Bid Disable (Check Credit)';
-                    $dataE['content'] = $htmlContent;
-                    $dataE['zoho_url'] = $url;
-                    $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);
-                }
-            }
+        foreach ($leads as $lead) {
+            EmailLog::create([
+                'user_id' => $user->id,
+                'from_email' => $fromEmail,
+                'lead_id' => $lead->id,
+                'to_email' => $toEmail,
+                'message_id' => $rel['message_id'],
+                'subject' => $subject,
+                'setting_name' => 'New Lead-Auto Bid Disable (Check Credit)',
+                'content' => $htmlContent,
+                'zoho_url' => $url,
+                'response' => json_encode($rel),
+            ]);
         }
     }
 
-    public static function sendLeadEmailBidEnough($userId, $leadId)
-    {
 
+    // public static function sendLeadEmailBidEnough($userId, $leadId)
+    // {
+
+    //     $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')->value('setting_value');
+
+    //     if ($sendLeadRequestEmail) {
+    //         $accessToken = ZohoHelper::getAccessToken();
+
+    //         $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+    //         if (!empty($zohoId)) {
+    //             $user = User::where('id', $userId)->first();
+
+    //             if (!empty($user)) {
+
+
+    //                 $lead = LeadRequest::with([
+    //                     'category',
+    //                     'customer'
+    //                 ])
+    //                     ->where('id', $leadId)
+    //                     ->first();
+
+    //                 $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+    //                     ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+    //                     ->map(fn($item) => [
+    //                         'question' => $item['ques'],
+    //                         'answer' => implode(', ', $item['ans'])
+    //                     ])
+    //                     ->toArray();
+
+
+    //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough',  [
+    //                     'baseUrl' => env('REACT_BASE_URL'),
+    //                     'name' => $user->name,
+    //                     'lead_name' => $lead->customer->name ?? '',
+    //                     'postcode' => $lead->postcode ?? '',
+    //                     'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+    //                     'masked_email' => $lead->customer?->email ? (function ($email) {
+    //                         [$name, $domain] = explode('@', $email);
+    //                         $visible = substr($name, 0, 2);
+    //                         $masked = str_repeat('*', max(strlen($name) - 2, 0));
+    //                         return $visible . $masked . '@' . $domain;
+    //                     })($lead->customer->email) : 'N/A',
+
+    //                     'service_name' => $lead->category->name ?? '',
+    //                     'has_additional_details' => $lead->has_additional_details ?? '',
+    //                     'credit_score' => $lead->credit_score ?? '',
+    //                     'is_frequent_user' => $lead->is_frequent_user ?? '',
+    //                     'is_urgent' => $lead->is_urgent ?? '',
+    //                     'is_high_hiring' => $lead->is_high_hiring ?? '',
+    //                     'phone_verified' => $lead->is_phone_verified ?? '',
+    //                     'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+    //                     'remaining_credit' => intval($user->total_credit - $lead->credit_score),
+    //                     'questionsAndAnswers' => $questionsAndAnswers,
+    //                 ])->render();
+
+    //                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+    //                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+    //                 $toEmail = $user->email;
+
+    //                 $subject = 'New Lead Secured – Auto Bid Active & Contact Details Inside';
+
+    //                  DB::table('zoho_logs')->insert([
+    //                     'url' => $url,
+    //                     'function_name' => 'sendLeadEmailBidEnough',
+    //                     'ipaddress' => request()->ip(),
+    //                     'created_at' => now(),
+    //                 ]);
+
+    //                 $response = Http::withToken($accessToken)
+    //                     ->post($url, [
+    //                         'data' => [
+    //                             [
+    //                                 'from' => [
+    //                                     'email' => $fromEmail,
+    //                                     'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+    //                                 ],
+    //                                 'to' => [
+    //                                     [
+    //                                         'email' => $toEmail
+    //                                     ]
+    //                                 ],
+    //                                 'subject' => $subject,
+    //                                 'content' => $htmlContent,
+    //                                 'mail_format' => 'html'
+    //                             ]
+    //                         ]
+    //                     ]);
+
+    //                 $rel = self::getZohoMailResponse($response);
+
+    //                 $dataE['user_id'] = $user->id;
+    //                 $dataE['from_email'] = $fromEmail;
+    //                 $dataE['lead_id'] = $leadId;
+    //                 $dataE['to_email'] = $toEmail;
+    //                 $dataE['message_id'] = $rel['message_id'];
+    //                 $dataE['subject'] = $subject;
+    //                 $dataE['setting_name'] = 'New Lead - Auto Bid Enabled (With Credits)';
+    //                 $dataE['content'] = $htmlContent;
+    //                 $dataE['zoho_url'] = $url;
+    //                 $dataE['response'] = json_encode($rel);
+    //                 EmailLog::insertGetId($dataE);
+    //             }
+    //         }
+    //     }
+    // }
+    public static function sendLeadBidEnoughMultiple(array $sellerLeadMap)
+    {
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')->value('setting_value');
 
-        if ($sendLeadRequestEmail) {
-            $accessToken = ZohoHelper::getAccessToken();
+        if (!$sendLeadRequestEmail) {
+            return;
+        }
 
+        $accessToken = ZohoHelper::getAccessToken();
+
+        foreach ($sellerLeadMap as $userId => $leadIds) {
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+            if (empty($zohoId)) continue;
 
-            if (!empty($zohoId)) {
-                $user = User::where('id', $userId)->first();
+            $user = User::where('id', $userId)->first();
+            if (empty($user)) continue;
 
-                if (!empty($user)) {
+            $leadDetailsList = [];
 
+            foreach ($leadIds as $leadId) {
+                $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+                if (!$lead) continue;
 
-                    $lead = LeadRequest::with([
-                        'category',
-                        'customer'
+                $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                    ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                    ->map(fn($item) => [
+                        'question' => $item['ques'],
+                        'answer' => implode(', ', $item['ans'])
                     ])
-                        ->where('id', $leadId)
-                        ->first();
+                    ->toArray();
 
-                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
-                        ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
-                        ->map(fn($item) => [
-                            'question' => $item['ques'],
-                            'answer' => implode(', ', $item['ans'])
-                        ])
-                        ->toArray();
+                $leadDetailsList[] = [
+                    'lead_id' => $lead->id,
+                    'lead_name' => $lead->customer->name ?? '',
+                    'postcode' => $lead->postcode ?? '',
+                    'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                    'masked_email' => $lead->customer?->email ? (function ($email) {
+                        [$name, $domain] = explode('@', $email);
+                        $visible = substr($name, 0, 2);
+                        $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                        return $visible . $masked . '@' . $domain;
+                    })($lead->customer->email) : 'N/A',
+                    'service_name' => $lead->category->name ?? '',
+                    'has_additional_details' => $lead->has_additional_details ?? '',
+                    'credit_score' => $lead->credit_score ?? '',
+                    'is_frequent_user' => $lead->is_frequent_user ?? '',
+                    'is_urgent' => $lead->is_urgent ?? '',
+                    'is_high_hiring' => $lead->is_high_hiring ?? '',
+                    'phone_verified' => $lead->is_phone_verified ?? '',
+                    'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                    'remaining_credit' => intval($user->total_credit - $lead->credit_score),
+                    'questionsAndAnswers' => $questionsAndAnswers,
+                ];
+            }
 
+            // Skip if no valid leads for this seller
+            if (empty($leadDetailsList)) {
+                continue;
+            }
 
-                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough',  [
-                        'baseUrl' => env('REACT_BASE_URL'),
-                        'name' => $user->name,
-                        'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->postcode ?? '',
-                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
-                        'masked_email' => $lead->customer?->email ? (function ($email) {
-                            [$name, $domain] = explode('@', $email);
-                            $visible = substr($name, 0, 2);
-                            $masked = str_repeat('*', max(strlen($name) - 2, 0));
-                            return $visible . $masked . '@' . $domain;
-                        })($lead->customer->email) : 'N/A',
+            $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough', [
+                'baseUrl' => env('REACT_BASE_URL'),
+                'name' => $user->name,
+                'leadDetailsList' => $leadDetailsList,
+            ])->render();
 
-                        'service_name' => $lead->category->name ?? '',
-                        'has_additional_details' => $lead->has_additional_details ?? '',
-                        'credit_score' => $lead->credit_score ?? '',
-                        'is_frequent_user' => $lead->is_frequent_user ?? '',
-                        'is_urgent' => $lead->is_urgent ?? '',
-                        'is_high_hiring' => $lead->is_high_hiring ?? '',
-                        'phone_verified' => $lead->is_phone_verified ?? '',
-                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
-                        'remaining_credit' => intval($user->total_credit - $lead->credit_score),
-                        'questionsAndAnswers' => $questionsAndAnswers,
-                    ])->render();
+            $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+            $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+            $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+            $toEmail = $user->email;
+            $subject = 'New Leads Secured – Auto Bid Active & Contact Details Inside';
 
-                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+            DB::table('zoho_logs')->insert([
+                'url' => $url,
+                'function_name' => 'sendLeadEmailBidEnoughMultiple',
+                'ipaddress' => request()->ip(),
+                'created_at' => now(),
+            ]);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
-                    $toEmail = $user->email;
-                    $subject = 'New Lead Secured – Auto Bid Active & Contact Details Inside';
+            $response = Http::withToken($accessToken)->post($url, [
+                'data' => [
+                    [
+                        'from' => [
+                            'email' => $fromEmail,
+                            'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist')
+                        ],
+                        'to' => [
+                            ['email' => $toEmail]
+                        ],
+                        'subject' => $subject,
+                        'content' => $htmlContent,
+                        'mail_format' => 'html'
+                    ]
+                ]
+            ]);
 
-                     DB::table('zoho_logs')->insert([
-                        'url' => $url,
-                        'function_name' => 'sendLeadEmailBidEnough',
-                        'ipaddress' => request()->ip(),
-                        'created_at' => now(),
-                    ]);
+            $rel = self::getZohoMailResponse($response);
 
-                    $response = Http::withToken($accessToken)
-                        ->post($url, [
-                            'data' => [
-                                [
-                                    'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
-                                    ],
-                                    'to' => [
-                                        [
-                                            'email' => $toEmail
-                                        ]
-                                    ],
-                                    'subject' => $subject,
-                                    'content' => $htmlContent,
-                                    'mail_format' => 'html'
-                                ]
-                            ]
-                        ]);
-
-                    $rel = self::getZohoMailResponse($response);
-
-                    $dataE['user_id'] = $user->id;
-                    $dataE['from_email'] = $fromEmail;
-                    $dataE['lead_id'] = $leadId;
-                    $dataE['to_email'] = $toEmail;
-                    $dataE['message_id'] = $rel['message_id'];
-                    $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'New Lead - Auto Bid Enabled (With Credits)';
-                    $dataE['content'] = $htmlContent;
-                    $dataE['zoho_url'] = $url;
-                    $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);
-                }
+            // Log all lead IDs in separate records or as a single comma-separated string
+            foreach ($leadIds as $leadId) {
+                EmailLog::insert([
+                    'user_id' => $user->id,
+                    'from_email' => $fromEmail,
+                    'lead_id' => $leadId,
+                    'to_email' => $toEmail,
+                    'message_id' => $rel['message_id'],
+                    'subject' => $subject,
+                    'setting_name' => 'New Lead - Auto Bid Enabled (With Credits)',
+                    'content' => $htmlContent,
+                    'zoho_url' => $url,
+                    'response' => json_encode($rel),
+                    'created_at' => now(),
+                ]);
             }
         }
     }
 
-    public static function sendLeadEmailBidNotEnough($userId, $leadId)
+
+
+    public static function sendGroupedLeadEmailBidNotEnough($userId, $leadId)
     {
+
+        if (empty($leads) || empty($userId)) {
+            return;
+        }
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')->value('setting_value');
-        if ($sendLeadRequestEmail) {
-            $accessToken = ZohoHelper::getAccessToken();
-
-            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
-
-            if (!empty($zohoId)) {
-                $user = User::where('id', $userId)->first();
-
-                if (!empty($user)) {
-
-
-                    $lead = LeadRequest::with([
-                        'category',
-                        'customer'
-                    ])
-                        ->where('id', $leadId)
-                        ->first();
-
-                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
-                        ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
-                        ->map(fn($item) => [
-                            'question' => $item['ques'],
-                            'answer' => implode(', ', $item['ans'])
-                        ])
-                        ->toArray();
-
-
-                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
-                        'baseUrl' => env('REACT_BASE_URL'),
-                        'name' => $user->name,
-                        'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->postcode ?? '',
-                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
-                        'masked_email' => $lead->customer?->email ? (function ($email) {
-                            [$name, $domain] = explode('@', $email);
-                            $visible = substr($name, 0, 2);
-                            $masked = str_repeat('*', max(strlen($name) - 2, 0));
-                            return $visible . $masked . '@' . $domain;
-                        })($lead->customer->email) : 'N/A',
-
-                        'service_name' => $lead->category->name ?? '',
-                        'has_additional_details' => $lead->has_additional_details ?? '',
-                        'credit_score' => $lead->credit_score ?? '',
-                        'is_frequent_user' => $lead->is_frequent_user ?? '',
-                        'is_urgent' => $lead->is_urgent ?? '',
-                        'is_high_hiring' => $lead->is_high_hiring ?? '',
-                        'phone_verified' => $lead->is_phone_verified ?? '',
-                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
-                        'questionsAndAnswers' => $questionsAndAnswers,
-                    ])->render();
-
-                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
-                    $toEmail = $user->email;
-                    $subject = 'Auto Bid Missed – Not Enough Credits to Secure New Lead';
-
-                    DB::table('zoho_logs')->insert([
-                        'url' => $url,
-                        'function_name' => 'sendLeadEmailBidNotEnough',
-                        'ipaddress' => request()->ip(),
-                        'created_at' => now(),
-                    ]);
-
-
-                    $response = Http::withToken($accessToken)
-                        ->post($url, [
-                            'data' => [
-                                [
-                                    'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
-                                    ],
-                                    'to' => [
-                                        [
-                                            'email' => $toEmail
-                                        ]
-                                    ],
-                                    'subject' => $subject,
-                                    'content' => $htmlContent,
-                                    'mail_format' => 'html'
-                                ]
-                            ]
-                        ]);
-
-                    $rel = self::getZohoMailResponse($response);
-
-                    $dataE['user_id'] = $user->id;
-                    $dataE['from_email'] = $fromEmail;
-                    $dataE['lead_id'] = $leadId;
-                    $dataE['to_email'] = $toEmail;
-                    $dataE['message_id'] = $rel['message_id'];
-                    $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'New Lead- Auto Bid Enabled (Without  Enough Credits)';
-                    $dataE['content'] = $htmlContent;
-                    $dataE['zoho_url'] = $url;
-                    $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);
-                }
-            }
+        if (!$sendLeadRequestEmail) {
+            return;
         }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            return;
+        }
+
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        if (empty($zohoId)) {
+            return;
+        }
+
+        $user = User::find($userId);
+        if (empty($user)) {
+            return;
+        }
+
+        $leadViews = [];
+
+        foreach ($leads as $leadId) {
+            $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+            if (!$lead) continue;
+
+            $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                ->map(fn($item) => [
+                    'question' => $item['ques'],
+                    'answer' => implode(', ', $item['ans'])
+                ])
+                ->toArray();
+
+            $leadViews[] = view('emails.lead_buyers.leads.single_lead_block', [
+                'lead_name' => $lead->customer->name ?? '',
+                'postcode' => $lead->postcode ?? '',
+                'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                'masked_email' => $lead->customer?->email ? (function ($email) {
+                    [$name, $domain] = explode('@', $email);
+                    $visible = substr($name, 0, 2);
+                    $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                    return $visible . $masked . '@' . $domain;
+                })($lead->customer->email) : 'N/A',
+                'service_name' => $lead->category->name ?? '',
+                'has_additional_details' => $lead->has_additional_details ?? '',
+                'credit_score' => $lead->credit_score ?? '',
+                'is_frequent_user' => $lead->is_frequent_user ?? '',
+                'is_urgent' => $lead->is_urgent ?? '',
+                'is_high_hiring' => $lead->is_high_hiring ?? '',
+                'phone_verified' => $lead->is_phone_verified ?? '',
+                'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                'questionsAndAnswers' => $questionsAndAnswers,
+            ])->render();
+        }
+
+        if (empty($leadViews)) {
+            return;
+        }
+
+        $htmlView = view('emails.lead_buyers.leads.grouped_lead_email', [
+            'baseUrl' => env('REACT_BASE_URL'),
+            'name' => $user->name,
+            'leadBlocks' => implode("<hr style='margin:20px 0;border-top:1px solid #ccc;'>", $leadViews),
+        ])->render();
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+        $toEmail = $user->email;
+        $subject = 'Auto Bid Missed – Not Enough Credits for Your New Leads';
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'sendGroupedLeadEmailBidNotEnough',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [
+                [
+                    'from' => [
+                        'email' => $fromEmail,
+                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist')
+                    ],
+                    'to' => [
+                        ['email' => $toEmail]
+                    ],
+                    'subject' => $subject,
+                    'content' => $htmlContent,
+                    'mail_format' => 'html'
+                ]
+            ]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+
+        EmailLog::insertGetId([
+            'user_id' => $user->id,
+            'from_email' => $fromEmail,
+            'lead_id' => null, // multiple leads
+            'to_email' => $toEmail,
+            'message_id' => $rel['message_id'],
+            'subject' => $subject,
+            'setting_name' => 'New Lead- Auto Bid Enabled (Without  Enough Credits)',
+            'content' => $htmlContent,
+            'zoho_url' => $url,
+            'response' => json_encode($rel),
+        ]);
+
+
     }
 
 
-    public static function sendLeadRequestReply($userId, $leadId)
-    {
+    // public static function sendLeadRequestReply($userId, $leadId)
+    // {
 
+    //     $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Request Reply')->value('setting_value');
+
+    //     if ($sendLeadRequestEmail) {
+    //         $accessToken = ZohoHelper::getAccessToken();
+
+    //         $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+    //         if (!empty($zohoId)) {
+    //             $user = User::where('id', $userId)->first();
+
+    //             if (!empty($user)) {
+
+
+    //                 $lead = LeadRequest::with([
+    //                     'category',
+    //                     'customer'
+    //                 ])
+    //                     ->where('id', $leadId)
+    //                     ->first();
+
+    //                 $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+    //                     ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+    //                     ->map(fn($item) => [
+    //                         'question' => $item['ques'],
+    //                         'answer' => implode(', ', $item['ans'])
+    //                     ])
+    //                     ->toArray();
+
+
+    //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply',  [
+    //                     'baseUrl' => env('REACT_BASE_URL'),
+    //                     'name' => $user->name,
+    //                     'lead_name' => $lead->customer->name ?? '',
+    //                     'postcode' => $lead->postcode ?? '',
+    //                     'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+    //                     'masked_email' => $lead->customer?->email ? (function ($email) {
+    //                         [$name, $domain] = explode('@', $email);
+    //                         $visible = substr($name, 0, 2);
+    //                         $masked = str_repeat('*', max(strlen($name) - 2, 0));
+    //                         return $visible . $masked . '@' . $domain;
+    //                     })($lead->customer->email) : 'N/A',
+
+    //                     'service_name' => $lead->category->name ?? '',
+    //                     'has_additional_details' => $lead->has_additional_details ?? '',
+    //                     'credit_score' => $lead->credit_score ?? '',
+    //                     'is_frequent_user' => $lead->is_frequent_user ?? '',
+    //                     'is_urgent' => $lead->is_urgent ?? '',
+    //                     'is_high_hiring' => $lead->is_high_hiring ?? '',
+    //                     'phone_verified' => $lead->is_phone_verified ?? '',
+    //                     'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+    //                     'remaining_credit' => intval($user->total_credit - $lead->credit_score),
+    //                     'questionsAndAnswers' => $questionsAndAnswers,
+    //                 ])->render();
+
+    //                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+    //                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+    //                 $toEmail = $user->email;
+    //                 $subject = 'New Lead Request – Prompt Reply Appreciated';
+
+    //                 DB::table('zoho_logs')->insert([
+    //                     'url' => $url,
+    //                     'function_name' => 'sendLeadRequestReply',
+    //                     'ipaddress' => request()->ip(),
+    //                     'created_at' => now(),
+    //                 ]);
+
+    //                 $response = Http::withToken($accessToken)
+    //                     ->post($url, [
+    //                         'data' => [
+    //                             [
+    //                                 'from' => [
+    //                                     'email' => $fromEmail,
+    //                                     'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+    //                                 ],
+    //                                 'to' => [
+    //                                     [
+    //                                         'email' => $toEmail
+    //                                     ]
+    //                                 ],
+    //                                 'subject' => $subject,
+    //                                 'content' => $htmlContent,
+    //                                 'mail_format' => 'html'
+    //                             ]
+    //                         ]
+    //                     ]);
+    //                 $rel = self::getZohoMailResponse($response);
+
+    //                 $dataE['user_id'] = $user->id;
+    //                 $dataE['from_email'] = $fromEmail;
+    //                 $dataE['lead_id'] = $leadId;
+    //                 $dataE['to_email'] = $toEmail;
+    //                 $dataE['message_id'] = $rel['message_id'];
+    //                 $dataE['subject'] = $subject;
+    //                 $dataE['setting_name'] = 'New Lead - Request Reply';
+    //                 $dataE['content'] = $htmlContent;
+    //                 $dataE['zoho_url'] = $url;
+    //                 $dataE['response'] = json_encode($rel);
+    //                 EmailLog::insertGetId($dataE);
+    //             }
+    //         }
+    //     }
+    // }
+
+    public static function sendGroupedRequestReplyLeads($userId, $leadIds)
+    {
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Request Reply')->value('setting_value');
 
-        if ($sendLeadRequestEmail) {
-            $accessToken = ZohoHelper::getAccessToken();
+        if (!$sendLeadRequestEmail || empty($leadIds)) return;
 
-            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        $accessToken = ZohoHelper::getAccessToken();
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        $user = User::where('id', $userId)->first();
 
-            if (!empty($zohoId)) {
-                $user = User::where('id', $userId)->first();
+        if (!$accessToken || !$zohoId || !$user) return;
 
-                if (!empty($user)) {
+        // Fetch all leads together
+        $leads = LeadRequest::with(['category', 'customer'])
+            ->whereIn('id', $leadIds)
+            ->get();
 
+        $groupedLeadsData = $leads->map(function ($lead) use ($user) {
+            $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                ->map(fn($item) => [
+                    'question' => $item['ques'],
+                    'answer' => implode(', ', $item['ans'])
+                ])
+                ->toArray();
 
-                    $lead = LeadRequest::with([
-                        'category',
-                        'customer'
-                    ])
-                        ->where('id', $leadId)
-                        ->first();
+            return [
+                'lead_name' => $lead->customer->name ?? '',
+                'postcode' => $lead->postcode ?? '',
+                'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                'masked_email' => $lead->customer?->email ? (function ($email) {
+                    [$name, $domain] = explode('@', $email);
+                    $visible = substr($name, 0, 2);
+                    $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                    return $visible . $masked . '@' . $domain;
+                })($lead->customer->email) : 'N/A',
+                'service_name' => $lead->category->name ?? '',
+                'has_additional_details' => $lead->has_additional_details ?? '',
+                'credit_score' => $lead->credit_score ?? '',
+                'is_frequent_user' => $lead->is_frequent_user ?? '',
+                'is_urgent' => $lead->is_urgent ?? '',
+                'is_high_hiring' => $lead->is_high_hiring ?? '',
+                'phone_verified' => $lead->is_phone_verified ?? '',
+                'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                'remaining_credit' => intval($user->total_credit - $lead->credit_score),
+                'questionsAndAnswers' => $questionsAndAnswers,
+            ];
+        });
 
-                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
-                        ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
-                        ->map(fn($item) => [
-                            'question' => $item['ques'],
-                            'answer' => implode(', ', $item['ans'])
-                        ])
-                        ->toArray();
+        // Render single email with all leads grouped
+        $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply', [
+            'baseUrl' => env('REACT_BASE_URL'),
+            'name' => $user->name,
+            'leads' => $groupedLeadsData
+        ])->render();
 
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply',  [
-                        'baseUrl' => env('REACT_BASE_URL'),
-                        'name' => $user->name,
-                        'lead_name' => $lead->customer->name ?? '',
-                        'postcode' => $lead->postcode ?? '',
-                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
-                        'masked_email' => $lead->customer?->email ? (function ($email) {
-                            [$name, $domain] = explode('@', $email);
-                            $visible = substr($name, 0, 2);
-                            $masked = str_repeat('*', max(strlen($name) - 2, 0));
-                            return $visible . $masked . '@' . $domain;
-                        })($lead->customer->email) : 'N/A',
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+        $toEmail = $user->email;
+        $subject = 'You Have New Leads – Reply Promptly';
 
-                        'service_name' => $lead->category->name ?? '',
-                        'has_additional_details' => $lead->has_additional_details ?? '',
-                        'credit_score' => $lead->credit_score ?? '',
-                        'is_frequent_user' => $lead->is_frequent_user ?? '',
-                        'is_urgent' => $lead->is_urgent ?? '',
-                        'is_high_hiring' => $lead->is_high_hiring ?? '',
-                        'phone_verified' => $lead->is_phone_verified ?? '',
-                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
-                        'remaining_credit' => intval($user->total_credit - $lead->credit_score),
-                        'questionsAndAnswers' => $questionsAndAnswers,
-                    ])->render();
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'sendGroupedRequestReplyLeads',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
 
-                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
-                    $toEmail = $user->email;
-                    $subject = 'New Lead Request – Prompt Reply Appreciated';
-
-                    DB::table('zoho_logs')->insert([
-                        'url' => $url,
-                        'function_name' => 'sendLeadRequestReply',
-                        'ipaddress' => request()->ip(),
-                        'created_at' => now(),
-                    ]);
-
-                    $response = Http::withToken($accessToken)
-                        ->post($url, [
-                            'data' => [
-                                [
-                                    'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
-                                    ],
-                                    'to' => [
-                                        [
-                                            'email' => $toEmail
-                                        ]
-                                    ],
-                                    'subject' => $subject,
-                                    'content' => $htmlContent,
-                                    'mail_format' => 'html'
-                                ]
+        $response = Http::withToken($accessToken)
+            ->post($url, [
+                'data' => [
+                    [
+                        'from' => [
+                            'email' => $fromEmail,
+                            'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist')
+                        ],
+                        'to' => [
+                            [
+                                'email' => $toEmail
                             ]
-                        ]);
-                    $rel = self::getZohoMailResponse($response);
+                        ],
+                        'subject' => $subject,
+                        'content' => $htmlContent,
+                        'mail_format' => 'html'
+                    ]
+                ]
+            ]);
 
-                    $dataE['user_id'] = $user->id;
-                    $dataE['from_email'] = $fromEmail;
-                    $dataE['lead_id'] = $leadId;
-                    $dataE['to_email'] = $toEmail;
-                    $dataE['message_id'] = $rel['message_id'];
-                    $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'New Lead - Request Reply';
-                    $dataE['content'] = $htmlContent;
-                    $dataE['zoho_url'] = $url;
-                    $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);
-                }
-            }
-        }
+        $rel = self::getZohoMailResponse($response);
+
+        // Log the grouped email with all lead IDs
+        EmailLog::insert([
+            'user_id' => $user->id,
+            'from_email' => $fromEmail,
+            'lead_id' => json_encode($leadIds),
+            'to_email' => $toEmail,
+            'message_id' => $rel['message_id'],
+            'subject' => $subject,
+            'setting_name' => 'New Lead - Request Reply',
+            'content' => $htmlContent,
+            'zoho_url' => $url,
+            'response' => json_encode($rel),
+            'created_at' => now()
+        ]);
     }
+
 
     public static function unsoldLeadEmail($data)
     {
@@ -1044,7 +1403,7 @@ class ZohoEmails
 
     }
 
-    // 
+    //
     public static function newLeadPoolOf7LeadBuyerEmail($leadId, $userId){
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Pool of 7 Lead Buyer')->value('setting_value');
         if ($sendLeadRequestEmail) {
@@ -1138,7 +1497,7 @@ class ZohoEmails
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);  
+                    EmailLog::insertGetId($dataE);
                 }
             }
         }

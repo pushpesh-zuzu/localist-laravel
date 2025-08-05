@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator
+    Auth, Hash, DB , Log, Mail, Validator
 };
 use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Str;
@@ -316,9 +316,60 @@ class MyRequestController extends Controller
 
     }
 
+    // public function sendNewLeadRequestAutoBidOff()
+    // {
+
+    //     $totalUnsentLeadEmails = 0;
+    //     $leadPref = new LeadService();
+
+    //     User::whereNotNull('zoho_record_id')
+    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+    //         ->where('recommended_leads.purchase_type', 'Autobid')
+    //         ->where('form_status', 1)
+    //         ->where('user_type', 1)
+    //         ->whereHas('details', function ($query) {
+    //             $query->where('autobid_pause', 1)
+    //                  ->orWhere('is_autobid', 0);
+    //         })
+    //         ->select('users.id')
+    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+    //             //dd($sellersChunk);
+    //             foreach ($sellersChunk as $seller) {
+
+    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
+    //                     // ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+
+    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+    //                 foreach ($filteredLeads as $lead) {
+    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
+    //                         ->where('lead_id', $lead->id)
+    //                         //->whereDate('created_at', Carbon::today())
+    //                         ->where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')
+    //                         ->exists();
+
+
+    //                     if (!$alreadySent) {
+    //                         ZohoEmails::sendLeadNotBid($seller->id, $lead->id);
+
+    //                         $totalUnsentLeadEmails++;
+    //                     }
+    //                 }
+    //             }
+    //         });
+
+    //     unset($leadPref);
+    //      return [
+    //         'status' => 'success',
+    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
+    //         'timestamp' => now()->toDateTimeString(),
+    //     ];
+    // }
+
     public function sendNewLeadRequestAutoBidOff()
     {
-
         $totalUnsentLeadEmails = 0;
         $leadPref = new LeadService();
 
@@ -329,45 +380,113 @@ class MyRequestController extends Controller
             ->where('user_type', 1)
             ->whereHas('details', function ($query) {
                 $query->where('autobid_pause', 1)
-                     ->orWhere('is_autobid', 0);
+                    ->orWhere('is_autobid', 0);
             })
             ->select('users.id')
+            ->distinct()
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-                //dd($sellersChunk);
+
                 foreach ($sellersChunk as $seller) {
-
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
-                        // ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
+                    $finalLeads = [];
+
                     foreach ($filteredLeads as $lead) {
                         $alreadySent = EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
-                            //->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')
                             ->exists();
 
-
                         if (!$alreadySent) {
-                            ZohoEmails::sendLeadNotBid($seller->id, $lead->id);
-
-                            $totalUnsentLeadEmails++;
+                            $finalLeads[] = $lead;
                         }
+                    }
+
+                    if (!empty($finalLeads)) {
+                        // Send one email with all leads
+                        $result=ZohoEmails::sendLeadNotBidMultiple($seller->id, $finalLeads);
+                         Log::info('Zoho Email for autobidoff request', [
+                            'user_id' => $seller->id,
+                            'response' => $result,
+                        ]);
+
+                        // Log each lead to avoid re-sending later
+
+                         $totalUnsentLeadEmails++;
+
                     }
                 }
             });
 
         unset($leadPref);
-         return [
+        return [
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ];
     }
 
+
+    // public function sendLeadEmailCreditEnough()
+    // {
+    //     $totalUnsentLeadEmails = 0;
+    //     $leadPref = new LeadService();
+
+    //     User::whereNotNull('zoho_record_id')
+    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+    //         ->where('recommended_leads.purchase_type', 'Autobid')
+    //         ->where('form_status', 1)
+    //         ->where('total_credit', '>', 0)
+    //         ->where('user_type', 1)
+    //         // ->whereHas('details', function ($query) {
+    //         //     $query->where('autobid_pause', 0)
+    //         //         ->where('is_autobid', 1);
+    //         // })
+    //         ->select('users.id', 'total_credit')
+    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+    //             foreach ($sellersChunk as $seller) {
+
+    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
+    //                    //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+
+    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+    //                 $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
+    //                     return $lead->credit_score <= $seller->total_credit;
+    //                 });
+
+
+
+    //                 foreach ($finalLeads as $lead) {
+
+    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
+    //                         ->where('lead_id', $lead->id)
+    //                         //->whereDate('created_at', Carbon::today())
+    //                         ->where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
+    //                         ->exists();
+
+
+    //                     if (!$alreadySent) {
+    //                         ZohoEmails::sendLeadEmailBidEnough($seller->id, $lead->id);
+    //                         $totalUnsentLeadEmails++;
+    //                     }
+
+    //                 }
+    //             }
+    //         });
+
+    //     unset($leadPref);
+    //     return [
+    //         'status' => 'success',
+    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
+    //         'timestamp' => now()->toDateTimeString(),
+    //     ];
+    // }
     public function sendLeadEmailCreditEnough()
     {
         $totalUnsentLeadEmails = 0;
@@ -379,52 +498,108 @@ class MyRequestController extends Controller
             ->where('form_status', 1)
             ->where('total_credit', '>', 0)
             ->where('user_type', 1)
-            // ->whereHas('details', function ($query) {
-            //     $query->where('autobid_pause', 0)
-            //         ->where('is_autobid', 1);
-            // })
             ->select('users.id', 'total_credit')
+            ->distinct()
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
                 foreach ($sellersChunk as $seller) {
 
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
-                       //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id, null, null, null, 'Autobid');
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
+                    // Filter by available credit
                     $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
                         return $lead->credit_score <= $seller->total_credit;
-                    });
-
-
-
-                    foreach ($finalLeads as $lead) {
-
-                        $alreadySent = EmailLog::where('user_id', $seller->id)
+                    })->filter(function ($lead) use ($seller) {
+                        // Only include leads not already emailed
+                        return !EmailLog::where('user_id', $seller->id)
                             ->where('lead_id', $lead->id)
-                            //->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
                             ->exists();
+                    })->values();
 
+                    if ($finalLeads->isNotEmpty()) {
+                        // Send one email with all leads
+                        $result = ZohoEmails::sendLeadBidEnoughMultiple($seller->id, $finalLeads);
 
-                        if (!$alreadySent) {
-                            ZohoEmails::sendLeadEmailBidEnough($seller->id, $lead->id);
-                            $totalUnsentLeadEmails++;
-                        }
+                        Log::info('Zoho Email for bid-enough leads', [
+                            'user_id' => $seller->id,
+                            'response' => $result,
+                        ]);
 
+                        // Log each lead to prevent resending
+
+                        $totalUnsentLeadEmails++;
                     }
                 }
             });
 
         unset($leadPref);
+
         return [
             'status' => 'success',
             'unsent_lead_emails' => $totalUnsentLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ];
     }
+
+
+    // public function sendLeadEmailCreditNotEnough()
+    // {
+    //     $totalUnsentLeadEmails = 0;
+    //     $leadPref = new LeadService();
+
+    //     User::whereNotNull('zoho_record_id')
+    //         //->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+    //         //->where('recommended_leads.purchase_type', 'Autobid')
+    //         ->where('form_status', 1)
+    //         ->where('user_type', 1)
+    //         // ->whereHas('details', function ($query) {
+    //         //     $query->where('autobid_pause', 0)
+    //         //         ->where('is_autobid', 1);
+    //         // })
+    //         ->select('id', 'total_credit')
+    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+
+    //             foreach ($sellersChunk as $seller) {
+
+    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
+    //                     //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+
+    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+    //                 $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
+    //                     return $lead->credit_score > $seller->total_credit;
+    //                 });
+
+
+
+    //                 foreach ($finalLeads as $lead) {
+    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
+    //                         ->where('lead_id', $lead->id)
+    //                         //->whereDate('created_at', Carbon::today())
+    //                         ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
+    //                         ->exists();
+
+
+    //                     if (!$alreadySent) {
+    //                         ZohoEmails::sendLeadEmailBidNotEnough($seller->id, $lead->id);
+    //                         $totalUnsentLeadEmails++;
+    //                     }
+    //                 }
+    //             }
+    //         });
+
+    //     unset($leadPref);
+
+    //     return [
+    //         'status' => 'success',
+    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
+    //         'timestamp' => now()->toDateTimeString(),
+    //     ];
+    // }
 
     public function sendLeadEmailCreditNotEnough()
     {
@@ -432,42 +607,37 @@ class MyRequestController extends Controller
         $leadPref = new LeadService();
 
         User::whereNotNull('zoho_record_id')
-            //->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-            //->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('user_type', 1)
-            // ->whereHas('details', function ($query) {
-            //     $query->where('autobid_pause', 0)
-            //         ->where('is_autobid', 1);
-            // })
             ->select('id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
                 foreach ($sellersChunk as $seller) {
 
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
-                        //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id, null, null, null, 'Autobid');
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
                     $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
                         return $lead->credit_score > $seller->total_credit;
                     });
 
-
-
-                    foreach ($finalLeads as $lead) {
+                    if ($finalLeads->isNotEmpty()) {
+                        // Check if email was already sent today for this seller
                         $alreadySent = EmailLog::where('user_id', $seller->id)
-                            ->where('lead_id', $lead->id)
-                            //->whereDate('created_at', Carbon::today())
                             ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
+                            ->whereDate('created_at', now()->toDateString())
                             ->exists();
 
-
                         if (!$alreadySent) {
-                            ZohoEmails::sendLeadEmailBidNotEnough($seller->id, $lead->id);
+                            // Send one email for all leads
+                            ZohoEmails::sendGroupedLeadEmailBidNotEnough($seller->id, $finalLeads); // you must implement this
                             $totalUnsentLeadEmails++;
+
+                            // Log one entry per seller to avoid re-sending
+
                         }
                     }
                 }
@@ -481,6 +651,7 @@ class MyRequestController extends Controller
             'timestamp' => now()->toDateTimeString(),
         ];
     }
+
 
     public function addImageToSubmittedRequest(Request $request){
         $user_id = $request->user_id;

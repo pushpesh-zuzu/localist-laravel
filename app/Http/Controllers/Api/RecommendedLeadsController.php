@@ -201,11 +201,13 @@ class RecommendedLeadsController extends Controller
             ->where('should_autobid', 1)
             ->where('created_at', '<=', Carbon::now()->subMinutes($startBidAfter))
             ->get();
+
         $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
         foreach($leads as $lead){
             $sellerInserted = 0;
 
             $sellers = $leadService->getAllSellers($lead);
+
             if(!empty($sellers['response']['sellers'])){
                 foreach($sellers['response']['sellers'] as $s){
                     $leadCreatedAt = Carbon::parse($lead->created_at);
@@ -213,6 +215,7 @@ class RecommendedLeadsController extends Controller
 
                     if($leadCreatedAt->greaterThan($sellerRegisteredAt)){
                         $batch = CustomHelper::getCurrentAutobidBatch($s->id);
+
                         if(!empty($batch)){
                             $dateStart = Carbon::parse($batch['start'])->startOfDay();
                             $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
@@ -221,6 +224,7 @@ class RecommendedLeadsController extends Controller
                                 ->where('purchase_type', 'Autobid')
                                 ->whereBetween('created_at', [$dateStart, $dateEnd])
                                 ->count();
+
                             if($count < $autobidLimit){
                                 $request->replace($request->only(['abc']));
                                 $request['bidtype'] = 'autobid';
@@ -496,56 +500,109 @@ class RecommendedLeadsController extends Controller
     }
 
 
-    public function sendLeadRequestReply() //sendLeadRequestReply
-    {
-        $totalUnsentLeadEmails = 0;
-        $leadPref = new LeadService();
+    // public function sendLeadRequestReply() //sendLeadRequestReply
+    // {
+    //     $totalUnsentLeadEmails = 0;
+    //     $leadPref = new LeadService();
 
-        User::whereNotNull('zoho_record_id')
-            ->where('form_status', 1)
-            ->where('user_type', 1)
-            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-            ->where('recommended_leads.purchase_type', 'Request Reply')
-            ->select('users.id', 'total_credit')
-            ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+    //     User::whereNotNull('zoho_record_id')
+    //         ->where('form_status', 1)
+    //         ->where('user_type', 1)
+    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+    //         ->where('recommended_leads.purchase_type', 'Request Reply')
+    //         ->select('users.id', 'total_credit')
+    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
-                foreach ($sellersChunk as $seller) {
-
-
-                    $allLeads = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('purchase_type', 'Request Reply')
-                                ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
-                                //->whereBetween('lead_requests.created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
-                                ->orderBy('lead_requests.id', 'desc')
-                                ->select('lead_requests.id')
-                                ->get();
+    //             foreach ($sellersChunk as $seller) {
 
 
+    //                 $allLeads = RecommendedLead::where('seller_id', $seller->id)
+    //                             ->where('purchase_type', 'Request Reply')
+    //                             ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
+    //                             //->whereBetween('lead_requests.created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
+    //                             ->orderBy('lead_requests.id', 'desc')
+    //                             ->select('lead_requests.id')
+    //                             ->get();
 
-                    foreach ($allLeads as $lead) {
-
-                        $alreadySent = EmailLog::where('user_id', $seller->id)
-                            ->where('lead_id', $lead->id)
-                            //->whereDate('created_at', Carbon::today())
-                            ->where('setting_name', 'New Lead - Request Reply')
-                            ->exists();
 
 
-                        if (!$alreadySent) {
-                            ZohoEmails::sendLeadRequestReply($seller->id, $lead->id);
-                            $totalUnsentLeadEmails++;
-                        }
-                    }
+    //                 foreach ($allLeads as $lead) {
+
+    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
+    //                         ->where('lead_id', $lead->id)
+    //                         //->whereDate('created_at', Carbon::today())
+    //                         ->where('setting_name', 'New Lead - Request Reply')
+    //                         ->exists();
+
+
+    //                     if (!$alreadySent) {
+    //                         ZohoEmails::sendLeadRequestReply($seller->id, $lead->id);
+    //                         $totalUnsentLeadEmails++;
+    //                     }
+    //                 }
+    //             }
+    //         });
+
+    //     unset($leadPref);
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
+    //         'timestamp' => now()->toDateTimeString(),
+    //     ]);
+    // }
+
+    public function sendLeadRequestReply()
+{
+    $totalUnsentLeadEmails = 0;
+    $leadPref = new LeadService();
+
+    User::whereNotNull('zoho_record_id')
+        ->where('form_status', 1)
+        ->where('user_type', 1)
+        ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+        ->where('recommended_leads.purchase_type', 'Request Reply')
+        ->select('users.id', 'users.total_credit')
+        ->distinct() // Important to avoid duplicate sellers
+        ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+
+            foreach ($sellersChunk as $seller) {
+
+                $leadIds = RecommendedLead::where('seller_id', $seller->id)
+                    ->where('purchase_type', 'Request Reply')
+                    ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
+                    ->orderBy('lead_requests.id', 'desc')
+                    ->pluck('lead_requests.id')
+                    ->toArray();
+
+                if (empty($leadIds)) {
+                    continue;
                 }
-            });
 
-        unset($leadPref);
-        return response()->json([
-            'status' => 'success',
-            'unsent_lead_emails' => $totalUnsentLeadEmails,
-            'timestamp' => now()->toDateTimeString(),
-        ]);
-    }
+                // Filter out already emailed leads
+                $unsentLeadIds = array_filter($leadIds, function ($leadId) use ($seller) {
+                    return !EmailLog::where('user_id', $seller->id)
+                        ->where('lead_id', $leadId)
+                        ->where('setting_name', 'New Lead - Request Reply')
+                        ->exists();
+                });
+
+                if (!empty($unsentLeadIds)) {
+                    // Send all leads in one email
+                    ZohoEmails::sendGroupedRequestReplyLeads($seller->id, $unsentLeadIds);
+                    $totalUnsentLeadEmails++;
+                }
+            }
+        });
+
+    unset($leadPref);
+
+    return response()->json([
+        'status' => 'success',
+        'unsent_lead_emails' => $totalUnsentLeadEmails,
+        'timestamp' => now()->toDateTimeString(),
+    ]);
+}
+
 
     public function addMultipleManualBid(Request $request){
         $aVals = $request->all();

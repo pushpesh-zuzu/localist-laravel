@@ -50,7 +50,7 @@ class LeadService
         return $allLeads;
     }
 
-    public function getSellerLeadsBaseQuery($user_id, $requestPostcode = null, $requestMiles = null, $filters = []){
+    public function getSellerLeadsBaseQuery($user_id, $requestPostcode = null, $requestMiles = null, $filters = [], $autobid = null){
         $userServices = UserService::where('user_id',$user_id)->select('service_id')->get();
         //get all types of locations
         $ulNationWide = UserServiceLocation::where('user_id', $user_id)->where('nation_wide','1')->get();
@@ -114,6 +114,7 @@ class LeadService
             ->pluck('lead_id')
             ->toArray();
 
+
         $baseQuery = $baseQuery->whereNotIn('id', $slotFullLeads); //do not include leads which 5 slot full
 
         if($requestPostcode === null){ //select default condition for location
@@ -164,11 +165,15 @@ class LeadService
             ->pluck('lead_id')
             ->toArray();
 
+
         // Merge both exclusion arrays
         $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
         if (!empty($excludedLeadIds)) {
-            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+            if(empty($autobid)){
+                $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+            }
         }
+
 
 
         //apply filters
@@ -244,12 +249,15 @@ class LeadService
                 $cc1 = explode('-',str_replace(' ','',$crf));
                 $creditRanges[] = [ min($cc1),  max($cc1)];
             }
+
             $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
                 foreach ($creditRanges as $range) {
                     $query->orWhereRaw('CAST(credit_score AS UNSIGNED) BETWEEN ? AND ?', [$range[0], $range[1]]);
                 }
             });
         }
+
+
 
         return $baseQuery;
 
