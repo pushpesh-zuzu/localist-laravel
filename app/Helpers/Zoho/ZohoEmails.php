@@ -691,7 +691,7 @@ class ZohoEmails
 
 
 
-    public static function sendGroupedLeadEmailBidNotEnough($userId, $leadId)
+    public static function sendGroupedLeadEmailBidNotEnough($userId, $leads)
     {
 
         if (empty($leads) || empty($userId)) {
@@ -721,6 +721,7 @@ class ZohoEmails
         $leadViews = [];
 
         foreach ($leads as $leadId) {
+            if (!$leadId) continue;
             $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
             if (!$lead) continue;
 
@@ -732,7 +733,7 @@ class ZohoEmails
                 ])
                 ->toArray();
 
-            $leadViews[] = view('emails.lead_buyers.leads.single_lead_block', [
+            $leadViews[] = [
                 'lead_name' => $lead->customer->name ?? '',
                 'postcode' => $lead->postcode ?? '',
                 'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
@@ -751,17 +752,17 @@ class ZohoEmails
                 'phone_verified' => $lead->is_phone_verified ?? '',
                 'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
                 'questionsAndAnswers' => $questionsAndAnswers,
-            ])->render();
+            ];
         }
 
         if (empty($leadViews)) {
             return;
         }
 
-        $htmlView = view('emails.lead_buyers.leads.grouped_lead_email', [
+        $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
             'baseUrl' => env('REACT_BASE_URL'),
             'name' => $user->name,
-            'leadBlocks' => implode("<hr style='margin:20px 0;border-top:1px solid #ccc;'>", $leadViews),
+            'leadDetailsList' => $leadViews,
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -797,18 +798,20 @@ class ZohoEmails
 
         $rel = self::getZohoMailResponse($response);
 
-        EmailLog::insertGetId([
-            'user_id' => $user->id,
-            'from_email' => $fromEmail,
-            'lead_id' => null, // multiple leads
-            'to_email' => $toEmail,
-            'message_id' => $rel['message_id'],
-            'subject' => $subject,
-            'setting_name' => 'New Lead- Auto Bid Enabled (Without  Enough Credits)',
-            'content' => $htmlContent,
-            'zoho_url' => $url,
-            'response' => json_encode($rel),
-        ]);
+        foreach ($leads as $lead) {
+            EmailLog::insertGetId([
+                'user_id' => $user->id,
+                'from_email' => $fromEmail,
+                'lead_id' => $lead->id, // multiple leads
+                'to_email' => $toEmail,
+                'message_id' => $rel['message_id'],
+                'subject' => $subject,
+                'setting_name' => 'New Lead- Auto Bid Enabled (Without  Enough Credits)',
+                'content' => $htmlContent,
+                'zoho_url' => $url,
+                'response' => json_encode($rel),
+            ]);
+        }
 
 
     }

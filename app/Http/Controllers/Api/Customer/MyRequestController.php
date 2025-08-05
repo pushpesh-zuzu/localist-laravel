@@ -408,6 +408,7 @@ class MyRequestController extends Controller
                     if (!empty($finalLeads)) {
                         // Send one email with all leads
                         $result=ZohoEmails::sendLeadNotBidMultiple($seller->id, $finalLeads);
+
                          Log::info('Zoho Email for autobidoff request', [
                             'user_id' => $seller->id,
                             'response' => $result,
@@ -521,7 +522,9 @@ class MyRequestController extends Controller
 
                     if ($finalLeads->isNotEmpty()) {
                         // Send one email with all leads
-                        $result = ZohoEmails::sendLeadBidEnoughMultiple($seller->id, $finalLeads);
+                        $result = ZohoEmails::sendLeadBidEnoughMultiple([
+                            $seller->id => $finalLeads->pluck('id')->toArray()
+                        ]);
 
                         Log::info('Zoho Email for bid-enough leads', [
                             'user_id' => $seller->id,
@@ -614,31 +617,41 @@ class MyRequestController extends Controller
 
                 foreach ($sellersChunk as $seller) {
 
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id, null, null, null, 'Autobid');
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
 
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
                     $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
                         return $lead->credit_score > $seller->total_credit;
-                    });
+                    })->filter(function ($lead) use ($seller) {
+                        // Only include leads not already emailed
+                        return !EmailLog::where('user_id', $seller->id)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
+                            ->exists();
+                    })->values();
+
+                    if ($finalLeads->isEmpty()) {
+                        continue;
+                    }
 
                     if ($finalLeads->isNotEmpty()) {
                         // Check if email was already sent today for this seller
-                        $alreadySent = EmailLog::where('user_id', $seller->id)
-                            ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
-                            ->whereDate('created_at', now()->toDateString())
-                            ->exists();
 
-                        if (!$alreadySent) {
+
                             // Send one email for all leads
-                            ZohoEmails::sendGroupedLeadEmailBidNotEnough($seller->id, $finalLeads); // you must implement this
+                            $result=ZohoEmails::sendGroupedLeadEmailBidNotEnough($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
                             $totalUnsentLeadEmails++;
 
+                            Log::info('Zoho Email for bid-not-enough leads', [
+                                'user_id' => $seller->id,
+                                'response' => $result,
+                            ]);
                             // Log one entry per seller to avoid re-sending
 
-                        }
                     }
                 }
             });

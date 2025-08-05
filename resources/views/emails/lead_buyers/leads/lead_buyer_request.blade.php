@@ -24,7 +24,7 @@
           </tr>
 
           <!-- Lead Loop -->
-          @foreach($leads as $lead)
+          @foreach($leadDetailsList as $lead)
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
 
