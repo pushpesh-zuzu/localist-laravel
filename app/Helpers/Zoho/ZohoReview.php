@@ -44,7 +44,7 @@ class ZohoReview
     protected function buildLeadBuyerPayload($userId)
     {
         $rating = Review::where('user_id', $userId)->avg('ratings');
-        $rating = max(1, min(5, round($rating)));
+        $rating = intval(max(1, min(5, round($rating))));
         $payload = [
             'data' => [[
                 'Rating' => $rating
