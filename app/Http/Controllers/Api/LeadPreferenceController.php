@@ -491,6 +491,21 @@ class LeadPreferenceController extends Controller
 
     public function submitLeads(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'lead_id' => 'required|integer|exists:lead_requests,id',
+            'seller_id' => 'required',
+            'final_price' => 'required',
+            'unit_type' => 'required',
+            'disclose_information' => 'required|integer'
+            ], [
+            'final_price.required' => 'Final agreed price is required.',
+            'unit_type.required' => 'Price Unit Type is required.',
+            'disclose_information.required' => 'Disclose information is required.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
         $aVals = $request->all();
         $sellerId = $aVals['seller_id'];
         $buyerId = $request->user_id;
@@ -509,13 +524,13 @@ class LeadPreferenceController extends Controller
                 'status'=>'hired',
                 'hired_by' => $buyerId
             ]);
-            // $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
-            // $zohoService = new ZohoService();
-            // $zohoService->integrateUser('lead',null,$leadsDetails);
             RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)
                 ->update([
+                    'final_price' => $request->final_price,
+                    'unit_type' => $request->unit_type,
+                    'disclose_information' => $request->disclose_information,
                     'status' => 'hired'
                 ]);
             $sendmessage = 'Request submited sucessfully';
