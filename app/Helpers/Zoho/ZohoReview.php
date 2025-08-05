@@ -47,7 +47,7 @@ class ZohoReview
         $rating = intval(max(1, min(5, round($rating))));
         $payload = [
             'data' => [[
-                'Rating' => 5
+                'Rating' => $rating
             ]]
 
         ];
@@ -58,10 +58,9 @@ class ZohoReview
 
     protected function updateZohoLeadBuyer($accessToken, $zohoRecordId, array $payload)
     {
-        return Http::withToken($accessToken)
-            ->put("https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoRecordId}", [
-                'data' => [$payload],
-            ]);
+       $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoRecordId}";
+       $method = 'put';
+       return Http::withToken($accessToken)->$method($url, $payload);
     }
 
 
