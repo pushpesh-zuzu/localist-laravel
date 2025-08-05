@@ -20,33 +20,21 @@ class ZohoReview
             return null;
         }
 
-        // $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
         $payload = $this->buildLeadBuyerPayload($userId);
 
-        // $response = $this->sendToZoho($access_token, $payload, $zohoId);
         if (!$payload) return null;
 
-        $response = $this->upsertToZohoService($access_token, $payload);
+        $response = $this->updateZohoLeadBuyer($access_token, $zohoId,$payload);
         $responseData = $response->json();
 
-        $usedCredits = $response->header('X-API-COST'); // this may return 24
 
-        Log::info('Zoho API Credit Used for Review Sync', [
+        Log::info('Zoho Review Response', [
             'user_id' => $userId,
-            'credits_used' => $usedCredits,
+            'response' => $responseData,
         ]);
 
-        if (
-            isset($responseData['data'][0]['status']) &&
-            $responseData['data'][0]['status'] === 'success' &&
-            isset($responseData['data'][0]['details']['id'])
-        ) {
-            $zohoRecordId = $responseData['data'][0]['details']['id'];
-            User::where('id', $userId)->update([
-                'zoho_record_id' => $zohoRecordId,
-            ]);
-        }
         return $responseData;
 
     }
@@ -59,8 +47,7 @@ class ZohoReview
         $payload = [
             'data' => [[
                 'Rating' => $rating
-            ]],
-            'duplicate_check_fields' => ['Lead_buyer_auto_id']
+            ]]
 
         ];
 
@@ -68,11 +55,14 @@ class ZohoReview
     }
 
 
-    protected function upsertToZohoService($accessToken, array $payload)
+    protected function updateZohoLeadBuyer($accessToken, $zohoRecordId, array $payload)
     {
         return Http::withToken($accessToken)
-            ->post('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/upsert', $payload);
+            ->put("https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoRecordId}", [
+                'data' => [$payload],
+            ]);
     }
+
 
     // protected function sendToZoho($accessToken, array $payload, $zohoId = null)
     // {
