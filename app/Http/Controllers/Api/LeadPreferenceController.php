@@ -254,6 +254,7 @@ class LeadPreferenceController extends Controller
                 ->where('user_id', $request->user_id)
                 ->where('question_id', $questionId)
                 ->first();
+
             $serviceIdZoho = $request->service_id;
             $questionActualId = $leadPreference->id;
             if ($leadPreference) {
@@ -262,10 +263,7 @@ class LeadPreferenceController extends Controller
                 $userId=$request->user_id;
                 ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
                     app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
-                }, [
-                    'success' => true,
-                    'message' => 'Data processed successfully'
-                ]);
+                });
                 //app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
                 //dd($x);
             } else {
