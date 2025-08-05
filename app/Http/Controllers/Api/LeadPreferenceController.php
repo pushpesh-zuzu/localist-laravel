@@ -494,9 +494,6 @@ class LeadPreferenceController extends Controller
         $validator = Validator::make($request->all(), [
             'lead_id' => 'required|integer|exists:lead_requests,id',
             'seller_id' => 'required',
-            'final_price' => 'required',
-            'unit_type' => 'required',
-            'disclose_information' => 'required|integer'
             ], [
             'final_price.required' => 'Final agreed price is required.',
             'unit_type.required' => 'Price Unit Type is required.',
