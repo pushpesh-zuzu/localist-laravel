@@ -80,12 +80,14 @@ class ZohoHelper
         $json = json_encode($responseData);
 
 
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-        header('Content-Type: application/json');
-        header('Content-Length: ' . strlen($json));
-        header('Connection: close');
+         if (!headers_sent()) {
+            header("Access-Control-Allow-Origin: *");
+            header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+            header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+            header('Content-Type: application/json');
+            header('Content-Length: ' . strlen($json));
+            header('Connection: close');
+        }
 
 
         while (ob_get_level() > 0) {
@@ -102,6 +104,49 @@ class ZohoHelper
             flush();
         }
     }
+
+    // public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
+    // {
+    //     // Send the response first
+    //     $json = json_encode($responseData);
+
+    //     // Set headers for CORS and response
+    //     if (!headers_sent()) {
+    //         header("Access-Control-Allow-Origin: *");
+    //         header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    //         header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    //         header("Content-Type: application/json");
+    //         header("Content-Length: " . strlen($json));
+    //         header("Connection: close");
+    //     }
+
+    //     // Clean (and end) all output buffers to prevent corrupt response
+    //     while (ob_get_level() > 0) {
+    //         ob_end_clean();
+    //     }
+
+    //     echo $json;
+
+    //     // Close connection with client
+    //     if (function_exists('fastcgi_finish_request')) {
+    //         fastcgi_finish_request();
+    //     } else {
+    //         flush();
+    //     }
+
+    //     // Register callback to be executed after response
+    //     register_shutdown_function(function () use ($callback) {
+    //         try {
+    //             $callback();
+    //         } catch (\Throwable $e) {
+    //             \Log::error('Zoho background task failed', [
+    //                 'message' => $e->getMessage(),
+    //                 'trace' => $e->getTraceAsString()
+    //             ]);
+    //         }
+    //     });
+    // }
+
 
 
 
