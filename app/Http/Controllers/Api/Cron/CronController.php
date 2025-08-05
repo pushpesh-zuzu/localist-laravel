@@ -191,22 +191,41 @@ class CronController extends Controller
 
         $sellerLeadSummary = [];
 
-        $latestPlanHistory = PlanHistory::select('user_id', DB::raw('MAX(created_at) as last_plan_date'))
-            ->groupBy('user_id')
-            ->toBase();
+        // $latestPlanHistory = PlanHistory::select('user_id', DB::raw('MAX(created_at) as last_plan_date'))
+        //     ->groupBy('user_id')
+        //     ->toBase();
 
 
-        User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
-            $join->on('users.id', '=', 'latest_plan.user_id');
-        })
+        // User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
+        //     $join->on('users.id', '=', 'latest_plan.user_id');
+        // })
+        //     ->where('users.form_status', 1)
+        //     ->where('users.user_type', 1)
+        //     ->whereNotNull('users.zoho_record_id')
+        //     ->where(function ($query) use ($from, $to) {
+        //         $query->where(function ($q) use ($from, $to) {
+        //             $q->whereBetween('latest_plan.last_plan_date', [$from, $to]);
+        //         })
+        //         ->where('users.total_credit', '<', 10);
+        //     })
+        //     ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
+        //     ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+            $latestPlanHistory = PlanHistory::select('user_id', DB::raw('MAX(created_at) as last_plan_date'))
+                ->groupBy('user_id')
+                ->toBase();
+
+            User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
+                $join->on('users.id', '=', 'latest_plan.user_id');
+            })
             ->where('users.form_status', 1)
             ->where('users.user_type', 1)
             ->whereNotNull('users.zoho_record_id')
             ->where(function ($query) use ($from, $to) {
                 $query->where(function ($q) use ($from, $to) {
-                    $q->whereBetween('latest_plan.last_plan_date', [$from, $to]);
+                    $q->whereBetween('latest_plan.last_plan_date', [$from, $to])
+                    ->orWhereNull('latest_plan.last_plan_date'); // Include users with no plan
                 })
-                ->where('users.total_credit', '<', 10);
+                ->where('users.total_credit', '<', 10); // Apply credit filter to both
             })
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
@@ -483,7 +502,7 @@ class CronController extends Controller
             if(!$discount_applied){
                 $curCredit = $l->credit_score;
                 $newCredit = floor($curCredit - (($discountPercent/100) * $curCredit));
-                
+
                 $dataUC['credit_score'] = $newCredit;
                 $dataUC['discount_applied'] = 1;
                 $dataUC['old_credit'] =$curCredit;
@@ -554,11 +573,11 @@ class CronController extends Controller
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'pending')
             ->get();
-        
+
         foreach($leads as $lead){
             $rLeads = RecommendedLead::where('lead_id', $lead->id)
                 ->get();
-            
+
             foreach($rLeads as $rLead){
                 $emailSent = EmailLog::where('user_id', $rLead->seller_id)
                     ->where('lead_id', $rLead->lead_id)
@@ -570,7 +589,7 @@ class CronController extends Controller
                     $totalLeadEmails++;
                 }
             }
-            
+
         }
 
         return response()->json([
@@ -596,11 +615,11 @@ class CronController extends Controller
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'pending')
             ->get();
-        
+
         foreach($leads as $lead){
            $rLeads = RecommendedLead::where('lead_id', $lead->id)
                 ->get();
-            
+
             foreach($rLeads as $rLead){
                 $emailSent = EmailLog::where('user_id', $rLead->seller_id)
                     ->where('lead_id', $rLead->lead_id)
@@ -612,7 +631,7 @@ class CronController extends Controller
                     $totalLeadEmails++;
                 }
             }
-            
+
         }
 
         return response()->json([
