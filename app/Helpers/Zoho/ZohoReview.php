@@ -47,7 +47,7 @@ class ZohoReview
         $rating = intval(max(1, min(5, round($rating))));
         $payload = [
             'data' => [[
-                'Rating' => $rating
+                'Rating' => 5
             ]]
 
         ];
