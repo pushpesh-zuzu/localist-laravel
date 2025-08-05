@@ -551,7 +551,7 @@ class RecommendedLeadsController extends Controller
     //     ]);
     // }
 
-    public function sendLeadRequestReply()
+public function sendLeadRequestReply()
 {
     $totalUnsentLeadEmails = 0;
     $leadPref = new LeadService();
@@ -586,9 +586,16 @@ class RecommendedLeadsController extends Controller
                         ->exists();
                 });
 
+
+
                 if (!empty($unsentLeadIds)) {
                     // Send all leads in one email
-                    ZohoEmails::sendGroupedRequestReplyLeads($seller->id, $unsentLeadIds);
+                    $result = ZohoEmails::sendGroupedRequestReplyLeads($seller->id, $unsentLeadIds);
+
+                     Log::info('Zoho Email for request reply', [
+                                'user_id' => $seller->id,
+                                'response' => $result,
+                            ]);
                     $totalUnsentLeadEmails++;
                 }
             }

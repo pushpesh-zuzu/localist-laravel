@@ -1018,19 +1018,21 @@ class ZohoEmails
         $rel = self::getZohoMailResponse($response);
 
         // Log the grouped email with all lead IDs
-        EmailLog::insert([
-            'user_id' => $user->id,
-            'from_email' => $fromEmail,
-            'lead_id' => json_encode($leadIds),
-            'to_email' => $toEmail,
-            'message_id' => $rel['message_id'],
-            'subject' => $subject,
-            'setting_name' => 'New Lead - Request Reply',
-            'content' => $htmlContent,
-            'zoho_url' => $url,
-            'response' => json_encode($rel),
-            'created_at' => now()
-        ]);
+        foreach ($leadIds as $leadId) {
+            EmailLog::insert([
+                'user_id' => $user->id,
+                'from_email' => $fromEmail,
+                'lead_id' => $leadId,
+                'to_email' => $toEmail,
+                'message_id' => $rel['message_id'],
+                'subject' => $subject,
+                'setting_name' => 'New Lead - Request Reply',
+                'content' => $htmlContent,
+                'zoho_url' => $url,
+                'response' => json_encode($rel),
+                'created_at' => now()
+            ]);
+        }
     }
 
 
