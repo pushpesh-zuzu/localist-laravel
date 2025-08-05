@@ -256,17 +256,16 @@ class LeadPreferenceController extends Controller
                 ->first();
 
             $serviceIdZoho = $request->service_id;
-            $questionActualId = $leadPreference->id;
             if ($leadPreference) {
                 // Update existing record
                 $leadPreference->update(['answers' => $cleanedAnswer]);
                 $userId=$request->user_id;
-                ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
-                    app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
-                }, [
-                    'success' => true,
-                    'message' => 'Data processed successfully'
-                ]);
+                // ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
+                //     app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
+                // }, [
+                //     'success' => true,
+                //     'message' => 'Data processed successfully'
+                // ]);
                 //app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
                 //dd($x);
             } else {
@@ -282,6 +281,12 @@ class LeadPreferenceController extends Controller
             $insertedOrUpdatedData[] = $leadPreference;
         }
 
+
+        $userId = $request->user_id;
+        $serviceIdZoho = $request->service_id;
+        ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
+            app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
+        });
 
         return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
     }
