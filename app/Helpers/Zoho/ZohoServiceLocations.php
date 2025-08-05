@@ -19,6 +19,11 @@ class ZohoServiceLocations
             return null;
         }
 
+        Log::info('request location for user', [
+                        'user_id' => $userId,
+                        'locations' => $locationIds
+                    ]);
+
         // $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
 
         // $payload = $this->buildServicePayload($access_token, $userId, $locationId, $zohoServiceId);

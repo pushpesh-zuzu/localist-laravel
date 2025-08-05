@@ -783,6 +783,7 @@ class LeadPreferenceController extends Controller
                 'success' => true,
                 'message' => 'Location updated successfully'
             ]);
+
             return $this->sendResponse(__('Location updated successfully'));
         }else{
             return $this->sendResponse(__('Select Service to proceed'));
@@ -986,7 +987,7 @@ class LeadPreferenceController extends Controller
         }
 
 
-        $user_service_locations = $query->pluck('id');
+        $user_service_locations = $query->pluck('zoho_location_id');
 
         app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
     //    // dd($user_service_locations);
