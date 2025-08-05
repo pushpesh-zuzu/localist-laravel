@@ -263,7 +263,10 @@ class LeadPreferenceController extends Controller
                 $userId=$request->user_id;
                 ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
                     app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
-                });
+                }, [
+                    'success' => true,
+                    'message' => 'Data processed successfully'
+                ]);
                 //app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
                 //dd($x);
             } else {
