@@ -155,6 +155,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
         Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
         Route::post('/submit-leads', [LeadPreferenceController::class, 'submitLeads']);
+        
 
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
