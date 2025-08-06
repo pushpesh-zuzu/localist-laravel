@@ -231,7 +231,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);
     }
 
-    public function leadpreferences(Request $request): JsonResponse
+    public function leadpreferences(Request $request)
     {
         $request->validate([
             'service_id'   => 'required',
@@ -284,11 +284,15 @@ class LeadPreferenceController extends Controller
 
         $userId = $request->user_id;
         $serviceIdZoho = $request->service_id;
-        ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
+        return ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
             app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
-        });
+        }, [
+                'success' => true,
+                'message' => 'Data processed successfully',
+                'data' => $insertedOrUpdatedData
+            ]);
 
-        return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
+        //return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
     }
 
     public function removeService(Request $request){
@@ -480,13 +484,17 @@ class LeadPreferenceController extends Controller
                     'message' => 'Request Submitted Successfully'
                 ]);
             }
+            else{
+                return $this->sendResponse($sendmessage, []);
+            }
 
 
         }else{
             $sendmessage = 'This lead is already hired!';
+            return $this->sendResponse($sendmessage, []);
         }
 
-        return $this->sendResponse($sendmessage, []);
+        //return $this->sendResponse($sendmessage, []);
     }
 
     public function submitLeads(Request $request)
@@ -661,7 +669,7 @@ class LeadPreferenceController extends Controller
                 }
             }
 
-         ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
+         return ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
                 app(ZohoService::class)->integrateService($userId, $serviceAllIds);
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
                 app(ZohoQuestionAnswer::class)->integrateServiceQa($userId,$serviceIds);
@@ -711,17 +719,17 @@ class LeadPreferenceController extends Controller
         UserServiceLocation::where('id',$request->location_id)->update($data);
 
         $locationId = $request->location_id;
-        ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationId) {
+        return ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationId) {
                 app(ZohoServiceLocations::class)->integrateServiceSingleLocations($userId, $locationId);
             }, [
                 'success' => true,
                 'message' => 'Radius Expaned'
             ]);
-        return $this->sendResponse('Radius Expaned');
+        //return $this->sendResponse('Radius Expaned');
 
     }
 
-    public function addUserLocation(Request $request): JsonResponse
+    public function addUserLocation(Request $request)
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
@@ -797,14 +805,14 @@ class LeadPreferenceController extends Controller
 
             }
 
-             ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationIds) {
+            return ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationIds) {
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
             }, [
                 'success' => true,
                 'message' => 'Location updated successfully'
             ]);
 
-            return $this->sendResponse(__('Location updated successfully'));
+            //return $this->sendResponse(__('Location updated successfully'));
         }else{
             return $this->sendResponse(__('Select Service to proceed'));
         }
@@ -842,7 +850,7 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('User Service Data'), $finalRows);
     }
 
-    public function editUserLocation(Request $request): JsonResponse
+    public function editUserLocation(Request $request)
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
@@ -955,7 +963,7 @@ class LeadPreferenceController extends Controller
         $locationIdsList = UserServiceLocation::where('user_id', $userId)
             ->pluck('id');
 
-        ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationIds,$locationIdsList) {
+        return ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationIds,$locationIdsList) {
             app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($locationIds);
             app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIdsList);
         }, [
@@ -963,7 +971,7 @@ class LeadPreferenceController extends Controller
             'message' => 'Location updated successfully'
         ]);
 
-        return $this->sendResponse(__('Location updated successfully'));
+        //return $this->sendResponse(__('Location updated successfully'));
     }
 
 
@@ -1296,13 +1304,13 @@ class LeadPreferenceController extends Controller
             $isonline  = $aVals['is_online'];
             // return $this->sendResponse('Switched update', $isonline);
             $userId = $aVals['user_id'];
-            ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+            return ZohoHelper::dispatchAfterResponse(function () use ($userId) {
                 app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
             }, [
                 'success' => true,
                 'message' => 'Switched update'
             ]);
-            return $this->sendResponse(__('Switched update'), []);
+            //return $this->sendResponse(__('Switched update'), []);
         }
         return $this->sendError('User not found');
     }

@@ -58,12 +58,7 @@ class ReviewController extends Controller{
         $data['updated_at'] = date('y-m-d H:i:s');
         $aid = Review::insertGetId($data);
 
-        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
-                    app(ZohoReview::class)->integrateZohoReview($user_id);
-                }, [
-                    'success' => true,
-                    'message' => 'Review submitted successfully!'
-                ]);
+
 
         if($aid){
             $avg_rating = Review::avg('ratings');
@@ -75,7 +70,14 @@ class ReviewController extends Controller{
             //Add Notification Log for new review
             CustomHelper::logNotifications($user_id,0,'buyer_browser_new_review', 'New Review', $request->review);
 
-            return $this->sendResponse('Review submitted successfully!');
+            return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+                    app(ZohoReview::class)->integrateZohoReview($user_id);
+                }, [
+                    'success' => true,
+                    'message' => 'Review submitted successfully!'
+                ]);
+
+            //return $this->sendResponse('Review submitted successfully!');
         }
         return $this->sendError('Something went wrong, try again!');
 

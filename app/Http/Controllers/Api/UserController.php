@@ -715,7 +715,7 @@ class UserController extends Controller
         return $this->sendResponse(__('User Profile Data'), $users);
     }
 
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfile(Request $request)
     {
         $aVals = $request->all();
         $validator = $validator = Validator::make($aVals, [
@@ -731,7 +731,7 @@ class UserController extends Controller
             'sms_notification_no'=>$request->sms_notification_no,
         ]);
 
-        ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+        return ZohoHelper::dispatchAfterResponse(function () use ($userId) {
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
         }, [
             'success' => true,
@@ -739,7 +739,7 @@ class UserController extends Controller
         ]);
 
         //app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
-        return $this->sendResponse(__('User Profile updated'));
+        //return $this->sendResponse(__('User Profile updated'));
     }
 
     public function logout(Request $request)

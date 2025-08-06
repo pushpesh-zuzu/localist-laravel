@@ -148,7 +148,7 @@ class SettingController extends Controller
         }
 
 
-        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+        return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
             //app(ZohoSocialMedia::class)->integrateSocialLinks($user_id);
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
         }, [
@@ -157,7 +157,7 @@ class SettingController extends Controller
         ]);
 
 
-        return $this->sendResponse(__('Profile updated successfully'));
+        //return $this->sendResponse(__('Profile updated successfully'));
     }
 
     public function sellerProfileQues(){
@@ -239,14 +239,15 @@ class SettingController extends Controller
             ]);
         }
 
-        ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+        return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
                     app(ZohoLeadBuyers::class)->integrateZohoDetails($user_id);
                 }, [
                     'success' => true,
-                    'message' => 'Billing details submitted successfully!'
+                    'message' => 'Billing details submitted successfully!',
+                    'data' => $userdetails
                 ]);
 
-        return $userdetails;
+        //return $userdetails;
     }
 
     public function sellerCardDetails(Request $request){

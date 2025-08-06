@@ -481,13 +481,15 @@ class RecommendedLeadsController extends Controller
 
 
         $bidId = $bids->id;
-        ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$bidId,$tId) {
-                    app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
-                    app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
-                }, [
-                    'success' => true,
-                    'message' => 'Bid placed successfully'
-                ]);
+        if($bidId){
+            ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$bidId,$tId) {
+                        app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
+                        app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
+                    }, [
+                        'success' => true,
+                        'message' => 'Bid placed successfully'
+                    ]);
+        }
 
         if($aVals['bidtype'] == 'reply'){
             ZohoHelper::dispatchAfterResponse([$this, 'sendLeadRequestReply'], [
@@ -496,7 +498,7 @@ class RecommendedLeadsController extends Controller
                 ]);
         }
 
-        return $this->sendResponse('Bid placed successfully');
+        //return $this->sendResponse('Bid placed successfully');
     }
 
 

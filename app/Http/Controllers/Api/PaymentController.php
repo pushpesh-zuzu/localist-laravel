@@ -96,12 +96,7 @@ class PaymentController extends Controller
 
                 //create transaction logs
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
-                ZohoHelper::dispatchAfterResponse(function () use ($user_id, $tId) {
-                    app(ZohoFinance::class)->integratePurchaseHistory($user_id, $tId);
-                }, [
-                    'success' => true,
-                    'message' => 'Payment successful!'
-                ]);
+
 
 
                 //Create invoice
@@ -127,6 +122,18 @@ class PaymentController extends Controller
                 }
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
                 Invoice::insertGetId($dataInv);
+
+                if($tId){
+                    return ZohoHelper::dispatchAfterResponse(function () use ($user_id, $tId) {
+                        app(ZohoFinance::class)->integratePurchaseHistory($user_id, $tId);
+                    }, [
+                        'success' => true,
+                        'message' => 'Payment successful!'
+                    ]);
+                }
+                else{
+                    return $this->sendResponse('Payment successful!');
+                }
 
                 //return $this->sendResponse('Payment successful!');
             }else{
