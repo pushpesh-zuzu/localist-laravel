@@ -799,12 +799,14 @@ class UserController extends Controller
         return $this->sendResponse(__('Password changed Successfully'));
     }
 
-    public function fetch_company_details($regNumber){
+    public function fetch_company_details($regNumber, Request $request){
+        $userId = $request->query('user_id');
+
         $companyRegService = new CompanyRegService();
         $companyDetails = $companyRegService->getCompanyDetails($regNumber);
         if(isset($companyDetails['company_name'])){
             try {
-                $this->checkCompanyExists($companyDetails['company_name']);
+                $this->checkCompanyExists($companyDetails['company_name'],$userId);
             } catch (\Exception $e) {
                 return $this->sendError($e->getMessage()); // returns a JsonResponse
             }
@@ -812,11 +814,14 @@ class UserController extends Controller
         return $companyDetails;
     }
 
-    private function checkCompanyExists(string $companyName): void
+    private function checkCompanyExists(string $companyName,$userId = null): void
     {
-        $exists = User::where('company_name', trim($companyName))->exists();
+        $query = User::where('company_name', trim($companyName));
+        if ($userId) {
+            $query->where('id', '!=', $userId);
+        }
 
-        if ($exists) {
+        if ($query->exists()) {
             throw new \Exception('Your account is already registered with this Company Name. Please contact us if this is not correct.');
         }
     }
