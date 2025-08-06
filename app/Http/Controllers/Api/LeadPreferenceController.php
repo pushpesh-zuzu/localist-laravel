@@ -556,7 +556,7 @@ class LeadPreferenceController extends Controller
 
 
 
-    public function addUserService(Request $request): JsonResponse
+    public function addUserService(Request $request)
     {
         $aVals = $request->all();
         $userId = $request->user_id;
