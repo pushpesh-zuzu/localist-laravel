@@ -32,6 +32,8 @@ Route::get('/check_api', function () {
 });
 
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
+Route::post('request-otp', [ApiController::class, 'requestOtp']);
+Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 Route::prefix('check')->group(function () {

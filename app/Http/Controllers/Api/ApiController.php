@@ -17,6 +17,7 @@ use App\Models\Plan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Coupon;
+use App\Models\Otp;
 use App\Models\UserServiceLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -136,7 +137,53 @@ class ApiController extends Controller
         return $this->sendResponse(__('Category Data'), $categories);
     }
 
-    // 
+    //
+    
+    public function requestOtp(Request $request){
+        $validator = Validator::make($request->all(), [
+            'phone_number' => 'required|min:10',
+        ], [
+            'phone_number.required' => 'Phone number is required.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $data['otp'] = "1234"; //random_int(1000, 9999);
+        $data['phone_number'] = $request->phone_number;
+
+        Otp::create($data);
+
+        return $this->sendResponse('OTP created successfully');
+    }
+
+    
+    public function verifyOtp(Request $request){
+        $validator = Validator::make($request->all(), [
+            'phone_number' => 'required|min:10',
+            'otp' => 'required|min:4',
+        ], [
+            'phone_number.required' => 'Phone number is required.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $dbOtp = Otp::where('phone_number', $request->phone_number)
+            ->where('otp_used', '0')
+            ->orderBy('id','desc')->first();
+        if(!empty($dbOtp)){
+            if($dbOtp->otp == $request->otp){
+                $data['otp_used'] = 1;
+                Otp::where('id', $dbOtp->id)->update($data);
+                return $this->sendResponse('OTP verified successfully');
+            }else{
+                return $this->sendError('Wrong OTP, try again!');
+            }
+        }
+
+        return $this->sendError('Otp not found! Please generate OTP first.');
+    }
 
     public function testApi(Request $request, \App\Services\LeadService $ls)
     {
