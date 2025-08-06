@@ -661,7 +661,7 @@ class LeadPreferenceController extends Controller
                 }
             }
 
-         ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
+            ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
                 app(ZohoService::class)->integrateService($userId, $serviceAllIds);
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
                 app(ZohoQuestionAnswer::class)->integrateServiceQa($userId,$serviceIds);
