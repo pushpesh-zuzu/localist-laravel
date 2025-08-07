@@ -88,10 +88,15 @@ class SectorController extends Controller{
 
         Category::where('id', $id)->update($data);
         return redirect()->route('sectors.index')->with('success', 'Sector updated successfully.');
-    
+    }
 
-        // $this->validateSave($request);   
-        // return redirect()->route('categories.index')->with('success', 'Category created successfully.');
+
+    // Remove the specified category from storage
+    public function destroy(Request $request, $id)
+    {
+        Category::where('id', $id)->delete();
+        return redirect()->route('sectors.index')
+                         ->with('success', 'Sector deleted successfully.');
     }
 
 }

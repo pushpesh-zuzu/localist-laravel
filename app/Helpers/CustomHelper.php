@@ -17,11 +17,12 @@ use App\Jobs\IntegrateZohoPurchaseHistory;
 class CustomHelper
 {
 
-    public static function createSectorsRecursive($data, $index = '1', $space = 40) {
+    public static function createSectorsRecursive($data, $index = '1', $space = 40){
         if (count($data['subsectors']) > 0) {
             $i = 1;
             foreach ($data['subsectors'] as $d) {
                 $currentIndex = $index . '.' . $i;
+                $deleteFormId = 'delete-form-' . $d['id'];
 
                 echo '<tr>
                         <td>
@@ -31,20 +32,28 @@ class CustomHelper
                         </td>
                         <td>' . ($d['status'] ? 'Active' : 'Inactive') . '</td>
                         <td>
-                            <a href="' . route('sectors.edit',$d['id']) . '" title="edit"><i class="fas fa-edit"></i></a> &nbsp;
-                            <a href="" class="delete_category" data-id="' . $d['id'] . '" title="delete"><i class="fas fa-trash"></i></a>
+                            <a href="' . route('sectors.edit', $d['id']) . '" title="Edit"><i class="fas fa-edit"></i></a> &nbsp;
+
+                            <a href="javascript:void(0);" onclick="event.preventDefault(); if(confirm(\'Are you sure to delete?\')) document.getElementById(\'' . $deleteFormId . '\').submit();" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </a>
+
+                            <form id="' . $deleteFormId . '" action="' . route('sectors.destroy', $d['id']) . '" method="POST" style="display: none;">
+                                ' . method_field('DELETE') . csrf_field() . '
+                            </form>
                         </td>
                     </tr>';
 
-                // Recursively call for child subsectors
+                // Recursive call
                 if (count($d['subsectors']) > 0) {
-                    self::createSectorsRecursive($d, $currentIndex, 2*$space);
+                    self::createSectorsRecursive($d, $currentIndex, 2 * $space);
                 }
 
                 $i++;
             }
         }
     }
+
 
     public static function logNotifications($userId, $leadId, $notiName, $title, $message, $checkExisting=false, $notiType='browser', $userType='buyer'){
         $insertLog = true;

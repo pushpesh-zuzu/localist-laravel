@@ -27,7 +27,13 @@
                             <td>@if($sl['status']) Active @else Inactive @endif </td>
                             <td>
                                 <a href="{{route('sectors.edit',$sl['id'])}}" title="edit"><i class="fas fa-edit"></i></a> &nbsp;
-                                <a href=""class="delete_category" data-id="{{$sl['id']}}" title="delete"><i class="fas fa-trash"></i></a>
+                                <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete">
+                                    <i class="fas fa-trash"></i></i>
+                                </a>
+                                <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('sectors.destroy',$sl['id']) }}" method="post" style="display: none;">
+                                    {{ method_field('DELETE') }}
+                                    {{ csrf_field() }}
+                                </form>
                             </td>
                         </tr>
                         {{\App\Helpers\CustomHelper::createSectorsRecursive($sl, $index+1)}}
@@ -40,20 +46,21 @@
     @push('scripts')
         <script>
             $(document).ready(function () {
-  $('#sectorsTable').DataTable({
-    paging: true,
-    searching: true,
-    info: true,
-    ordering: false, // prevent breaking nested order
-    dom: 'lfrtip', // length menu, filter, table, info, pagination
-    rowCallback: function(row, data, index){
-      // Keep styling on nested rows if needed
-      if($(row).hasClass('child-row')){
-        $(row).css('background-color', '#f9f9f9');
-      }
-    }
-  });
-});
+                $('#sectorsTable').DataTable({
+                    paging: true,
+                    searching: true,
+                    info: true,
+                    pageLength: 50,
+                    ordering: false, // prevent breaking nested order
+                    dom: 'lfrtip', // length menu, filter, table, info, pagination
+                    rowCallback: function(row, data, index){
+                        // Keep styling on nested rows if needed
+                        if($(row).hasClass('child-row')){
+                            $(row).css('background-color', '#f9f9f9');
+                        }
+                    }
+                });
+            });
         </script>
     @endpush
 </x-app-layout> 
