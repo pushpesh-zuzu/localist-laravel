@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Yajra\Datatables\Datatables;
 use Yajra\DataTables\Html\Builder;
 use Illuminate\Support\Facades\DB;
@@ -26,8 +27,15 @@ class SectorController extends Controller{
 
     public function store(Request $request)
     {
-        echo "<pre>";
-        print_r($request->all());
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|unique:categories,name',
+            'homepage_display_name' => 'required',
+            'banner_title' => 'required',
+          ], [
+            'name.unique' => 'Sector Name already exists.'
+        ]);
+
+        $validator->validate();
 
         if($request->is_subsector){
             $data['parent_id'] = $request->pr_id;
@@ -68,6 +76,19 @@ class SectorController extends Controller{
 
     public function update(Request $request, $id)
     {
+        $validator = Validator::make($request->all(), [
+            'name' => [
+                'required',
+                Rule::unique('categories', 'name')->ignore($id),
+            ],
+            'homepage_display_name' => 'required',
+            'banner_title' => 'required',
+          ], [
+            'name.exists' => 'Sector Name already exists.'
+        ]);
+
+        $validator->validate();
+
         if($request->is_subsector){
             $data['parent_id'] = $request->pr_id;
         }

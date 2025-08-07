@@ -76,12 +76,12 @@
             <div class="col-md-6">
               <label class="form-label" for="is_home">{{ __('Show at Home') }}</label>
               <input type="radio" id="is_home"  @if($sector && $sector['is_home'] == 1) checked  @endif  name="is_home"  value="1" > Yes
-              <input type="radio" id="is_home"  @if($sector && $sector['is_home'] == 0) checked  @endif  name="is_home"  value="0" > No
+              <input type="radio" id="is_home"  @if($sector && $sector['is_home'] == 0) checked  @endif  name="is_home"  value="0" checked> No
             </div>
             <div class="col-md-6">
               <label class="form-label" for="is_popular">{{ __('Is Popular Service') }}</label>
               <input type="radio" id="is_popular"  @if($sector && $sector['is_popular'] == 1) checked  @endif  name="is_popular"  value="1" > Yes
-              <input type="radio" id="is_popular"  @if($sector && $sector['is_popular'] == 0) checked  @endif  name="is_popular"  value="0" > No
+              <input type="radio" id="is_popular"  @if($sector && $sector['is_popular'] == 0) checked  @endif  name="is_popular"  value="0" checked> No
             </div>
           </div>
 
