@@ -18,7 +18,15 @@
                 {{ __('Dashboard') }}
             </a>   
         </li> 
+        
         <li class="nav-item">
+            <a href="{{ route('sectors.index') }}" class="nav-link {{ request()->routeIs('sectors.index') ? 'active' : '' }}">
+                <i class="bi bi-list nav-icon"></i>
+                Sectors
+            </a>   
+        </li>
+
+        {{-- <li class="nav-item">
             <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.index') ? 'active' : '' }}">
                 <i class="bi bi-list nav-icon"></i>
                 {{ __('Sector') }}
@@ -30,7 +38,7 @@
                 <i class="bi bi-list nav-icon"></i>
                 {{ __('Sub Sector') }}
             </a>   
-        </li>
+        </li> --}}
         <li class="nav-group" aria-expanded="false">
             <a class="nav-link nav-group-toggle" href="#">
             <i class="fa-solid fa-user nav-icon"></i> {{ __('Lead Buyers') }}</a>
@@ -107,7 +115,7 @@
         <li class="nav-item">
             <a href="{{ route('menus.index') }}" class="nav-link {{ request()->routeIs('menus.index') ? 'active' : '' }}">
                   <i class="bi bi-file-earmark-fill nav-icon"></i>
-                {{ __('Menus') }}
+                {{ __('Footer Menus') }}
             </a>   
         </li>
         <li class="nav-item">

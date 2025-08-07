@@ -11,7 +11,7 @@ class Category extends Model
     use SoftDeletes; // Enable soft deletes
     use HasSlug;
 
-    protected $fillable = ['name', 'slug','description','parent_id','banner_image','banner_title','category_icon','seo_title','seo_description','is_home','status'];
+    protected $fillable = ['name', 'homepage_display_name' , 'slug','description','parent_id','banner_image','banner_title','category_icon','seo_title','seo_description','is_home','status'];
 
     public function parent()
     {
@@ -31,6 +31,16 @@ class Category extends Model
     public function serviceQuestions()
     {
         return $this->hasMany(ServiceQuestion::class, 'category', 'id');
+    }
+
+    public function subsector(){
+        return $this->hasMany('App\Models\Category','parent_id','id');
+    }
+
+    // recursive, loads all descendants with products
+    public function subsectors()
+    {
+        return $this->subsector()->with('subsectors');
     }
 
 }

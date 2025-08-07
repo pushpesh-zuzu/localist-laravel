@@ -17,6 +17,35 @@ use App\Jobs\IntegrateZohoPurchaseHistory;
 class CustomHelper
 {
 
+    public static function createSectorsRecursive($data, $index = '1', $space = 40) {
+        if (count($data['subsectors']) > 0) {
+            $i = 1;
+            foreach ($data['subsectors'] as $d) {
+                $currentIndex = $index . '.' . $i;
+
+                echo '<tr>
+                        <td>
+                            <span style="margin-left:' . $space . 'px;"></span>
+                            <strong>' . $currentIndex . '.</strong>
+                            <img src="' . \App\Helpers\CustomHelper::displayImage($d['category_icon'], 'category') . '" height="25" width="25" style="display: inline" /> &nbsp;' . $d['name'] . '
+                        </td>
+                        <td>' . ($d['status'] ? 'Active' : 'Inactive') . '</td>
+                        <td>
+                            <a href="' . route('sectors.edit',$d['id']) . '" title="edit"><i class="fas fa-edit"></i></a> &nbsp;
+                            <a href="" class="delete_category" data-id="' . $d['id'] . '" title="delete"><i class="fas fa-trash"></i></a>
+                        </td>
+                    </tr>';
+
+                // Recursively call for child subsectors
+                if (count($d['subsectors']) > 0) {
+                    self::createSectorsRecursive($d, $currentIndex, 2*$space);
+                }
+
+                $i++;
+            }
+        }
+    }
+
     public static function logNotifications($userId, $leadId, $notiName, $title, $message, $checkExisting=false, $notiType='browser', $userType='buyer'){
         $insertLog = true;
         $isSettingOn=NotificationSetting::where('user_id',$userId)

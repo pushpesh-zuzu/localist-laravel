@@ -44,14 +44,7 @@ class AccountSettingController extends Controller
         }
 
         if($request->hasfile('image_file')){
-
-            $dir = 'public/images/customer';
-            $single_img=$request->file('image_file');
-            $file_name = "img_" .time() ."." .$single_img->getClientOriginalExtension();
-            $single_img->move($dir, $file_name);
-
-            
-            $data['profile_image'] = $dir .'/' .$file_name;
+            $data['profile_image'] =  CustomHelper::fileUpload($request->image_file,'users');
             $data['updated_at'] = date('y-m-d H:i:s');
             
             $sId = User::where('id',$user_id)->update($data);
