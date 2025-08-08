@@ -30,7 +30,7 @@ class SectorController extends Controller{
         $validator = Validator::make($request->all(), [
             'name' => 'required|unique:categories,name',
             'homepage_display_name' => 'required',
-            'banner_title' => 'required',
+            'breadcrumb_title' => 'required',
           ], [
             'name.unique' => 'Sector Name already exists.'
         ]);
@@ -43,7 +43,7 @@ class SectorController extends Controller{
         $data['name'] = $request->name;
         $data['homepage_display_name'] = $request->homepage_display_name;
         $data['description'] = $request->description;
-        $data['banner_title'] = $request->banner_title;
+        $data['breadcrumb_title'] = $request->breadcrumb_title;
         $data['seo_title'] = $request->seo_title;
         $data['seo_description'] = $request->seo_description;
         $data['is_home'] = $request->is_home;
@@ -82,7 +82,7 @@ class SectorController extends Controller{
                 Rule::unique('categories', 'name')->ignore($id),
             ],
             'homepage_display_name' => 'required',
-            'banner_title' => 'required',
+            'breadcrumb_title' => 'required',
           ], [
             'name.exists' => 'Sector Name already exists.'
         ]);
@@ -95,7 +95,7 @@ class SectorController extends Controller{
         $data['name'] = $request->name;
         $data['homepage_display_name'] = $request->homepage_display_name;
         $data['description'] = $request->description;
-        $data['banner_title'] = $request->banner_title;
+        $data['breadcrumb_title'] = $request->breadcrumb_title;
         $data['seo_title'] = $request->seo_title;
         $data['seo_description'] = $request->seo_description;
         $data['is_home'] = $request->is_home;

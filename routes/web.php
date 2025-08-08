@@ -66,10 +66,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('sectors', SectorController::class);
-
-    Route::resource('categories', CategoryController::class);   
-
-    Route::resource('subcategories', SubCategoryController::class);
+    
     Route::resource('blogs', BlogsController::class);
     Route::resource('pages', PagesController::class);
     Route::resource('menus', MenuController::class);

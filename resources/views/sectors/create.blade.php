@@ -17,7 +17,7 @@
             <div class="col-md-5 mb-3">
                 <div class="form-group">
                     <label class="required">Sector Name (Mega Menu)</label>
-                    <input type="text" name="name" value="{{ $sector ? $sector['name'] : old('name') }}" required
+                    <input type="text" id="name" name="name" value="{{ $sector ? $sector['name'] : old('name') }}" required
                         class="form-control {{$errors->has('name')?'is-invalid':''}}" placeholder="Sector Name">
                 </div>                            
             </div>
@@ -45,17 +45,17 @@
             <div class="col-md-6 mb-3">
                 <div class="form-group">
                     <label class="form-label">Home Page Display Name</label>
-                    <input type="text" name="homepage_display_name" value="{{ $sector ? $sector['homepage_display_name'] : old('homepage_display_name') }}" required
+                    <input type="text" id="homepage_display_name" name="homepage_display_name" value="{{ $sector ? $sector['homepage_display_name'] : old('homepage_display_name') }}" required
                         class="form-control {{$errors->has('homepage_display_name')?'is-invalid':''}}" placeholder="Home Page Display Name">
                 </div>                            
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label" for="banner_title">{{ __('Banner Title') }}</label>
-              <input type="text" id="banner_title" class="form-control" name="banner_title" class="form-control{{ $errors->has('banner_title') ? ' is-invalid' : '' }}" 
-              value="{{ $sector ? $sector['banner_title'] : old('banner_title') }}"  placeholder="Banner Title" required>
-              @if ($errors->has('banner_title'))
+              <label class="form-label" for="breadcrumb_title">Breadcrumb Title</label>
+              <input type="text" id="breadcrumb_title" class="form-control" name="breadcrumb_title" class="form-control{{ $errors->has('breadcrumb_title') ? ' is-invalid' : '' }}" 
+              value="{{ $sector ? $sector['breadcrumb_title'] : old('breadcrumb_title') }}"  placeholder="Breadcrumb Title" required>
+              @if ($errors->has('breadcrumb_title'))
               <span class="invalid-feedback d-block" role="alert">
-                <strong>{{ $errors->first('banner_title') }}</strong>
+                <strong>{{ $errors->first('breadcrumb_title') }}</strong>
               </span>
               @endif
             </div>
@@ -142,14 +142,20 @@
         <script>
 
             $(document).ready(function(){
-                $("#is_subsector").change(function() {
-                if(this.checked) {
-                    $("#parent_cat_div").show();
-                }else{
-                    $("#parent_cat_div").hide();
-                }
+              $("#is_subsector").change(function() {
+              if(this.checked) {
+                  $("#parent_cat_div").show();
+              }else{
+                  $("#parent_cat_div").hide();
+              }
 
-                });
+              });
+              $('#name').on('focusout', function() {
+                let value = $(this).val();
+                $('#homepage_display_name').val(value);
+                $('#breadcrumb_title').val(value);
+              });
+
             });
             </script>
     @endpush
