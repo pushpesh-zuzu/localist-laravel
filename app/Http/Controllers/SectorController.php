@@ -48,6 +48,7 @@ class SectorController extends Controller{
         $data['seo_description'] = $request->seo_description;
         $data['is_home'] = $request->is_home;
         $data['is_popular'] = $request->is_popular;
+        $data['show_in_search'] = $request->show_in_search;
         if($request->hasFile('category_icon')){ 
             $data['category_icon'] = CustomHelper::fileUpload($request->category_icon,'category');
         }
@@ -100,6 +101,7 @@ class SectorController extends Controller{
         $data['seo_description'] = $request->seo_description;
         $data['is_home'] = $request->is_home;
         $data['is_popular'] = $request->is_popular;
+        $data['show_in_search'] = $request->show_in_search;
         if($request->hasFile('category_icon')){ 
             $data['category_icon'] = CustomHelper::fileUpload($request->category_icon,'category');
         }

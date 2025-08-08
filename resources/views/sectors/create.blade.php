@@ -73,17 +73,23 @@
           </div>
 
           <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label" for="is_home">{{ __('Show at Home') }}</label>
               <input type="radio" id="is_home"  @if($sector && $sector['is_home'] == 1) checked  @endif  name="is_home"  value="1" > Yes
               <input type="radio" id="is_home"  @if($sector && $sector['is_home'] == 0) checked  @endif  name="is_home"  value="0" checked> No
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label" for="is_popular">{{ __('Is Popular Service') }}</label>
               <input type="radio" id="is_popular"  @if($sector && $sector['is_popular'] == 1) checked  @endif  name="is_popular"  value="1" > Yes
               <input type="radio" id="is_popular"  @if($sector && $sector['is_popular'] == 0) checked  @endif  name="is_popular"  value="0" checked> No
             </div>
+            <div class="col-md-4">
+              <label class="form-label" for="show_in_search">Show In Search</label>
+              <input type="radio" id="show_in_search"  @if($sector && $sector['show_in_search'] == 1) checked  @endif  name="show_in_search"  value="1" checked> Yes
+              <input type="radio" id="show_in_search"  @if($sector && $sector['show_in_search'] == 0) checked  @endif  name="show_in_search"  value="0" > No
+            </div>
           </div>
+          
 
           <div class="row mb-3">
             <div class="col-md-6">

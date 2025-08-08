@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    protected $fillable = ['name', 'homepage_display_name' , 'description','parent_id','banner_image','breadcrumb_title','category_icon','seo_title','seo_description','is_home','is_popular','status'];
+    protected $fillable = ['name', 'homepage_display_name' , 'description','parent_id','banner_image','breadcrumb_title','category_icon','seo_title','seo_description','is_home','is_popular', 'show_in_search','status'];
 
     public function parent()
     {

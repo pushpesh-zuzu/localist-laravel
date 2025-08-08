@@ -122,6 +122,7 @@ class ApiController extends Controller
                 $query->where('name', 'LIKE', "%{$search}%")
                       ->orWhere('description', 'LIKE', "%{$search}%");
             })
+            ->where('show_in_search', '1')
             ->get();
         }else{
             $categories = Category::where('status', 1)
@@ -129,6 +130,7 @@ class ApiController extends Controller
                                   $query->where('name', 'LIKE', "%{$search}%")
                                         ->orWhere('description', 'LIKE', "%{$search}%");
                               })
+                              ->where('show_in_search', '1')
                               ->get();
         }
         
