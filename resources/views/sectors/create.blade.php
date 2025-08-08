@@ -150,11 +150,11 @@
               }
 
               });
-              $('#name').on('focusout', function() {
-                let value = $(this).val();
-                $('#homepage_display_name').val(value);
-                $('#breadcrumb_title').val(value);
-              });
+              // $('#name').on('focusout', function() {
+              //   let value = $(this).val();
+              //   $('#homepage_display_name').val(value);
+              //   $('#breadcrumb_title').val(value);
+              // });
 
             });
             </script>

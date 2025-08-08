@@ -8,10 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use SoftDeletes; // Enable soft deletes
-    use HasSlug;
-
-    protected $fillable = ['name', 'homepage_display_name' , 'slug','description','parent_id','banner_image','banner_title','category_icon','seo_title','seo_description','is_home','status'];
+    protected $fillable = ['name', 'homepage_display_name' , 'description','parent_id','banner_image','breadcrumb_title','category_icon','seo_title','seo_description','is_home','status'];
 
     public function parent()
     {
