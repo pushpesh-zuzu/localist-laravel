@@ -82,7 +82,7 @@
 				<div class="row mb-3">
 					<div class="col-md-12">
 						<label class="form-label" for="banner_title">{{ __('Slug') }}</label>
-						<input type="text" id="slug" class="form-control" name="slug" class="form-control{{ $errors->has('slug') ? ' is-invalid' : '' }}" 
+						<input type="text" id="slug" class="form-control" name="slug" class="form-control{{ $errors->has('slug') ? ' is-invalid' : '' }}" required
 							value="{{ $aRow ? $aRow->slug : old('slug') }}"  placeholder="Enter Slug">
 						@if ($errors->has('slug'))
 						<span class="invalid-feedback d-block" role="alert">
@@ -95,14 +95,14 @@
                 <div class="row mb-3">
 					<div class="col-md-12">
 						<label class="form-label" for="title_desc">{{ __('Title Description') }}</label>
-						<textarea class="form-control" id="title_desc" rows="10" name="title_desc" class="form-control{{ $errors->has('title_desc') ? ' is-invalid' : '' }}" 
+						<textarea class="form-control" id="title_desc" rows="10" name="title_desc" class="form-control{{ $errors->has('title_desc') ? ' is-invalid' : '' }}" required
 							placeholder="">{{ $aRow ? $aRow->title_desc : old('title_desc') }}</textarea>
 					</div>
 				</div>
                 <div class="row mb-3">
 					<div class="col-md-12">
 						<label class="form-label" for="page_details">{{ __('Page Details') }}</label>
-						<textarea class="form-control" id="page_details" rows="10" name="page_details" class="form-control{{ $errors->has('page_details') ? ' is-invalid' : '' }}" 
+						<textarea class="form-control" id="page_details" rows="10" name="page_details" class="form-control{{ $errors->has('page_details') ? ' is-invalid' : '' }}" required
 							placeholder="">{{ $aRow ? $aRow->page_details : old('page_details') }}</textarea>
 					</div>
 				</div>
@@ -119,56 +119,10 @@
 						</span>
 						@endif
 					</div>
-                    <div class="col-md-6">
-						<label class="form-label" for="og_image">{{ __('OG Image') }}</label>
-						<input type="file" id="og_image" class="form-control" name="og_image" class="form-control{{ $errors->has('og_image') ? ' is-invalid' : '' }}" />
-						@if($aRow && $aRow->og_image) 
-						<img src="{{ \App\Helpers\CustomHelper::displayImage($aRow->og_image, 'pages') }}" height="100" width="100" class="mt-2" />                
-						@endif
-						@if ($errors->has('og_image d-block'))
-						<span class="invalid-feedback" role="alert">
-						<strong>{{ $errors->first('og_image') }}</strong>
-						</span>
-						@endif
-					</div>
+                    
 				</div>
                 <hr>
-                <div class="card card-border">
-                    <div class="card-header">
-                        <h5>Seo Information</h5> 
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label" for="seo_title">{{ __('Seo Title') }}</label>
-                                <input type="text" id="seo_title" class="form-control" name="seo_title" class="form-control{{ $errors->has('seo_title') ? ' is-invalid' : '' }}" 
-                                    value="{{ $aRow ? $aRow->seo_title : old('seo_title') }}" required placeholder="Seo Title">              
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label" for="seo_keyword">{{ __('Seo Keyword') }}</label>
-                                <input type="text" id="seo_keyword" class="form-control" name="seo_keyword" class="form-control{{ $errors->has('seo_keyword') ? ' is-invalid' : '' }}" 
-                                    value="{{ $aRow ? $aRow->seo_keyword : old('seo_keyword') }}" required placeholder="Seo Keyword">              
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label class="form-label" for="seo_description">{{ __('Seo Description') }}</label>
-                                <textarea class="form-control" id="seo_description" rows="3" name="seo_description" class="form-control{{ $errors->has('seo_description') ? ' is-invalid' : '' }}" 
-                                    placeholder="Seo Description">{{ $aRow ? $aRow->seo_description : old('seo_description') }}</textarea>
-                            </div>
-                        </div>
-                        <div class="row mb-5">
-                            <div class="col-md-12">
-                                <label class="form-label" for="page_script">{{ __('Page Script') }}</label>
-                                <textarea class="form-control" id="page_script" rows="10" name="page_script" class="form-control{{ $errors->has('page_script') ? ' is-invalid' : '' }}" 
-                                    placeholder="">{{ $aRow ? $aRow->page_script : old('page_script') }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                 <hr>
+                
                 <div class="card card-border">
                     <div class="card-header">
                         <h5>Lower Section</h5> 
@@ -178,7 +132,7 @@
                             <div class="col-md-12">
                                 <label class="form-label" for="lower_section_title">{{ __('Title') }}</label>
                                 <input type="text" id="lower_section_title" class="form-control" name="lower_section_title" class="form-control{{ $errors->has('lower_section_title') ? ' is-invalid' : '' }}" 
-                                    value="{{ $aRow ? $aRow->lower_section_title : old('lower_section_title') }}" required placeholder="Title">              
+                                    value="{{ $aRow ? $aRow->lower_section_title : old('lower_section_title') }}"  placeholder="Title">              
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -191,6 +145,54 @@
                     </div>
                 </div>
                 <hr>
+				<div class="card card-border">
+                    <div class="card-header">
+                        <h5>Seo Information</h5> 
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label" for="seo_title">{{ __('Seo Title') }}</label>
+                                <input type="text" id="seo_title" class="form-control" name="seo_title" class="form-control{{ $errors->has('seo_title') ? ' is-invalid' : '' }}" 
+                                    value="{{ $aRow ? $aRow->seo_title : old('seo_title') }}"  placeholder="Seo Title">              
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label" for="seo_keyword">{{ __('Seo Keyword') }}</label>
+                                <input type="text" id="seo_keyword" class="form-control" name="seo_keyword" class="form-control{{ $errors->has('seo_keyword') ? ' is-invalid' : '' }}" 
+                                    value="{{ $aRow ? $aRow->seo_keyword : old('seo_keyword') }}"  placeholder="Seo Keyword">              
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label" for="seo_description">{{ __('Seo Description') }}</label>
+                                <textarea class="form-control" id="seo_description" rows="3" name="seo_description" class="form-control{{ $errors->has('seo_description') ? ' is-invalid' : '' }}" 
+                                    placeholder="Seo Description">{{ $aRow ? $aRow->seo_description : old('seo_description') }}</textarea>
+                            </div>
+                        </div>
+						<div class="col-md-12 mb-3">
+							<label class="form-label" for="og_image">{{ __('OG Image') }}</label>
+							<input type="file" id="og_image" class="form-control" name="og_image" class="form-control{{ $errors->has('og_image') ? ' is-invalid' : '' }}" />
+							@if($aRow && $aRow->og_image) 
+							<img src="{{ \App\Helpers\CustomHelper::displayImage($aRow->og_image, 'pages') }}" height="100" width="100" class="mt-2" />                
+							@endif
+							@if ($errors->has('og_image d-block'))
+							<span class="invalid-feedback" role="alert">
+							<strong>{{ $errors->first('og_image') }}</strong>
+							</span>
+							@endif
+						</div>
+                        <div class="row mb-5">
+                            <div class="col-md-12">
+                                <label class="form-label" for="page_script">{{ __('Page Script') }}</label>
+                                <textarea class="form-control" id="page_script" rows="10" name="page_script" class="form-control{{ $errors->has('page_script') ? ' is-invalid' : '' }}" 
+                                    placeholder="">{{ $aRow ? $aRow->page_script : old('page_script') }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <hr>
                 <div class="card card-border">
 						<div class="card-header">
 							<h5>FAQs</h5> </div>

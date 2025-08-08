@@ -62,7 +62,8 @@ class PagesController extends Controller
     {
         // dd($request->all());
         $aValids['slug'] =  'required';
-        $aValids['seo_title'] =  'required';
+        $aValids['title_desc'] =  'required';
+        $aValids['page_details'] =  'required';
     
         if ($isEdit) {
             $aValids['page_title'] = 'required|unique:pages,page_title,' . $isEdit->id;
