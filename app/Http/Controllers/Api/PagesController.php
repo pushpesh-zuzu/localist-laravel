@@ -81,7 +81,7 @@ class PagesController extends Controller
         }
 
         // show_form_no logic
-        $show_form_no = count($levels) >= 2 ? 2 : 1;
+        $show_form_no = count($levels) > 2 ? 2 : 1;
 
         // Final response
         return $this->sendResponse(__('Pages Data'), [
