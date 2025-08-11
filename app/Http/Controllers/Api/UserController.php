@@ -608,6 +608,29 @@ class UserController extends Controller
         return $validator;
     }
 
+    public function createLoginMagicLink(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $user = User::where('email',$request->email)->where('form_status', '1')->first();
+        //dd($user);
+        if(empty($user)){
+            return $this->sendError('Given email not found!');
+        }
+        $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+        $user->update(['remember_token' => $token]);
+        $user->remember_tokens = $token;
+
+        ZohoEmails::sendLoginMagicLinkEmail($user, $token);
+        return $this->sendResponse('An email is on the way.');
+    }
+
 
     public function login(Request $request): JsonResponse
     {

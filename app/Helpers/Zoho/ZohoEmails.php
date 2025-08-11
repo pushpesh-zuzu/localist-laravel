@@ -1233,7 +1233,7 @@ class ZohoEmails
         }
     }
 
-     public static function creditsAfter5Days($userId, $leadData, $settingValue)
+    public static function creditsAfter5Days($userId, $leadData, $settingValue)
     {
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $settingValue)->value('setting_value');
@@ -1508,6 +1508,71 @@ class ZohoEmails
                     $dataE['response'] = json_encode($rel);
                     EmailLog::insertGetId($dataE);
                 }
+            }
+        }
+    }
+
+
+    public static function sendLoginMagicLinkEmail($user, $token)
+    {
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name','Send Login Magic Link')->value('setting_value');
+
+        if ($sendLeadRequestEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $user->id);
+            if(!empty($user)){
+                $htmlView = view('emails.login.login_with_magic_link',  [
+                    'baseUrl' => env('REACT_BASE_URL'),
+                    'name' => $user->name,                    
+                    'token' => $token,
+                ])->render();
+
+                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                $toEmail = $user->email;
+                $subject = 'Here is your magic link';
+
+
+                DB::table('zoho_logs')->insert([
+                    'url' => $url,
+                    'function_name' => 'sendLoginMagicLinkEmail',
+                    'created_at' => now(),
+                ]);
+
+                $response = Http::withToken($accessToken)
+                    ->post($url, [
+                        'data' => [
+                            [
+                                'from' => [
+                                    'email' => $fromEmail,
+                                    'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                ],
+                                'to' => [
+                                    [
+                                        'email' => $toEmail
+                                    ]
+                                ],
+                                'subject' => $subject,
+                                'content' => $htmlContent,
+                                'mail_format' => 'html'
+                            ]
+                        ]
+                    ]);
+                $rel = self::getZohoMailResponse($response);
+
+                $dataE['user_id'] = $user->id;
+                $dataE['from_email'] = $fromEmail;
+                $dataE['to_email'] = $toEmail;
+                $dataE['message_id'] = $rel['message_id'];
+                $dataE['subject'] = $subject;
+                $dataE['setting_name'] = 'Send Login Magic Link';
+                $dataE['content'] = $htmlContent;
+                $dataE['zoho_url'] = $url;
+                $dataE['response'] = json_encode($rel);
+                EmailLog::insertGetId($dataE);
             }
         }
     }

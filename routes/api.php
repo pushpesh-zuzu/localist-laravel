@@ -129,6 +129,7 @@ Route::prefix('users')->group(function () {
     Route::get('/bottom-pages', [PagesController::class, 'bottomPages']);
     Route::get('/page-details/{slug}', [PagesController::class, 'pageDetails']);
     Route::post('/login', [UserController::class, 'login']);
+    Route::post('/create-login-magic-link', [UserController::class, 'createLoginMagicLink']);
 
     Route::post('test-api',[ApiController::class,'testApi']);
 
