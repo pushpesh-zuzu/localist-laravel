@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoPurchasedLeads;
@@ -434,7 +435,7 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $lead = LeadRequest::where('id',$aVals['lead_id'])->first();
-
+        $leadId = $aVals['lead_id'];
         if(empty($lead)){
             return $this->sendError('Lead not found', 404);
         }
@@ -476,8 +477,10 @@ class LeadPreferenceController extends Controller
             }
 
             if($statusUpdate){
-                return ZohoHelper::dispatchAfterResponse(function () use ($sellerId, $recommendedId) {
+                return ZohoHelper::dispatchAfterResponse(function () use ($sellerId, $recommendedId,$leadId) {
                     app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
+                    ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
+                    ZohoEmails::newLeadHiredEmail($leadId,$sellerId);
 
                 }, [
                     'success' => true,

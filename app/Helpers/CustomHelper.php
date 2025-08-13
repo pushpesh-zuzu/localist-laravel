@@ -232,9 +232,9 @@ class CustomHelper
         $val = NotificationSetting::where('user_id',$user_id)
             ->where('noti_name',$noti_name)
             ->where('user_type',$user_type)
-            ->where('user_type',$user_type)
+            ->where('noti_type',$noti_type)
             ->value('noti_value');
-        
+
         $rel = !empty($val) ? $val : 0;
         return $rel;
     }

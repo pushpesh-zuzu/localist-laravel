@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\EmailLog;
 use App\Models\EmailSetting;
 use App\Models\LeadRequest;
+use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -1482,9 +1483,231 @@ class ZohoEmails
     }
 
     //
+
+    public static function newLeadClosedEmail($leadId, $sellerId){
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Closed Email Lead Buyer')->value('setting_value');
+
+        $allSellers = RecommendedLead::where('lead_id',$leadId)->where('seller_id','!=',$sellerId)->get();
+        foreach ($allSellers as $userId) {
+            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_closing_leads','email','buyer');
+            if ($sendLeadRequestEmail && $sendEmailSettings) {
+                $accessToken = ZohoHelper::getAccessToken();
+
+
+                $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+                if (!empty($zohoId)) {
+                    $user = User::where('id', $userId)->first();
+                    if(!empty($user)){
+                        $lead = LeadRequest::with([
+                            'category',
+                            'customer'
+                        ])
+                            ->where('id', $leadId)
+                            ->first();
+
+                        $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                            ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                            ->map(fn($item) => [
+                                'question' => $item['ques'],
+                                'answer' => implode(', ', $item['ans'])
+                            ])
+                            ->toArray();
+
+
+                        $htmlView = view('emails.lead_buyers.leads.lead_buyer_closed',  [
+                            'baseUrl' => env('REACT_BASE_URL'),
+                            'name' => $user->name,
+                            'lead_name' => $lead->customer->name ?? '',
+                            'postcode' => $lead->postcode ?? '',
+                            'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                            'masked_email' => $lead->customer?->email ? (function ($email) {
+                                [$name, $domain] = explode('@', $email);
+                                $visible = substr($name, 0, 2);
+                                $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                                return $visible . $masked . '@' . $domain;
+                            })($lead->customer->email) : 'N/A',
+
+                            'service_name' => $lead->category->name ?? '',
+                            'has_additional_details' => $lead->has_additional_details ?? '',
+                            'credit_score' => $lead->credit_score ?? '',
+                            'is_frequent_user' => $lead->is_frequent_user ?? '',
+                            'is_urgent' => $lead->is_urgent ?? '',
+                            'is_high_hiring' => $lead->is_high_hiring ?? '',
+                            'phone_verified' => $lead->is_phone_verified ?? '',
+                            'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                            'questionsAndAnswers' => $questionsAndAnswers,
+                        ])->render();
+
+                        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                        $toEmail = $user->email;
+                        $subject = 'Lead Closed: ' . $lead->category->name .'request has been taken';
+
+
+                        DB::table('zoho_logs')->insert([
+                            'url' => $url,
+                            'function_name' => 'newLeadClosedEmail',
+                            'created_at' => now(),
+                        ]);
+
+                        $response = Http::withToken($accessToken)
+                            ->post($url, [
+                                'data' => [
+                                    [
+                                        'from' => [
+                                            'email' => $fromEmail,
+                                            'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                        ],
+                                        'to' => [
+                                            [
+                                                'email' => $toEmail
+                                            ]
+                                        ],
+                                        'subject' => $subject,
+                                        'content' => $htmlContent,
+                                        'mail_format' => 'html'
+                                    ]
+                                ]
+                            ]);
+                        $rel = self::getZohoMailResponse($response);
+
+                        $dataE['user_id'] = $user->id;
+                        $dataE['from_email'] = $fromEmail;
+                        $dataE['to_email'] = $toEmail;
+                        $dataE['message_id'] = $rel['message_id'];
+                        $dataE['subject'] = $subject;
+                        $dataE['setting_name'] = 'New Lead Closed Email Lead Buyer';
+                        $dataE['lead_id'] = $leadId;
+                        $dataE['content'] = $htmlContent;
+                        $dataE['zoho_url'] = $url;
+                        $dataE['noti_name'] = 'buyer_email_customer_closing_leads';
+                        $dataE['title'] = 'Lead Closed';
+                        $dataE['message'] = 'Lead has already been purchased';
+                        $dataE['user_type'] = 'buyer';
+                        $dataE['noti_type'] = 'email';
+                        $dataE['response'] = json_encode($rel);
+                        EmailLog::insertGetId($dataE);
+                    }
+                }
+            }
+        }
+    }
+
+    public static function newLeadHiredEmail($leadId,$userId){
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Hired Email Lead Buyer')->value('setting_value');
+            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_hiring_me','email','buyer');
+            if ($sendLeadRequestEmail && $sendEmailSettings) {
+                $accessToken = ZohoHelper::getAccessToken();
+
+
+                $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+                if (!empty($zohoId)) {
+                    $user = User::where('id', $userId)->first();
+                    if(!empty($user)){
+                        $lead = LeadRequest::with([
+                            'category',
+                            'customer'
+                        ])
+                            ->where('id', $leadId)
+                            ->first();
+
+                        $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                            ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                            ->map(fn($item) => [
+                                'question' => $item['ques'],
+                                'answer' => implode(', ', $item['ans'])
+                            ])
+                            ->toArray();
+
+
+                        $htmlView = view('emails.lead_buyers.leads.lead_buyer_hired',  [
+                            'baseUrl' => env('REACT_BASE_URL'),
+                            'name' => $user->name,
+                            'lead_name' => $lead->customer->name ?? '',
+                            'postcode' => $lead->postcode ?? '',
+                            'phone' => $lead->customer?->phone ?? 'N/A',
+                            'email' => $lead->customer?->email ?? 'N/A',
+
+                            'service_name' => $lead->category->name ?? '',
+                            'has_additional_details' => $lead->has_additional_details ?? '',
+                            'credit_score' => $lead->credit_score ?? '',
+                            'is_frequent_user' => $lead->is_frequent_user ?? '',
+                            'is_urgent' => $lead->is_urgent ?? '',
+                            'is_high_hiring' => $lead->is_high_hiring ?? '',
+                            'phone_verified' => $lead->is_phone_verified ?? '',
+                            'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                            'questionsAndAnswers' => $questionsAndAnswers,
+                        ])->render();
+
+                        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                        $toEmail = $user->email;
+                        $subject = 'Hey! You hired a new lead!';
+
+
+                        DB::table('zoho_logs')->insert([
+                            'url' => $url,
+                            'function_name' => 'newLeadHiredEmail',
+                            'created_at' => now(),
+                        ]);
+
+                        $response = Http::withToken($accessToken)
+                            ->post($url, [
+                                'data' => [
+                                    [
+                                        'from' => [
+                                            'email' => $fromEmail,
+                                            'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                        ],
+                                        'to' => [
+                                            [
+                                                'email' => $toEmail
+                                            ]
+                                        ],
+                                        'subject' => $subject,
+                                        'content' => $htmlContent,
+                                        'mail_format' => 'html'
+                                    ]
+                                ]
+                            ]);
+                        $rel = self::getZohoMailResponse($response);
+
+                        $dataE['user_id'] = $user->id;
+                        $dataE['from_email'] = $fromEmail;
+                        $dataE['to_email'] = $toEmail;
+                        $dataE['message_id'] = $rel['message_id'];
+                        $dataE['subject'] = $subject;
+                        $dataE['setting_name'] = 'New Lead Hired Email Lead Buyer';
+                        $dataE['lead_id'] = $leadId;
+                        $dataE['content'] = $htmlContent;
+                        $dataE['zoho_url'] = $url;
+                        $dataE['noti_name'] = 'buyer_email_customer_hiring_me';
+                        $dataE['title'] = 'Lead Hired';
+                        $dataE['message'] = 'You Hired New Lead';
+                        $dataE['user_type'] = 'buyer';
+                        $dataE['noti_type'] = 'email';
+                        $dataE['response'] = json_encode($rel);
+
+                        EmailLog::insertGetId($dataE);
+                    }
+                }
+
+        }
+    }
+
+
     public static function newLeadPoolOf7LeadBuyerEmail($leadId, $userId){
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Pool of 7 Lead Buyer')->value('setting_value');
-        if ($sendLeadRequestEmail) {
+        $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_new_lead','email','buyer');
+        if ($sendLeadRequestEmail && $sendEmailSettings) {
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
@@ -1575,6 +1798,11 @@ class ZohoEmails
                     $dataE['lead_id'] = $leadId;
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
+                    $dataE['noti_name'] = 'buyer_email_new_lead';
+                    $dataE['title'] = 'New Lead';
+                    $dataE['message'] = 'You got a New Lead';
+                    $dataE['user_type'] = 'buyer';
+                    $dataE['noti_type'] = 'email';
                     $dataE['response'] = json_encode($rel);
                     EmailLog::insertGetId($dataE);
                 }
@@ -1595,7 +1823,7 @@ class ZohoEmails
                 if(!empty($user)){
                     $htmlView = view('emails.login.login_with_magic_link',  [
                         'baseUrl' => env('REACT_BASE_URL'),
-                        'name' => $user->name,                    
+                        'name' => $user->name,
                         'token' => $token,
                     ])->render();
 
