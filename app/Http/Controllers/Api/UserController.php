@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\{
 };
 use Illuminate\Validation\Rule;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoCustomerQuestionAnswer;
 use App\Helpers\Zoho\ZohoFinance;
 use App\Services\ZeroBounceService;
 use Illuminate\Support\Str;
@@ -182,7 +183,6 @@ class UserController extends Controller
 
 
     public function registration(Request $request){
-
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;
         $loggedUser = $request->loggedUser;//For checking seller/buyer
@@ -341,9 +341,6 @@ class UserController extends Controller
             }
             $user->remember_tokens = $token;
 
-
-
-
             // $zohoService =new ZohoServiceLocations();
             // $zohoQa = new ZohoQuestionAnswer();
 
@@ -417,7 +414,7 @@ class UserController extends Controller
                     }
 
                 } elseif ($user->user_type == 2) {
-                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user);
+                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
                 }
 
 

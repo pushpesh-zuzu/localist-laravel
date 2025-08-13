@@ -1,12 +1,16 @@
 <?php
 namespace App\Helpers\Zoho;
 
+use App\Models\User;
+use DateTime;
+use DateTimeZone;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ZohoQuoteCustomers
 {
-    public function integrateQuoteCustomer($user)
+    public function integrateQuoteCustomer($userId)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -15,61 +19,60 @@ class ZohoQuoteCustomers
             return null;
         }
 
-        $zohoId = $this->getZohoCustomerId($access_token, $user->id);
-        $payload = $this->buildCustomerPayload($user, $zohoId);
-        $response = $this->sendToZoho($access_token, $payload, $zohoId);
+        //$zohoId = $this->getZohoCustomerId($access_token, $user->id);
+        $payload = $this->buildCustomerPayload($userId);
+        $response = $this->upsertToZohoService($access_token, $payload);
 
-        return $response->json();
+        $responseData = $response->json();
 
-    }
-    protected function getZohoCustomerId($accessToken, $userId)
-    {
-        $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Quote_Customers/search', [
-                'criteria' => "(User_auto_Id:equals:{$userId})"
+        if (
+            isset($responseData['data'][0]['status']) &&
+            $responseData['data'][0]['status'] === 'success' &&
+            isset($responseData['data'][0]['details']['id'])
+        ) {
+            $zohoRecordId = $responseData['data'][0]['details']['id'];
+            User::where('id', $userId)->update([
+                'zoho_record_id' => $zohoRecordId,
             ]);
+        }
 
-        $data = $response->json();
+        Log::info('Zoho API Credit Used for LeadBuyer Sync', [
+            'user_id' => $userId,
+            'response' => $responseData
+        ]);
 
-        return $data['data'][0]['id'] ?? null;
+        return $responseData;
+
     }
 
-    protected function buildCustomerPayload($user, $zohoId = null)
+
+    protected function buildCustomerPayload($userId)
     {
+        $user = User::findOrFail($userId);
+        $datetime = new DateTime($user->created_at, new DateTimeZone('Asia/Kolkata'));
+        $formatted = $datetime->format('Y-m-d\TH:i:sP');
         $payload = [
             'data' => [[
-                'User_auto_Id'   => $user->id,
-                'Name'           => $user->name,
-                'Email'          => $user->email,
-                'Mobile'         => $user->phone,
-                'password'       => $user->password,
-                'zipcode'        => $user->zipcode,
-                'city'           => $user->city,
-                'status'         => $user->status == 1 ? 'Added' : 'Rejected',
-                'otp'            => $user->otp,
-                'active_status'  => $user->active_status,
+                'User_auto_Id'      => $user->id,
+                'Name'              => $user->name,
+                'Email'             => $user->email,
+                'Mobile'            => $user->phone,
+                'zipcode'           => $user->zipcode,
+                'city'              => $user->city,
                 'registration_type' => $user->form_status ==1 ? 'completed' : 'abandoned',
-                'user_type'      => $user->user_type,
-                'updated_at'     => now()->format('c'),
-            ]]
+                'created_at'        => $formatted
+            ]],
+            'duplicate_check_fields' => ['User_auto_Id']
         ];
-
-        if (!$zohoId) {
-            $payload['data'][0]['created_at'] = now()->format('c');
-        }
 
         return $payload;
     }
 
-    protected function sendToZoho($accessToken, array $payload, $zohoId = null)
+    protected function upsertToZohoService($accessToken, array $payload)
     {
-        $url = $zohoId
-            ? "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}"
-            : "https://www.zohoapis.eu/crm/v2/Quote_Customers";
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Quote_Customers/upsert', $payload);
 
-        $method = $zohoId ? 'put' : 'post';
-
-        return Http::withToken($accessToken)->$method($url, $payload);
     }
 
 

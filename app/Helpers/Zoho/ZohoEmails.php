@@ -166,6 +166,76 @@ class ZohoEmails
         }
     }
 
+    public static function sendAbandonedEncouragementEmail($userId)
+    {
+
+        $sendEncouragementEmail = EmailSetting::where('setting_name', 'Send Abandoned Encouragement Email')->value('setting_value');
+
+        if ($sendEncouragementEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+
+            $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::where('id', $userId)->first();
+
+                if (!empty($user)) {
+
+
+                    $htmlView = view('emails.customers.registration.customer_encouragement',  [
+                        'baseUrl' => env('REACT_BASE_URL'),
+                        'name' => $user->name
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+
+                     DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendAbandonedEncouragementEmail',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
+                    ]);
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
+                    $toEmail = $user->email;
+                    $subject = 'Complete your registration – we’ve saved your spot!';
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html'
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Send Abandoned Encouragement Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+        }
+    }
+
 
     public static function sendIncompleteRegistrationEmail($userId)
     {
@@ -798,11 +868,11 @@ class ZohoEmails
 
         $rel = self::getZohoMailResponse($response);
 
-        foreach ($leads as $lead) {
+        foreach ($leads as $leadId) {
             EmailLog::insertGetId([
                 'user_id' => $user->id,
                 'from_email' => $fromEmail,
-                'lead_id' => $lead->id, // multiple leads
+                'lead_id' => $leadId, // multiple leads
                 'to_email' => $toEmail,
                 'message_id' => $rel['message_id'],
                 'subject' => $subject,

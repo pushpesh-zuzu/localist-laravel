@@ -11,6 +11,8 @@ class ZohoHelper
 {
     public const  EMAIL_LEAD_BUYERS_API_URL = 'https://www.zohoapis.eu/crm/v8/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
 
+    public const  EMAIL_QUOTE_CUSTOMERS_API_URL = 'https://www.zohoapis.eu/crm/v8/Quote_Customers/{ZOHO_ID}/actions/send_mail';
+
 
     public static function getUrl($key, $val){
         $url = $key;
@@ -61,6 +63,30 @@ class ZohoHelper
         }
         return null;
     }
+
+    public static function getZohoQuoteCustomerId($accessToken, $userId)
+    {
+        $recId = User::where('id', $userId)->value('zoho_record_id');
+        if(!empty($recId)){
+            return $recId;
+        }
+
+        $response = Http::withToken($accessToken)
+            ->get('https://www.zohoapis.eu/crm/v2/Quote_Customers/search', [
+                'criteria' => "(User_auto_Id:equals:{$userId})"
+            ]);
+
+        $data = $response->json();
+
+        if(!empty($data['data'][0]['id'])){
+            $zohoId = User::where('id', $userId)->update([
+                'zoho_record_id' => $data['data'][0]['id']
+            ]);
+            return $data['data'][0]['id'];
+        }
+        return null;
+    }
+
 
     public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
     {

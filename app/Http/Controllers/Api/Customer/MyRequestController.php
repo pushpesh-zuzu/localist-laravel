@@ -15,8 +15,11 @@ use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Helpers\CustomHelper;
 use App\Helpers\CreditScorePredictor as CreditScore;
+use App\Helpers\Zoho\ZohoCustomerQuestionAnswer;
 use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
+use App\Helpers\Zoho\ZohoQuoteRequest;
 use App\Models\User;
 use App\Models\UserService;
 use App\Models\UserServiceLocation;
@@ -150,8 +153,9 @@ class MyRequestController extends Controller
                 }
             }
 
+            $serviceId =$request->service_id;
             $data['customer_id'] = $euId;
-            $data['service_id'] = $request->service_id;
+            $data['service_id'] = $serviceId;
             $data['city'] = $request->city;
             $data['postcode'] = $request->postcode;
 
@@ -268,16 +272,41 @@ class MyRequestController extends Controller
                     }
                 }
 
-                return ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
-                    'success' => true,
-                    'message' => 'Quote Submitted Successfully',
-                    'data' => $rel
-                ]);
+                // ZohoHelper::dispatchAfterResponse(function () use ($euId) {
+                //     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                // });
+
+                // return ZohoHelper::dispatchAfterResponse([$this, 'autoBidBased'], [
+                //     'success' => true,
+                //     'message' => 'Quote Submitted Successfully',
+                //     'data' => $rel
+                // ]);
+
+                return ZohoHelper::dispatchAfterResponse(
+                    function () use ($euId, $rel,$sId,$serviceId) {
+                        app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                        app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                        //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
+                        $this->autoBidBased([
+                            'success' => true,
+                            'message' => 'Quote Submitted Successfully',
+                            'data' => $rel,
+                            'euId' => $euId,
+                        ]);
+                    },
+                    [
+                        'success' => true,
+                        'message' => 'Quote Submitted Successfully',
+                        'data' => $rel
+                    ]
+                );
+
 
 
                 //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
+
             $euId = User::where('email',$request->email)->value('id');
             if(!empty($euId)){
                 return $this->sendResponse('Abodned user!');
@@ -293,9 +322,40 @@ class MyRequestController extends Controller
             $dataUser['created_at'] = date('y-m-d H:i:s');
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($dataUser);
-            return $this->sendResponse('Abodned user!');
-        }
+
+            return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                app(self::class)->sendEncouragementEmail(['userId' => $euId]);
+            }, [
+                    'success' => true,
+                    'message' => 'Abandoned user'
+                ]);
+
+                //return $this->sendResponse('Abodned user!');
+            }
        return $this->sendError('Something went wrong, try again!');
+    }
+
+    public function sendEncouragementEmail($request)
+    {
+        $userId = $request['userId'];
+        $sentCount = 0;
+        $users = User::whereNotNull('zoho_record_id')
+            ->where('id',$userId)
+            ->where('form_status',0)
+
+            // ->with(['details', 'emailLogs' => function ($q) {
+            //     $q->where('setting_name', 'Send Autobid Encouragement Email')
+            //         ->latest();
+            // }])
+            ->get();
+
+        ZohoEmails::sendAbandonedEncouragementEmail($userId);
+        return response()->json([
+            'status' => 'success',
+            'message' => "$sentCount encouragement email(s) sent.",
+            'timestamp' => now()->toDateTimeString()
+        ]);
     }
 
     public function autoBidBased()
@@ -705,7 +765,7 @@ class MyRequestController extends Controller
 
     public function addDetailsToRequest(Request $request){
         $user_id = $request->user_id;
-
+        $leadRequestId = $request->request_id;
         $validator = Validator::make($request->all(), [
             'request_id' => 'required|integer|exists:lead_requests,id',
           ], [
@@ -718,12 +778,23 @@ class MyRequestController extends Controller
         $data['details'] = $request->details;
         $data['professional_letin'] = !empty($request->professional_letin)? $request->professional_letin : '0';
         $data['has_additional_details'] = '1';
-        $sId = LeadRequest::where('id',$request->request_id)->update($data);
+        $sId = LeadRequest::where('id',$leadRequestId)->update($data);
+
+
         // $leadsDetails = LeadRequest::where('id',$request->request_id)->first();
         // $zohoService = new ZohoService();
         // $zohoService->integrateUser('lead',null,$leadsDetails);
         if($sId){
-            return $this->sendResponse('Details Added');
+            return ZohoHelper::dispatchAfterResponse(
+                    function () use ($user_id, $leadRequestId) {
+                        app(ZohoQuoteRequest::class)->integrateQuoteRequest($user_id,$leadRequestId);
+                    },
+                    [
+                        'success' => true,
+                        'message' => 'Details Added',
+                    ]
+                );
+            //return $this->sendResponse('Details Added');
         }
 
         return $this->sendError('Something went wrong, try again!');
