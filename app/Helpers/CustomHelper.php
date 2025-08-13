@@ -228,6 +228,17 @@ class CustomHelper
         return $rel;
     }
 
+    public static function getSingleNotificationSetting($user_id, $noti_name, $user_type='buyer', $noti_type='email'){
+        $val = NotificationSetting::where('user_id',$user_id)
+            ->where('noti_name',$noti_name)
+            ->where('user_type',$user_type)
+            ->where('user_type',$user_type)
+            ->value('noti_value');
+        
+        $rel = !empty($val) ? $val : 0;
+        return $rel;
+    }
+
     public static function createTrasactionLog($userId, $amount, $credits, $detail, $status=1, $type=0, $error_response=''){
 
         static $zohoRegistered = false;

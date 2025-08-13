@@ -24,6 +24,8 @@ use App\Helpers\Zoho\ZohoEmails;
 
 class NotificationController extends Controller
 {
+    
+
     public function addUpdateNotificationSettings(Request $request){
         $user_id = $request->user_id;
 
