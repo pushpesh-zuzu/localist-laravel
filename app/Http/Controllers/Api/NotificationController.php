@@ -55,6 +55,12 @@ class NotificationController extends Controller
                 $user_type = 'buyer';
                 $noti_type = 'browser';
                 break;
+            case 'buyer_email_new_lead':
+            case 'buyer_email_customer_closing_leads':
+            case 'buyer_email_customer_hiring_me':
+                $user_type = 'buyer';
+                $noti_type = 'email';
+                break;
             default:
                 $user_type = 'error';
                 $noti_type = 'error';
@@ -101,6 +107,7 @@ class NotificationController extends Controller
             ->select(['user_id','noti_name','noti_value','user_type','noti_type'])
             ->get()->toArray();
 
+        
         //for customer
         if($request->user_type == 'customer'){
             //Changes to my requests
@@ -139,6 +146,45 @@ class NotificationController extends Controller
         }
         //for seller
         if($request->user_type == 'buyer'){
+            if($request->noti_type == 'email'){ //for email type
+                //Changes to buyer_email_new_lead
+                if (!in_array('buyer_email_new_lead', array_column($notiSettingList, 'noti_name'))) {
+                    $noti = array(
+                        "user_id"=> $user_id,
+                        "noti_name"=> "buyer_email_new_lead",
+                        "noti_value"=> 0,
+                        "user_type"=> "buyer",
+                        "noti_type"=> "email"
+                    );
+                    array_push($notiSettingList,$noti);
+                }
+
+                //Changes to buyer_email_customer_closing_leads
+                if (!in_array('buyer_email_customer_closing_leads', array_column($notiSettingList, 'noti_name'))) {
+                    $noti = array(
+                        "user_id"=> $user_id,
+                        "noti_name"=> "buyer_email_customer_closing_leads",
+                        "noti_value"=> 0,
+                        "user_type"=> "buyer",
+                        "noti_type"=> "email"
+                    );
+                    array_push($notiSettingList,$noti);
+                }
+
+                //Changes to buyer_email_customer_hiring_me
+                if (!in_array('buyer_email_customer_hiring_me', array_column($notiSettingList, 'noti_name'))) {
+                    $noti = array(
+                        "user_id"=> $user_id,
+                        "noti_name"=> "buyer_email_customer_hiring_me",
+                        "noti_value"=> 0,
+                        "user_type"=> "buyer",
+                        "noti_type"=> "email"
+                    );
+                    array_push($notiSettingList,$noti);
+                }
+            }
+
+
             if($request->noti_type == 'browser'){ //for browser type
                 //Changes to buyer_browser_new_lead
                 if (!in_array('buyer_browser_new_lead', array_column($notiSettingList, 'noti_name'))) {
