@@ -131,7 +131,7 @@ class UserController extends Controller
 
     public function getSellerProfile(Request $request){
         $validator = Validator::make($request->all(), [
-            'seller_id' => 'required|integer|exists:users,id',
+            'seller_id' => 'sometimes|integer|exists:users,id',
             ], [
             'seller_id.required' => 'Seller id is required.',
             'seller_id.exists' => 'Seller id does not exists.',
@@ -140,7 +140,13 @@ class UserController extends Controller
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
-        $sellerId = $request->seller_id;
+        $sellerId = "";
+        if(empty($request->seller_id)){
+            $sellerId = $request->user_id;
+        }else{
+            $sellerId = $request->seller_id;
+        }
+        
         $buyerId = $request->buyer_id;
         $leadId = $request->lead_id;
 
@@ -619,12 +625,13 @@ class UserController extends Controller
         }
 
         $user = User::where('email',$request->email)->where('form_status', '1')->first();
-        //dd($user);
+        
         if(empty($user)){
             return $this->sendError('Given email not found!');
         }
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
+       
         $user->remember_tokens = $token;
 
         ZohoEmails::sendLoginMagicLinkEmail($user, $token);
@@ -648,6 +655,7 @@ class UserController extends Controller
         }
 
         $user = Auth::user();
+        
         if ($user && $user->form_status != 0) {
                 if($user->status == 0)
                 {
