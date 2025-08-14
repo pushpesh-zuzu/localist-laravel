@@ -37,7 +37,6 @@ class ReviewController extends Controller{
             'uuid' => 'required|exists:users,uuid',
             'name' => 'required',
             'email' => 'required',
-            'review' => 'required',
             'ratings' => 'required|numeric|min:0|max:5',
           ], [
             'uuid.required' => 'User identification is required.'
@@ -52,7 +51,7 @@ class ReviewController extends Controller{
         $data['user_id'] = $user_id;
         $data['name'] = $request->name;
         $data['email'] = $request->email;
-        $data['review'] = $request->review;
+        $data['review'] = !empty($request->review) ? $request->review : '';
         $data['ratings'] = $request->ratings;
         $data['created_at'] = date('y-m-d H:i:s');
         $data['updated_at'] = date('y-m-d H:i:s');
