@@ -1486,11 +1486,14 @@ class ZohoEmails
 
     public static function newLeadClosedEmail($leadId, $sellerId){
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Closed Email Lead Buyer')->value('setting_value');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Lead Buyer - New Lead Closed (Email Notification)')->value('setting_value');
 
         $allSellers = RecommendedLead::where('lead_id',$leadId)->where('seller_id','!=',$sellerId)->get();
-        foreach ($allSellers as $userId) {
-            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_closing_leads','email','buyer');
+
+        foreach ($allSellers as $user) {
+            $userId =$user->seller_id;
+            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_closing_leads','buyer','email');
+
             if ($sendLeadRequestEmail && $sendEmailSettings) {
                 $accessToken = ZohoHelper::getAccessToken();
 
@@ -1554,6 +1557,8 @@ class ZohoEmails
                             'created_at' => now(),
                         ]);
 
+
+
                         $response = Http::withToken($accessToken)
                             ->post($url, [
                                 'data' => [
@@ -1580,15 +1585,11 @@ class ZohoEmails
                         $dataE['to_email'] = $toEmail;
                         $dataE['message_id'] = $rel['message_id'];
                         $dataE['subject'] = $subject;
-                        $dataE['setting_name'] = 'New Lead Closed Email Lead Buyer';
+                        $dataE['setting_name'] = 'Lead Buyer - New Lead Closed (Email Notification)';
                         $dataE['lead_id'] = $leadId;
                         $dataE['content'] = $htmlContent;
                         $dataE['zoho_url'] = $url;
-                        $dataE['noti_name'] = 'buyer_email_customer_closing_leads';
-                        $dataE['title'] = 'Lead Closed';
-                        $dataE['message'] = 'Lead has already been purchased';
-                        $dataE['user_type'] = 'buyer';
-                        $dataE['noti_type'] = 'email';
+
                         $dataE['response'] = json_encode($rel);
                         EmailLog::insertGetId($dataE);
                     }
@@ -1599,8 +1600,8 @@ class ZohoEmails
 
     public static function newLeadHiredEmail($leadId,$userId){
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Hired Email Lead Buyer')->value('setting_value');
-            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_hiring_me','email','buyer');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Lead Buyer - New Lead Hired (Email Notification)')->value('setting_value');
+            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_hiring_me','buyer','email');
             if ($sendLeadRequestEmail && $sendEmailSettings) {
                 $accessToken = ZohoHelper::getAccessToken();
 
@@ -1685,15 +1686,10 @@ class ZohoEmails
                         $dataE['to_email'] = $toEmail;
                         $dataE['message_id'] = $rel['message_id'];
                         $dataE['subject'] = $subject;
-                        $dataE['setting_name'] = 'New Lead Hired Email Lead Buyer';
+                        $dataE['setting_name'] = 'Lead Buyer - New Lead Hired (Email Notification)';
                         $dataE['lead_id'] = $leadId;
                         $dataE['content'] = $htmlContent;
                         $dataE['zoho_url'] = $url;
-                        $dataE['noti_name'] = 'buyer_email_customer_hiring_me';
-                        $dataE['title'] = 'Lead Hired';
-                        $dataE['message'] = 'You Hired New Lead';
-                        $dataE['user_type'] = 'buyer';
-                        $dataE['noti_type'] = 'email';
                         $dataE['response'] = json_encode($rel);
 
                         EmailLog::insertGetId($dataE);
@@ -1706,7 +1702,7 @@ class ZohoEmails
 
     public static function newLeadPoolOf7LeadBuyerEmail($leadId, $userId){
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Pool of 7 Lead Buyer')->value('setting_value');
-        $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_new_lead','email','buyer');
+        $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_new_lead','buyer','email');
         if ($sendLeadRequestEmail && $sendEmailSettings) {
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
@@ -1798,11 +1794,7 @@ class ZohoEmails
                     $dataE['lead_id'] = $leadId;
                     $dataE['content'] = $htmlContent;
                     $dataE['zoho_url'] = $url;
-                    $dataE['noti_name'] = 'buyer_email_new_lead';
-                    $dataE['title'] = 'New Lead';
-                    $dataE['message'] = 'You got a New Lead';
-                    $dataE['user_type'] = 'buyer';
-                    $dataE['noti_type'] = 'email';
+
                     $dataE['response'] = json_encode($rel);
                     EmailLog::insertGetId($dataE);
                 }
