@@ -155,7 +155,8 @@ class UserController extends Controller
 
         //percentage completed
         $user['percentage_completed'] = $user->getProfileCompletionPercentage();
-        $user['remember_token'] = $user->remember_token;
+        $token = $user->createToken('authToken', ['user_id' => $sellerId])->plainTextToken;
+        $user['remember_tokens'] = $token;
         //for hired list count
         $hireCount = RecommendedLead::where('seller_id', $sellerId)
             ->where('status','hired')
