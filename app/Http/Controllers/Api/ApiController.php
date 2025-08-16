@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\{
 use Illuminate\Support\Facades\Storage;
 use Log;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoLeadBuyers;
 use \Carbon\Carbon;
 
 class ApiController extends Controller
@@ -43,25 +45,25 @@ class ApiController extends Controller
         foreach($aRows as $value){
             $value['baseurl'] = url('/').Storage::url('app/public/images/category');
         }
-        
+
         return $this->sendResponse(__('Category Data'),$aRows);
     }
-    
+
     public function allServices()
     {
         $categories = Category::where('is_home', 1)
             ->where('parent_id', 0)
             ->where('status', 1)
             ->get();
-    
+
         $result = [];
-    
+
         foreach ($categories as $category) {
             $subcategories = Category::where('is_home', 1)
                 ->where('parent_id', $category->id)
                 ->where('status', 1)
                 ->get();
-    
+
             // Only add the category if subcategories exist
             if ($subcategories->isNotEmpty()) {
                 $category['subcategory'] = $subcategories;
@@ -69,14 +71,14 @@ class ApiController extends Controller
                 $result[] = $category;
             }
         }
-    
+
         return $this->sendResponse(__('Category Data'), $result);
     }
     public function leadsSearchServices(Request $request)
     {
         $search = $request->search; // Get search keyword from request
         $serviceid = $request->serviceid; // Get search keyword from request
-    
+
         // Check if search keyword is provided; otherwise, return empty
         if (empty($search)) {
             $categories = [];
@@ -100,16 +102,16 @@ class ApiController extends Controller
                               })
                               ->get();
         }
-        
-        
-    
+
+
+
         return $this->sendResponse(__('Category Data'), $categories);
     }
     public function searchServices(Request $request)
     {
         $search = $request->search; // Get search keyword from request
         $serviceid = $request->serviceid; // Get search keyword from request
-    
+
         // Check if search keyword is provided; otherwise, return empty
         if (empty($search)) {
             $categories = [];
@@ -133,14 +135,14 @@ class ApiController extends Controller
                               ->where('show_in_search', '1')
                               ->get();
         }
-        
-        
-    
+
+
+
         return $this->sendResponse(__('Category Data'), $categories);
     }
 
     //
-    
+
     public function requestOtp(Request $request){
         $validator = Validator::make($request->all(), [
             'phone_number' => 'required|min:10',
@@ -151,15 +153,37 @@ class ApiController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $data['otp'] = "1234"; //random_int(1000, 9999);
+        $data['otp'] = random_int(1000, 9999);
         $data['phone_number'] = $request->phone_number;
 
         Otp::create($data);
 
-        return $this->sendResponse('OTP created successfully');
+        $user_id = $request->user_id;
+
+        if ($user_id) {
+            $updated = User::where('id', $user_id)->update(['otp' => $data['otp']]);
+
+            if ($updated) {
+                // fetch the updated user
+                $user = User::find($user_id);
+
+                if ($user && $user->otp) {
+                    return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
+                        app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
+                    }, [
+                        'success' => true,
+                        'message' => 'OTP created successfully'
+                    ]);
+                }
+                return $this->sendError('OTP creation failed');
+            }
+            return $this->sendError('OTP creation failed');
+
+        }
+        return $this->sendError('OTP creation failed');
     }
 
-    
+
     public function verifyOtp(Request $request){
         $validator = Validator::make($request->all(), [
             'phone_number' => 'required|min:10',

@@ -67,6 +67,7 @@ class ZohoLeadBuyers
                 'country'                       => $user->country,
                 'Onlines'                       => $user->is_online  == 1 ? 'Yes' : 'No',
                 'city'                          => $user->city,
+                'otp'                           => $user->otp ?? 0,
                 'Single_Line_11'                => optional($user->primaryCategory)->name,
                 'zipcode'                       => ($user->zipcode) ? $user->zipcode : $user->details->billing_postcode,
                 'company_location'              => $user->company_location,

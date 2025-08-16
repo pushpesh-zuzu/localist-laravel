@@ -59,6 +59,7 @@ class ZohoQuoteCustomers
                 'Mobile'            => $user->phone,
                 'zipcode'           => $user->zipcode,
                 'city'              => $user->city,
+                'otp'               => $user->otp ?? 0,
                 'registration_type' => $user->form_status ==1 ? 'completed' : 'abandoned',
                 'created_at'        => $formatted
             ]],
