@@ -221,7 +221,7 @@ class MyRequestController extends Controller
             User::where('form_status', 1)
                 ->whereIn('user_type', [1, 3])
                 ->select('id')
-                ->chunk(1000, function ($sellersChunk) use ($leadService) {
+                ->chunk(800, function ($sellersChunk) use ($leadService) {
                     foreach ($sellersChunk as $seller) {
                         $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
                         $allLeads = $baseQuery->orderBy('id', 'desc')->get();
