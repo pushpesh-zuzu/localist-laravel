@@ -28,7 +28,7 @@ Route::get('/user', function (Request $request) {
 
 
 Route::get('/check_api', function () {
-    return "api is working!.";
+    return "api is working!";
 });
 
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
