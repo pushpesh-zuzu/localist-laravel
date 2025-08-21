@@ -1,19 +1,54 @@
-/.phpunit.cache
-/node_modules
+# --------------------------------
+# Laravel & PHP
+# --------------------------------
+/vendor/
+/node_modules/
+.env
+.env.*        # ignore all environment files (production, staging, backup, etc.)
+/auth.json
+
+# --------------------------------
+# Laravel generated files
+# --------------------------------
+/bootstrap/cache/*.php
 /storage/*.key
 /storage/pail
-/.env
-.env.backup
-.env.production
-.phpactor.json
+/storage/logs/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/public/storage
+
+# --------------------------------
+# PHPUnit / Testing
+# --------------------------------
+/.phpunit.cache
 .phpunit.result.cache
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-/auth.json
+
+# --------------------------------
+# IDE & Editor junk
+# --------------------------------
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+.phpactor.json
+
+# --------------------------------
+# Node / Frontend
+# --------------------------------
+npm-debug.log
+yarn-error.log
+
+# --------------------------------
+# OS generated files
+# --------------------------------
+.DS_Store
+Thumbs.db
+
+# --------------------------------
+# Databases (local dev only)
+# --------------------------------
+/database/*.sqlite
