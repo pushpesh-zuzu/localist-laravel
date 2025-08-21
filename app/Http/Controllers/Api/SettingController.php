@@ -131,21 +131,44 @@ class SettingController extends Controller
             }
 
         }
-        if($aValues['type'] == 'accreditations'){
+        // if($aValues['type'] == 'accreditations'){
 
-            //uploading multiple accres
-            $files = $request->file('accre_image');
+        //     //uploading multiple accres
+        //     $files = $request->file('accre_image');
+        //     $names = $request->input('accre_name', []);
+        //     foreach($files as $index => $img){
+        //         $imagePath =  CustomHelper::accfileUpload($img,'accreditations');
+        //         $accreditations = UserAccreditation::create([
+        //             'user_id'  => $user_id,
+        //             'name' => $names[$index],
+        //             'image' => $imagePath
+        //         ]);
+        //     }
+
+        // }
+
+        if ($aValues['type'] == 'accreditations') {
+            $files = $request->file('accre_image'); // can be single or array
             $names = $request->input('accre_name', []);
-            foreach($files as $index => $img){
-                $imagePath =  CustomHelper::accfileUpload($img,'accreditations');
-                $accreditations = UserAccreditation::create([
-                    'user_id'  => $user_id,
-                    'name' => $names[$index],
-                    'image' => $imagePath
-                ]);
-            }
 
+            if ($files) {
+                // normalize to array
+                if (!is_array($files)) {
+                    $files = [$files];
+                }
+
+                foreach ($files as $index => $img) {
+                    $imagePath = CustomHelper::accfileUpload($img, 'accreditations');
+
+                    UserAccreditation::create([
+                        'user_id' => $user_id,
+                        'name'    => $names[$index] ?? null, // safe access
+                        'image'   => $imagePath,
+                    ]);
+                }
+            }
         }
+
 
 
         return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {

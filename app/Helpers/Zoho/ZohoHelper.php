@@ -13,7 +13,7 @@ class ZohoHelper
 
     public const  EMAIL_QUOTE_CUSTOMERS_API_URL = 'https://www.zohoapis.eu/crm/v8/Quote_Customers/{ZOHO_ID}/actions/send_mail';
 
-
+    public  const SMS_QUOTE_CUSTOMERS_API_URL = 'https://www.zohoapis.eu/crm/v6/functions/Send_Sinch_Sms/actions/execute';
     public static function getUrl($key, $val){
         $url = $key;
         return str_replace('{ZOHO_ID}', $val, $url);
