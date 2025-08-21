@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\Cron\CronController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
+use App\Http\Controllers\ContactUsController;
+
 // use App\Http\Controllers\Api\ZohoController;
 
 
@@ -30,6 +32,8 @@ Route::get('/user', function (Request $request) {
 Route::get('/check_api', function () {
     return "check api";
 });
+
+Route::post('/contact-us', [ContactUsController::class, 'store']);
 
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
@@ -158,7 +162,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
         Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
         Route::post('/submit-leads', [LeadPreferenceController::class, 'submitLeads']);
-        
+
 
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
         Route::post('/edit-location', [LeadPreferenceController::class, 'editUserLocation']);
