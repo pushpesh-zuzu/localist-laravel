@@ -211,11 +211,21 @@ class ApiController extends Controller
         return $this->sendError('Otp not found! Please generate OTP first.');
     }
 
-    public function testApi(Request $request, \App\Services\LeadService $ls)
+    public function testApi(Request $request, \App\Services\LeadService $leadService)
     {
+        // $user_id = 13;
+        // $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
+        // $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+        // print_r($allLeads->toArray());
+        $postcode = 'B37 7YE';
+        $miles = 0.5;
+        $radiusPostcode = CustomHelper::getPostcodesWithinRadius($postcode, $miles);
+        $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($postcode, $miles);
 
-        $a = \App\Helpers\Zoho\ZohoEmails::sendWelcomeEmail(176,'12345678');
-        // print_r($a);
+        echo "<pre>";
+        print_r($radiusPostcode);
+        print_r($radiusPostcodeQuery->toRawSql());
+        exit;
     }
 
 }

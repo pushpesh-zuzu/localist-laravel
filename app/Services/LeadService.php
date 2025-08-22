@@ -124,12 +124,15 @@ class LeadService
 
 
                 foreach ($ulDistance as $item) {
-                    $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
+                    // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
+                    $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($item['postcode'], $item['miles']);
 
-
-                    $query->orWhere(function ($q) use ($item, $radiusPostcode) {
-                        $q->where('service_id', $item['service_id'])
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
+                    $query->orWhere(function ($q) use ($item, $radiusPostcodeQuery) {
+                        $q->where('service_id', $item['service_id']);
+                        if($radiusPostcodeQuery){
+                            $q->whereIn('postcode', $radiusPostcodeQuery);
+                        }
+                            
                     });
                 }
 
@@ -143,14 +146,17 @@ class LeadService
 
             $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
                 //for distance type
-                $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
+                // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
+                $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($item['postcode'], $item['miles']);
                 foreach($allServices as $item){
 
                     $quesPref = $this->getSellerPreferenceMap($user_id, $item);
 
-                    $query->orWhere(function ($q) use ($item, $radiusPostcode, $user_id) {
-                        $q->where('service_id', $item)
-                            ->whereIn('postcode', array_column($radiusPostcode, 'postcode'));
+                    $query->orWhere(function ($q) use ($item, $radiusPostcodeQuery, $user_id) {
+                        $q->where('service_id', $item);
+                        if($radiusPostcodeQuery){
+                            $q->whereIn('postcode', $radiusPostcodeQuery);
+                        }
                     });
                 }
             });

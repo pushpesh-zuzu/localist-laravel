@@ -135,6 +135,7 @@ Route::prefix('users')->group(function () {
     Route::post('/login', [UserController::class, 'login']);
     Route::post('/create-login-magic-link', [UserController::class, 'createLoginMagicLink']);
 
+    Route::get('test-api',[ApiController::class,'testApi']);
     Route::post('test-api',[ApiController::class,'testApi']);
 
 

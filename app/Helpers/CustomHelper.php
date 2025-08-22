@@ -167,6 +167,35 @@ class CustomHelper
         $f = new \NumberFormatter('en', \NumberFormatter::SPELLOUT);
         return ucfirst($f->format($number));
     }
+
+    public static function getPostcodesWithinRadiusQuery($postcode, $radius = 0, $km = false)
+    {
+        $val = $km ? 6371 : 3959; // Earth radius
+
+        // Get latitude and longitude of the given postcode
+        $center = Postcode::where('postcode', $postcode)->first();
+        if (!$center) {
+            return null; // or throw exception if no postcode found
+        }
+
+        $lat = $center->latitude;
+        $lng = $center->longitude;
+
+        // Instead of fetching -> return a query builder (subquery)
+        return \DB::table('postcodes')
+            ->select('postcode')
+            ->whereRaw("(
+                $val * acos(
+                    cos(radians(?)) *
+                    cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(?)) +
+                    sin(radians(?)) *
+                    sin(radians(latitude))
+                )
+            ) <= ?", [$lat, $lng, $lat, $radius]);
+    }
+
+
     public static function getPostcodesWithinRadius($postcode, $radius = 0, $km=false){
         $val = $km ? 6371 : 3959;
 
