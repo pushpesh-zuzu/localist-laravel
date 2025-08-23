@@ -32,7 +32,7 @@ class ReviewController extends Controller{
     public function getProfile(Request $request){
 
         $validator = Validator::make($request->all(), [
-            'profile_uuid' => 'required|exists:users,id',
+            'profile_uuid' => 'required|exists:users,uuid',
             ], [
             'profile_uuid.required' => 'Profile id is required.',
             'profile_uuid.exists' => 'Profile id does not exists.',
