@@ -57,13 +57,13 @@ class PlansController extends Controller
     protected function validateSave(Request $request,$isEdit = "")
     {
         $aValids['category_id'] = 'required|numeric';
-        $aValids['name'] =  'required|unique:plans|max:255';
+        $aValids['name'] =  'required|max:255';
         $aValids['price'] =  'required|numeric';
         $aValids['plan_type'] = 'required';
 
         if($isEdit)
         {
-            $aValids['name'] =   'required|unique:plans,name,' . $isEdit->id . '|max:255';
+            $aValids['name'] =   'required|max:255';
         }
 
         $request->validate($aValids);
