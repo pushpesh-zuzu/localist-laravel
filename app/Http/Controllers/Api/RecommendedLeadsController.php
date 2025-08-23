@@ -76,8 +76,9 @@ class RecommendedLeadsController extends Controller
 
     public function getRepliesList(Request $request)
     {
+
         $buyerId = $request->user_id;
-        $leadid = $request->lead_id;
+        $leadid = $request->lead_id['id'] ?? null;
         $result = [];
 
         if (!empty($leadid)) {
