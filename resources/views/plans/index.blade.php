@@ -15,7 +15,8 @@
             <th scope="col">Category</th>
             <th scope="col">Name</th>
             <th scope="col">Price</th>
-            <th scope="col">No. of Leads</th>
+            <th scope="col">Credits</th>
+            <th scope="col">Responses</th>
             <th scope="col">Plan Type</th>
             <th scope="col">Action</th>
           </tr>
@@ -28,6 +29,7 @@
             <td>{{ $aRow->name }}</td>
             <td>{{ $aRow->price }}</td>
             <td>{{ $aRow->no_of_leads }}</td>
+            <td>{{ $aRow->no_of_responses }}</td>
             <td>{{ $aRow->plan_type }}</td>
             <td>
                 <a href="{{ route('plans.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></i></a>

@@ -60,6 +60,7 @@ class PlansController extends Controller
         $aValids['name'] =  'required|max:255';
         $aValids['price'] =  'required|numeric';
         $aValids['plan_type'] = 'required';
+        $aValids['no_of_responses'] = 'required';
 
         if($isEdit)
         {

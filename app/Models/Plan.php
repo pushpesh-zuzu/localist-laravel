@@ -3,15 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasSlug;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Plan extends Model
 {
-    use SoftDeletes; // Enable soft deletes
-    use HasSlug;
 
-    protected $fillable = ['category_id','name', 'slug','description','price','no_of_leads','plan_type','status'];
+    protected $fillable = ['category_id','name','description','price','no_of_leads', 'no_of_responses','plan_type','status'];
     
 
     public function category()

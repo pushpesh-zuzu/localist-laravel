@@ -53,7 +53,7 @@
 
           <div class="row mb-3">
             
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label" for="price">{{ __('Price') }}</label>
               <input  required type="text" id="price" name="price" class="form-control{{ $errors->has('price') ? ' is-invalid' : '' }}"  value="{{ $aRow ? $aRow->price : old('price') }}"/>
              
@@ -64,7 +64,7 @@
               @endif
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label" for="price">{{ __('No of Credits') }}</label>
               <input required type="number" min="0" id="no_of_leads" name="no_of_leads" class="form-control{{ $errors->has('no_of_leads') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->no_of_leads : old('no_of_leads') }}" />
              
@@ -74,7 +74,17 @@
               </span>
               @endif
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+              <label class="form-label" for="no_of_responses">{{ __('No of Response') }}</label>
+              <input required type="number" min="0" id="no_of_responses" name="no_of_responses" class="form-control{{ $errors->has('no_of_responses') ? ' is-invalid' : '' }}" value="{{ $aRow ? $aRow->no_of_responses : old('no_of_responses') }}" />
+
+              @if ($errors->has('no_of_responses'))
+              <span class="invalid-feedback  d-block" role="alert">
+                <strong>{{ $errors->first('no_of_responses') }}</strong>
+              </span>
+              @endif
+            </div>
+            <div class="col-md-3">
               <label class="form-label" for="plan_type">{{ __('Plan Type') }}</label>
               <select required id="plan_type"  name="plan_type" class="form-control{{ $errors->has('plan_type') ? ' is-invalid' : '' }}" >
                 <option value="">Select Any</option>
