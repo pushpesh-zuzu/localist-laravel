@@ -89,7 +89,7 @@ class PaymentController extends Controller
                 $dataPh['plan_name'] = $request->details;
                 $dataPh['price'] = number_format($request->amount, 2);
                 $dataPh['vat'] = number_format($request->vat, 2);
-                $dataPh['total_amount'] = number_format($total_amount, 2);
+                $dataPh['total_amount'] = $total_amount;
                 $dataPh['created_at'] = date('Y-m-d H:i:s');
                 PlanHistory::insertGetId($dataPh);
 
