@@ -19,11 +19,56 @@ use App\Models\UserService;
 use App\Models\UserServiceLocation;
 use App\Models\Category;
 use App\Models\LeadRequest;
+use App\Models\RecommendedLead;
+use App\Models\UserResponseTime;
+use App\Models\UserDetail;
+use App\Models\UserAccreditation;
 use App\Models\Review;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
 
 class ReviewController extends Controller{
+
+    public function getProfile(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'profile_uuid' => 'required|exists:users,id',
+            ], [
+            'profile_uuid.required' => 'Profile id is required.',
+            'profile_uuid.exists' => 'Profile id does not exists.',
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $sellerId = User::where('uuid',$request->profile_uuid)->value('id');
+        $user = User::where('id',$sellerId)->first();
+        //percentage completed
+        $user['percentage_completed'] = $user->getProfileCompletionPercentage();
+        //for hired list count
+        $hireCount = RecommendedLead::where('seller_id', $sellerId)
+            ->where('status','hired')
+            ->count();
+
+        $user['hire_count'] = $hireCount;
+
+        // $replyCount = RecommendedLead::where('lead_id', $leadId)
+        //     ->where('seller_id',$sellerId)
+        //     ->where('buyer_id', $buyerId)
+        //     ->count();
+        // $user['lead_purchased'] = $replyCount > 0 ? 1 : 0;
+        $responseTime = UserResponseTime::where('seller_id', $sellerId)->value('average');
+        $responseTime = !empty($responseTime) ? $responseTime : 15;
+        $user['response_time'] = CustomHelper::formatTimeDuration($responseTime);
+        $user['user_details'] = UserDetail::where('user_id',$sellerId)->first();
+        $user['reviews'] = Review::where('user_id',$sellerId)->get();
+        $user['reviews_count'] = count($user['reviews']);
+        $user['accreditations'] = UserAccreditation::where('user_id',$sellerId)->get();
+        $user['services'] = UserService::where('user_id',$sellerId)->with(['userServices'])->get();
+        $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$sellerId)->get();
+        return $this->sendResponse('Review profile', $user);
+    }
 
     public function getCustomerLink(Request $request){
         $user_id = $request->user_id;
