@@ -106,7 +106,7 @@ class PaymentController extends Controller
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($request->amount, 2);
                 $dataInv['vat'] = number_format($request->vat, 2);
-                $dataInv['total_amount'] = number_format($total_amount, 2);
+                $dataInv['total_amount'] = $total_amount;
 
                 $userDetails = UserDetail::where('user_id',$user_id)->first();
                 if(!empty($userDetails->billing_contact_name)){
