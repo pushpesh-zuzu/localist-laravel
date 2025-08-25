@@ -38,7 +38,7 @@ class ApiController extends Controller
         return $this->sendResponse(__('Category Data'),$aRows);
     }
 
-    public function popularServices()
+    public function homeServices()
     {
 
         $aRows = Category::where('is_home',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)->get();
@@ -46,7 +46,18 @@ class ApiController extends Controller
             $value['baseurl'] = url('/').Storage::url('app/public/images/category');
         }
 
-        return $this->sendResponse(__('Category Data'),$aRows);
+        return $this->sendResponse(__('Home Services'),$aRows);
+    }
+
+    public function popularServices()
+    {
+
+        $aRows = Category::where('is_popular',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)->get();
+        foreach($aRows as $value){
+            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        }
+
+        return $this->sendResponse(__('Popular Services'),$aRows);
     }
 
     public function popularUserServices(Request $request)
@@ -57,7 +68,7 @@ class ApiController extends Controller
             ->pluck('service_id')
             ->toArray();
 
-        $aRows = Category::where('is_home',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)
+        $aRows = Category::where('is_popular',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)
         ->whereHas('serviceQuestions')
         ->whereNotIn('id', $userServices)
         ->get();
@@ -65,7 +76,7 @@ class ApiController extends Controller
             $value['baseurl'] = url('/').Storage::url('app/public/images/category');
         }
 
-        return $this->sendResponse(__('Category Data'),$aRows);
+        return $this->sendResponse(__('Popular User Services'),$aRows);
     }
 
 

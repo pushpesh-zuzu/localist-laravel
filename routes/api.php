@@ -125,6 +125,7 @@ Route::prefix('users')->group(function () {
     Route::get('/closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
+    Route::get('/home-services', [ApiController::class, 'homeServices']);
     Route::post('/user-available-popular-services', [ApiController::class, 'popularUserServices']);
 
     Route::post('/search-services', [ApiController::class, 'searchServices']);
