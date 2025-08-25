@@ -217,8 +217,8 @@ class ApiController extends Controller
         // $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
         // $allLeads = $baseQuery->orderBy('id', 'desc')->get();
         // print_r($allLeads->toArray());
-        $postcode = 'B37 7YE';
-        $miles = 0.5;
+        $postcode = 'WC2H 9JQ';
+        $miles = 10.1;
         $radiusPostcode = CustomHelper::getPostcodesWithinRadius($postcode, $miles);
         $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($postcode, $miles);
 

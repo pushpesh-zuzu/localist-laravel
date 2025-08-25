@@ -78,7 +78,8 @@ class RecommendedLeadsController extends Controller
     {
 
         $buyerId = $request->user_id;
-        $leadid = $request->lead_id['id'] ?? null;
+        $leadid = $request->lead_id;
+        
         $result = [];
 
         if (!empty($leadid)) {
