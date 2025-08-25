@@ -217,6 +217,11 @@ class ApiController extends Controller
         // $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
         // $allLeads = $baseQuery->orderBy('id', 'desc')->get();
         // print_r($allLeads->toArray());
+
+        $reactBaseUrl = env('REACT_BASE_URL');
+        print_r($reactBaseUrl);
+        exit;
+
         $postcode = 'WC2H 9JQ';
         $miles = 10.1;
         $radiusPostcode = CustomHelper::getPostcodesWithinRadius($postcode, $miles);
