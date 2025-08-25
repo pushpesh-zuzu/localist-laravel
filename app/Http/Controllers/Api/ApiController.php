@@ -141,6 +141,45 @@ class ApiController extends Controller
         return $this->sendResponse(__('Category Data'), $categories);
     }
 
+    public function searchAvailableServices(Request $request)
+    {
+    $search = $request->search;
+    $serviceid = $request->serviceid;
+    $userId = $request->user_id; // frontend should pass user_id
+
+    if (empty($search)) {
+        return $this->sendResponse(__('Category Data'), []);
+    }
+
+    // Fetch user's existing services
+    $userServices = UserService::where('user_id', $userId)
+        ->pluck('service_id')
+        ->toArray();
+
+    $query = Category::select('categories.*')
+        ->join('service_questions', 'categories.id', '=', 'service_questions.category')
+        ->where('categories.status', 1)
+        ->where(function ($q) use ($search) {
+            $q->where('categories.name', 'LIKE', "%{$search}%")
+              ->orWhere('categories.description', 'LIKE', "%{$search}%");
+        })
+        ->where('show_in_search', '1')
+        ->distinct();
+
+    if (!empty($serviceid)) {
+        $query->where('categories.id', '!=', $serviceid);
+    }
+
+    // ✅ apply exclusion only if user already has services
+    if (!empty($userServices)) {
+        $query->whereNotIn('categories.id', $userServices);
+    }
+    $categories = $query->get();
+
+    return $this->sendResponse(__('Category Data'), $categories);
+    }
+
+
     //
 
     public function requestOtp(Request $request){
