@@ -998,23 +998,10 @@ class LeadPreferenceController extends Controller
         $user_service_locations = $query->pluck('zoho_location_id');
 
         app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
-    //    // dd($user_service_locations);
-    //     ZohoHelper::dispatchAfterResponse(function () use ($user_service_locations) {
-    //         $x=app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
-    //         dd($x);
-    //     }, [
-    //         'success' => true,
-    //         'message' => 'Location deleted successfully'
-    //     ]);
 
         $query->delete();
 
-
-
-
-
-
-        return $this->sendResponse('Location deleted sucessfully', []);
+        return $this->sendResponse('Location deleted successfully');
     }
 
     public function leadsByFilter(Request $request, LeadService $leadService){
