@@ -62,12 +62,15 @@ class UserController extends Controller
     public function getSellerDashboardStats(Request $request, LeadService $ls){
         $userId = $request->user_id;
         $user = User::where('id', $userId)->first();
-
+        
         if(!empty($user)){
 
-             $leadsBQ = $ls->getSellerLeadsBaseQuery($userId);
+            $leadsBQ = $ls->getSellerLeadsBaseQuery($userId);
+            // print_r($leadsBQ->toRawSql());
+            // exit;
+
             //unread leads
-            $unreadLeads = $leadsBQ->where('status','new')->get();
+            $unreadLeads = (clone $leadsBQ)->where('status','new')->get();
             $unreadLeads = $ls->leadsAccordingTOSellerPref($userId, $unreadLeads);
             $leads['unread_leads_count'] = count($unreadLeads);
 
