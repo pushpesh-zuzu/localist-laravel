@@ -70,7 +70,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('sectors', SectorController::class);
-    
+
     Route::resource('blogs', BlogsController::class);
     Route::resource('pages', PagesController::class);
     Route::resource('menus', MenuController::class);
@@ -82,8 +82,12 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('buyer-bids/{userid}', [BuyerController::class, 'buyerBids'])->name('buyer.buyerBids');
     Route::get('buyer-login/{userid}', [BuyerController::class, 'buyerLogin'])->name('buyer.buyerLogin');
     Route::get('buyer-viewcount/{userid}', [BuyerController::class, 'viewCount'])->name('buyer.viewCount');
+    Route::get('buyer-contact-form', [BuyerController::class, 'contactForm'])->name('buyer.contact_form');
+    Route::get('buyer-show-contact-form/{id}', [BuyerController::class, 'viewContactForm'])->name('buyer.show_contact_form');
     Route::resource('seller', SellerController::class);
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
+    Route::get('seller-contact-form', [SellerController::class, 'contactForm'])->name('seller.contact_form');
+    Route::get('seller-show-contact-form/{id}', [SellerController::class, 'viewContactForm'])->name('seller.show_contact_form');
     Route::get('seller-incomplete-list', [SellerController::class, 'incompletelist'])->name('seller.incomplete');
     Route::get('seller-services/{userid}', [SellerController::class, 'sellerServices'])->name('seller.services');
     Route::get('credit-plans/{userid}', [SellerController::class, 'creditPlans'])->name('seller.creditPlans');

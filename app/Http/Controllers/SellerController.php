@@ -17,6 +17,7 @@ use App\Models\Category;
 use App\Models\User;
 use App\Models\Plan;
 use App\Models\RecommendedLead;
+use Illuminate\Support\Facades\DB;
 
 class SellerController extends Controller
 {
@@ -25,8 +26,24 @@ class SellerController extends Controller
      */
     public function index()
     {
-        $aRows = User::whereIn('user_type', [1, 3])->where('form_status',1)->orderBy('id','DESC')->get(); 
+        $aRows = User::whereIn('user_type', [1, 3])->where('form_status',1)->orderBy('id','DESC')->get();
         return view('seller.complete', compact('aRows'));
+    }
+
+    public function contactForm()
+    {
+        $aRows = DB::table('contact_us')->where('user_type', 1)->orderBy('id','DESC')->get();
+        return view('seller.contact_form_list', compact('aRows'));
+    }
+
+    public function viewContactForm(string $id)
+    {
+        DB::table('contact_us')
+        ->where('id', $id)
+        ->update(['status' => 1]);
+
+        $aRows = DB::table('contact_us')->where('user_type', 1)->where('id', $id)->first();
+        return view('seller.contact_view', compact('aRows'));
     }
 
     /**
@@ -50,7 +67,7 @@ class SellerController extends Controller
      */
     public function show(string $id)
     {
-        $aRows = User::where('id',$id)->with(['userDetails'])->first(); 
+        $aRows = User::where('id',$id)->with(['userDetails'])->first();
         return view('seller.view', compact('aRows'));
     }
 
@@ -98,14 +115,14 @@ class SellerController extends Controller
         \DB::table('unique_visitors')->where('seller_id',$id)->orWhere('buyer_id',$id)->delete();
         \DB::table('autobid_status_logs')->where('user_id',$id)->delete();
         \DB::table('email_logs')->where('user_id',$id)->delete();
-        
+
         return redirect()->route('seller.index')
                          ->with('success', 'Seller deleted successfully.');
     }
 
     public function incompletelist()
     {
-        $aRows = User::whereIn('user_type', [1, 3])->where('form_status',0)->orderBy('id','DESC')->get(); 
+        $aRows = User::whereIn('user_type', [1, 3])->where('form_status',0)->orderBy('id','DESC')->get();
         return view('seller.incomplete', compact('aRows'));
     }
 
@@ -180,7 +197,7 @@ class SellerController extends Controller
 
         foreach ($groupedLeads as $customerId => $customerLeads) {
             $user = User::find($customerId);
-            
+
             $aRows[] = [
                 'buyer_name' => $user ? $user->name : '',
                 'customer_id' => $customerId,
@@ -234,9 +251,9 @@ class SellerController extends Controller
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('seller.login_history', get_defined_vars());
     }
-    
 
-    
+
+
 
 
     // public function sellerBids($userid){

@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\User;
 use DB;
 
+
 class BuyerController extends Controller
 {
     /**
@@ -18,13 +19,13 @@ class BuyerController extends Controller
      */
     public function index()
     {
-        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',1)->orderBy('id','DESC')->get(); 
+        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',1)->orderBy('id','DESC')->get();
         return view('buyer.index', compact('aRows'));
     }
 
     public function incompletelist()
     {
-        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',0)->orderBy('id','DESC')->get(); 
+        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',0)->orderBy('id','DESC')->get();
         return view('buyer.incomplete', compact('aRows'));
     }
 
@@ -50,8 +51,24 @@ class BuyerController extends Controller
     public function show(string $id)
     {
         $user_id = $id;
-        $aRows = User::where('id',$id)->with(['leadRequests.category'])->first(); 
+        $aRows = User::where('id',$id)->with(['leadRequests.category'])->first();
         return view('buyer.view', compact('aRows','user_id'));
+    }
+
+     public function contactForm()
+    {
+        $aRows = DB::table('contact_us')->where('user_type', 2)->orderBy('id','DESC')->get();
+        return view('buyer.contact_form_list', compact('aRows'));
+    }
+
+    public function viewContactForm(string $id)
+    {
+        DB::table('contact_us')
+        ->where('id', $id)
+        ->update(['status' => 1]);
+
+        $aRows = DB::table('contact_us')->where('user_type', 2)->where('id', $id)->first();
+        return view('buyer.contact_view', compact('aRows'));
     }
 
     /**
@@ -120,7 +137,7 @@ class BuyerController extends Controller
 
         foreach ($groupedLeads as $customerId => $customerLeads) {
             $user = User::find($customerId);
-            
+
             $aRows[] = [
                 'buyer_name' => $user ? $user->name : '',
                 'customer_id' => $customerId,
@@ -150,7 +167,7 @@ class BuyerController extends Controller
         foreach ($aRows as $key => $value) {
             $value['leadname'] = LeadRequest::where('id',$value->lead_id)->pluck('postcode')->first();
             $value['seller'] = User::where('id',$value->seller_id)->pluck('name')->first();
-        }    
+        }
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('buyer.view_count', get_defined_vars());
     }
