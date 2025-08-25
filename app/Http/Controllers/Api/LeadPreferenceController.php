@@ -982,30 +982,6 @@ class LeadPreferenceController extends Controller
 
     public function removeLocation(Request $request)
     {
-        // $aValues = $request->all();
-        // if($aValues['nation_wide'] == 1){
-        //         $user_service_locations = UserServiceLocation::where('nation_wide', 1)->where('user_id',$aValues['user_id'])->pluck('id');
-        //         UserServiceLocation::where('nation_wide', 1)
-        //                     ->where('user_id', $aValues['user_id'])
-        //                     ->delete();
-        //     ZohoHelper::dispatchAfterResponse(function () use ($user_service_locations) {
-        //         app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
-        //     }, [
-        //         'success' => true,
-        //         'message' => 'Location deleted sucessfully'
-        //     ]);
-        // }else{
-        //     $user_service_locations = UserServiceLocation::whereIn('postcode', [$aValues['postcode']])->where('user_id',$aValues['user_id'])->pluck('id');
-        //         UserServiceLocation::whereIn('postcode', [$aValues['postcode']])
-        //                     ->where('user_id', $aValues['user_id'])
-        //                     ->delete();
-        //     ZohoHelper::dispatchAfterResponse(function () use ($user_service_locations) {
-        //         app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
-        //     }, [
-        //         'success' => true,
-        //         'message' => 'Location deleted sucessfully'
-        //     ]);
-        // }
         $aValues = $request->all();
 
         if ($aValues['nation_wide'] == 1) {
@@ -1014,7 +990,8 @@ class LeadPreferenceController extends Controller
         } else {
 
             $query = UserServiceLocation::where('user_id', $aValues['user_id'])
-                                        ->whereIn('postcode', [$aValues['postcode']]);
+                                        ->where('miles', $aValues['miles'])
+                                        ->where('postcode', $aValues['postcode']);
         }
 
 
