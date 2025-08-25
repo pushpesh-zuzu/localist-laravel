@@ -39,7 +39,7 @@ class ZohoEmails
                         array_push($services, $sl);
                     }
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'email' => $user->email,
                         'password' => $password,
@@ -113,7 +113,7 @@ class ZohoEmails
 
 
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_encouragement',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name
                     ])->render();
 
@@ -184,7 +184,7 @@ class ZohoEmails
 
 
                     $htmlView = view('emails.customers.registration.customer_encouragement',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name
                     ])->render();
 
@@ -255,7 +255,7 @@ class ZohoEmails
 
 
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_incomplete_registration',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name
                     ])->render();
 
@@ -344,7 +344,7 @@ class ZohoEmails
 
 
     //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
-    //                     'baseUrl' => config('react_base_url'),
+    //                     'baseUrl' => config('app.react_base_url'),
     //                     'name' => $user->name,
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
@@ -475,7 +475,7 @@ class ZohoEmails
 
         // Email view for multiple leads
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
-            'baseUrl' => config('react_base_url'),
+            'baseUrl' => config('app.react_base_url'),
             'name' => $user->name,
             'leads' => $formattedLeads,
         ])->render();
@@ -567,7 +567,7 @@ class ZohoEmails
 
 
     //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough',  [
-    //                     'baseUrl' => config('react_base_url'),
+    //                     'baseUrl' => config('app.react_base_url'),
     //                     'name' => $user->name,
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
@@ -704,7 +704,7 @@ class ZohoEmails
             }
 
             $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough', [
-                'baseUrl' => config('react_base_url'),
+                'baseUrl' => config('app.react_base_url'),
                 'name' => $user->name,
                 'leadDetailsList' => $leadDetailsList,
             ])->render();
@@ -831,7 +831,7 @@ class ZohoEmails
         }
 
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
-            'baseUrl' => config('react_base_url'),
+            'baseUrl' => config('app.react_base_url'),
             'name' => $user->name,
             'leadDetailsList' => $leadViews,
         ])->render();
@@ -921,7 +921,7 @@ class ZohoEmails
 
 
     //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply',  [
-    //                     'baseUrl' => config('react_base_url'),
+    //                     'baseUrl' => config('app.react_base_url'),
     //                     'name' => $user->name,
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
@@ -1047,7 +1047,7 @@ class ZohoEmails
 
         // Render single email with all leads grouped
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply', [
-            'baseUrl' => config('react_base_url'),
+            'baseUrl' => config('app.react_base_url'),
             'name' => $user->name,
             'leads' => $groupedLeadsData
         ])->render();
@@ -1140,7 +1140,7 @@ class ZohoEmails
 
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_aftertime',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
@@ -1240,7 +1240,7 @@ class ZohoEmails
 
                 if (!empty($user)) {
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => $totalCreditSum,
@@ -1324,7 +1324,7 @@ class ZohoEmails
 
                 if (!empty($user)) {
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => $totalCreditSum,
@@ -1412,7 +1412,7 @@ class ZohoEmails
                         ->toArray();
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_status_update',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'service' => $lead->category->name ?? '',
                         'seller_id' => $rlead->seller_id,
@@ -1520,7 +1520,7 @@ class ZohoEmails
 
 
                         $htmlView = view('emails.lead_buyers.leads.lead_buyer_closed',  [
-                            'baseUrl' => config('react_base_url'),
+                            'baseUrl' => config('app.react_base_url'),
                             'name' => $user->name,
                             'lead_name' => $lead->customer->name ?? '',
                             'postcode' => $lead->postcode ?? '',
@@ -1628,7 +1628,7 @@ class ZohoEmails
 
 
                         $htmlView = view('emails.lead_buyers.leads.lead_buyer_hired',  [
-                            'baseUrl' => config('react_base_url'),
+                            'baseUrl' => config('app.react_base_url'),
                             'name' => $user->name,
                             'lead_name' => $lead->customer->name ?? '',
                             'postcode' => $lead->postcode ?? '',
@@ -1727,7 +1727,7 @@ class ZohoEmails
 
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_pool_of_7_lead_buyer',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
@@ -1814,7 +1814,7 @@ class ZohoEmails
             if(!empty($zohoId)){
                 if(!empty($user)){
                     $htmlView = view('emails.login.login_with_magic_link',  [
-                        'baseUrl' => config('react_base_url'),
+                        'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'token' => $token,
                     ])->render();
