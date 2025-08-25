@@ -91,14 +91,11 @@ class UserController extends Controller
 
             //user plan
             $primaryCategory = $user->primary_category;
-            $planType = "None";
             $planHistory = PlanHistory::where('user_id',$userId)->orderBy('id','desc')->first();
             if(!empty($planHistory)){
                 $plans = Plan::where('category_id', $primaryCategory)->where('status',1)->where('plan_type','normal')->orderBy('id','DESC')->get();
-                $planType = "Elite Pro";
             }else{
                 $plans = Plan::where('category_id', $primaryCategory)->where('status',1)->where('plan_type','starter')->orderBy('id','DESC')->get();
-                $planType = "Standard";
             }
             $data['plans'] = $plans;
 
@@ -110,7 +107,7 @@ class UserController extends Controller
 
             //account details
             $data['account_details'] = [
-                'plan_type' => $planType,
+                'plan_type' => $planHistory->plan_name ?? 'None',
                 'credits' => $user->total_credit ?? 0
             ];
 
