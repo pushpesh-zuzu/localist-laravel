@@ -52,7 +52,19 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localists.zuzucodes.com/admin/public/'),
+    'url' => env('APP_URL', 'https://dev.localists.com/admin/public/'),
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application REACT_BASE_URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used by the EMAil class to properly generate URLs in the email sent to buyer/customer.
+    |
+    */
+
+    'react_base_url' => env('REACT_BASE_URL', 'https://dev.localists.com/'),
 
     /*
     |--------------------------------------------------------------------------

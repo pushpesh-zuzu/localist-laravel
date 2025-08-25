@@ -218,7 +218,7 @@ class ApiController extends Controller
         // $allLeads = $baseQuery->orderBy('id', 'desc')->get();
         // print_r($allLeads->toArray());
 
-        $reactBaseUrl = env('REACT_BASE_URL');
+        $reactBaseUrl = config('react_base_url');
         print_r($reactBaseUrl);
         exit;
 
