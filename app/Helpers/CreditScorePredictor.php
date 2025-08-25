@@ -11,6 +11,9 @@ class CreditScorePredictor{
             case 43:
                 $url .= 'landscaping';
                 break;
+            case 49:
+                $url .= 'fence_and_gate';
+                break;
             case 51:
                 $url .= 'driveway_installation';
                 break;
@@ -20,6 +23,7 @@ class CreditScorePredictor{
             case 54:
                 $url .= 'artificial_grass';
                 break;
+            
 
             default:
                 $url = "";
