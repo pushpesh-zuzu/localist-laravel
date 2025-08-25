@@ -49,6 +49,26 @@ class ApiController extends Controller
         return $this->sendResponse(__('Category Data'),$aRows);
     }
 
+    public function popularUserServices(Request $request)
+    {
+        $userId = $request->user_id;
+
+        $userServices = UserService::where('user_id', $userId)
+            ->pluck('service_id')
+            ->toArray();
+
+        $aRows = Category::where('is_home',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)
+        ->whereHas('serviceQuestions')
+        ->whereNotIn('id', $userServices)
+        ->get();
+        foreach($aRows as $value){
+            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        }
+
+        return $this->sendResponse(__('Category Data'),$aRows);
+    }
+
+
     public function allServices()
     {
         $categories = Category::where('is_home', 1)
