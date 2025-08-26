@@ -79,30 +79,44 @@ class ApiController extends Controller
         return $this->sendResponse(__('Popular User Services'),$aRows);
     }
 
-
-    public function allServices()
-    {
-        $categories = Category::where('is_home', 1)
-            ->where('parent_id', 0)
-            ->where('status', 1)
-            ->get();
-
+    private function flattenCategories($categories) {
         $result = [];
 
         foreach ($categories as $category) {
-            $subcategories = Category::where('is_home', 1)
-                ->where('parent_id', $category->id)
-                ->where('status', 1)
-                ->get();
+            // only include if show_in_search = 1
+            if (isset($category['show_in_search']) && $category['show_in_search'] == 1) {
+                $item = $category;
+                unset($item['home_subsectors'], $item['subsectors']);
+                $result[] = $item;
+            }
 
-            // Only add the category if subcategories exist
-            if ($subcategories->isNotEmpty()) {
-                $category['subcategory'] = $subcategories;
-                $category['baseurl'] = url('/') . Storage::url('app/public/images/category');
-                $result[] = $category;
+            // recurse into children
+            if (!empty($category['home_subsectors'])) {
+                $result = array_merge($result, $this->flattenCategories($category['home_subsectors']));
+            }
+
+            if (!empty($category['subsectors'])) {
+                $result = array_merge($result, $this->flattenCategories($category['subsectors']));
             }
         }
 
+        return $result;
+    }
+
+    public function allServices()
+    {
+        $categories = Category::with(['homeSubsectors'])
+            ->where('is_home', 1)
+            ->where('parent_id', '0')->get()->toArray();
+        $result = [];
+        foreach ($categories as $category) {
+            $item = $category;
+            unset($item['home_subsectors'], $item['subsectors']);
+            $item['subcategory'] = $this->flattenCategories($category['home_subsectors']);
+            $item['baseurl'] = url('/') . Storage::url('app/public/images/category');
+            $result[] = $item;
+        }
+        
         return $this->sendResponse(__('Category Data'), $result);
     }
     public function leadsSearchServices(Request $request)

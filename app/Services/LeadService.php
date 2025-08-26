@@ -355,7 +355,7 @@ class LeadService
 
 public function getAllSellers($lead, $filters = [],$sendFlag = null){
         // echo "<pre>";print_r($lead->toArray());exit;
-        $start = microtime(true);
+
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
         $serviceId = $lead->service_id;
         $leadCreditScore = $lead->credit_score;
@@ -378,9 +378,6 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
             throw new \Exception("Reference postcode not found: $refPostcode");
         }
 
-        \Log::info('reference postcode took ' . (microtime(true) - $start) . ' seconds');
-
-        $start = microtime(true);
         $refLat = $ref->latitude;
         $refLng = $ref->longitude;
 
@@ -389,9 +386,6 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
             ->where('service_id', $serviceId)
             ->pluck('seller_id')->toArray();
 
-        \Log::info('repliesUsers took ' . (microtime(true) - $start) . ' seconds');
-
-        $start = microtime(true);
         // Step 2: Preselect user_service_locations using simplified logic
         $rows = DB::table('user_service_locations as usl')
             ->join('users', function ($join) use ($repliesUsers)  {
@@ -429,7 +423,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
                 'users.created_at as user_created_time'
             );
 
-        \Log::info('preselect took ' . (microtime(true) - $start) . ' seconds');
+
         if(!empty($filters['rating'])){
             if($filters['rating'] === 'no_rating'){
                 $rows = $rows->where('users.avg_rating', 0);
@@ -458,7 +452,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
         $rows = $rows->get();
 
 
-$start = microtime(true);
+
         // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
             ->map(function ($items) {
@@ -473,9 +467,8 @@ $start = microtime(true);
                 $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
                 return $r;
             });
-        \Log::info('grouping took ' . (microtime(true) - $start) . ' seconds');
 
-        $start = microtime(true);
+
         // Step 4: Filter by distance using Haversine Formula
         $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
             $distance = 3958.8 * acos(
@@ -489,8 +482,7 @@ $start = microtime(true);
                 || $row->postcode == $refPostcode
                 || $row->miles >= $distance;
         });
-        \Log::info('filtering took ' . (microtime(true) - $start) . ' seconds');
-        $start = microtime(true);
+
 
         $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)->sortBy('distance');
 
@@ -524,7 +516,7 @@ $start = microtime(true);
             return collect(array_values($seen));
         });
 
-        \Log::info('final filtering took ' . (microtime(true) - $start) . ' seconds');
+
 
         return [
             'empty' => empty($finalUniqueSellers) ? true : false,

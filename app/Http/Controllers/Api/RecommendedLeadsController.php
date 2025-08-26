@@ -153,16 +153,13 @@ class RecommendedLeadsController extends Controller
     }
 
     public function getManualLeads(Request $request, LeadService $leadService){
-        $start = microtime(true);
         
         $lead = LeadRequest::find($request->lead_id);
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
         $responseTimeFilter = $request->responseTimeFilter ?? [];
         $ratingFilter = $request->rating ?? [];
-        \Log::info('lead took ' . (microtime(true) - $start) . ' seconds');
 
         $result = $leadService->getAllSellers($lead);
-        \Log::info('getAllSellers took ' . (microtime(true) - $start) . ' seconds');
         
         if(!empty($result['response']['sellers'])){
             // for weightage sorting
@@ -173,17 +170,14 @@ class RecommendedLeadsController extends Controller
             $sorted = $result['response']['sellers']
                 ->sortByDesc('total_credit')
                 ->values();
-            \Log::info('Sorting - credit - took ' . (microtime(true) - $start) . ' seconds');
+
             $topN = $sorted->take($w80); //Step 2: Take first 4
             $remaining = $sorted->slice($w80)             // Step 3: Get remaining
                 ->sortBy('distance')                   // Sort remaining by distance ASC
                 ->values();
 
-            \Log::info('Sorting - distance - took ' . (microtime(true) - $start) . ' seconds');    
             $finalSorted = $topN->merge($remaining);
 
-            \Log::info('Merging took ' . (microtime(true) - $start) . ' seconds');
-            
             $result['response']['sellers'] = $finalSorted->values()->toArray();
         }else{
             return $this->sendResponse('No Seller Found!', [$result['response']]);

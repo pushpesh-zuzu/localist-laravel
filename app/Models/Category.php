@@ -40,4 +40,10 @@ class Category extends Model
         return $this->subsector()->with('subsectors');
     }
 
+    // recursive, loads all descendants with products
+    public function homeSubsectors()
+    {
+        return $this->subsector()->with('subsectors')->where('is_home',1);
+    }
+
 }
