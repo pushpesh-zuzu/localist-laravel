@@ -24,7 +24,7 @@ use App\Helpers\Zoho\ZohoEmails;
 
 class NotificationController extends Controller
 {
-    
+
 
     public function addUpdateNotificationSettings(Request $request){
         $user_id = $request->user_id;
@@ -77,7 +77,7 @@ class NotificationController extends Controller
         $data['updated_at'] = date('y-m-d H:i:s');
 
         if($noti_type != 'error'){
-            $noti_id = NotificationSetting::where('noti_name',$noti_name)->where('user_type',$user_type)->value('id');
+            $noti_id = NotificationSetting::where('noti_name',$noti_name)->where('user_id',$user_id)->where('user_type',$user_type)->value('id');
             if(empty($noti_id)){
                 $data['created_at'] = date('y-m-d H:i:s');
                 NotificationSetting::insertGetId($data);
@@ -109,7 +109,7 @@ class NotificationController extends Controller
             ->select(['user_id','noti_name','noti_value','user_type','noti_type'])
             ->get()->toArray();
 
-        
+
         //for customer
         if($request->user_type == 'customer'){
             //Changes to my requests
