@@ -501,6 +501,34 @@ class RecommendedLeadsController extends Controller
         //return $this->sendResponse('Bid placed successfully');
     }
 
+    public function addMultipleManualBid(Request $request){
+        $aVals = $request->all();
+        $request['bidtype'] = 'reply';
+        $buyerId = $aVals['user_id'];
+        $leadId = $aVals['lead_id'];
+        $inserted = 0;
+
+        // echo "<pre>";
+        // print_r($aVals);
+        // exit;
+
+        foreach ($aVals['seller_id'] as $index => $sellerId) {
+            $request->replace($request->only(['user_id', 'lead_id','bidtype']));
+            $request['service_id'] = $aVals['service_id'][$index];
+            $request['distance'] = $aVals['distance'][$index];
+            $request['seller_id'] = $sellerId;
+            $fResponse =  $this->addManualBid($request);
+            $fData = json_decode($fResponse->getContent(), true);
+            if (!empty($fData['success'])) {
+                $inserted++;
+            }
+        }
+        return $this->sendResponse('Multiple Bids placed successfully', [
+            'inserted_count' => $inserted,
+            'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
+        ]);
+    }
+
 
     // public function sendLeadRequestReply() //sendLeadRequestReply
     // {
@@ -613,28 +641,7 @@ public function sendLeadRequestReply()
 }
 
 
-    public function addMultipleManualBid(Request $request){
-        $aVals = $request->all();
-        $request['bidtype'] = 'reply';
-        $buyerId = $aVals['user_id'];
-        $leadId = $aVals['lead_id'];
-        $inserted = 0;
-        foreach ($aVals['seller_id'] as $index => $sellerId) {
-            $request->replace($request->only(['user_id', 'lead_id','bidtype']));
-            $request['service_id'] = $aVals['service_id'][$index];
-            $request['distance'] = $aVals['distance'][$index];
-            $request['seller_id'] = $sellerId;
-            $fResponse =  $this->addManualBid($request);
-            $fData = json_decode($fResponse->getContent(), true);
-            if (!empty($fData['success'])) {
-                $inserted++;
-            }
-        }
-        return $this->sendResponse('Bids placed successfully', [
-            'inserted_count' => $inserted,
-            'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
-        ]);
-    }
+    
 
    public function addActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name, $contact_type, $leadtime){
         $activity = ActivityLog::create([
