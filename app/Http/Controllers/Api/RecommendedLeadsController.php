@@ -111,17 +111,18 @@ class RecommendedLeadsController extends Controller
                     // 👇 Apply quicktorespond check
                     $contactTypes = ['Whatsapp', 'email', 'mobile', 'sms'];
                     $firstResponse = ActivityLog::where('lead_id', $leadid)
-                        ->where(function($q) use ($buyerId, $bid){
-                            $q->where('from_user_id', $buyerId)
-                            ->orWhere('from_user_id', $bid->seller_id)
-                            ->orWhere('to_user_id',$buyerId)
-                            ->orWhere('to_user_id',$bid->seller_id);
-
+                        ->where(function ($query) use ($buyerId, $bid){
+                            $query->where(function ($q) use ($buyerId, $bid){
+                                $q->where('from_user_id', $bid->seller_id)
+                                ->where('to_user_id', $buyerId);
+                            })->orWhere(function ($q) use ($buyerId, $bid){
+                                $q->where('from_user_id', $buyerId)
+                                ->where('to_user_id', $bid->seller_id);
+                            });
                         })
                         ->whereIn('contact_type', $contactTypes)
                         ->orderBy('created_at', 'asc')
                         ->first();
-
                     $quickToRespond = 0;
                     if ($firstResponse) {
                         $leadTime = Carbon::parse($lead->created_at)->setTimezone('Asia/Kolkata');
@@ -144,6 +145,7 @@ class RecommendedLeadsController extends Controller
                         'log' => !empty($firstResponse->activity_name) ? $firstResponse->activity_name : 'Requested a Quote',
                         'date_time' => !empty($firstResponse->created_at) ? date('d M Y, H:i', strtotime($bid->created_at)) : date('d M Y, H:i')
                     ];
+                    unset($firstResponse);
                     $result[] = $sellerData;
                 }
             }
