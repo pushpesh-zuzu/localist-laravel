@@ -106,8 +106,8 @@ class MyRequestController extends Controller
                     $dataUser['form_status'] = $request->form_status;
                     $dataUser['created_at'] = date('y-m-d H:i:s');
                     $dataUser['updated_at'] = date('y-m-d H:i:s');
-                    $phoneOtp = "1234";
-                    //$phoneOtp = random_int(1000, 9999);
+                    //$phoneOtp = "1234";
+                    $phoneOtp = random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
 
@@ -283,8 +283,10 @@ class MyRequestController extends Controller
                 //     'data' => $rel
                 // ]);
 
+
                 return ZohoHelper::dispatchAfterResponse(
-                    function () use ($euId, $rel,$sId,$serviceId) {
+                    function () use ($euId, $rel,$sId) {
+
                         app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
                         app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
                         //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
