@@ -1385,6 +1385,8 @@ class LeadPreferenceController extends Controller
         $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
 
         if($aVals['response_type'] == 'seller'){
+
+
             if($type == 'Whatsapp'){
                 $activityname = $sellerName .' contacted '. $buyerName .' through Whatsapp';
             }
@@ -1398,9 +1400,7 @@ class LeadPreferenceController extends Controller
                 $activityname = $sellerName .' contacted '. $buyerName .' through SMS';
             }
             $isActivity = self::getActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname);
-            if(empty($isActivity)){
-                self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
-            }
+            self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
 
         }else{
             if($type == 'Whatsapp'){
