@@ -132,7 +132,7 @@ class UserController extends Controller
 
     public function getSellerProfile(Request $request){
         $validator = Validator::make($request->all(), [
-            'seller_id' => 'sometimes|integer|exists:users,id',
+            'seller_id' => 'required|integer|exists:users,id',
             ], [
             'seller_id.required' => 'Seller id is required.',
             'seller_id.exists' => 'Seller id does not exists.',
