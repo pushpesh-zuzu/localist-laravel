@@ -1544,6 +1544,8 @@ class ZohoEmails
                         ])->render();
 
                         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+
                         $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
@@ -1579,7 +1581,10 @@ class ZohoEmails
                                 ]
                             ]);
                         $rel = self::getZohoMailResponse($response);
-
+                        Log::info('New Lead Closed -when pending to hired', [
+                            'user_id' => $sellerId,
+                            'response' => $response->json(),
+                        ]);
                         $dataE['user_id'] = $user->id;
                         $dataE['from_email'] = $fromEmail;
                         $dataE['to_email'] = $toEmail;
@@ -1680,7 +1685,10 @@ class ZohoEmails
                                 ]
                             ]);
                         $rel = self::getZohoMailResponse($response);
-
+                         Log::info('New Lead Hired -when pending to hired', [
+                            'user_id' => $userId,
+                            'response' => $response->json(),
+                        ]);
                         $dataE['user_id'] = $user->id;
                         $dataE['from_email'] = $fromEmail;
                         $dataE['to_email'] = $toEmail;
