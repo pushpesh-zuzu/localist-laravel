@@ -1658,7 +1658,6 @@ class ZohoEmails
                         $toEmail = $user->email;
                         $subject = 'Hey! You hired a new lead!';
 
-
                         DB::table('zoho_logs')->insert([
                             'url' => $url,
                             'function_name' => 'newLeadHiredEmail',
