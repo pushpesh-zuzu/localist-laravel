@@ -380,6 +380,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
 
         \Log::info('reference postcode took ' . (microtime(true) - $start) . ' seconds');
 
+        $start = microtime(true);
         $refLat = $ref->latitude;
         $refLng = $ref->longitude;
 
@@ -390,6 +391,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
 
         \Log::info('repliesUsers took ' . (microtime(true) - $start) . ' seconds');
 
+        $start = microtime(true);
         // Step 2: Preselect user_service_locations using simplified logic
         $rows = DB::table('user_service_locations as usl')
             ->join('users', function ($join) use ($repliesUsers)  {
@@ -456,7 +458,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
         $rows = $rows->get();
 
 
-
+$start = microtime(true);
         // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
             ->map(function ($items) {
@@ -473,6 +475,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
             });
         \Log::info('grouping took ' . (microtime(true) - $start) . ' seconds');
 
+        $start = microtime(true);
         // Step 4: Filter by distance using Haversine Formula
         $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
             $distance = 3958.8 * acos(
@@ -487,6 +490,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
                 || $row->miles >= $distance;
         });
         \Log::info('filtering took ' . (microtime(true) - $start) . ' seconds');
+        $start = microtime(true);
 
         $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)->sortBy('distance');
 
