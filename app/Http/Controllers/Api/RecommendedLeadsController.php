@@ -482,25 +482,25 @@ class RecommendedLeadsController extends Controller
             ->delete();
 
 
-        $bidId = $bids->id;
-        if($bidId){
-            ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$bidId,$tId) {
-                        app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
-                        app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
-                    }, [
-                        'success' => true,
-                        'message' => 'Bid placed successfully - M'
-                    ]);
-        }
+        // $bidId = $bids->id;
+        // if($bidId){
+        //     ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$bidId,$tId) {
+        //                 app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
+        //                 app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
+        //             }, [
+        //                 'success' => true,
+        //                 'message' => 'Bid placed successfully - M'
+        //             ]);
+        // }
 
-        if($aVals['bidtype'] == 'reply'){
-            ZohoHelper::dispatchAfterResponse([$this, 'sendLeadRequestReply'], [
-                    'success' => true,
-                    'message' => 'Bid placed successfully - I',
-                ]);
-        }
+        // if($aVals['bidtype'] == 'reply'){
+        //     ZohoHelper::dispatchAfterResponse([$this, 'sendLeadRequestReply'], [
+        //             'success' => true,
+        //             'message' => 'Bid placed successfully - I',
+        //         ]);
+        // }
 
-        //return $this->sendResponse('Bid placed successfully');
+        return $this->sendResponse('Bid placed successfully-K');
     }
 
     public function addMultipleManualBid(Request $request){
