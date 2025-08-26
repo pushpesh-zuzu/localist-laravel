@@ -487,14 +487,14 @@ class RecommendedLeadsController extends Controller
                         app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
                     }, [
                         'success' => true,
-                        'message' => 'Bid placed successfully'
+                        'message' => 'Bid placed successfully - M'
                     ]);
         }
 
         if($aVals['bidtype'] == 'reply'){
             ZohoHelper::dispatchAfterResponse([$this, 'sendLeadRequestReply'], [
                     'success' => true,
-                    'message' => 'Bid placed successfully',
+                    'message' => 'Bid placed successfully - I',
                 ]);
         }
 
