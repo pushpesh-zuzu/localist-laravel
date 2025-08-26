@@ -288,18 +288,15 @@ class ApiController extends Controller
         // $allLeads = $baseQuery->orderBy('id', 'desc')->get();
         // print_r($allLeads->toArray());
 
-        $reactBaseUrl = config('app.react_base_url');
-        print_r($reactBaseUrl);
-        exit;
+        $start = microtime(true);
+        $lead = LeadRequest::find($request->lead_id);
+        \Log::info('lead took ' . (microtime(true) - $start) . ' seconds');
 
-        $postcode = 'WC2H 9JQ';
-        $miles = 10.1;
-        $radiusPostcode = CustomHelper::getPostcodesWithinRadius($postcode, $miles);
-        $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($postcode, $miles);
+        $result = $leadService->getAllSellers($lead);
+        \Log::info('getAllSellers took ' . (microtime(true) - $start) . ' seconds');
 
         echo "<pre>";
-        print_r($radiusPostcode);
-        print_r($radiusPostcodeQuery->toRawSql());
+        print_r($result);
         exit;
     }
 
