@@ -155,14 +155,12 @@ class RecommendedLeadsController extends Controller
     public function getManualLeads(Request $request, LeadService $leadService){
 
         $lead = LeadRequest::find($request->lead_id);
-
-
         if (!$lead) return $this->sendError(__('No Lead found'), 404);
         $responseTimeFilter = $request->responseTimeFilter ?? [];
         $ratingFilter = $request->rating ?? [];
 
         $result = $leadService->getAllSellers($lead);
-
+        
         if(!empty($result['response']['sellers'])){
             // for weightage sorting
             $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
