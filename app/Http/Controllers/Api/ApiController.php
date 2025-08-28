@@ -116,7 +116,7 @@ class ApiController extends Controller
             $item['baseurl'] = url('/') . Storage::url('app/public/images/category');
             $result[] = $item;
         }
-        
+
         return $this->sendResponse(__('Category Data'), $result);
     }
     public function leadsSearchServices(Request $request)
@@ -155,11 +155,24 @@ class ApiController extends Controller
     public function searchServices(Request $request)
     {
         $search = $request->search; // Get search keyword from request
-        $serviceid = $request->serviceid; // Get search keyword from request
 
+        $search = substr((string) $search, 0, 4);
+
+        $serviceid = $request->serviceid; // Get search keyword from request
+        $base = Category::query()
+        ->where('status', 1)
+        ->where('show_in_search', 1);
+
+            if ($serviceid > 0) {
+                $base->where('id', '!=', $serviceid);
+            }
         // Check if search keyword is provided; otherwise, return empty
-        if (empty($search)) {
-            $categories = [];
+        if ($search === '') {
+        // You can order as you like; name asc is common for dropdowns
+            $categories = $base
+                ->orderBy('name')
+                ->get(['id', 'name', 'description']); // keep payload lean if you want
+
             return $this->sendResponse(__('Category Data'), $categories);
         }
         if(!empty($serviceid)){
