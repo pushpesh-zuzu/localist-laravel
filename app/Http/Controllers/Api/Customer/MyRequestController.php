@@ -110,7 +110,7 @@ class MyRequestController extends Controller
                     //$phoneOtp = random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
                     $euId = User::insertGetId($dataUser);
-                    
+
                 }
                 $user = User::where('id',$euId)->first();
                 //dd($user);
@@ -273,9 +273,63 @@ class MyRequestController extends Controller
                 //     ]
                 // );
 
+                return ZohoHelper::dispatchAfterResponse(
+                    function () use ($euId, $rel,$sId,$leadService) {
+
+                        User::where('form_status', 1)
+                            ->whereIn('user_type', [1, 3])
+                            ->select('id')
+                            ->chunk(800, function ($sellersChunk) use ($leadService) {
+                                foreach ($sellersChunk as $seller) {
+                                    $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
+                                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+                                    $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+                                    foreach ($allLeads as $lead) {
+                                        CustomHelper::logNotifications(
+                                            $seller->id,
+                                            $lead->id,
+                                            'buyer_browser_new_lead',
+                                            'New Lead',
+                                            'You have got a new lead',
+                                            true
+                                        );
+                                    }
+                                }
+                            });
+
+                            $lead = LeadRequest::find($sId);
+                            $sellers = $leadService->getAllSellers($lead);
+                            if(!empty($sellers['response']['sellers'])){
+                                $sortedSellers = $sellers['response']['sellers']
+                                    ->sortByDesc('total_credit')
+                                    ->values()
+                                    ->take(7);
+                                foreach($sortedSellers as $seller){
+                                    ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
+                                }
+                            }
+
+                        app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                        app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                        //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
+                        $this->autoBidBased([
+                            'success' => true,
+                            'message' => 'Quote Submitted Successfully',
+                            'data' => $rel,
+                            'euId' => $euId,
+                        ]);
+                    },
+                    [
+                        'success' => true,
+                        'message' => 'Quote Submitted Successfully',
+                        'data' => $rel
+                    ]
+                );
 
 
-                return $this->sendResponse('Quote Submitted Sucessfully',$rel);
+                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
         }else{
 
