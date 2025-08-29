@@ -198,6 +198,7 @@ class ApiController extends Controller
             ->where('id', '!=', $serviceid)
             ->where(function ($query) use ($search) {
                 $query->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('tags', 'LIKE', "%{$search}%")
                       ->orWhere('description', 'LIKE', "%{$search}%");
             })
             ->where('show_in_search', '1')
@@ -206,6 +207,7 @@ class ApiController extends Controller
             $categories = Category::where('status', 1)
                               ->where(function ($query) use ($search) {
                                   $query->where('name', 'LIKE', "%{$search}%")
+                                        ->orWhere('tags', 'LIKE', "%{$search}%")
                                         ->orWhere('description', 'LIKE', "%{$search}%");
                               })
                               ->where('show_in_search', '1')

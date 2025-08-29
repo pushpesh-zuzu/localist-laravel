@@ -20,7 +20,7 @@ class SectorController extends Controller{
     }
 
     public function create(Request $request){
-        $data['sectorsList']= Category::where('status','1')->get();   
+        $data['sectorsList']= Category::where('status','1')->get();
         $data['sector'] = '';
         return view('sectors.create',$data);
     }
@@ -49,25 +49,25 @@ class SectorController extends Controller{
         $data['is_home'] = $request->is_home;
         $data['is_popular'] = $request->is_popular;
         $data['show_in_search'] = $request->show_in_search;
-        if($request->hasFile('category_icon')){ 
+        if($request->hasFile('category_icon')){
             $data['category_icon'] = CustomHelper::fileUpload($request->category_icon,'category');
         }
-        if($request->hasFile('banner_image')){ 
+        if($request->hasFile('banner_image')){
             $data['banner_image'] = CustomHelper::fileUpload($request->banner_image,'category');
         }
 
         Category::create($data);
         return redirect()->route('sectors.index')->with('success', 'Sector created successfully.');
-    
 
-        // $this->validateSave($request);   
+
+        // $this->validateSave($request);
         // return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
     // Show the form for editing the specified category
     public function edit(Request $request, $id)
     {
-        $data['sectorsList']= Category::where('status','1')->get(); 
+        $data['sectorsList']= Category::where('status','1')->get();
         $data['sector'] = Category::where('id', $id)->first()->toArray();
         // echo "<pre>";
         // print_r($data['sector']);
@@ -77,6 +77,7 @@ class SectorController extends Controller{
 
     public function update(Request $request, $id)
     {
+
         $validator = Validator::make($request->all(), [
             'name' => [
                 'required',
@@ -100,12 +101,13 @@ class SectorController extends Controller{
         $data['seo_title'] = $request->seo_title;
         $data['seo_description'] = $request->seo_description;
         $data['is_home'] = $request->is_home;
+        $data['tags'] = $request->tags;
         $data['is_popular'] = $request->is_popular;
         $data['show_in_search'] = $request->show_in_search;
-        if($request->hasFile('category_icon')){ 
+        if($request->hasFile('category_icon')){
             $data['category_icon'] = CustomHelper::fileUpload($request->category_icon,'category');
         }
-        if($request->hasFile('banner_image')){ 
+        if($request->hasFile('banner_image')){
             $data['banner_image'] = CustomHelper::fileUpload($request->banner_image,'category');
         }
 
