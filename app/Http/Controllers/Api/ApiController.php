@@ -51,32 +51,50 @@ class ApiController extends Controller
 
     public function popularServices()
     {
+        $oneWeekAgo = Carbon::now()->subWeek();
 
-        $aRows = Category::where('is_popular',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)->get();
-        foreach($aRows as $value){
-            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        $aRows = Category::where('is_popular', 1)
+            ->where('parent_id', '<>', 0)
+            ->where('status', 1)
+            ->withCount(['leadRequests as leads_count' => function ($query) use ($oneWeekAgo) {
+                $query->where('created_at', '>=', $oneWeekAgo);
+            }])
+            ->orderByDesc('leads_count')
+            ->get();
+
+        foreach ($aRows as $value) {
+            $value['baseurl'] = url('/') . Storage::url('app/public/images/category');
         }
 
-        return $this->sendResponse(__('Popular Services'),$aRows);
+        return $this->sendResponse(__('Popular Services'), $aRows);
     }
 
     public function popularUserServices(Request $request)
     {
         $userId = $request->user_id;
+        $oneWeekAgo = Carbon::now()->subWeek();
 
+        // get services already added by the user
         $userServices = UserService::where('user_id', $userId)
             ->pluck('service_id')
             ->toArray();
 
-        $aRows = Category::where('is_popular',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)
-        ->whereHas('serviceQuestions')
-        ->whereNotIn('id', $userServices)
-        ->get();
-        foreach($aRows as $value){
-            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        $aRows = Category::where('is_popular', 1)
+            ->where('parent_id', '<>', 0)
+            ->where('status', 1)
+            ->whereHas('serviceQuestions')
+            ->whereNotIn('id', $userServices)
+            ->withCount(['leadRequests as leads_count' => function ($query) use ($oneWeekAgo) {
+                $query->where('created_at', '>=', $oneWeekAgo);
+            }])
+            ->orderByDesc('leads_count')
+            ->get();
+
+        foreach ($aRows as $value) {
+            $value['baseurl'] = url('/') . Storage::url('app/public/images/category');
         }
 
-        return $this->sendResponse(__('Popular User Services'),$aRows);
+        return $this->sendResponse(__('Popular User Services'), $aRows);
     }
 
     private function flattenCategories($categories) {
