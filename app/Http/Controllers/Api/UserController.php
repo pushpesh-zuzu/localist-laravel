@@ -218,6 +218,15 @@ class UserController extends Controller
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = 0;
         $aVals['business_profile_name'] = $request->businessname;
+         if (isset($aVals['phone']) && !empty($aVals['phone'])) {
+            $cleanPhone = preg_replace('/\s+/', '', $aVals['phone']); // remove spaces
+            if (strpos($cleanPhone, '+44') !== 0) {
+                $cleanPhone = ltrim($cleanPhone, '0');
+                $aVals['phone'] = '+44' . $cleanPhone;
+            } else {
+                $aVals['phone'] = $cleanPhone;
+            }
+        }
         $user = User::create($aVals);
 
 
