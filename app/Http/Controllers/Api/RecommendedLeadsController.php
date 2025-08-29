@@ -416,7 +416,7 @@ class RecommendedLeadsController extends Controller
             ->where('seller_id',$sellerId)
             ->first();
         if(!empty($bidCheck)){
-            return $this->sendError('Bid Already Placed for this seller', 404);
+            return $this->sendError('Contact already exists for this seller', 404);
         }
 
         // check if N bids has been placed on this lead or not
@@ -429,7 +429,7 @@ class RecommendedLeadsController extends Controller
                 'closed_status' => 1
             ]);
             $word = CustomHelper::numberToWords($leadSlotCount);
-            return $this->sendError($word .' slots has been full! No more bids can be placed.', 404);
+            return $this->sendError($word .' slots has been full! No more contacts can be made.', 404);
         }
         $logInfo = "";
         $trInfo = "";
