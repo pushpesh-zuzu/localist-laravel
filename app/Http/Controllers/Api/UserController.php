@@ -62,7 +62,7 @@ class UserController extends Controller
     public function getSellerDashboardStats(Request $request, LeadService $ls){
         $userId = $request->user_id;
         $user = User::where('id', $userId)->first();
-        
+
         if(!empty($user)){
 
             $leadsBQ = $ls->getSellerLeadsBaseQuery($userId);
@@ -217,6 +217,7 @@ class UserController extends Controller
         $aVals['password'] = Hash::make($passwordRandomString);
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = 0;
+        $aVals['business_profile_name'] = $request->businessname;
         $user = User::create($aVals);
 
 

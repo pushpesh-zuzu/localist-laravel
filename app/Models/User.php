@@ -32,6 +32,7 @@ class User extends Authenticatable
         'email',
         'password',
         'company_reg_number',
+        'business_profile_name',
         'company_name',
         'company_website',
         'is_company_website',

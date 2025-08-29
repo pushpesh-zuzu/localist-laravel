@@ -1223,9 +1223,9 @@ class LeadPreferenceController extends Controller
                 'user_id' => $aVals['buyer_id'], //buyer
                 'lead_id' => $aVals['lead_id']
             ]);
-            return $this->sendResponse('Data added Sucessfully', []);
+            return $this->sendResponse('Added to your saved leads', []);
         }
-        return $this->sendError('Data already added for this user');
+        return $this->sendError('Added to your saved leads');
     }
 
     public function getSaveForLaterList(Request $request)
