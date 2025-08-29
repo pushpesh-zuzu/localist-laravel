@@ -500,7 +500,7 @@ class RecommendedLeadsController extends Controller
         //         ]);
         // }
 
-        return $this->sendResponse('Bid placed successfully-K');
+        return $this->sendResponse('Your request has been sent.');
     }
 
     public function addMultipleManualBid(Request $request){
@@ -525,63 +525,12 @@ class RecommendedLeadsController extends Controller
                 $inserted++;
             }
         }
-        return $this->sendResponse('Multiple Bids placed successfully', [
+        return $this->sendResponse('Your requests have been sent.', [
             'inserted_count' => $inserted,
             'total_now' => RecommendedLead::where('lead_id', $leadId)->count()
         ]);
     }
 
-
-    // public function sendLeadRequestReply() //sendLeadRequestReply
-    // {
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         ->where('form_status', 1)
-    //         ->where('user_type', 1)
-    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         ->where('recommended_leads.purchase_type', 'Request Reply')
-    //         ->select('users.id', 'total_credit')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-
-    //             foreach ($sellersChunk as $seller) {
-
-
-    //                 $allLeads = RecommendedLead::where('seller_id', $seller->id)
-    //                             ->where('purchase_type', 'Request Reply')
-    //                             ->join('lead_requests', 'recommended_leads.lead_id', '=', 'lead_requests.id')
-    //                             //->whereBetween('lead_requests.created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
-    //                             ->orderBy('lead_requests.id', 'desc')
-    //                             ->select('lead_requests.id')
-    //                             ->get();
-
-
-
-    //                 foreach ($allLeads as $lead) {
-
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         //->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead - Request Reply')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadRequestReply($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ]);
-    // }
 
 public function sendLeadRequestReply()
 {
