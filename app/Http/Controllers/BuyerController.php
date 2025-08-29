@@ -12,6 +12,7 @@ use App\Models\User;
 use DB;
 
 
+
 class BuyerController extends Controller
 {
     /**
