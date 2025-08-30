@@ -41,7 +41,7 @@ class ZohoLeadBuyers
 
         Log::info('Zoho API Credit Used for LeadBuyer Sync', [
             'user_id' => $userId,
-            'credits_used' => $response->headers()
+            'response' => $responseData
         ]);
 
         return $responseData;
