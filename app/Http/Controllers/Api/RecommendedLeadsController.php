@@ -301,22 +301,22 @@ class RecommendedLeadsController extends Controller
 
         for ($i = 1; $i <= 5; $i++) {
             // Simulate rating filter exactly like the `ratingFilter` method
-            $result = $leadService->getAllSellers($lead, ['rating' => $i]);
+            // $result = $leadService->getAllSellers($lead, ['rating' => $i]);
 
             $ratings[] = [
                 'label' => $i == 5 ? 'only' : '& up',
                 'value' => $i,
-                'count' => count($result['response']['sellers']),
+                // 'count' => count($result['response']['sellers']),
             ];
         }
 
          // Handle sellers with no rating (avg_rating is null)
-        $resultNoRating = $leadService->getAllSellers($lead, ['rating' => 'no_rating']);
+        // $resultNoRating = $leadService->getAllSellers($lead, ['rating' => 'no_rating']);
 
         $ratings[] = [
             'label' => 'No rating',
             'value' => 'no_rating',
-            'count' => count($resultNoRating['response']['sellers']),
+            // 'count' => count($resultNoRating['response']['sellers']),
         ];
 
         return $this->sendResponse(__('Filtered Data by Rating'), [$ratings]);
