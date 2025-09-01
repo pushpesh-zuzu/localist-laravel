@@ -176,6 +176,7 @@ class UserController extends Controller
         $user['reviews'] = Review::where('user_id',$sellerId)->get();
         $user['reviews_count'] = count($user['reviews']);
         $user['accreditations'] = UserAccreditation::where('user_id',$sellerId)->get();
+        $user['photos'] = UserDetail::where('user_id',$sellerId)->first();
         $user['services'] = UserService::where('user_id',$sellerId)->with(['userServices'])->get();
         $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$sellerId)->get();
 

@@ -16,7 +16,7 @@ use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator
+    Auth, Hash, DB , Log, Mail, Validator
 };
 use Illuminate\Support\Facades\Storage;
 use Stripe\Stripe;
@@ -75,33 +75,50 @@ class SettingController extends Controller
         }
 
         if($aValues['type'] == 'photos'){
+            $existingPhotos = $request->input('existing_photos'); // "old1.png,old2.png"
+
+            if (is_string($existingPhotos)) {
+                $existingPhotosArray = $existingPhotos ? explode(',', $existingPhotos) : [];
+            } elseif (is_array($existingPhotos)) {
+                $existingPhotosArray = $existingPhotos;
+            } else {
+                $existingPhotosArray = [];
+            }
+
+
+
+
+            $newPhotos = []; // will hold uploaded files
+
             if ($request->hasFile('company_photos')) {
-                $companyimgPaths = []; // Store multiple image names
                 foreach ($request->file('company_photos') as $image) {
+                    // Upload file
                     $companyimagePath = CustomHelper::fileUpload($image, 'users');
                     if ($companyimagePath) {
-                        $companyimgPaths[] = $companyimagePath; // Add filename to the array
+                        $newPhotos[] = $companyimagePath; // add new photo filename
                     }
                 }
-
-                $company_photos = implode(',', $companyimgPaths); // Convert array to a comma-separated string
-            }else{
-                $company_photos = "";
             }
+
+            $allPhotos = array_merge($existingPhotosArray, $newPhotos);
+
             if(isset($userdetails) && $userdetails != ''){
                 $userdetails->update([
-                    'company_photos' => $company_photos,
-                    'company_youtube_link' => $aValues['company_youtube_link'],
+                    'company_photos' => implode(',', $allPhotos),
+                    'company_youtube_link' => $aValues['company_youtube_link'] ?? null,
                 ]);
             }else{
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
-                    'company_photos' => $company_photos,
-                    'company_youtube_link' => $aValues['company_youtube_link'],
+                    'company_photos' => implode(',', $allPhotos),
+                    'company_youtube_link' => $aValues['company_youtube_link'] ?? null,
                     'is_autobid' => 1
                 ]);
             }
         }
+
+
+
 
         if($aValues['type'] == 'social_media'){
             // echo "<pre>";
@@ -147,22 +164,62 @@ class SettingController extends Controller
 
         // }
 
-        if ($aValues['type'] == 'accreditations') {
-            $files = $request->file('accre_image'); // can be single or array
-            $names = $request->input('accre_name', []);
+        // if ($aValues['type'] == 'accreditations') {
+        //     $files = $request->file('accre_image'); // can be single or array
+        //     $names = $request->input('accre_name', []);
 
-            if ($files) {
-                // normalize to array
-                if (!is_array($files)) {
-                    $files = [$files];
+        //     return ['message'=>$request];
+        //     if ($files) {
+        //         // normalize to array
+        //         if (!is_array($files)) {
+        //             $files = [$files];
+        //         }
+
+        //         foreach ($files as $index => $img) {
+        //             $imagePath = CustomHelper::accfileUpload($img, 'accreditations');
+
+        //             UserAccreditation::create([
+        //                 'user_id' => $user_id,
+        //                 'name'    => $names[$index] ?? null, // safe access
+        //                 'image'   => $imagePath,
+        //             ]);
+        //         }
+        //     }
+        // }
+
+        if ($aValues['type'] == 'accreditations') {
+            $ids      = $request->input('accre_id', []);        // indexed ids
+            $names    = $request->input('accre_name', []);      // indexed names
+            $files    = $request->file('accre_file', []);       // indexed files
+            $existing = $request->input('accre_existing', []);  // indexed filenames
+
+            foreach ($names as $index => $name) {
+                $id   = $ids[$index] ?? null;
+                $file = $files[$index] ?? null;
+                $imagePath = null;
+
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+
+                    $imagePath = CustomHelper::accfileUpload($file, 'accreditations');
+                } elseif (!empty($existing[$index])) {
+
+                    $imagePath = $existing[$index];
                 }
 
-                foreach ($files as $index => $img) {
-                    $imagePath = CustomHelper::accfileUpload($img, 'accreditations');
+                if ($id) {
+
+                    $accr = UserAccreditation::find($id);
+                    if ($accr) {
+                        $accr->update([
+                            'name'  => $name,
+                            'image' => $imagePath,
+                        ]);
+                    }
+                } else {
 
                     UserAccreditation::create([
                         'user_id' => $user_id,
-                        'name'    => $names[$index] ?? null, // safe access
+                        'name'    => $name,
                         'image'   => $imagePath,
                     ]);
                 }
@@ -170,6 +227,13 @@ class SettingController extends Controller
         }
 
 
+         if ($aValues['type'] == 'delete_accreditation') {
+            $id = $request->input('accre_id');
+            if ($id) {
+                UserAccreditation::where('id', $id)->delete();
+            }
+
+        }
 
         return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
             //app(ZohoSocialMedia::class)->integrateSocialLinks($user_id);

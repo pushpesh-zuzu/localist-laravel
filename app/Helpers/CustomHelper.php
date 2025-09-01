@@ -348,7 +348,7 @@ class CustomHelper
             if (!in_array($mimeType, ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/bmp', 'image/svg+xml'])) {
                 return "";
             }
-            $imagename =  time() . '.' . $imageext;
+            $imagename = uniqid() . '_' . time() . '.' . $imageext;
 
             if(env('APP_ENV', config('app.env')) == 'local'){
                 $folderPath = 'images/' . $destinationFolder;
