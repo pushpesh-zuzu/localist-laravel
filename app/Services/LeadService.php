@@ -442,10 +442,10 @@ class LeadService
                 DB::raw('COALESCE(urt.average, 15) as response_time'),
                 'p.latitude as lat',
                 'p.longitude as lng',
-                DB::raw("3958.8 * acos(
+                DB::raw("TRUNCATE(3958.8 * acos(
                     cos(radians($refLat)) * cos(radians(p.latitude)) * cos(radians(p.longitude) - radians($refLng))
                     + sin(radians($refLat)) * sin(radians(p.latitude))
-                ) as distance"),
+                ), 3) as distance"),
                 'users.created_at as user_created_time'
             )
             ->get();
