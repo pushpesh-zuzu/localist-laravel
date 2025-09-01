@@ -470,12 +470,13 @@ class LeadService
                 || $row->miles >= $row->distance;
         });
 
-        // Step 5: Apply preference logic
-        $final = $this->usersAccordingToPrefs($question, $filteredUsers, $row->service_id ?? $serviceId)
-            ->when(empty($filters['distance_order']), fn($c) => $c->sortBy('distance'))
-            ->when(strtolower($filters['distance_order'] ?? '') === 'farthest to nearest', fn($c) => $c->sortByDesc('distance'));
+        // Step 5: Apply distance sorting logic
+        $distanceOrder = strtolower($filters['distance_order'] ?? '');
+        $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)
+            ->when($distanceOrder === '' || $distanceOrder === 'nearest to farthest', fn($c) => $c->sortBy('distance'))
+            ->when($distanceOrder === 'farthest to nearest', fn($c) => $c->sortByDesc('distance'));
 
-        // Step 6: Ensure unique sellers by nearest distance
+        // Step 6: Ensure unique sellers
         $finalUniqueSellers = $final->unique('id')->values();
 
         return [
