@@ -329,8 +329,8 @@ class RecommendedLeadsController extends Controller
 
         $rating = $request->rating;
 
-        // Accept 1-5 or "no_rating"
-        if (!in_array($rating, ['1', '2', '3', '4', '5', 'no_rating'], true)) {
+        // Accept 1-5 or "no_rating" or "all"
+        if (!in_array($rating, ['1', '2', '3', '4', '5', 'no_rating', 'all'], true)) {
             return $this->sendError(__('Invalid rating value'), 400);
         }
 
