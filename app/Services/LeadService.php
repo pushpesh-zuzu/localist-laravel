@@ -353,25 +353,24 @@ class LeadService
                         // CUSTOMER PANEL
 ####################################################################################################################
 
-    public function getAllSellers($lead, $filters = [],$sendFlag = null){
-        // echo "<pre>";print_r($lead->toArray());exit;
-
+    public function getAllSellers($lead, $filters = [], $sendFlag = null)
+    {
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
-        $serviceId = $lead->service_id;
-        $leadCreditScore = $lead->credit_score;
-        $refPostcode = $lead->postcode;
-        $customerId = $lead->customer_id;
-        $question = $lead->arrayed_questions;
-        $serviceName = Category::find($serviceId)->name ?? '';
+        $serviceId        = $lead->service_id;
+        $leadCreditScore  = (int) $lead->credit_score;
+        $refPostcode      = $lead->postcode;
+        $customerId       = $lead->customer_id;
+        $question         = $lead->arrayed_questions;
+        $serviceName      = Category::find($serviceId)->name ?? '';
 
         if (!is_array(json_decode($question, true))) {
             return $this->sendError('Invalid or missing lead questions', 404);
         }
 
-        // Step 1: Get lat/lng of reference postcode
+        // Step 1: Get reference lat/lng in one go
         $ref = DB::table('postcodes')
-            ->where('postcode', $refPostcode)
             ->select('latitude', 'longitude')
+            ->where('postcode', $refPostcode)
             ->first();
 
         if (!$ref) {
@@ -381,29 +380,52 @@ class LeadService
         $refLat = $ref->latitude;
         $refLng = $ref->longitude;
 
-        // users who have contacted this lead
+        // Already contacted sellers
         $repliesUsers = RecommendedLead::where('lead_id', $lead->id)
             ->where('service_id', $serviceId)
-            ->pluck('seller_id')->toArray();
+            ->pluck('seller_id')
+            ->toArray();
 
-        // Step 2: Preselect user_service_locations using simplified logic
+        // Step 2: Query sellers (push as much filtering into SQL as possible)
         $rows = DB::table('user_service_locations as usl')
-            ->join('users', function ($join) use ($repliesUsers)  {
+            ->join('users', function ($join) use ($repliesUsers, $customerId) {
                 $join->on('users.id', '=', 'usl.user_id')
                     ->where('users.form_status', 1)
-                    ->whereNotIn('users.id', $repliesUsers);
-
+                    ->whereNotIn('users.id', $repliesUsers)
+                    ->where('users.id', '<>', $customerId);
             })
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
             ->join('postcodes as p', 'p.postcode', '=', 'usl.postcode')
             ->leftJoin('user_response_times as urt', 'urt.seller_id', '=', 'usl.user_id')
-            ->where('users.id' ,'<>', $lead->customer_id) //do not include self as seller
             ->where('usl.service_id', $serviceId)
             ->when($sendFlag != 2, function ($query) use ($leadCreditScore) {
-                $query->where('users.total_credit', '>=', (int) $leadCreditScore);
+                $query->where('users.total_credit', '>=', $leadCreditScore);
             })
+            ->when(!empty($filters['rating']), function ($query) use ($filters) {
+                if ($filters['rating'] === 'no_rating') {
+                    $query->where('users.avg_rating', 0);
+                } elseif ($filters['rating'] === 5) {
+                    $query->where('users.avg_rating', '=', 5);
+                } else {
+                    $query->where('users.avg_rating', '>=', $filters['rating']);
+                }
+            })
+            ->when(!empty($filters['response_time']), function ($query) use ($filters) {
+                $timeThresholds = [
+                    'Responds within 10 mins' => 10,
+                    'Responds within 1 hour'  => 60,
+                    'Responds within 6 hours' => 360,
+                    'Responds within 24 hours'=> 1440,
+                ];
+                $maxAllowed = $timeThresholds[$filters['response_time']] ?? null;
+                if ($maxAllowed) {
+                    $query->whereNotNull('urt.average')
+                        ->where('urt.average', '<=', $maxAllowed);
+                }
+            })
+            // Calculate distance in SQL (Haversine)
             ->select(
-                'users.id as id',
+                'users.id',
                 'users.name',
                 'users.profile_image',
                 'users.total_credit',
@@ -417,164 +439,96 @@ class LeadService
                 'usl.miles',
                 'usl.nation_wide',
                 'usl.postcode',
-                'urt.average as response_time',
+                DB::raw('COALESCE(urt.average, 15) as response_time'),
                 'p.latitude as lat',
                 'p.longitude as lng',
+                DB::raw("TRUNCATE(3958.8 * acos(
+                    cos(radians($refLat)) * cos(radians(p.latitude)) * cos(radians(p.longitude) - radians($refLng))
+                    + sin(radians($refLat)) * sin(radians(p.latitude))
+                ), 3) as distance"),
                 'users.created_at as user_created_time'
-            );
+            )
+            ->get();
 
-
-        if(!empty($filters['rating'])){
-            if($filters['rating'] === 'no_rating'){
-                $rows = $rows->where('users.avg_rating', 0);
-
-            }else if($filters['rating'] === 5){
-                $rows = $rows->where('users.avg_rating', '=', 5);
-            }else{
-                $rows = $rows->where('users.avg_rating', '>=', $filters['rating']);
-            }
-        }
-
-        //response_time filter
-        if(!empty($filters['response_time'])){
-            $timeThresholds = [
-                'Responds within 10 mins' => 10,
-                'Responds within 1 hour' => 60,
-                'Responds within 6 hours' => 360,
-                'Responds within 24 hours' => 1440,
-            ];
-            $maxAllowed = $timeThresholds[$filters['response_time']] ?? null;
-
-            $rows = $rows->where('urt.average','<>', null)
-                ->where('urt.average', '<=', $maxAllowed);
-        }
-
-        $rows = $rows->get();
-
-
-
-        // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
+        // Step 3: Group sellers by user_id + postcode
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
-            ->map(function ($items) use($serviceName, $leadCreditScore) {
-                // Step 1: Pick best row
-                $nationwide = $items->firstWhere('nation_wide', 1);
-                $r = $nationwide ?: $items->sortByDesc('miles')->first();
+            ->map(function ($items) use ($serviceName, $leadCreditScore) {
+                $r = $items->firstWhere('nation_wide', 1)
+                    ?: $items->sortByDesc('miles')->first();
 
-                // Step 2: Add calculated fields
-                $r->credit_score = $leadCreditScore;
-                $r->service_name = $serviceName;
-                $rpTime = !empty($r->response_time) ? $r->response_time : 15;
-                $r->response_time = $rpTime;
-                $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
+                $r->credit_score   = $leadCreditScore;
+                $r->service_name   = $serviceName;
+                $r->quicktorespond = ($r->response_time > 0 && $r->response_time <= 720) ? 1 : 0;
 
                 return $r;
             });
 
-
-
-        // Step 4: Filter by distance using Haversine Formula
-        $filteredUsers = $grouped->filter(function ($row) use ($refLat, $refLng, $refPostcode) {
-            $distance = 3958.8 * acos(
-                cos(deg2rad($refLat)) * cos(deg2rad($row->lat)) * cos(deg2rad($row->lng) - deg2rad($refLng)) +
-                sin(deg2rad($refLat)) * sin(deg2rad($row->lat))
-            );
-
-            $row->distance = (double) round($distance, 2); // add distance field
-
+        // Step 4: Apply final distance filtering in PHP
+        $filteredUsers = $grouped->filter(function ($row) use ($refPostcode) {
             return $row->nation_wide == 1
                 || $row->postcode == $refPostcode
-                || $row->miles >= $distance;
+                || $row->miles >= $row->distance;
         });
 
+        // Step 5: Apply preference logic
+        $final = $this->usersAccordingToPrefs($question, $filteredUsers, $row->service_id ?? $serviceId)
+            ->when(empty($filters['distance_order']), fn($c) => $c->sortBy('distance'))
+            ->when(($filters['distance_order'] ?? '') === 'Farthest to Nearest', fn($c) => $c->sortByDesc('distance'));
 
-        $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)->sortBy('distance');
-
-        if(!empty($filters['distance_order'])){
-            if($filters['distance_order'] === 'farthest to nearest'){
-                $final = $final->sortByDesc('distance');
-            }
-        }
-
-        // print_r($final);
-        // exit;
-
-        $seen = [];
-
-        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
-            // Check if this seller ID is already seen
-            if (isset($seen[$seller->id])) {
-                // Keep the one with lower distance
-                if ($seller->distance < $seen[$seller->id]->distance) {
-                    $seen[$seller->id] = $seller;
-                }
-            } else {
-                // First time seeing this seller
-                $seen[$seller->id] = $seller;
-            }
-
-            // Always return false, final result is built in pipe
-            return false;
-        })->pipe(function () use (&$seen) {
-            // Reindex to get a collection of just the lowest-distance sellers
-            return collect(array_values($seen));
-        });
-
-
+        // Step 6: Ensure unique sellers by nearest distance
+        $finalUniqueSellers = $final->unique('id')->values();
 
         return [
-            'empty' => empty($finalUniqueSellers) ? true : false,
-            'response' => [
-                'service_name' => $serviceName,
-                'sellersCount' => count($finalUniqueSellers),
-                'sellers' => $finalUniqueSellers,
-                'displayCount' => $recommendedCount ?? 0,
-                'baseurl' => url('/') . Storage::url('app/public/images/users'),
-                'w80' => (int) ($recommendedCount * 0.8)
+            'empty'   => $finalUniqueSellers->isEmpty(),
+            'response'=> [
+                'service_name'  => $serviceName,
+                'sellersCount'  => $finalUniqueSellers->count(),
+                'sellers'       => $finalUniqueSellers,
+                'displayCount'  => $recommendedCount,
+                'baseurl'       => url('/') . Storage::url('app/public/images/users'),
+                'w80'           => (int) ($recommendedCount * 0.8),
             ]
         ];
     }
 
 
-    public function getAllSellersNationList($lead, $filters = [],$sendFlag = null){
-        // echo "<pre>";print_r($lead->toArray());exit;
 
+    public function getAllSellersNationList($lead, $filters = [], $sendFlag = null)
+    {
         $recommendedCount = CustomHelper::setting_value("recommended_list_count", 5);
-        $serviceId = $lead->service_id;
-        $leadCreditScore = $lead->credit_score;
-        $refPostcode = $lead->postcode;
-        $customerId = $lead->customer_id;
-        $question = $lead->arrayed_questions;
-        $serviceName = Category::find($serviceId)->name ?? '';
+        $serviceId        = $lead->service_id;
+        $leadCreditScore  = (int) $lead->credit_score;
+        $refPostcode      = $lead->postcode;
+        $customerId       = $lead->customer_id;
+        $question         = $lead->arrayed_questions;
+        $serviceName      = Category::find($serviceId)->name ?? '';
 
         if (!is_array(json_decode($question, true))) {
             return $this->sendError('Invalid or missing lead questions', 404);
         }
 
-        // Step 1: Get lat/lng of reference postcode
-
-
-        // users who have contacted this lead
+        // Step 1: Already contacted sellers
         $repliesUsers = RecommendedLead::where('lead_id', $lead->id)
             ->where('service_id', $serviceId)
-            ->pluck('seller_id')->toArray();
+            ->pluck('seller_id')
+            ->toArray();
 
-        // Step 2: Preselect user_service_locations using simplified logic
+        // Step 2: Query sellers (nationwide or service-specific)
         $rows = DB::table('user_service_locations as usl')
-            ->join('users', function ($join) use ($repliesUsers)  {
+            ->join('users', function ($join) use ($repliesUsers, $customerId) {
                 $join->on('users.id', '=', 'usl.user_id')
                     ->where('users.form_status', 1)
-                    ->whereNotIn('users.id', $repliesUsers);
-
+                    ->whereNotIn('users.id', $repliesUsers)
+                    ->where('users.id', '<>', $customerId);
             })
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
             ->leftJoin('user_response_times as urt', 'urt.seller_id', '=', 'usl.user_id')
-            ->where('users.id' ,'<>', $lead->customer_id) //do not include self as seller
             ->where('usl.service_id', $serviceId)
             ->when($sendFlag == 1, function ($query) {
                 $query->where('usl.nation_wide', 1);
             })
             ->select(
-                'users.id as id',
+                'users.id',
                 'users.name',
                 'users.profile_image',
                 'users.total_credit',
@@ -588,41 +542,39 @@ class LeadService
                 'usl.miles',
                 'usl.nation_wide',
                 'usl.postcode',
-                'urt.average as response_time',
+                DB::raw('COALESCE(urt.average, 15) as response_time'),
                 'users.created_at as user_created_time'
-            );
+            )
+            ->get();
 
-        $rows = $rows->get();
-
-
-
-        // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
+        // Step 3: Group sellers by user_id + postcode
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
-            ->map(function ($items) use($serviceName, $leadCreditScore) {
-                // Step 1: Pick best row
-                $nationwide = $items->firstWhere('nation_wide', 1);
-                $r = $nationwide ?: $items->sortByDesc('miles')->first();
+            ->map(function ($items) use ($serviceName, $leadCreditScore) {
+                $r = $items->firstWhere('nation_wide', 1)
+                    ?: $items->sortByDesc('miles')->first();
 
-                // Step 2: Add calculated fields
-                $r->credit_score = $leadCreditScore;
-                $r->service_name = $serviceName;
-                $rpTime = !empty($r->response_time) ? $r->response_time : 15;
-                $r->response_time = $rpTime;
-                $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
+                $r->credit_score   = $leadCreditScore;
+                $r->service_name   = $serviceName;
+                $r->quicktorespond = ($r->response_time > 0 && $r->response_time <= 720) ? 1 : 0;
 
                 return $r;
             });
 
-
-
+        // Step 4: Apply preference logic
         $final = $this->usersAccordingToPrefs($question, $grouped, $serviceId);
 
+        // Step 5: Ensure unique sellers
+        $finalUniqueSellers = $final->unique('id')->values();
+
         return [
-            'empty' => empty($final) ? true : false,
-            'response' => [
-                'service_name' => $serviceName,
-                'sellers' => $final,
-                'baseurl' => url('/') . Storage::url('app/public/images/users')
+            'empty'   => $finalUniqueSellers->isEmpty(),
+            'response'=> [
+                'service_name'  => $serviceName,
+                'sellersCount'  => $finalUniqueSellers->count(),
+                'sellers'       => $finalUniqueSellers,
+                'displayCount'  => $recommendedCount,
+                'baseurl'       => url('/') . Storage::url('app/public/images/users'),
+                'w80'           => (int) ($recommendedCount * 0.8),
             ]
         ];
     }
