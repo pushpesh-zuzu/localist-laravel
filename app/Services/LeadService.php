@@ -473,7 +473,7 @@ class LeadService
         // Step 5: Apply preference logic
         $final = $this->usersAccordingToPrefs($question, $filteredUsers, $row->service_id ?? $serviceId)
             ->when(empty($filters['distance_order']), fn($c) => $c->sortBy('distance'))
-            ->when(($filters['distance_order'] ?? '') === 'Farthest to Nearest', fn($c) => $c->sortByDesc('distance'));
+            ->when(strtolower($filters['distance_order'] ?? '') === 'farthest to nearest', fn($c) => $c->sortByDesc('distance'));
 
         // Step 6: Ensure unique sellers by nearest distance
         $finalUniqueSellers = $final->unique('id')->values();
