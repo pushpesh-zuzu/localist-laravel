@@ -455,18 +455,21 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
 
         // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
-            ->map(function ($items) {
+            ->map(function ($items) use($serviceName, $leadCreditScore) {
+                // Step 1: Pick best row
                 $nationwide = $items->firstWhere('nation_wide', 1);
-                return $nationwide ?: $items->sortByDesc('miles')->first();
-            })
-            ->map(function ($r) use($serviceName, $leadCreditScore){
+                $r = $nationwide ?: $items->sortByDesc('miles')->first();
+
+                // Step 2: Add calculated fields
                 $r->credit_score = $leadCreditScore;
-                $r->service_name= $serviceName;
+                $r->service_name = $serviceName;
                 $rpTime = !empty($r->response_time) ? $r->response_time : 15;
                 $r->response_time = $rpTime;
                 $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
+
                 return $r;
             });
+
 
 
         // Step 4: Filter by distance using Haversine Formula
@@ -522,6 +525,7 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
             'empty' => empty($finalUniqueSellers) ? true : false,
             'response' => [
                 'service_name' => $serviceName,
+                'sellersCount' => count($finalUniqueSellers),
                 'sellers' => $finalUniqueSellers,
                 'displayCount' => $recommendedCount ?? 0,
                 'baseurl' => url('/') . Storage::url('app/public/images/users'),
@@ -593,14 +597,19 @@ public function getAllSellers($lead, $filters = [],$sendFlag = null){
 
 
         // Step 3: Group by user_id + postcode, keep nation_wide=1 if present, else max miles
-        $grouped = $rows->groupBy(fn($row) => $row->user_id)
-            ->map(function ($items) {
+        $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
+            ->map(function ($items) use($serviceName, $leadCreditScore) {
+                // Step 1: Pick best row
                 $nationwide = $items->firstWhere('nation_wide', 1);
-                return $nationwide ?: $items->sortByDesc('miles')->first();
-            })
-            ->map(function ($r) use($serviceName, $leadCreditScore){
+                $r = $nationwide ?: $items->sortByDesc('miles')->first();
+
+                // Step 2: Add calculated fields
                 $r->credit_score = $leadCreditScore;
-                $r->service_name= $serviceName;
+                $r->service_name = $serviceName;
+                $rpTime = !empty($r->response_time) ? $r->response_time : 15;
+                $r->response_time = $rpTime;
+                $r->quicktorespond = ($rpTime > 0 && $rpTime <= 720) ? 1 : 0;
+
                 return $r;
             });
 

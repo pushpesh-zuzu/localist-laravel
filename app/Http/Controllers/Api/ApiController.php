@@ -339,6 +339,7 @@ class ApiController extends Controller
         $lead = LeadRequest::find($request->lead_id);
         \Log::info('lead took ' . (microtime(true) - $start) . ' seconds');
 
+        $start = microtime(true);
         $result = $leadService->getAllSellers($lead);
         \Log::info('getAllSellers took ' . (microtime(true) - $start) . ' seconds');
 
