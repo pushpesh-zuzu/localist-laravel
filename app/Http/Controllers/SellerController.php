@@ -67,7 +67,7 @@ class SellerController extends Controller
      */
     public function show(string $id)
     {
-        $aRows = User::where('id',$id)->with(['userDetails'])->first();
+        $aRows = User::where('id',$id)->with(['details'])->first();
         return view('seller.view', compact('aRows'));
     }
 
@@ -136,7 +136,7 @@ class SellerController extends Controller
                                                 ->where('user_id', $userid)
                                                 ->with('serquestions')
                                                 ->get();
-            $value['autobid'] = UserService::where('user_id', $userid)->where('service_id', $value->id)->pluck('auto_bid')->first();
+            $value['autobid'] = UserDetail::where('user_id', $userid)->pluck('is_autobid')->first();
         }
         return view('seller.services', get_defined_vars());
     }
