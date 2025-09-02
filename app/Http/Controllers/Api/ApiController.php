@@ -174,6 +174,8 @@ class ApiController extends Controller
     {
         $search = $request->search; // Get search keyword from request
 
+        $serviceTitle = $request->serviceTitle;
+
         $search = substr((string) $search, 0, 4);
 
         $serviceid = $request->serviceid; // Get search keyword from request
@@ -184,6 +186,11 @@ class ApiController extends Controller
             if ($serviceid > 0) {
                 $base->where('id', '!=', $serviceid);
             }
+
+            if (!empty($serviceTitle)  || $serviceTitle != null) {
+                $base->where('slug', '!=', $serviceTitle);
+            }
+
         // Check if search keyword is provided; otherwise, return empty
         if ($search === '') {
         // You can order as you like; name asc is common for dropdowns
@@ -204,14 +211,17 @@ class ApiController extends Controller
             ->where('show_in_search', '1')
             ->get();
         }else{
-            $categories = Category::where('status', 1)
+            $categoriess = Category::where('status', 1)
                               ->where(function ($query) use ($search) {
                                   $query->where('name', 'LIKE', "%{$search}%")
                                         ->orWhere('tags', 'LIKE', "%{$search}%")
                                         ->orWhere('description', 'LIKE', "%{$search}%");
-                              })
-                              ->where('show_in_search', '1')
-                              ->get();
+                              });
+                              if (!empty($serviceTitle)  || $serviceTitle != null) {
+                                    $categoriess->where('slug', '!=', $serviceTitle);
+                                }
+                              $categoriess->where('show_in_search', '1');
+                         $categories= $categoriess->get();
         }
 
 
