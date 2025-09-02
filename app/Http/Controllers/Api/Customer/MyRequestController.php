@@ -62,7 +62,6 @@ class MyRequestController extends Controller
 
     public function createNewRequest(Request $request, LeadService $leadService){
 
-
         if($request->form_status == "1"){
             $validator = Validator::make($request->all(), [
                 'service_id' => 'required|integer|exists:categories,id',
@@ -83,13 +82,12 @@ class MyRequestController extends Controller
             $phoneOtp = "";
             $euId = "";
             $token = "";
-
+            $password = "";
             //check if it is registration request or not
 
             if(!empty($request->email)){
 
                 //check if user exists for the given email or not
-                $password = "";
                 $euId = User::where('email',$request->email)->value('id');
 
                 if(empty($euId)){
@@ -107,7 +105,7 @@ class MyRequestController extends Controller
                     $dataUser['zipcode'] = $request->postcode;
                     $dataUser['city'] = $request->city;
                     //for
-                    $password = '12345678';//Str::random(10);
+                    $password =Str::random(8);
                     $dataUser['password'] = Hash::make($password);
                     $dataUser['user_type'] = 2;
                     $dataUser['active_status'] = 2;
@@ -117,6 +115,7 @@ class MyRequestController extends Controller
                     //$phoneOtp = "1234";
                     $phoneOtp = random_int(1000, 9999);
                     $dataUser['otp'] = $phoneOtp;
+
                     $euId = User::insertGetId($dataUser);
 
                 }
@@ -282,7 +281,7 @@ class MyRequestController extends Controller
                 // );
 
                 return ZohoHelper::dispatchAfterResponse(
-                    function () use ($euId, $rel,$sId,$leadService) {
+                    function () use ($euId, $rel,$sId,$leadService,$password) {
 
                         User::where('form_status', 1)
                             ->whereIn('user_type', [1, 3])
@@ -320,6 +319,7 @@ class MyRequestController extends Controller
                             }
 
                         app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                        ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password);
                         app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
                         //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
                         $this->autoBidBased([
@@ -348,7 +348,7 @@ class MyRequestController extends Controller
             $dataUser['name'] = $request->name;
             $dataUser['email'] = $request->email;
             $dataUser['phone'] = $request->phone;
-            $password = Str::random(10);
+            $password = Str::random(8);
             $dataUser['password'] = Hash::make($password);
             $dataUser['user_type'] = 2;
             $dataUser['active_status'] = 2;
@@ -893,7 +893,8 @@ class MyRequestController extends Controller
             return $this->sendError($validator->errors());
         }
 
-        $cOtp = User::where('id',$request->user_id)->value('otp');
+        $fUser = User::where('id',$request->user_id)->first();
+        $cOtp = $fUser->otp;
         $otp = $request->otp;
 
         if($cOtp == $otp){
@@ -907,7 +908,19 @@ class MyRequestController extends Controller
             // $leadsDetails = LeadRequest::where('customer_id',$request->user_id)->first();
             // $zohoService = new ZohoService();
             // $zohoService->integrateUser('lead',null,$leadsDetails);
-            return $this->sendResponse('Phone number verified successfully!');
+            $rel['user_id'] = $request->user_id;
+
+            $rel['user_type'] = $fUser->user_type;
+            $rel['form_status'] = $fUser->form_status;
+            $rel['active_status'] = $fUser->active_status;
+            $rel['remember_tokens'] = $fUser->token;
+            $rel['name'] = $fUser->name;
+            $rel['email'] = $fUser->email;
+            $rel['phone'] = $fUser->phone;
+            $rel['uuid'] = $fUser->uuid;
+
+
+            return $this->sendResponse('Phone number verified successfully!',$rel);
 
         }
         return $this->sendError('Wrong OTP, try again!');

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to Localist</title>
+    <title>Welcome to Localists</title>
     <style>
         body {
             margin: 0;
@@ -124,7 +124,7 @@
             </div>
 
             <div class="card">
-                <h1>Welcome to Localist, {{ $name }}</h1>
+                <h1>Welcome to Localists, {{ $name }}</h1>
                 <div class="highlight">We're excited to start helping you grow your business!</div>
                 <p>We'll now email you targeted leads from new customers. Ensure you get the right leads by confirming your lead preferences now.</p>
                 <a href="{{$baseUrl}}/leads/settings" class="btn">Confirm lead preferences</a>
@@ -136,9 +136,9 @@
                 <p>You can log in to your account and manage your leads anytime:</p>
                 <p>
                   Email: {{$email}} <br/>
-                  Password: {{$password}}
+                  Password: <strong> {{$password}}</strong>
                 </p>
-                <a href="{{$baseUrl}}/login" class="btn">Log in to Localist</a>
+                <a href="{{$baseUrl}}/login" class="btn">Log in to Localists</a>
             </div>
 
             <div class="card">
@@ -223,9 +223,8 @@
                   Secure your next customer by topping up your credits today.</p>
                 <a href="{{$baseUrl}}/mycredits" class="btn">Buy Credits</a>
                 <p>You can also call our customer support team at
-                  <a href="tel:{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}</a>
-                   or email <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}</a>.</p>
-                <p>Regards,<br>Localist Team</p>
+                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.</p>
+                <p>Regards,<br>Localists Team</p>
             </div>
 
             <div class="footer">

@@ -214,7 +214,7 @@ class UserController extends Controller
                 }
             }
         }
-        $passwordRandomString = '12345678';//Str::random(10);
+        $passwordRandomString = Str::random(8);
         $aVals['password'] = Hash::make($passwordRandomString);
         $randomNumber = rand(1000, 5000);
         $aVals['total_credit'] = 0;
