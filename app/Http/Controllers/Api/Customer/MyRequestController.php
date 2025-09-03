@@ -84,6 +84,7 @@ class MyRequestController extends Controller
             $euId = "";
             $token = "";
             $password =Str::random(8);
+            $euidInsert=0;
             //check if it is registration request or not
 
             if(!empty($request->email)){
@@ -92,6 +93,7 @@ class MyRequestController extends Controller
                 $euId = User::where('email',$request->email)->value('id');
 
                 if(empty($euId)){
+                    $euidInsert =1;
                     $dataUser['name'] = $request->name;
                     $dataUser['email'] = $request->email;
                     if (isset($request->phone) && !empty($request->phone)) {
@@ -316,7 +318,7 @@ class MyRequestController extends Controller
                 // );
 
                 return ZohoHelper::dispatchAfterResponse(
-                    function () use ($euId, $rel,$sId,$leadService,$password) {
+                    function () use ($euId, $rel,$sId,$leadService,$password,$euidInsert) {
 
                         User::where('form_status', 1)
                             ->whereIn('user_type', [1, 3])
@@ -352,10 +354,11 @@ class MyRequestController extends Controller
                                     ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                                 }
                             }
-
-                        app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                        ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password);
-                        app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                        if($euidInsert == 1){
+                            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                            ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password);
+                            app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                        }
                         //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
                         $this->autoBidBased([
                             'success' => true,
