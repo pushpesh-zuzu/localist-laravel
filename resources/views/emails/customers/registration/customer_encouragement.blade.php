@@ -103,12 +103,12 @@
         <div class="email-container">
 
             <div class="logo-container">
-                <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localist Logo" class="logo">
+                <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localists Logo" class="logo">
             </div>
 
             <div class="card">
                 <h1>Hi {{ $name }}, you’re almost there!</h1>
-                <div class="highlight">Just one more step to activate your Localist account.</div>
+                <div class="highlight">Just one more step to activate your Localists account.</div>
                 <p>We noticed you started signing up but didn’t finish. Complete your registration to get access to top local leads, auto-bidding, and more.</p>
                 <p>By registering, you can:</p>
                 <ul>
@@ -121,13 +121,11 @@
 
             <div class="card">
                 <div class="section-header">Need Help?</div>
-                <p>Our team is here to assist you. Call us at
-                    <a href="tel:{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}</a>
-                    or email
-                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}</a>.
+                <p>Our team is here to assist you.  Email us at
+                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
                 </p>
                 <p>We’re excited to help you grow 🚀</p>
-                <p>— The Localist Team</p>
+                <p>— The Localists Team</p>
             </div>
 
             <div class="footer">

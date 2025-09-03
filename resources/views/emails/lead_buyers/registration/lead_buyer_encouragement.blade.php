@@ -103,12 +103,12 @@
         <div class="email-container">
 
             <div class="logo-container">
-                <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localist Logo" class="logo">
+                <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localists Logo" class="logo">
             </div>
 
             <div class="card">
                 <h1>Hi {{ $name }}, ready to unlock more sales?</h1>
-                <div class="highlight">Auto-Bid is helping Localist sellers increase sales by up to <strong>35%</strong>!</div>
+                <div class="highlight">Auto-Bid is helping Localists sellers increase sales by up to <strong>35%</strong>!</div>
                 <p>Right now, Auto-Bid is turned <strong>off</strong> on your account — which means you might be missing out on top leads.</p>
                 <p>Sellers using Auto-Bid get:</p>
                 <ul>
@@ -116,7 +116,7 @@
                     <li>✅ Faster conversions with automatic matching</li>
                     <li>✅ Hands-free lead purchases 24/7</li>
                 </ul>
-                <p>Don't miss out on high-intent customers. Enable Auto-Bid and let Localist do the work for you!</p>
+                <p>Don't miss out on high-intent customers. Enable Auto-Bid and let Localists do the work for you!</p>
                 <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Enable Auto-Bid Now</a>
             </div>
 
@@ -129,16 +129,11 @@
 
             <div class="card">
                 <div class="section-header">Need Help?</div>
-                <p>Our team is here to help you make the most of Localist. Call us at
-                    <a href="tel:{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">
-                        {{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}
-                    </a> or email
-                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">
-                        {{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}
-                    </a>.
+                <p>Our team is here to help you make the most of Localists. Email us at
+                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
                 </p>
                 <p>Let’s grow your business together 🚀</p>
-                <p>— The Localist Team</p>
+                <p>— The Localists Team</p>
             </div>
 
             <div class="footer">

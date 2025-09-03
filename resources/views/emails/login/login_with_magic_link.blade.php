@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Welcome to Localist</title>
+  <title>Welcome to Localists</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -60,7 +60,7 @@
 <body>
   <div class="container">
     <div class="header">
-       <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localist Logo" style="max-height: 50px;">
+       <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="max-height: 50px;">
     </div>
     <div class="content">
       <h1>Hi {{$name}}</h1>

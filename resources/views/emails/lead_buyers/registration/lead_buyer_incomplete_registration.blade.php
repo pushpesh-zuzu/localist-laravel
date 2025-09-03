@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Complete Your Registration on Localist</title>
+  <title>Complete Your Registration on Localists</title>
   <style>
     body {
       margin: 0;
@@ -90,24 +90,24 @@
     <div class="email-container">
 
       <div class="logo-container">
-        <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localist Logo" class="logo">
+        <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localists Logo" class="logo">
       </div>
 
       <div class="card">
         <h1>Hello {{ $name }}, complete your registration</h1>
-        <p class="highlight" style="color:#00afe3">You're just one step away from connecting with more buyers on Localist!</p>
+        <p class="highlight" style="color:#00afe3">You're just one step away from connecting with more buyers on Localists!</p>
         <p>We noticed you started signing up but didn't finish. Sellers who complete their profile can:</p>
         <ul>
           <li>✅ Access premium leads instantly</li>
           <li>✅ Appear in more buyer searches</li>
           <li>✅ Track engagement and conversions</li>
         </ul>
-        <p>Finish registering and unlock your full potential on Localist.</p>
+        <p>Finish registering and unlock your full potential on Localists.</p>
         <a href="{{$baseUrl}}/sellers/create/" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Join as a Professional</a>
       </div>
 
       <div class="card">
-        <h2>Why Localist?</h2>
+        <h2>Why Localists?</h2>
         <p>Thousands of buyers are looking for trusted sellers like you every day. Don’t miss out on leads just because your profile is incomplete.</p>
         <p>With your name, phone, and email already saved, you can pick up right where you left off!</p>
       </div>
@@ -115,14 +115,8 @@
       <div class="card">
         <h2>Need Help?</h2>
         <p>Have questions or need support? We’re here for you.</p>
-        <p>Call us:
-          <a href="tel:{{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}">
-            {{\App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000')}}
-          </a><br>
-          Or email us at
-          <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}">
-            {{\App\Helpers\CustomHelper::setting_value('website_email','india@localist.com')}}
-          </a>.
+        <p>Email us at
+          <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
         </p>
       </div>
 

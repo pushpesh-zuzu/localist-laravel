@@ -15,7 +15,7 @@
           <!-- Logo -->
           <tr>
             <td align="center" style="padding-bottom: 20px;">
-              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localist Logo" style="max-height: 50px;">
+              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="max-height: 50px;">
             </td>
           </tr>
 
@@ -54,7 +54,7 @@
                 @else
                   <strong>🏅</strong> {{ $credit_score }} credits to respond<br>
                 @endif
-                
+
                 <strong>📍</strong> {{ $postcode }}<br>
                 <strong>📞</strong> {{ $masked_phone }}<br>
                 <strong>✉️</strong> {{ $masked_email }}<br>
@@ -85,13 +85,8 @@
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; margin-top: 20px;">
               <div style="background-color: #d8edf8; color: #1a588c; padding: 12px 20px; margin: -32px -32px 20px -32px; border-top-left-radius: 4px; border-top-right-radius: 4px; font-weight: bold;">Need Help?</div>
               <p style="color: #61696d;">
-                Call us at
-                <a href="tel:{{ \App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000') }}">
-                  {{ \App\Helpers\CustomHelper::setting_value('website_phone_number','+91 0000000000') }}
-                </a> or email
-                <a href="mailto:{{ \App\Helpers\CustomHelper::setting_value('website_email','india@localist.com') }}">
-                  {{ \App\Helpers\CustomHelper::setting_value('website_email','india@localist.com') }}
-                </a>.
+                 Email us at
+                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
               </p>
             </td>
           </tr>
