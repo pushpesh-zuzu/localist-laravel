@@ -82,7 +82,7 @@ class MyRequestController extends Controller
             $phoneOtp = "";
             $euId = "";
             $token = "";
-            $password = "";
+            $password =Str::random(8);
             //check if it is registration request or not
 
             if(!empty($request->email)){
@@ -105,7 +105,7 @@ class MyRequestController extends Controller
                     $dataUser['zipcode'] = $request->postcode;
                     $dataUser['city'] = $request->city;
                     //for
-                    $password =Str::random(8);
+
                     $dataUser['password'] = Hash::make($password);
                     $dataUser['user_type'] = 2;
                     $dataUser['active_status'] = 2;
@@ -913,7 +913,7 @@ class MyRequestController extends Controller
             $rel['user_type'] = $fUser->user_type;
             $rel['form_status'] = $fUser->form_status;
             $rel['active_status'] = $fUser->active_status;
-            $rel['remember_tokens'] = $fUser->token;
+            $rel['remember_tokens'] = $fUser->remember_token;
             $rel['name'] = $fUser->name;
             $rel['email'] = $fUser->email;
             $rel['phone'] = $fUser->phone;
