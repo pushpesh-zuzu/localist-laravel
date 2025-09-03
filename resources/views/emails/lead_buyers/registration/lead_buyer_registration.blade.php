@@ -211,12 +211,12 @@
             <div class="card">
                 <div class="section-header">Important Pages</div>
                 <ol>
-                    <li><a href="{{$baseUrl}}/dashboard">Dashboard</a></li>
-                    <li><a href="{{$baseUrl}}/leads">Leads</a></li>
-                    <li><a href="{{$baseUrl}}/settings/my_profile">My Profile</a></li>
-                    <li><a href="{{$baseUrl}}/leads/settings">My Services</a></li>
-                    <li><a href="{{$baseUrl}}/mycredits">My Credits</a></li>
-                    <li><a href="{{$baseUrl}}/invoice-billing">Invoices & Billing Details</a></li>
+                    <li><a href="{{$baseUrl}}/sellers/dashboard">Dashboard</a></li>
+                    <li><a href="{{$baseUrl}}/sellers/leads">Leads</a></li>
+                    <li><a href="{{$baseUrl}}/settings/profile/my-profile">My Profile</a></li>
+                    <li><a href="{{$baseUrl}}/settings/leads/my-services">My Services</a></li>
+                    <li><a href="{{$baseUrl}}/settings/billing/my-credits">My Credits</a></li>
+                    <li><a href="{{$baseUrl}}/settings/billing/invoice-billing-details">Invoices & Billing Details</a></li>
                 </ol>
                 <p>You currently have <strong>0 credits</strong> in your account. To start receiving quality leads and allow our system to auto-bid on your behalf please purchase credits now.</p>
                 <p><strong>Credits unlock opportunities. Don’t miss out!</strong><br>
