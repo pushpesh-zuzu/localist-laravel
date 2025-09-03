@@ -51,7 +51,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'Welcome to Localist';
+                    $subject = 'Welcome to Localists';
 
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
@@ -121,7 +121,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
-                    $subject = 'Welcome to Localist';
+                    $subject = 'Welcome to Localists';
 
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
