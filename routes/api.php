@@ -30,7 +30,7 @@ Route::get('/user', function (Request $request) {
 
 
 Route::get('/check_api', function () {
-    return "api is working!-all-ok-final-1";
+    return "[" .date('Y-m-d h:i:s A') ."] api is working!-all-ok-final-1";
 });
 
 Route::post('/contact-us', [ContactUsController::class, 'store']);
