@@ -43,6 +43,7 @@ use App\Helpers\Zoho\ZohoQuoteCustomers;
 use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoSocialMedia;
 use App\Models\EmailSetting;
+use App\Models\NotificationSetting;
 
 class UserController extends Controller
 {
@@ -241,6 +242,65 @@ class UserController extends Controller
             }
         }
         $user = User::create($aVals);
+        if ($user->id) {
+            $now = now();
+            NotificationSetting::insert([
+                [
+                    'user_id'   => $user->id,
+                    'noti_name' => 'buyer_email_new_lead',
+                    'noti_value'=> 1,
+                    'user_type' => 'buyer',
+                    'noti_type' => 'email',
+                    'created_at'=> $now,
+                    'updated_at'=> $now,
+                ],
+                [
+                    'user_id'   => $user->id,
+                    'noti_name' => 'buyer_email_customer_closing_leads',
+                    'noti_value'=> 1,
+                    'user_type' => 'buyer',
+                    'noti_type' => 'email',
+                    'created_at'=> $now,
+                    'updated_at'=> $now,
+                ],
+                [
+                    'user_id'   => $user->id,
+                    'noti_name' => 'buyer_email_customer_hiring_me',
+                    'noti_value'=> 1,
+                    'user_type' => 'buyer',
+                    'noti_type' => 'email',
+                    'created_at'=> $now,
+                    'updated_at'=> $now,
+                ],
+                [
+                    'user_id'   => $user->id,
+                    'noti_name' => 'buyer_browser_new_lead',
+                    'noti_value'=> 1,
+                    'user_type' => 'buyer',
+                    'noti_type' => 'browser',
+                    'created_at'=> $now,
+                    'updated_at'=> $now,
+                ],
+                [
+                    'user_id'   => $user->id,
+                    'noti_name' => 'buyer_browser_customer_sending_message',
+                    'noti_value'=> 1,
+                    'user_type' => 'buyer',
+                    'noti_type' => 'browser',
+                    'created_at'=> $now,
+                    'updated_at'=> $now,
+                ],
+                [
+                    'user_id'   => $user->id,
+                    'noti_name' => 'buyer_browser_new_review',
+                    'noti_value'=> 1,
+                    'user_type' => 'buyer',
+                    'noti_type' => 'browser',
+                    'created_at'=> $now,
+                    'updated_at'=> $now,
+                ],
+            ]);
+        }
 
 
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;

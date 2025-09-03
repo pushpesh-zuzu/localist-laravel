@@ -27,6 +27,7 @@ use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
 use App\Models\EmailLog;
+use App\Models\NotificationSetting;
 use App\Services\LeadService;
 
 class MyRequestController extends Controller
@@ -117,6 +118,40 @@ class MyRequestController extends Controller
                     $dataUser['otp'] = $phoneOtp;
 
                     $euId = User::insertGetId($dataUser);
+
+                    if(!empty($euId)){
+                        $now = now();
+                        NotificationSetting::insert([
+                            [
+                                'user_id'   => $euId,
+                                'noti_name' => 'customer_email_change_in_request',
+                                'noti_value'=> 1,
+                                'user_type' => 'customer',
+                                'noti_type' => 'email',
+                                'created_at'=> $now,
+                                'updated_at'=> $now,
+                            ],
+                            [
+                                'user_id'   => $euId,
+                                'noti_name' => 'customer_email_reminder_to_reply',
+                                'noti_value'=> 1,
+                                'user_type' => 'customer',
+                                'noti_type' => 'email',
+                                'created_at'=> $now,
+                                'updated_at'=> $now,
+                            ],
+                            [
+                                'user_id'   => $euId,
+                                'noti_name' => 'customer_email_update_about_new_feature',
+                                'noti_value'=> 1,
+                                'user_type' => 'customer',
+                                'noti_type' => 'email',
+                                'created_at'=> $now,
+                                'updated_at'=> $now,
+                            ],
+                        ]);
+
+                    }
 
                 }
                 $user = User::where('id',$euId)->first();
