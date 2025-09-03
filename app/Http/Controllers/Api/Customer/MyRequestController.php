@@ -953,7 +953,7 @@ class MyRequestController extends Controller
             $rel['email'] = $fUser->email;
             $rel['phone'] = $fUser->phone;
             $rel['uuid'] = $fUser->uuid;
-
+            $rel['request_id'] = $request->request_id;
 
             return $this->sendResponse('Phone number verified successfully!',$rel);
 
