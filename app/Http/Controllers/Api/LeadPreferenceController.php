@@ -1511,11 +1511,13 @@ class LeadPreferenceController extends Controller
                 'updated_at' => date('Y-m-d H:i:d')
             ]);
         }else{
+            $now = now();
             SellerNote::create([
                 'seller_id'  => $aVals['user_id'],
                 'buyer_id'  => $aVals['buyer_id'],
                 'lead_id'  => $aVals['lead_id'],
                 'notes' => $aVals['notes'],
+                'created_at' => $now
             ]);
         }
 
