@@ -490,7 +490,7 @@ class UserController extends Controller
         }
         $users = User::where('email',$request->email)->first();
         if(!empty($users) && $users != ''){
-            return $this->sendError('your account is already registered with this email, Please contact us if this is not correct.');
+            return $this->sendError('Your account is already registered with this email, Please contact us if this is not correct.');
         }
         $result = $this->zeroBounceService->validateEmail($request->email);
         if (isset($result['status']) && $result['status'] === 'invalid') {
@@ -510,7 +510,7 @@ class UserController extends Controller
                 ]
               ], [
                 'phone.required' => 'Phone number is required.',
-                'phone.unique'   => 'your account is already registered with this phone number, Please contact us if this is not correct.',
+                'phone.unique'   => 'Your account is already registered with this phone number, Please contact us if this is not correct.',
                 'phone.regex'    => 'Enter a valid  phone number ',
                 ]);
 
@@ -589,7 +589,7 @@ class UserController extends Controller
                 ]
               ], [
                 'company_location.required' => 'Address is required.',
-                'company_location.unique'   => 'your account is already registered with this address,
+                'company_location.unique'   => 'Your account is already registered with this address,
                     Please contact us if this is not correct.',
                 'company_location.regex'    => 'Enter a valid address ',
                 ]);
@@ -610,7 +610,7 @@ class UserController extends Controller
                 'name' => 'required',
                 'email' => 'required|email|unique:users,email'
               ], [
-                'email.unique' => 'your account is already registered with this email, Please contact us if this is not correct.'
+                'email.unique' => 'Your account is already registered with this email, Please contact us if this is not correct.'
             ]);
         }else{
             $validator = Validator::make($aVals, [
@@ -618,7 +618,7 @@ class UserController extends Controller
                 'email' => 'required|email|unique:users,email',
                 // 'password' => 'required|string|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/|regex:/[@$!%*?&]/|max:16'
               ], [
-                'email.unique' => 'your account is already registered with this email, Please contact us if this is not correct.'
+                'email.unique' => 'Your account is already registered with this email, Please contact us if this is not correct.'
             ]);
         }
         return $validator;
