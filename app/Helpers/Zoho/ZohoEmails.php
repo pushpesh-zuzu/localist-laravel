@@ -1887,7 +1887,14 @@ class ZohoEmails
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
-            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $user->id);
+            if($user->user_type == 1){
+                $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $user->id);
+            }
+            elseif($user->user_type == 2){
+                $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $user->id);
+            }
+
+
             if(!empty($zohoId)){
                 if(!empty($user)){
                     $htmlView = view('emails.login.login_with_magic_link',  [
@@ -1897,7 +1904,12 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    if($user->user_type == 1){
+                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    }
+                    elseif($user->user_type == 2){
+                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+                    }
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -1930,7 +1942,6 @@ class ZohoEmails
                             ]
                         ]);
                     $rel = self::getZohoMailResponse($response);
-
                     $dataE['user_id'] = $user->id;
                     $dataE['from_email'] = $fromEmail;
                     $dataE['to_email'] = $toEmail;
