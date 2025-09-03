@@ -131,6 +131,14 @@ class UserController extends Controller
     }
 
     public function getSellerProfile(Request $request){
+
+
+        if(!empty($request->seller_id_magic)){
+            $userDetails = User::where('remember_token',$request->seller_id_magic)->first();
+            $sellerId = $userDetails->id;
+        }
+        else{
+
         $validator = Validator::make($request->all(), [
             'seller_id' => 'required|integer|exists:users,id',
             ], [
@@ -142,10 +150,12 @@ class UserController extends Controller
             return $this->sendError($validator->errors());
         }
         $sellerId = "";
-        if(empty($request->seller_id)){
-            $sellerId = $request->user_id;
-        }else{
-            $sellerId = $request->seller_id;
+
+            if(empty($request->seller_id)){
+                $sellerId = $request->user_id;
+            }else{
+                $sellerId = $request->seller_id;
+            }
         }
 
         $buyerId = $request->buyer_id;
@@ -182,6 +192,8 @@ class UserController extends Controller
 
         return $this->sendResponse('Seller Profile.', $user);
     }
+
+
 
 
 
