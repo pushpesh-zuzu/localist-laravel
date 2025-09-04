@@ -391,6 +391,7 @@ class SettingController extends Controller
                 'payment_method' => $request->stripe_payment_method_id,
 
             ]);
+            print_r($customer); exit;
             if(!empty($customer)){
                 $stipeCustomerId = $customer['id'];
 
