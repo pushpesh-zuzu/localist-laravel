@@ -373,7 +373,7 @@ class SettingController extends Controller
             ]);
             $type = 'added';
         }
-
+        print_r("card updated");
         //update stripe card id to user
         $dataN['stripe_payment_method_id'] = $request->stripe_payment_method_id;
         $dataN['updated_at'] = date('y-m-d H:i:s');
@@ -385,6 +385,8 @@ class SettingController extends Controller
 
         Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
         if(empty($stipeCustomerId)){ //customer not exits in database
+            print_r("customer not exits in database");
+            //create new customer and attach card to it 
             $customer = Customer::create([
                 'name' => $user->name,
                 'email' => $user->email,
