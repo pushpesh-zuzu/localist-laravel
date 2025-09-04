@@ -52,7 +52,7 @@ Route::prefix('check')->group(function () {
 //cron for lead buyer registration email
 //Route::post('users/registration', [UserController::class, 'registration']);
 Route::prefix('cron')->group(function () {
-    Route::get('test', [CronController::class,'unSoldLeadsStep3']);
+    Route::get('/closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::get('on-day-basis', [CronController::class,'onDayBasis']);
     Route::get('on-hourly-basis', [CronController::class,'onHourlyBasis']);
 });
@@ -122,7 +122,7 @@ Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
     Route::get('/fetch_company_details/{regNumber}',[UserController::class, 'fetch_company_details']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
-    Route::get('/closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
+    
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::get('/home-services', [ApiController::class, 'homeServices']);
