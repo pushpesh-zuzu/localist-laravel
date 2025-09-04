@@ -374,7 +374,7 @@ class LeadService
             ->first();
 
         if (!$ref) {
-            throw new \Exception("Reference postcode not found: $refPostcode");
+            throw new \Exception("Reference postcode not found: $refPostcode; lead_id: " . $lead->id);
         }
 
         $refLat = $ref->latitude;
