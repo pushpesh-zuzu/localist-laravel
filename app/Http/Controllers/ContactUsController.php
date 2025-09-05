@@ -21,6 +21,21 @@ class ContactUsController extends Controller
 
 
         $contact = ContactUs::create($validated);
+        
+        // Send email to user
+        $dataUser['email'] = $request->email;
+        $dataUser['fullName'] = $request->full_name;
+        $dataUser['subject'] = "Thank you for contacting Localists – We've received your request";
+        try {
+            Mail::send('emails.contact_form.contact_form_user', $dataUser, function ($message) use ($dataUser) {
+                $message->from('contactform@localistssenders.com');
+                $message->to($dataUser['email']);
+                $message->subject($dataUser['subject']);
+            });
+        } catch (\Throwable $e) {
+        }
+
+
 
         return response()->json([
             'success' => true,
