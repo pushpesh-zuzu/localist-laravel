@@ -33,6 +33,61 @@ Route::get('/check_api', function () {
     return "api is working!-all-ok-final-1";
 });
 
+Route::get('/mail-test', function () {
+    // $dataUser['email'] = 'pushpeshsh@zuzucodes.com';
+    // $dataUser['fullName'] = 'Pushpesh Sharma';
+    // $dataUser['subject'] = "Thank you for contacting Localists – We've received your request";
+    // try {
+    //     Mail::send('emails.contact_form.contact_form_user', $dataUser, function ($message) use ($dataUser) {
+    //         $message->from('contactform@localistssenders.com');
+    //         $message->to($dataUser['email']);
+    //         $message->subject($dataUser['subject']);
+    //     });
+
+    //     // If no exception is thrown, assume success
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Email sent successfully'
+    //     ]);
+    // } catch (\Throwable $e) {
+    //     return response()->json([
+    //         'status' => 'error',
+    //         'message' => $e->getMessage()
+    //     ]);
+    // }
+
+
+    $dataAdmin['to'] = 'pushpeshsh@zuzucodes.com';
+    $dataAdmin['fullName'] = 'Pushpesh Sharma';
+    $dataAdmin['email'] = 'pushpeshsh@zuzucodes.com';
+    $dataAdmin['phone'] = '+44 1234567890';
+    $dataAdmin['userType'] = '1';
+    $dataAdmin['user_message'] = 'Some message from user.';
+    $dataAdmin['subject'] = "New Contact Form Submission – Localists";
+    try {
+        Mail::send('emails.contact_form.contact_form_admin', $dataAdmin, function ($message) use ($dataAdmin) {
+            $message->from('contactform@localistssenders.com');
+            $message->to($dataAdmin['to']);
+            $message->cc(['zoofishan@zuzucodes.com', 'pushpesh@zuzucodes.com']); // <-- Add multiple CCs
+            $message->subject($dataAdmin['subject']);
+        });
+
+        // If no exception is thrown, assume success
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Email sent successfully'
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ]);
+    }
+
+});
+
+
+
 Route::post('/contact-us', [ContactUsController::class, 'store']);
 
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
