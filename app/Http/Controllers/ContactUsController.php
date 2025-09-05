@@ -76,13 +76,23 @@ class ContactUsController extends Controller
 
     public function sendMailInBackground(Request $request)
     {
-        $dataUser['email'] = $request->email;
-        $dataUser['fullName'] = $request->full_name;
+        $dataUser['email'] = 'pushpeshsh@zuzucodes.com';
+        $dataUser['fullName'] = "Pushpesh Sharma";
         $dataUser['subject'] = "Thank you for contacting Localists – We've received your request";
 
-        ZohoHelper::executeTaskInBackground(function() use ($dataUser) {
-            $this->sentUserMail($dataUser);
-        });
+        // respond immediately
+        ZohoHelper::respondAndContinue([
+            'status'  => 'success',
+            'message' => 'Email is being sent in the background',
+        ]);
+
+        for($i=1; $i<=5; $i++) {
+            // Simulate a time-consuming task
+            $dataUser['fullName'] .= " - " . $i;
+            ZohoHelper::executeTaskInBackground(function() use ($dataUser) {
+                $this->sentUserMail($dataUser);
+            });
+        }
 
         return response()->json([
             'status' => 'success',
