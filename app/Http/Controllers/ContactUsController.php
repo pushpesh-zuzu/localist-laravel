@@ -27,11 +27,41 @@ class ContactUsController extends Controller
         $dataUser['email'] = $request->email;
         $dataUser['fullName'] = $request->full_name;
         $dataUser['subject'] = "Thank you for contacting Localists – We've received your request";
-        Mail::send('emails.contact_form.contact_form_user', $dataUser, function ($message) use ($dataUser) {
-            $message->from('contactform@localistssenders.com');
-            $message->to($dataUser['email']);
-            $message->subject($dataUser['subject']);
-        });
+        
+        // try {
+        //     Mail::send('emails.contact_form.contact_form_user', $dataUser, function ($message) use ($dataUser) {
+        //         $message->from('contactform@localistssenders.com');
+        //         $message->to($dataUser['email']);
+        //         $message->subject($dataUser['subject']);
+        //     });
+        // } catch (\Throwable $e) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => $e->getMessage()
+        //     ]);
+        // }
+
+
+        // $dataAdmin['to'] = 'michael.marshall@localists.com';
+        // $dataAdmin['fullName'] = $request->full_name;
+        // $dataAdmin['email'] = $request->email;
+        // $dataAdmin['phone'] = $request->phone;
+        // $dataAdmin['userType'] = $request->user_type;
+        // $dataAdmin['user_message'] = $request->message;
+        // $dataAdmin['subject'] = "New Contact Form Submission – Localists";
+        // try {
+        //     Mail::send('emails.contact_form.contact_form_admin', $dataAdmin, function ($message) use ($dataAdmin) {
+        //         $message->from('contactform@localistssenders.com');
+        //         $message->to($dataAdmin['to']);
+        //         $message->cc(['zoofishan@zuzucodes.com', 'nathan.oconnor@localists.com']); // <-- Add multiple CCs
+        //         $message->subject($dataAdmin['subject']);
+        //     });
+        // } catch (\Throwable $e) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => $e->getMessage()
+        //     ]);
+        // }
 
 
 
