@@ -127,7 +127,7 @@
                 <h1>Welcome to Localists, {{ $name }}</h1>
                 <div class="highlight">We're excited to start helping you grow your business!</div>
                 <p>We'll now email you targeted leads from new customers. Ensure you get the right leads by confirming your lead preferences now.</p>
-                <a href="{{$baseUrl}}/leads/settings" class="btn">Confirm lead preferences</a>
+                <a href="{{$baseUrl}}/settings/leads/my-services" class="btn">Confirm lead preferences</a>
             </div>
 
 
@@ -149,7 +149,7 @@
                         <li>{{$s}}</li>
                     @endforeach
                 </ul>
-                <p>You can change anytime form <a href="{{$baseUrl}}/leads/settings">My Services</a> page</p>
+                <p>You can change anytime form <a href="{{$baseUrl}}/settings/leads/my-services">My Services</a> page</p>
             </div>
 
             <div class="card">
@@ -221,14 +221,14 @@
                 <p>You currently have <strong>0 credits</strong> in your account. To start receiving quality leads and allow our system to auto-bid on your behalf please purchase credits now.</p>
                 <p><strong>Credits unlock opportunities. Don’t miss out!</strong><br>
                   Secure your next customer by topping up your credits today.</p>
-                <a href="{{$baseUrl}}/mycredits" class="btn">Buy Credits</a>
+                <a href="{{$baseUrl}}/settings/billing/my-credits" class="btn">Buy Credits</a>
                 <p>You can also call our customer support team at
-                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.</p>
+                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
                 <p>Regards,<br>Localists Team</p>
             </div>
 
             <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/e-mail-notification">here</a>.<br>
+                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
                 {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
             </div>
 
