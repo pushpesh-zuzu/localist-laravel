@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use Mail;
 use App\Models\ContactUs;
 use Illuminate\Http\Request;
+use App\Helpers\Zoho\ZohoHelper;
 
 class ContactUsController extends Controller
 {
@@ -71,4 +72,39 @@ class ContactUsController extends Controller
             'message' => 'Contact Details Saved Successfully'
         ]);
     }
+
+
+    public function sendMailInBackground(Request $request)
+    {
+        $dataUser['email'] = $request->email;
+        $dataUser['fullName'] = $request->full_name;
+        $dataUser['subject'] = "Thank you for contacting Localists – We've received your request";
+
+        ZohoHelper::executeTaskInBackground(function() use ($dataUser) {
+            $this->sentUserMail($dataUser);
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Email is being sent in the background'
+        ]);
+    }
+
+
+    public function sentUserMail($dataUser)
+    {
+        try {
+            Mail::send('emails.contact_form.contact_form_user', $dataUser, function ($message) use ($dataUser) {
+                $message->from('contactform@localistssenders.com');
+                $message->to($dataUser['email']);
+                $message->subject($dataUser['subject']);
+            });
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
 }

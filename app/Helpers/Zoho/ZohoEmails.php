@@ -96,7 +96,7 @@ class ZohoEmails
         }
     }
 
-    public static function sendWelcomeEmailQuoteCustomer($userId, $password)
+    public static function sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp)
     {
         $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Welcome Email For Customer')->value('setting_value');
 
@@ -113,7 +113,8 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'email' => $user->email,
-                        'password' => $password
+                        'password' => $password,
+                        'phone_otp' => $phoneOtp
 
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);

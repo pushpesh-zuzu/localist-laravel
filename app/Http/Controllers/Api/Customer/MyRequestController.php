@@ -85,6 +85,7 @@ class MyRequestController extends Controller
             $token = "";
             $password =Str::random(8);
             $euidInsert=0;
+            $phoneOtp = 0;
             //check if it is registration request or not
 
             if(!empty($request->email)){
@@ -356,7 +357,7 @@ class MyRequestController extends Controller
                             }
                         if($euidInsert == 1){
                             app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                            ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password);
+                            ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
                             app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
                         }
                         //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);

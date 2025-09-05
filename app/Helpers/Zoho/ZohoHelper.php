@@ -131,6 +131,23 @@ class ZohoHelper
         }
     }
 
+
+    public static function executeTaskInBackground(callable $callback)
+    {
+
+        register_shutdown_function(function () use ($callback) {
+            try {
+                $callback();
+            } catch (\Throwable $e) {
+                Log::error('Zoho background task failed', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        });
+
+    }
+
     // public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
     // {
     //     // Send the response first
