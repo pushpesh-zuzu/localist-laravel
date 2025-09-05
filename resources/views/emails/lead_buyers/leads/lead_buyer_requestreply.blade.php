@@ -65,9 +65,9 @@
 
                 <!-- CTA -->
                 @if($lead['hasEnoughCredits'])
-                  <a href="{{ $baseUrl }}/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact {{ $lead['lead_name'] }} now</a>
+                  <a href="{{ $baseUrl }}/sellers/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact {{ $lead['lead_name'] }} now</a>
                 @else
-                  <a href="{{ $baseUrl }}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Add Credits to Contact</a>
+                  <a href="{{ $baseUrl }}/settings/billing/my-credits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Add Credits to Contact</a>
                 @endif
 
               </td>
@@ -91,7 +91,7 @@
               <div style="background-color: #d8edf8; color: #1a588c; padding: 12px 20px; margin: -32px -32px 20px -32px; border-top-left-radius: 4px; border-top-right-radius: 4px; font-weight: bold;">Need Help?</div>
               <p style="color: #61696d;">
                  Email us at
-                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
+                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
               </p>
             </td>
           </tr>
@@ -99,7 +99,7 @@
           <!-- Footer -->
           <tr>
             <td align="center" style="padding: 20px; font-size: 12px; color: #666666;">
-              Manage your email preferences <a href="{{ $baseUrl }}/e-mail-notification" style="color: #007bff;">here</a>.<br>
+              Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification" style="color: #007bff;">here</a>.<br>
               {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
             </td>
           </tr>

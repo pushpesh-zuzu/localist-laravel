@@ -93,12 +93,12 @@
             <div class="card">
                 <div class="section-header">Help</div>
                 <p>If you have any questions, please reach out to us at
-                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.</p>
+                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
                 <p>Regards,<br>Localists Team</p>
             </div>
 
             <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/e-mail-notification">here</a>.<br>
+                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
                 {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
             </div>
 

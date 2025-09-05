@@ -122,14 +122,14 @@
             <div class="card">
                 <div class="section-header">Need Help?</div>
                 <p>Our team is here to assist you.  Email us at
-                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
+                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
                 </p>
                 <p>We’re excited to help you grow 🚀</p>
                 <p>— The Localists Team</p>
             </div>
 
             <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/e-mail-notification">here</a>.<br>
+                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
                 {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
             </div>
 

@@ -117,27 +117,27 @@
                     <li>✅ Hands-free lead purchases 24/7</li>
                 </ul>
                 <p>Don't miss out on high-intent customers. Enable Auto-Bid and let Localists do the work for you!</p>
-                <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Enable Auto-Bid Now</a>
+                <a href="{{$baseUrl}}/settings/billing/my-credits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Enable Auto-Bid Now</a>
             </div>
 
             <div class="card">
                 <div class="section-header">How Auto-Bid Works</div>
                 <p>Once enabled, Auto-Bid uses your service filters to automatically secure matching leads the moment they come in. No need to log in, no missed opportunities.</p>
                 <p>Just add credits and let the system keep your business ahead of the competition — even while you're offline.</p>
-                <a href="{{$baseUrl}}/mycredits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Top Up Credits</a>
+                <a href="{{$baseUrl}}/settings/billing/my-credits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Top Up Credits</a>
             </div>
 
             <div class="card">
                 <div class="section-header">Need Help?</div>
                 <p>Our team is here to help you make the most of Localists. Email us at
-                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists')}}</a>.
+                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
                 </p>
                 <p>Let’s grow your business together 🚀</p>
                 <p>— The Localists Team</p>
             </div>
 
             <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/e-mail-notification">here</a>.<br>
+                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
                 {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
             </div>
 
