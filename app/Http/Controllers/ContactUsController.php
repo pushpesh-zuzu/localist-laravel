@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers;
 
+use Mail;
 use App\Models\ContactUs;
 use Illuminate\Http\Request;
 
