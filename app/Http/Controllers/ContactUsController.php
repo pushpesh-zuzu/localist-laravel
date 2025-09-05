@@ -93,11 +93,6 @@ class ContactUsController extends Controller
                 $this->sentUserMail($dataUser);
             });
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Email is being sent in the background'
-        ]);
     }
 
 

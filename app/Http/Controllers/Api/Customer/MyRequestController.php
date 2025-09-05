@@ -319,7 +319,7 @@ class MyRequestController extends Controller
                 // );
 
                 return ZohoHelper::dispatchAfterResponse(
-                    function () use ($euId, $rel,$sId,$leadService,$password,$euidInsert) {
+                    function () use ($euId, $rel,$sId,$leadService,$password,$euidInsert, $phoneOtp) {
 
                         User::where('form_status', 1)
                             ->whereIn('user_type', [1, 3])
