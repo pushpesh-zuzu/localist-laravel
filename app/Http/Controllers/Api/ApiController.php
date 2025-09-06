@@ -349,10 +349,35 @@ class ApiController extends Controller
                 $message->subject($dataUser['subject']);
             });
         } catch (\Throwable $e) {
+            // Build full debug array, including previous exceptions
+            $debug = [
+                'type'    => get_class($e),
+                'message' => $e->getMessage(),
+                'code'    => $e->getCode(),
+                'file'    => $e->getFile() . ':' . $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
+                'previous' => [],
+            ];
+
+            $p = $e->getPrevious();
+            while ($p) {
+                $debug['previous'][] = [
+                    'type'    => get_class($p),
+                    'message' => $p->getMessage(),
+                    'file'    => $p->getFile() . ':' . $p->getLine(),
+                    'trace'   => $p->getTraceAsString(),
+                ];
+                $p = $p->getPrevious();
+            }
+
+            // Log full debug to laravel log
+            Log::error('Mail send failed (detailed)', $debug);
+
+            // Return full debug in response (only while debugging)
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
-            ]);
+                'debug'  => $debug
+            ], 500);
         }
 
 

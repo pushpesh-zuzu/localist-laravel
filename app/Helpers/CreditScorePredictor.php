@@ -6,7 +6,7 @@ class CreditScorePredictor{
 
     public static function predict($servie_id, $predict, $data){
         $rel = 0;
-        $url = "https://localist.pythonanywhere.com/predict/";
+        $url = "https://localists.com/credit_score_prediction/predict/";
         switch($servie_id){
             case 43:
                 $url .= 'landscaping';

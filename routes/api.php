@@ -33,7 +33,8 @@ Route::get('/check_api', function () {
     return "api is working!-all-ok-final-1";
 });
 
-Route::get('/mail-test', [ContactUsController::class, 'sendMailInBackground']);
+// Route::get('/mail-test', [ContactUsController::class, 'sendMailInBackground']);
+Route::get('/mail-test', [ApiController::class, 'mailTest']);
 
 
 
