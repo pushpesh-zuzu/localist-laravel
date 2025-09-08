@@ -9,9 +9,61 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoHelper
 {
-    public const  EMAIL_LEAD_BUYERS_API_URL = 'https://crmsandbox.zoho.eu/crm/v8/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
+    // public const  EMAIL_LEAD_BUYERS_API_URL = 'https://crmsandbox.zoho.eu/crm/v8/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
 
-    public const  EMAIL_QUOTE_CUSTOMERS_API_URL = 'https://crmsandbox.zoho.eu/crm/v8/Quote_Customers/{ZOHO_ID}/actions/send_mail';
+    // public const  EMAIL_QUOTE_CUSTOMERS_API_URL = 'https://crmsandbox.zoho.eu/crm/v8/Quote_Customers/{ZOHO_ID}/actions/send_mail';
+
+
+    public const EMAIL_LEAD_BUYERS_API_URL     = 'EMAIL_LEAD_BUYERS_API_URL';
+    public const EMAIL_QUOTE_CUSTOMERS_API_URL = 'EMAIL_QUOTE_CUSTOMERS_API_URL';
+
+    // map constants -> DB setting keys
+    protected static array $map = [
+        self::EMAIL_LEAD_BUYERS_API_URL     => 'zoho_email_api_url',
+        self::EMAIL_QUOTE_CUSTOMERS_API_URL => 'zoho_email_api_url',
+    ];
+
+    /**
+     * Get raw setting from DB (via CustomHelper)
+     *
+     * @param string $constKey One of the class constants above
+     * @return string|null
+     */
+    public static function getSetting(string $constKey, ?string $zohoId = null): ?string
+    {
+        if (!isset(self::$map[$constKey])) {
+            return null;
+        }
+
+        $baseUrl = CustomHelper::setting_value(self::$map[$constKey]);
+
+        if (!$baseUrl) {
+            return null;
+        }
+
+        // Build the template URL depending on the constant
+        switch ($constKey) {
+            case self::EMAIL_LEAD_BUYERS_API_URL:
+                $template = rtrim($baseUrl, '/') . '/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
+                break;
+
+            case self::EMAIL_QUOTE_CUSTOMERS_API_URL:
+                $template = rtrim($baseUrl, '/') . '/Quote_Customers/{ZOHO_ID}/actions/send_mail';
+                break;
+
+            default:
+                $template = rtrim($baseUrl, '/');
+                break;
+        }
+
+        // If no zohoId passed, return template with placeholder (or base)
+        if ($zohoId === null) {
+            return $template;
+        }
+
+        // Replace placeholder with actual id (safe)
+        return str_replace('{ZOHO_ID}', ltrim($zohoId, '/'), $template);
+    }
 
 
     public static function getUrl($key, $val){
@@ -48,10 +100,17 @@ class ZohoHelper
             return $recId;
         }
 
+        $baseUrl = CustomHelper::setting_value('zoho_email_api_url');
+
         $response = Http::withToken($accessToken)
-            ->get('https://crmsandbox.zoho.eu/crm/v2/Lead_Buyer_Registration/search', [
+            ->get($baseUrl . '/Lead_Buyer_Registration/search', [
                 'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
             ]);
+
+        // $response = Http::withToken($accessToken)
+        //     ->get('https://crmsandbox.zoho.eu/crm/v2/Lead_Buyer_Registration/search', [
+        //         'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
+        //     ]);
 
         $data = $response->json();
 
@@ -71,10 +130,17 @@ class ZohoHelper
             return $recId;
         }
 
+        $baseUrl = CustomHelper::setting_value('zoho_email_api_url');
+
         $response = Http::withToken($accessToken)
-            ->get('https://crmsandbox.zoho.eu/crm/v2/Quote_Customers/search', [
+            ->get($baseUrl . '/Quote_Customers/search', [
                 'criteria' => "(User_auto_Id:equals:{$userId})"
             ]);
+
+        // $response = Http::withToken($accessToken)
+        //     ->get('https://crmsandbox.zoho.eu/crm/v2/Quote_Customers/search', [
+        //         'criteria' => "(User_auto_Id:equals:{$userId})"
+        //     ]);
 
         $data = $response->json();
 

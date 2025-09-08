@@ -47,7 +47,7 @@ class ZohoEmails
                         'services' => $services
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -118,7 +118,7 @@ class ZohoEmails
 
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -189,7 +189,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
@@ -260,7 +260,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
 
                      DB::table('zoho_logs')->insert([
                         'url' => $url,
@@ -331,7 +331,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -552,7 +552,7 @@ class ZohoEmails
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
         $toEmail = $user->email;
@@ -781,7 +781,7 @@ class ZohoEmails
             ])->render();
 
             $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-            $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+            $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
             $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
             $toEmail = $user->email;
             $subject = 'New Leads Secured – Auto Bid Active & Contact Details Inside';
@@ -909,7 +909,7 @@ class ZohoEmails
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
 
-        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
         $toEmail = $user->email;
         $subject = 'Auto Bid Missed – Not Enough Credits for Your New Leads';
@@ -1124,7 +1124,7 @@ class ZohoEmails
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
         $toEmail = $user->email;
@@ -1237,7 +1237,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -1321,7 +1321,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -1405,7 +1405,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -1502,7 +1502,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -1617,7 +1617,7 @@ class ZohoEmails
                         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
 
 
-                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                         $toEmail = $user->email;
@@ -1723,7 +1723,7 @@ class ZohoEmails
                         ])->render();
 
                         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                         $toEmail = $user->email;
@@ -1829,7 +1829,7 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
                     $toEmail = $user->email;
@@ -1906,10 +1906,10 @@ class ZohoEmails
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     if($user->user_type == 1){
-                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
                     }
                     elseif($user->user_type == 2){
-                        $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+                        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
                     }
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'mikemarshall402@hotmail.com');
