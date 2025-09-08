@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoHelper
 {
-    public const  EMAIL_LEAD_BUYERS_API_URL = 'https://www.zohoapis.eu/crm/v8/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
+    public const  EMAIL_LEAD_BUYERS_API_URL = 'https://crmsandbox.zoho.eu/crm/v8/Lead_Buyer_Registration/{ZOHO_ID}/actions/send_mail';
 
-    public const  EMAIL_QUOTE_CUSTOMERS_API_URL = 'https://www.zohoapis.eu/crm/v8/Quote_Customers/{ZOHO_ID}/actions/send_mail';
+    public const  EMAIL_QUOTE_CUSTOMERS_API_URL = 'https://crmsandbox.zoho.eu/crm/v8/Quote_Customers/{ZOHO_ID}/actions/send_mail';
 
-    public  const SMS_QUOTE_CUSTOMERS_API_URL = 'https://www.zohoapis.eu/crm/v6/functions/Send_Sinch_Sms/actions/execute';
+
     public static function getUrl($key, $val){
         $url = $key;
         return str_replace('{ZOHO_ID}', $val, $url);
@@ -49,7 +49,7 @@ class ZohoHelper
         }
 
         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/search', [
+            ->get('https://crmsandbox.zoho.eu/crm/v2/Lead_Buyer_Registration/search', [
                 'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
             ]);
 
@@ -72,7 +72,7 @@ class ZohoHelper
         }
 
         $response = Http::withToken($accessToken)
-            ->get('https://www.zohoapis.eu/crm/v2/Quote_Customers/search', [
+            ->get('https://crmsandbox.zoho.eu/crm/v2/Quote_Customers/search', [
                 'criteria' => "(User_auto_Id:equals:{$userId})"
             ]);
 
