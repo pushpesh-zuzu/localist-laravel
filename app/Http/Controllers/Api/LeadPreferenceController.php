@@ -366,13 +366,15 @@ class LeadPreferenceController extends Controller
 
     public function getPendingLeads(Request $request)
     {
+        echo "<pre>";
         $aVals = $request->all();
+        print_r($aVals);
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
             ->where('status','<>', 'hired')
             ->pluck('lead_id')
             ->toArray();
-
+        print_r($recommendedLeadIds);
         $allLeads = LeadRequest::with(['customer', 'category'])
         ->whereIn('id',$recommendedLeadIds)
         ->whereHas('customer', function($query) {
@@ -380,7 +382,7 @@ class LeadPreferenceController extends Controller
         })
         ->orderBy('id', 'DESC')
         ->get();
-
+        print_r($allLeads->toArray()); die;
         foreach ($allLeads as $key => $value) {
             $isActivity = ActivityLog::where('to_user_id',$user_id)
                                  ->where('from_user_id',$value->customer_id)

@@ -476,8 +476,20 @@ class LeadService
             ->when($distanceOrder === '' || $distanceOrder === 'nearest to farthest', fn($c) => $c->sortBy('distance'))
             ->when($distanceOrder === 'farthest to nearest', fn($c) => $c->sortByDesc('distance'));
 
-        // Step 6: Ensure unique sellers
-        $finalUniqueSellers = $final->unique('id')->values();
+        // Step 6: Ensure unique sellers (keep nearest one per seller id)
+        $seen = [];
+        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
+            if (isset($seen[$seller->id])) {
+                if ($seller->distance < $seen[$seller->id]->distance) {
+                    $seen[$seller->id] = $seller;
+                }
+            } else {
+                $seen[$seller->id] = $seller;
+            }
+            return false;
+        })->pipe(function () use (&$seen) {
+            return collect(array_values($seen));
+        });
 
         return [
             'empty'   => $finalUniqueSellers->isEmpty(),
@@ -564,8 +576,20 @@ class LeadService
         // Step 4: Apply preference logic
         $final = $this->usersAccordingToPrefs($question, $grouped, $serviceId);
 
-        // Step 5: Ensure unique sellers
-        $finalUniqueSellers = $final->unique('id')->values();
+        // Step 5: Ensure unique sellers (keep nearest one per seller id)
+        $seen = [];
+        $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
+            if (isset($seen[$seller->id])) {
+                if ($seller->distance < $seen[$seller->id]->distance) {
+                    $seen[$seller->id] = $seller;
+                }
+            } else {
+                $seen[$seller->id] = $seller;
+            }
+            return false;
+        })->pipe(function () use (&$seen) {
+            return collect(array_values($seen));
+        });
 
         return [
             'empty'   => $finalUniqueSellers->isEmpty(),
