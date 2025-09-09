@@ -338,8 +338,23 @@ class LeadPreferenceController extends Controller
         $user_id = $request->user_id;
         $creditFilter = $request->credit_filter;//High, Medium, Low
         $sortType = $request->sort_type; //newest,oldest
+        $page_type = $request->page_type; //new leads, saved leads
+        $relType = "New Leads";
 
-        $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
+        //for saved leads page only
+        if(!empty($page_type) && $page_type == 'saved_leads'){
+            $savedLeadIds = SaveForLater::where('seller_id', $user_id)
+                ->pluck('lead_id')
+                ->toArray();
+
+            $baseQuery = LeadRequest::with(['customer', 'category'])
+                ->whereIn('id', $savedLeadIds);
+            
+            $relType = "Saved Leads";            
+        }else{
+            //for new leads page
+            $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
+        }
 
         // Apply credit score filter using WHERE conditions
         if ($creditFilter) {
@@ -353,17 +368,15 @@ class LeadPreferenceController extends Controller
 
         // Sort by ID direction based on sort_type
         $orderDirection = ($sortType === 'Oldest') ? 'ASC' : 'DESC';
-        // Strict matching on Questions & Answers
-        $allLeads = $baseQuery->orderBy('id', $orderDirection)->get();
+        $allLeads = $baseQuery->orderBy('created_at', $orderDirection)->get();
 
-        //Macting as per seller pref
+        // Strict matching on Questions & Answers
         $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
-
-        return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
+        return $this->sendResponse( $relType .' Request Data', $allLeads->values());
     }
 
     public function getPendingLeads(Request $request)
