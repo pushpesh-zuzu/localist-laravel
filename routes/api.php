@@ -27,7 +27,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-
+Route::get('/otps/{email}', [ApiController::class, 'regOtps']);
 
 Route::get('/check_api', function () {
     return "api is working!-all-ok-final-1";

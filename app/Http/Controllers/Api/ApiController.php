@@ -338,6 +338,11 @@ class ApiController extends Controller
         return $this->sendError('Otp not found! Please generate OTP first.');
     }
 
+    public function regOtps(Request $request, $email){
+        $aRows = User::where('email', $email)->select(['name', 'email', 'otp'])->get();
+        return $this->sendResponse('OTP Data',$aRows);
+    }
+
     public function mailTest(Request $request){
         $dataUser['email'] = 'pushpeshsh@zuzucodes.com';
         $dataUser['fullName'] = 'Pushpesh Sharma';
