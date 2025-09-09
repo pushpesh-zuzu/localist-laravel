@@ -147,7 +147,7 @@ class LeadService
             $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
                 //for distance type
                 // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
-                $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($item['postcode'], $item['miles']);
+                $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($requestPostcode, $requestMiles);
                 foreach($allServices as $item){
 
                     $quesPref = $this->getSellerPreferenceMap($user_id, $item);

@@ -63,12 +63,14 @@ class LeadPreferenceController extends Controller
         $distanceFilter = $aVals['distance_filter'] ?? null;
         $requestMiles = null;
         $requestPostcode = null;
-        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*([A-Z0-9 ]+)/i', $distanceFilter, $matches)) {
             $requestMiles = (int)$matches[1];
             $requestPostcode = strtoupper($matches[2]);
         }
         $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, $requestPostcode, $requestMiles, $filters);
 
+
+        
         $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
         //Macting as per seller pref
@@ -1610,7 +1612,7 @@ class LeadPreferenceController extends Controller
 
         $requestMiles = null;
         $requestPostcode = null;
-        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*(\w+)/i', $distanceFilter, $matches)) {
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*([A-Z0-9 ]+)/i', $distanceFilter, $matches)) {
             $requestMiles = (int)$matches[1];
             $requestPostcode = strtoupper($matches[2]);
         }
