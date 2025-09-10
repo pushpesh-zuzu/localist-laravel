@@ -64,6 +64,8 @@ class MyRequestController extends Controller
     public function createNewRequest(Request $request, LeadService $leadService){
 
         if($request->form_status == "1"){
+
+
             $validator = Validator::make($request->all(), [
                 'service_id' => 'required|integer|exists:categories,id',
                 'postcode' => 'required',
@@ -319,7 +321,7 @@ class MyRequestController extends Controller
                 // );
 
                 return ZohoHelper::dispatchAfterResponse(
-                    function () use ($euId, $rel,$sId,$leadService,$password,$euidInsert, $phoneOtp) {
+                    function () use ($euId, $rel,$sId,$leadService,$password,$euidInsert, $phoneOtp,$fUser) {
 
                         User::where('form_status', 1)
                             ->whereIn('user_type', [1, 3])
@@ -357,7 +359,9 @@ class MyRequestController extends Controller
                             }
                         if($euidInsert == 1){
                             app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                            ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
+                            if($fUser->form_status ==1){
+                                ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
+                            }
                             app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
                         }
                         //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
@@ -422,6 +426,7 @@ class MyRequestController extends Controller
             //         ->latest();
             // }])
             ->get();
+
 
         ZohoEmails::sendAbandonedEncouragementEmail($userId);
         return response()->json([
