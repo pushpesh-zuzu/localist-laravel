@@ -199,6 +199,7 @@ class UserController extends Controller
 
 
     public function registration(Request $request){
+
         $aVals = $request->all();
         $auto_bid = $request->auto_bid;
         $loggedUser = $request->loggedUser;//For checking seller/buyer
@@ -970,7 +971,7 @@ class UserController extends Controller
 
         ActivityLog::insertGetId($data);
 
-        return redirect(env('REACT_BASE_URL') .'/lead/save-later');
+        return redirect(env('REACT_BASE_URL') .'/sellers/leads/save-for-later');
     }
 
 }
