@@ -970,8 +970,8 @@ class UserController extends Controller
         $data['created_at'] = date('Y-m-d H:i:s');
 
         ActivityLog::insertGetId($data);
-
-        return redirect(env('REACT_BASE_URL') .'/sellers/leads/save-for-later');
+        $baseUrl = CustomHelper::setting_value('react_base_url', config('app.react_base_url'));
+        return redirect($baseUrl .'sellers/leads/my-responses');
     }
 
 }
