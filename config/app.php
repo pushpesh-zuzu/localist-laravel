@@ -64,7 +64,7 @@ return [
     |
     */
 
-    'react_base_url' => env('REACT_BASE_URL', 'https://dev.localists.com/'),
+    'react_base_url' => env('REACT_BASE_URL', 'https://localists.com/'),
 
     /*
     |--------------------------------------------------------------------------
