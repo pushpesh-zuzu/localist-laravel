@@ -1134,7 +1134,7 @@ class LeadPreferenceController extends Controller
         return $categories;
     }
 
-    public function getFilterLocations1($user_id, $leadService)
+    public function getFilterLocations1($user_id, $leadService, $page_type)
     {
         $aRows = UserServiceLocation::where('user_id', $user_id)->orderBy('postcode')->get();
         $uniqueRows = $aRows->unique('postcode')->values();
