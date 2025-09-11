@@ -22,7 +22,9 @@
           <!-- Header -->
           <tr>
             <td style="padding-bottom: 20px;">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }}, you've got new leads!</h1>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                 <p> You've got new leads!</p></h1>
             </td>
           </tr>
 

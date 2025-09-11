@@ -22,7 +22,8 @@
           <!-- Teaser Card -->
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">{{ $name }}, new jobs are waiting for you!</h1>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }}, <p> New jobs are waiting for you! </p></h1>
               @if($credit_purchase)
                 <p style="color: #61696d;">You haven't purchased any credit pack for  5 days, and your current balance is below 10. There are <strong>{{ $total_count }}</strong> jobs matching your preferences waiting — but you can’t bid on them!</p>
                 @else

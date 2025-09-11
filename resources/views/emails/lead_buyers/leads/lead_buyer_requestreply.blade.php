@@ -22,8 +22,9 @@
           <!-- Greeting -->
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px;">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }},</h1>
-              <p style="color: #61696d;">You've received new lead requests</p>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                <p>You've received new lead requests</p></h1>
             </td>
           </tr>
 

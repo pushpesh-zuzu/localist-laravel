@@ -107,7 +107,9 @@
             </div>
 
             <div class="card">
-                <h1>Hi {{ $name }}, you’re almost there!</h1>
+                <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                <p> You’re almost there! </p></h1>
                 <div class="highlight">Just one more step to activate your Localists account.</div>
                 <p>We noticed you started signing up but didn’t finish. Complete your registration to get access to top local leads, auto-bidding, and more.</p>
                 <p>By registering, you can:</p>

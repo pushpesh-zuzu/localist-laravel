@@ -94,7 +94,9 @@
       </div>
 
       <div class="card">
-        <h1>Hello {{ $name }}, complete your registration</h1>
+        <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                <p>Complete your registration – we’ve saved your spot!</p></h1>
         <p class="highlight" style="color:#00afe3">You're just one step away from connecting with more buyers on Localists!</p>
         <p>We noticed you started signing up but didn't finish. Sellers who complete their profile can:</p>
         <ul>

@@ -107,7 +107,9 @@
             </div>
 
             <div class="card">
-                <h1>Hi {{ $name }}, ready to unlock more sales?</h1>
+                <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                <p>  Ready to unlock more sales? </p></h1>
                 <div class="highlight">Auto-Bid is helping Localists sellers increase sales by up to <strong>35%</strong>!</div>
                 <p>Right now, Auto-Bid is turned <strong>off</strong> on your account — which means you might be missing out on top leads.</p>
                 <p>Sellers using Auto-Bid get:</p>

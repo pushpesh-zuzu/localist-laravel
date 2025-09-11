@@ -22,7 +22,8 @@
           <!-- Main Card -->
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }}, you've Hired a {{$service_name}} lead!</h1>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }}, <p> You've Hired a {{$service_name}} lead!</p></h1>
 
               <!-- Tags -->
               <div style="margin: 10px 0;">

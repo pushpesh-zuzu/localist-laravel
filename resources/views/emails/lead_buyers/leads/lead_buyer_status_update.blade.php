@@ -22,7 +22,9 @@
           <!-- Main Card -->
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">Hi {{ $name }}, you've purchased a {{$service}} lead!</h1>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                <p> You've purchased a {{$service}} lead! </p></h1>
               <p style="color: #61696d;">Please update the status of the lead on following condition(s).</p>
 
               <!-- Tags -->
@@ -54,7 +56,7 @@
 
               <!-- CTA -->
              <a href="{{url('/api/lead-purchase-status-update-log/' .$lead_id .'/' .$seller_id .'/' .$buyer_id .'/Attempted Contact (no response)')}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Attempted Contact (no response)</a>
-             <a href="{{url('/api/lead-purchase-status-update-log/' .$lead_id .'/' .$seller_id .'/' .$buyer_id .'/Contact made with the Buyer (in process of providing  quotes)')}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact made with the Buyer (in process of proving quotes) </a>
+             <a href="{{url('/api/lead-purchase-status-update-log/' .$lead_id .'/' .$seller_id .'/' .$buyer_id .'/Contact made with the Buyer (in process of providing  quotes)')}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact made with the Buyer (in process of providing quotes)</a>
              <a href="{{url('/api/lead-purchase-status-update-log/' .$lead_id .'/' .$seller_id .'/' .$buyer_id .'/Contact made with the Buyer (Quote Provided)')}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact made with the Buyer (Quote Provided) </a>
              <a href="{{url('/api/lead-purchase-status-update-log/' .$lead_id .'/' .$seller_id .'/' .$buyer_id .'/Contact made with Buyer & Quote Provided (no hire)')}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact made with Buyer & Quote Provided (no hire) </a>
              <a href="{{url('/api/lead-purchase-status-update-log/' .$lead_id .'/' .$seller_id .'/' .$buyer_id .'/Contact made with Buyer & Quote Provided (hired)')}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact made with Buyer & Quote Provided (hired) </a>

@@ -16,8 +16,9 @@
           <tr>
             <td align="center" style="padding-bottom: 20px;">
               <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="max-height: 50px;">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;">
-                Hi {{ $name }}, you've got a new lead!
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }},
+                <p>You've got a new lead! </p>
               </h1>
 
             </td>
@@ -61,9 +62,9 @@
 
               <!-- CTA -->
               @if($lead['hasEnoughCredits'])
-                <a href="{{ $baseUrl }}/sellers/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Lead Now</a>
+                <a href="{{ $baseUrl }}/sellers/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Now</a>
               @else
-                <a href="{{ $baseUrl }}/settings/billing/my-credits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Top Up Credits to Contact</a>
+                <a href="{{ $baseUrl }}/settings/billing/my-credits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Contact Now </a>
               @endif
             </td>
           </tr>

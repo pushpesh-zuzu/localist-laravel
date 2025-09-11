@@ -22,7 +22,8 @@
           <!-- Main Card -->
           <tr>
             <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px;"> Hi {{ $name }}, the {{ $service_name }} lead is no longer available.</h1>
+              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
+                 Hi {{ $name }}, <p>{{ $service_name }} lead is no longer available.</p></h1>
               <p style="color: #61696d;">Unfortunately, this lead has already been purchased by another customer.
               But don't worry — new {{ $service_name }} leads are added regularly, and we'll notify you when a matching one becomes available.</strong>.</p>
               <!-- Tags -->
