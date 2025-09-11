@@ -61,332 +61,136 @@ class MyRequestController extends Controller
 
     }
 
-    public function createNewRequest(Request $request, LeadService $leadService){
+    public  function registerQuoteCustomer(Request $request){
+        $validator = Validator::make($request->all(), [
+            'form_status' => 'required'
+            ], [
+            'form_status.required' => 'Form status is required.'
+        ]);
 
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
         if($request->form_status == "1"){
-
-
-            $validator = Validator::make($request->all(), [
-                'service_id' => 'required|integer|exists:categories,id',
-                'postcode' => 'required',
-                'questions' => 'required',
-                'phone' => 'required',
-                'form_status' => 'required'
+            $validator2 = Validator::make($request->all(), [
+                'name' => 'required',
+                'email' => 'required|unique:users,email',
+                'phone' => 'required'
               ], [
-                'postcode.required' => 'Location Postcode is required.',
-                'service_id.exists' => 'Provided service id does not exists.',
-                'form_status.required' => 'Form Status is required.'
+                'name.required' => 'Name is required.',
+                'email.required' => 'Email is required.',
+                'email.unique' => 'Email already exists.',
+                'phone.required' => 'Phone is required.'
             ]);
 
-            if($validator->fails()){
-                return $this->sendError($validator->errors());
+            if($validator2->fails()){
+                return $this->sendError($validator2->errors());
             }
-
-            $phoneOtp = "";
             $euId = "";
             $token = "";
             $password =Str::random(8);
             $euidInsert=0;
             $phoneOtp = 0;
-            //check if it is registration request or not
 
-            if(!empty($request->email)){
-
-                //check if user exists for the given email or not
-                $euId = User::where('email',$request->email)->value('id');
-
-                if(empty($euId)){
-                    $euidInsert =1;
-                    $dataUser['name'] = $request->name;
-                    $dataUser['email'] = $request->email;
-                    if (isset($request->phone) && !empty($request->phone)) {
-                        $cleanPhone = preg_replace('/\s+/', '', $request->phone); // remove spaces
-                        if (strpos($cleanPhone, '+44') !== 0) {
-                            $cleanPhone = ltrim($cleanPhone, '0');
-                            $dataUser['phone'] = '+44' . $cleanPhone;
-                        } else {
-                            $dataUser['phone'] = $cleanPhone;
-                        }
-                    }
-                    $dataUser['zipcode'] = $request->postcode;
-                    $dataUser['city'] = $request->city;
-                    //for
-
-                    $dataUser['password'] = Hash::make($password);
-                    $dataUser['user_type'] = 2;
-                    $dataUser['active_status'] = 2;
-                    $dataUser['form_status'] = $request->form_status;
-                    $dataUser['created_at'] = date('y-m-d H:i:s');
-                    $dataUser['updated_at'] = date('y-m-d H:i:s');
-                    //$phoneOtp = "1234";
-                    $phoneOtp = random_int(1000, 9999);
-                    $dataUser['otp'] = $phoneOtp;
-
-                    $euId = User::insertGetId($dataUser);
-
-                    if(!empty($euId)){
-                        $now = now();
-                        NotificationSetting::insert([
-                            [
-                                'user_id'   => $euId,
-                                'noti_name' => 'customer_email_change_in_request',
-                                'noti_value'=> 1,
-                                'user_type' => 'customer',
-                                'noti_type' => 'email',
-                                'created_at'=> $now,
-                                'updated_at'=> $now,
-                            ],
-                            [
-                                'user_id'   => $euId,
-                                'noti_name' => 'customer_email_reminder_to_reply',
-                                'noti_value'=> 1,
-                                'user_type' => 'customer',
-                                'noti_type' => 'email',
-                                'created_at'=> $now,
-                                'updated_at'=> $now,
-                            ],
-                            [
-                                'user_id'   => $euId,
-                                'noti_name' => 'customer_email_update_about_new_feature',
-                                'noti_value'=> 1,
-                                'user_type' => 'customer',
-                                'noti_type' => 'email',
-                                'created_at'=> $now,
-                                'updated_at'=> $now,
-                            ],
-                        ]);
-
-                    }
-
-                }
-                $user = User::where('id',$euId)->first();
-                //dd($user);
-                $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-                $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
-                $user->remember_tokens = $token;
-
-
-            }else{
-
-                //take bearer token and extract user id from token
-                $token = $request->bearerToken();
-                if (!$token) {
-                    return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
-                }
-                $accessToken = PersonalAccessToken::findToken($token);
-                if (!$accessToken) {
-                    return response()->json(['error' => 'Unauthorized','message' => 'Invalid token.'], 401);
-                }
-                // Extract user_id from token abilities
-                $euId = $accessToken->abilities['user_id'] ?? null;
-                if (!$euId) {
-                    return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+            $dataUser['name'] = $request->name;
+            $dataUser['email'] = $request->email;
+            if (isset($request->phone) && !empty($request->phone)) {
+                $cleanPhone = preg_replace('/\s+/', '', $request->phone); // remove spaces
+                if (strpos($cleanPhone, '+44') !== 0) {
+                    $cleanPhone = ltrim($cleanPhone, '0');
+                    $dataUser['phone'] = '+44' . $cleanPhone;
+                } else {
+                    $dataUser['phone'] = $cleanPhone;
                 }
             }
+            $dataUser['zipcode'] = $request->postcode;
+            $dataUser['city'] = $request->city;
+            //for
 
-            $serviceId =$request->service_id;
-            $data['customer_id'] = $euId;
-            $data['service_id'] = $serviceId;
-            $data['city'] = $request->city;
-            $data['postcode'] = $request->postcode;
+            $dataUser['password'] = Hash::make($password);
+            $dataUser['user_type'] = 2;
+            $dataUser['active_status'] = 2;
+            $dataUser['form_status'] = 1;
+            $dataUser['created_at'] = date('y-m-d H:i:s');
+            $dataUser['updated_at'] = date('y-m-d H:i:s');
+            //$phoneOtp = "1234";
+            $phoneOtp = random_int(1000, 9999);
+            $dataUser['otp'] = $phoneOtp;
 
-            // remove null from question
-            $jQuestions = $request->questions;
-            $decodedQ = json_decode($jQuestions, true);
-            $filtered = array_filter($decodedQ, function($item) {
-                return !is_null($item);
-            });
-            $filtered = array_values($filtered);
-            $data['questions'] = json_encode($filtered);
+            $euId = User::insertGetId($dataUser);
 
-            //make the answers in proper json array so that it can be used for strict macthing
-            $arrQuesD = json_decode($request->questions, true);
-            $arrQues = [];
-            foreach ($arrQuesD as $aq) {
-                if(!empty($aq)){
-                    $temp['ques'] = $aq['ques'];
-                    $temp['ans'] = array_map('trim', explode(',', $aq['ans']));
-                    $arrQues[] = $temp;
-                }
-            }
-            $data['arrayed_questions'] = json_encode($arrQues);
-
-            $data['phone'] = $request->phone;
-
-            $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
-
-
-            $data['created_at'] = date('y-m-d H:i:s');
-            $data['updated_at'] = date('y-m-d H:i:s');
-
-            //evaluate Lead Badges
-            $data['is_phone_verified'] = User::where('id',$euId)->value('phone_verified') == 1 ? 1 : 0;
-
-            $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
-            $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
-
-            $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
-            $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
-
-            $patternUrgent = "/\b(as soon as possible)\b/i";
-            $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
-            //end evaluate Lead Badges
-
-            $predict['Location'] = $request->city .', ' . strtoupper($request->postcode);
-            $predict['Urgent'] = $data['is_urgent'];
-            $predict['High'] = $data['is_high_hiring'];
-            $predict['Verified'] = $data['is_phone_verified'];
-            $predict['Frequent'] = $data['is_frequent_user'];
-
-            $data['credit_score'] = CreditScore::predict($data['service_id'],$predict,$request->questions);
-
-            $leadDetails = LeadRequest::create($data);
-            $sId = $leadDetails->id;
-
-            if($sId){
-                $fUser = User::where('id',$euId)->first();
-                $rel['user_id'] = $euId;
-
-                $rel['user_type'] = $fUser->user_type;
-                $rel['form_status'] = $fUser->form_status;
-                $rel['active_status'] = $fUser->active_status;
-                $rel['remember_tokens'] = $token;
-                $rel['name'] = $fUser->name;
-                $rel['email'] = $fUser->email;
-                $rel['phone'] = $fUser->phone;
-                $rel['uuid'] = $fUser->uuid;
-                $rel['is_online'] = $fUser->is_online;
-                $rel['profile_image'] = $fUser->profile_image;
-                $rel['total_credit'] = $fUser->total_credit;
-                $rel['nation_wide'] = $fUser->nation_wide;
-                $rel['request_id'] = $sId;
-
-
-                //create Notification on lead creation
-                // User::where('form_status', 1)
-                //     ->whereIn('user_type', [1, 3])
-                //     ->select('id')
-                //     ->chunk(800, function ($sellersChunk) use ($leadService) {
-                //         foreach ($sellersChunk as $seller) {
-                //             $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
-                //             $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
-                //             $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-                //             foreach ($allLeads as $lead) {
-                //                 CustomHelper::logNotifications(
-                //                     $seller->id,
-                //                     $lead->id,
-                //                     'buyer_browser_new_lead',
-                //                     'New Lead',
-                //                     'You have got a new lead',
-                //                     true
-                //                 );
-                //             }
-                //         }
-                //     });
-
-                //code to sent email on new lead
-                // $lead = LeadRequest::find($sId);
-                // $sellers = $leadService->getAllSellers($lead);
-                // if(!empty($sellers['response']['sellers'])){
-                //     $sortedSellers = $sellers['response']['sellers']
-                //         ->sortByDesc('total_credit')
-                //         ->values()
-                //         ->take(7);
-                //     foreach($sortedSellers as $seller){
-                //         ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
-                //     }
-                // }
-
-
-                // return ZohoHelper::dispatchAfterResponse(
-                //     function () use ($euId, $rel,$sId) {
-
-                //         app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                //         app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
-                //         //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
-                //         $this->autoBidBased([
-                //             'success' => true,
-                //             'message' => 'Quote Submitted Successfully',
-                //             'data' => $rel,
-                //             'euId' => $euId,
-                //         ]);
-                //     },
-                //     [
-                //         'success' => true,
-                //         'message' => 'Quote Submitted Successfully',
-                //         'data' => $rel
-                //     ]
-                // );
-
-                return ZohoHelper::dispatchAfterResponse(
-                    function () use ($euId, $rel,$sId,$leadService,$password,$euidInsert, $phoneOtp,$fUser) {
-
-                        User::where('form_status', 1)
-                            ->whereIn('user_type', [1, 3])
-                            ->select('id')
-                            ->chunk(800, function ($sellersChunk) use ($leadService) {
-                                foreach ($sellersChunk as $seller) {
-                                    $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
-                                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
-                                    $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-                                    foreach ($allLeads as $lead) {
-                                        CustomHelper::logNotifications(
-                                            $seller->id,
-                                            $lead->id,
-                                            'buyer_browser_new_lead',
-                                            'New Lead',
-                                            'You have got a new lead',
-                                            true
-                                        );
-                                    }
-                                }
-                            });
-
-                            $lead = LeadRequest::find($sId);
-                            $sellers = $leadService->getAllSellers($lead);
-                            if(!empty($sellers['response']['sellers'])){
-                                $sortedSellers = $sellers['response']['sellers']
-                                    ->sortByDesc('total_credit')
-                                    ->values()
-                                    ->take(7);
-                                foreach($sortedSellers as $seller){
-                                    ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
-                                }
-                            }
-                        if($euidInsert == 1){
-                            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                            if($fUser->form_status ==1){
-                                ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
-                            }
-                            app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
-                        }
-                        //app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
-                        $this->autoBidBased([
-                            'success' => true,
-                            'message' => 'Quote Submitted Successfully',
-                            'data' => $rel,
-                            'euId' => $euId,
-                        ]);
-                    },
+            if(!empty($euId)){
+                $now = now();
+                NotificationSetting::insert([
                     [
-                        'success' => true,
-                        'message' => 'Quote Submitted Successfully',
-                        'data' => $rel
-                    ]
-                );
+                        'user_id'   => $euId,
+                        'noti_name' => 'customer_email_change_in_request',
+                        'noti_value'=> 1,
+                        'user_type' => 'customer',
+                        'noti_type' => 'email',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $euId,
+                        'noti_name' => 'customer_email_reminder_to_reply',
+                        'noti_value'=> 1,
+                        'user_type' => 'customer',
+                        'noti_type' => 'email',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $euId,
+                        'noti_name' => 'customer_email_update_about_new_feature',
+                        'noti_value'=> 1,
+                        'user_type' => 'customer',
+                        'noti_type' => 'email',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                ]);
 
-
-                //return $this->sendResponse('Quote Submitted Sucessfully',$rel);
             }
+
+            $user = User::where('id',$euId)->first();
+            //dd($user);
+            $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+            $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
+            $user->remember_tokens = $token;
+
+            $rel['user_id'] = $euId;
+
+            $rel['user_type'] = $user->user_type;
+            $rel['form_status'] = $user->form_status;
+            $rel['active_status'] = $user->active_status;
+            $rel['remember_tokens'] = $token;
+            $rel['name'] = $user->name;
+            $rel['email'] = $user->email;
+            $rel['phone'] = $user->phone;
+            $rel['uuid'] = $user->uuid;
+            $rel['is_online'] = $user->is_online;
+            $rel['profile_image'] = $user->profile_image;
+            $rel['total_credit'] = $user->total_credit;
+            $rel['nation_wide'] = $user->nation_wide;
+
+            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel, $password, $phoneOtp, $user) {
+
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                if($user->form_status ==1){
+                    ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
+                }
+                app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+            }, [
+                'success' => true,
+                'message' => 'Quote Customer registered Successfully',
+                'data' => $rel
+            ]);
         }else{
 
             $euId = User::where('email',$request->email)->value('id');
             if(!empty($euId)){
-                return $this->sendResponse('Abodned user!');
+                return $this->sendResponse('Abandoned Quote Customer already exists');
             }
             $dataUser['name'] = $request->name;
             $dataUser['email'] = $request->email;
@@ -395,7 +199,7 @@ class MyRequestController extends Controller
             $dataUser['password'] = Hash::make($password);
             $dataUser['user_type'] = 2;
             $dataUser['active_status'] = 2;
-            $dataUser['form_status'] = $request->form_status;
+            $dataUser['form_status'] = 0;
             $dataUser['created_at'] = date('y-m-d H:i:s');
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($dataUser);
@@ -405,11 +209,174 @@ class MyRequestController extends Controller
                 app(self::class)->sendEncouragementEmail(['userId' => $euId]);
             }, [
                     'success' => true,
-                    'message' => 'Abandoned user'
-                ]);
+                    'message' => 'Abandoned Quote Customer'
+                ]
+            );
+        }
 
-                //return $this->sendResponse('Abodned user!');
+    }
+
+    public function createNewRequest(Request $request, LeadService $leadService){
+
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|integer|exists:categories,id',
+            'postcode' => 'required',
+            'questions' => 'required',
+            'phone' => 'required',
+            ], [
+            'postcode.required' => 'Location Postcode is required.',
+            'service_id.exists' => 'Provided service id does not exists.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        //take bearer token and extract user id from token
+        $token = $request->bearerToken();
+        if (!$token) {
+            return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+        }
+        $accessToken = PersonalAccessToken::findToken($token);
+        if (!$accessToken) {
+            return response()->json(['error' => 'Unauthorized','message' => 'Invalid token.'], 401);
+        }
+        // Extract user_id from token abilities
+        $euId = $accessToken->abilities['user_id'] ?? null;
+        if (!$euId) {
+            return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+        }
+
+        $serviceId =$request->service_id;
+        $data['customer_id'] = $euId;
+        $data['service_id'] = $serviceId;
+        $data['city'] = $request->city;
+        $data['postcode'] = $request->postcode;
+
+        // remove null from question
+        $jQuestions = $request->questions;
+        $decodedQ = json_decode($jQuestions, true);
+        $filtered = array_filter($decodedQ, function($item) {
+            return !is_null($item);
+        });
+        $filtered = array_values($filtered);
+        $data['questions'] = json_encode($filtered);
+
+        //make the answers in proper json array so that it can be used for strict macthing
+        $arrQuesD = json_decode($request->questions, true);
+        $arrQues = [];
+        foreach ($arrQuesD as $aq) {
+            if(!empty($aq)){
+                $temp['ques'] = $aq['ques'];
+                $temp['ans'] = array_map('trim', explode(',', $aq['ans']));
+                $arrQues[] = $temp;
             }
+        }
+        $data['arrayed_questions'] = json_encode($arrQues);
+
+        $data['phone'] = $request->phone;
+
+        $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
+
+
+        $data['created_at'] = date('y-m-d H:i:s');
+        $data['updated_at'] = date('y-m-d H:i:s');
+
+        //evaluate Lead Badges
+        $data['is_phone_verified'] = User::where('id',$euId)->value('phone_verified') == 1 ? 1 : 0;
+
+        $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
+        $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
+
+        $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
+        $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
+
+        $patternUrgent = "/\b(as soon as possible)\b/i";
+        $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
+        //end evaluate Lead Badges
+
+        $predict['Location'] = $request->city .', ' . strtoupper($request->postcode);
+        $predict['Urgent'] = $data['is_urgent'];
+        $predict['High'] = $data['is_high_hiring'];
+        $predict['Verified'] = $data['is_phone_verified'];
+        $predict['Frequent'] = $data['is_frequent_user'];
+
+        $data['credit_score'] = CreditScore::predict($data['service_id'],$predict,$request->questions);
+
+        $sId = 0;
+        if($data['credit_score'] > 0){
+            $leadDetails = LeadRequest::create($data);
+            $sId = $leadDetails->id;
+        }
+
+        if($sId){
+            $fUser = User::where('id',$euId)->first();
+            $rel['user_id'] = $euId;
+
+            $rel['user_type'] = $fUser->user_type;
+            $rel['form_status'] = $fUser->form_status;
+            $rel['active_status'] = $fUser->active_status;
+            $rel['remember_tokens'] = $token;
+            $rel['name'] = $fUser->name;
+            $rel['email'] = $fUser->email;
+            $rel['phone'] = $fUser->phone;
+            $rel['uuid'] = $fUser->uuid;
+            $rel['is_online'] = $fUser->is_online;
+            $rel['profile_image'] = $fUser->profile_image;
+            $rel['total_credit'] = $fUser->total_credit;
+            $rel['nation_wide'] = $fUser->nation_wide;
+            $rel['request_id'] = $sId;
+
+            return ZohoHelper::dispatchAfterResponse(
+                function () use ($euId, $rel, $sId, $leadService, $fUser) {
+
+                    User::where('form_status', 1)
+                        ->whereIn('user_type', [1, 3])
+                        ->select('id')
+                        ->chunk(800, function ($sellersChunk) use ($leadService) {
+                            foreach ($sellersChunk as $seller) {
+                                $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
+                                $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+                                $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+                                foreach ($allLeads as $lead) {
+                                    CustomHelper::logNotifications(
+                                        $seller->id,
+                                        $lead->id,
+                                        'buyer_browser_new_lead',
+                                        'New Lead',
+                                        'You have got a new lead',
+                                        true
+                                    );
+                                }
+                            }
+                        });
+
+                    $lead = LeadRequest::find($sId);
+                    $sellers = $leadService->getAllSellers($lead);
+                    if(!empty($sellers['response']['sellers'])){
+                        $sortedSellers = $sellers['response']['sellers']
+                            ->sortByDesc('total_credit')
+                            ->values()
+                            ->take(7);
+                        foreach($sortedSellers as $seller){
+                            ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
+                        }
+                    }
+                    $this->autoBidBased([
+                        'success' => true,
+                        'message' => 'Quote Submitted Successfully',
+                        'data' => $rel,
+                        'euId' => $euId,
+                    ]);
+            }, [
+                'success' => true,
+                'message' => 'Quote Submitted Successfully',
+                'data' => $rel
+            ]);
+        }
+        
        return $this->sendError('Something went wrong, try again!');
     }
 

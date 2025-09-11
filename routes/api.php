@@ -100,7 +100,7 @@ Route::prefix('payment')->group(function () {
 
 
 Route::prefix('customer')->group(function () {
-
+    Route::post('register-quote-customer',[MyRequestController::class,'registerQuoteCustomer']);
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
