@@ -1241,24 +1241,34 @@ class LeadPreferenceController extends Controller
         return $this->sendError('Added to your saved leads');
     }
 
-    public function getSaveForLaterList(Request $request)
+    public function getSaveForLaterList(Request $request, LeadService $leadService)
     {
-        $userId = $request->user_id; // seller_id
+        $user_id = $request->user_id; // seller_id
+        $aVals = $request->all();
+        //filters
+        $filters['searchName'] = $aVals['name'] ?? null;
+        $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
+        $filters['lead_time'] = $aVals['lead_time'] ?? null;
+        $filters['services'] = $aVals['service_id'] ?? null;
+        $filters['creditFilter'] = $aVals['credits'] ?? null;
+        $distanceFilter = $aVals['distance_filter'] ?? null;
+        $requestMiles = null;
+        $requestPostcode = null;
+        if ($distanceFilter && preg_match('/(\d+)\s*miles\s*from\s*([A-Z0-9 ]+)/i', $distanceFilter, $matches)) {
+            $requestMiles = (int)$matches[1];
+            $requestPostcode = strtoupper($matches[2]);
+        }
 
-        // Step 1: Get all lead_ids saved by this seller
-        $savedLeadIds = SaveForLater::where('seller_id', $userId)
-                                    ->pluck('lead_id')
-                                    ->toArray();
+        $baseQuery = $leadService->getSellerSavedLeadsBaseQuery($user_id, $requestPostcode, $requestMiles, $filters);
+        $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
-        // Step 2: Fetch the actual lead data from LeadRequest
-        $savedLeads = LeadRequest::with(['customer', 'category'])
-                                ->whereIn('id', $savedLeadIds)
-                                ->orderBy('id', 'DESC')
-                                ->get();
+        //Macting as per seller pref
+        $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
+
         //add lead view count
-        $savedLeads = $this->addLeadViewCount($savedLeads);
+        $allLeads = $this->addLeadViewCount($allLeads);
 
-        if ($savedLeads->isEmpty()) {
+        if ($allLeads->isEmpty()) {
             return $this->sendResponse(__('Saved Leads'), [
                 [
                     'savedLeads' => []
@@ -1267,7 +1277,7 @@ class LeadPreferenceController extends Controller
         }else{
             return $this->sendResponse(__('Saved Leads'), [
                 [
-                    'savedLeads' => $savedLeads->values()
+                    'savedLeads' => $allLeads->values()
                 ]
             ]);
         }
