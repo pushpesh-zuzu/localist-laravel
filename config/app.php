@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://dev.localists.com/admin/public/'),
+    'url' => env('APP_URL', 'https://localists.com/admin/public/'),
 
 
     /*

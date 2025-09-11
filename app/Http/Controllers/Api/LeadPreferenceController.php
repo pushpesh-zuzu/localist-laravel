@@ -1020,13 +1020,26 @@ class LeadPreferenceController extends Controller
     public function leadsByFilter(Request $request, LeadService $leadService){
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
+        $page_type = $request->page_type; //new leads, saved leads
+        $relType = "New Leads";
 
-        $leadSpotlights = self::getSpotligths($user_id, $leadService);
-        $leadTimeCounts = self::getLeadTimeData($user_id, $leadService);
-        $services = self::getFilterservices1($user_id, $leadService);
-        $location = self::getFilterLocations1($user_id, $leadService);
-        $credits = self::getFilterCreditList1($user_id, $leadService);
-        $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
+        //for saved leads page only
+        if(!empty($page_type) && $page_type == 'saved_leads'){
+            $relType = "Saved Leads";
+            
+            $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
+        }else{
+            //for new leads page
+            $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
+        }
+
+        $leadSpotlights = self::getSpotligths($user_id, $leadService, $page_type);
+        $leadTimeCounts = self::getLeadTimeData($user_id, $leadService, $page_type);
+        $services = self::getFilterservices1($user_id, $leadService, $page_type);
+        $location = self::getFilterLocations1($user_id, $leadService, $page_type);
+        $credits = self::getFilterCreditList1($user_id, $leadService, $page_type);
+
+        
 
         return $this->sendResponse(__('Filter Data'), [
             [
@@ -1041,7 +1054,7 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse(__('Filter Data'),$datas);
     }
 
-    public function getSpotligths($user_id, $leadService)
+    public function getSpotligths($user_id, $leadService, $page_type)
     {
         $spotlights = [
             'All lead spotlights',
@@ -1051,7 +1064,12 @@ class LeadPreferenceController extends Controller
         ];
         $leadSpotlights = [];
         foreach ($spotlights as $sp) {
-            $query = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
+            if(!empty($page_type) && $page_type == 'saved_leads'){
+                $query = $leadService->getSellerSavedLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
+            }else{
+                $query = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
+            }
+            
             $allLeads = $query->orderBy('id', 'asc')->get();
             //Macting as per seller pref
             $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
@@ -1065,11 +1083,11 @@ class LeadPreferenceController extends Controller
     }
 
 
-    private function getLeadTimeData($user_id, $leadService)
+    private function getLeadTimeData($user_id, $leadService, $page_type)
     {
         $timeFilters = [
             'Today',
-            'Yesterday',
+            'Yesterday',    
             'Last 2-3 days',
             'Last 7 days',
             'Last 14+ days'
@@ -1077,8 +1095,13 @@ class LeadPreferenceController extends Controller
 
         $result = [];
         foreach ($timeFilters as $time) {
-            $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
+            if(!empty($page_type) && $page_type == 'saved_leads'){
+                $baseQuery = $leadService->getSellerSavedLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
 
+            }else{
+                $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
+            }
+            
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
 
             //Macting as per seller pref
@@ -1092,14 +1115,18 @@ class LeadPreferenceController extends Controller
         return $result;
     }
 
-    public function getFilterservices1($user_id, $leadService)
+    public function getFilterservices1($user_id, $leadService, $page_type)
     {
         $serviceIds = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
         $categories = Category::whereIn('id', $serviceIds)->get();
 
         foreach ($categories as $category) {
             // Use basequery to get all lead IDs matching filters
-            $leads = $leadService->getSellerLeadsBaseQuery($user_id)->where('service_id', $category->id)->get();
+            if(!empty($page_type) && $page_type == 'saved_leads'){
+                $leads = $leadService->getSellerSavedLeadsBaseQuery($user_id)->where('service_id', $category->id)->get();
+            }else{
+                $leads = $leadService->getSellerLeadsBaseQuery($user_id)->where('service_id', $category->id)->get();
+            }
             $category['locations'] = UserServiceLocation::where('user_id', $user_id)->where('service_id', $category->id)->count();
             $category['leadcount'] = $leads->count();
         }
@@ -1114,9 +1141,17 @@ class LeadPreferenceController extends Controller
 
         foreach ($uniqueRows as $row) {
             // Use basequery and apply postcode match
-            $leadCount = $leadService->getSellerLeadsBaseQuery($user_id)
+            
+            if(!empty($page_type) && $page_type == 'saved_leads'){
+                $leadCount = $leadService->getSellerSavedLeadsBaseQuery($user_id)
                             ->where('postcode', $row->postcode)
                             ->count();
+            }else{
+                $leadCount = $leadService->getSellerLeadsBaseQuery($user_id)
+                            ->where('postcode', $row->postcode)
+                            ->count();
+            }
+            
 
             $row['total_services'] = $aRows->where('postcode', $row->postcode)->count();
             $row['leadcount'] = $leadCount;
@@ -1125,14 +1160,19 @@ class LeadPreferenceController extends Controller
         return $uniqueRows;
     }
 
-    public function getFilterCreditList1($user_id, $leadService)
+    public function getFilterCreditList1($user_id, $leadService, $page_type)
     {
         $creditList = CreditList::get();
 
         foreach ($creditList as $creditItem) {
             // print_r($creditItem->credits);
             // print_r("\n\n\n");
-            $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['creditFilter' => $creditItem->credits]);
+            if(!empty($page_type) && $page_type == 'saved_leads'){
+                $baseQuery = $leadService->getSellerSavedLeadsBaseQuery($user_id, null, null, ['creditFilter' => $creditItem->credits]);
+            }else{
+                $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['creditFilter' => $creditItem->credits]);
+            }
+            //
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
 
             //Macting as per seller pref
@@ -1141,20 +1181,6 @@ class LeadPreferenceController extends Controller
         }
 
         return $creditList;
-    }
-
-
-    public function getFilterservices($user_id){
-        $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
-        $categories = Category::whereIn('id', $serviceId)->get();
-        foreach ($categories as $key => $value) {
-            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
-            $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
-
-            //for getting primary category in service list
-            $value['primaryService'] =  User::where('id', $user_id)->value('primary_category');
-        }
-        return $categories;
     }
 
 
