@@ -131,6 +131,7 @@ class CronController extends Controller
             return !empty($summary);
         });
 
+        print_r("Total sellers with leads: ".json_encode($sellerLeadSummary)."\n");
 
         foreach ($sellerLeadSummary as $sellerId => $leadStats) {
             $sellerTotalLeadCount = 0;
