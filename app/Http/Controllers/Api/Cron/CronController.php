@@ -409,7 +409,7 @@ class CronController extends Controller
 
     private function unSoldLeadsStep2(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
-
+        print_r("unSoldLeadsStep2 called \n");
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
         if ($now->minute === 0) {
@@ -422,6 +422,7 @@ class CronController extends Controller
 
 
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
+        print_r("Leads count: ".count($leads)."\n");
 
         if ($leads->isEmpty()) {
             return $this->sendError(__('No leads found older than 84 hours'), 404);
