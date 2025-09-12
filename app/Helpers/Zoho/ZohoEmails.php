@@ -65,8 +65,8 @@ class ZohoEmails
                             'data' => [
                                 [
                                     'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
+                                        'email' => 'noreply@localistscustomers.com',//$fromEmail,
+                                        'user_name' => 'Localists.com'//CustomHelper::setting_value('zoho_default_from_name', 'Localist') // Change to your preferred display name
                                     ],
                                     'to' => [
                                         [
@@ -75,7 +75,8 @@ class ZohoEmails
                                     ],
                                     'subject' => $subject,
                                     'content' => $htmlContent,
-                                    'mail_format' => 'html'
+                                    'mail_format' => 'html',
+                                    'org_email' => true
                                 ]
                             ]
                         ]);
