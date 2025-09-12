@@ -492,7 +492,6 @@ class MyRequestController extends Controller
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
                 foreach ($sellersChunk as $seller) {
-                    print_r($seller->toArray());
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
                     $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
