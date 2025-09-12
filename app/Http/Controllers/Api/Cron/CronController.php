@@ -492,10 +492,13 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
 
-        print_r("Time window from ".$from->toDateTimeString()." to ".$to->toDateTimeString()."\n");exit;
+        
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'new')
             ->get();
+
+        print_r("Found ".count($leads)." leads\n");
+        print_r("Time window from ".$from->toDateTimeString()." to ".$to->toDateTimeString()."\n");
         $discountPercent = CustomHelper::setting_value('discount_percent_of_unsold_leads',20);
 
         foreach($leads as $l){
