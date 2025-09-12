@@ -433,6 +433,7 @@ class CronController extends Controller
         foreach ($leads as $lead) {
 
             $result = $leadService->getAllSellersNationList($lead, null, 1);
+            print_r("Lead ID: ".$lead->id." Result: ".json_encode($result)."\n");exit;
 
             if (isset($result['response']['sellers'])) {
 
