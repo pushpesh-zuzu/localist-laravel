@@ -599,11 +599,15 @@ class MyRequestController extends Controller
         $leadPref = new LeadService();
 
         User::whereNotNull('zoho_record_id')
-            ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-            ->where('recommended_leads.purchase_type', 'Autobid')
+            // ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            // ->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
             ->where('total_credit', '>', 0)
             ->where('user_type', 1)
+            ->whereHas('details', function ($query) {
+                $query->where('autobid_pause', 0)
+                    ->where('is_autobid', 1);
+            })
             ->select('users.id', 'total_credit')
             ->distinct()
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
