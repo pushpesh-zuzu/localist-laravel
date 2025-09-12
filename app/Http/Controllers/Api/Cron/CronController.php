@@ -83,6 +83,7 @@ class CronController extends Controller
                         $leadQuery = LeadRequest::with('category')
                             ->where('service_id', $location->service_id)
                             ->whereBetween('created_at', [$from, $to]);
+                            
 
                         if ($location->nation_wide != 1) {
 
@@ -95,6 +96,8 @@ class CronController extends Controller
                         }
 
                         $leads = $leadQuery->get();
+
+                        print_r("Leads: ".json_encode($leads->toArray())."\n");
 
                         foreach ($leads as $lead) {
 
