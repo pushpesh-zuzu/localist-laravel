@@ -420,7 +420,7 @@ class CronController extends Controller
         $from = $to->copy()->subMinutes(59);
 
 
-
+        print_r("From: ".$from." To: ".$to."\n");
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
         print_r("Leads count: ".count($leads)."\n");
 
