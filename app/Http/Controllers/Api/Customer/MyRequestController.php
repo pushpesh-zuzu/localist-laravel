@@ -482,7 +482,7 @@ class MyRequestController extends Controller
             // ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
             // ->where('recommended_leads.purchase_type', 'Autobid')
             ->where('form_status', 1)
-            ->where('user_type', 1)
+            ->whereIn('user_type', [1, 3])
             ->whereHas('details', function ($query) {
                 $query->where('autobid_pause', 1)
                     ->orWhere('is_autobid', 0);
