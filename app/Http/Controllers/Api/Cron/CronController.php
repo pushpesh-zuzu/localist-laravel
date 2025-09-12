@@ -52,6 +52,7 @@ class CronController extends Controller
 
     public function sendLeadsAfter7Days()
     {
+        print_r("sendLeadsAfter7Days called\n");
         $totalUnsentLeadEmails = 0;
 
         $now = Carbon::now();
@@ -63,7 +64,9 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59);
 
-        $sellerLeadSummary = [];
+        print_r("From: ".$from." To: ".$to."\n");
+
+        $sellerLeadSummary = [];       
 
         User::whereNotNull('zoho_record_id')
             ->where('form_status', 1)
