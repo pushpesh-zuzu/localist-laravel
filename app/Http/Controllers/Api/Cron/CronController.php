@@ -70,11 +70,12 @@ class CronController extends Controller
 
         User::whereNotNull('zoho_record_id')
             ->where('form_status', 1)
-            ->where('user_type', 1)
+            ->whereIn('user_type', [1,3])
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
+                    print_r("Processing seller ID: " .$seller->id."\n");
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
                     $groupedLeadStats = [];
                     $nationwideLeadIds = [];
@@ -151,6 +152,8 @@ class CronController extends Controller
                     ]);
                 }
             }
+
+            print_r("seller Data: ".json_encode($sellerLeadData)."\n");
 
             if (!empty($sellerLeadData)) {
                 $emailPayload = [
