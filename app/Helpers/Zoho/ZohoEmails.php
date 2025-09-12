@@ -554,7 +554,7 @@ class ZohoEmails
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
             'baseUrl' => config('app.react_base_url'),
             'name' => $user->name,
-            'leads' => $formattedLeads,
+            'leadDetailsList' => $formattedLeads,
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
