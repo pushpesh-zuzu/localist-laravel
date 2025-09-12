@@ -97,6 +97,7 @@ class CronController extends Controller
 
                         $leads = $leadQuery->get();
 
+                        print_r("Leads Query: ".json_encode($leadQuery->toRawSql())."\n");
                         print_r("Leads: ".json_encode($leads->toArray())."\n");
 
                         foreach ($leads as $lead) {
