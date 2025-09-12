@@ -409,7 +409,6 @@ class CronController extends Controller
 
     private function unSoldLeadsStep2(Request $request, LeadService $leadService){
         $totalUnsentLeadEmails = 0;
-        print_r("unSoldLeadsStep2 called \n");
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
         if ($now->minute === 0) {
@@ -420,9 +419,7 @@ class CronController extends Controller
         $from = $to->copy()->subMinutes(59);
 
 
-        print_r("From: ".$from." To: ".$to."\n");
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
-        print_r("Leads count: ".count($leads)."\n");
 
         if ($leads->isEmpty()) {
             return $this->sendError(__('No leads found older than 84 hours'), 404);
@@ -433,7 +430,6 @@ class CronController extends Controller
         foreach ($leads as $lead) {
 
             $result = $leadService->getAllSellersNationList($lead, null, 1);
-            print_r("Lead ID: ".$lead->id." Result: ".json_encode($result)."\n");exit;
 
             if (isset($result['response']['sellers'])) {
 
@@ -484,6 +480,9 @@ class CronController extends Controller
     public function unSoldLeadsStep3(Request $request, LeadService $leadService){
         $totalLeadEmails = 0;
         $sentEmails = [];
+
+        print_r("unSoldLeadsStep3 called\n");
+
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
         if ($now->minute === 0) {
@@ -493,7 +492,7 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
 
-
+        print_r("Time window from ".$from->toDateTimeString()." to ".$to->toDateTimeString()."\n");exit;
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'new')
             ->get();
