@@ -429,6 +429,26 @@ class ApiController extends Controller
         exit;
     }
 
+    public function resendOtpEnable(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+        ], [
+            'user_id.required' => 'Something Went wrong.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+        $userId = $request->input('user_id');
+
+        return response()->json([
+                'status' =>200,
+                'user_id' =>$userId,
+                'enable' => true,
+                'message' => 'Resend Otp Button Enable Now'
+            ], 400);
+
+    }
+
     public function resendOtp(Request $request){
 
 
