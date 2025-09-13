@@ -21,13 +21,14 @@ use App\Models\Otp;
 use App\Models\UserServiceLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator
+    Auth, Hash, DB , Log as FacadesLog, Mail, Validator
 };
 use Illuminate\Support\Facades\Storage;
 use Log;
 use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
 use \Carbon\Carbon;
 
 class ApiController extends Controller
@@ -427,5 +428,118 @@ class ApiController extends Controller
         print_r($result);
         exit;
     }
+
+    public function resendOtp(Request $request){
+
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+        ], [
+            'user_id.required' => 'Something Went wrong.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+        $userId = $request->input('user_id');
+        if (! $userId) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'user_id is required'
+            ], 400);
+        }
+
+        try {
+        // Find user
+        $user = User::find($userId);
+
+
+        if (! $user) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        // Generate OTP (4 digits)
+        $phoneOtp = random_int(1000, 9999);
+
+        // Update user record
+        $user->otp = $phoneOtp;   // make sure this column exists in your users table
+
+        $user->save();
+
+
+        // (Optional) send OTP via SMS here, e.g. using your Sinch function
+
+
+        return ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId);
+
+
+            }, [
+                    'success' => true,
+                    'message' => 'OTP resent Successfully'
+                ]
+            );
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+
+    }
+
+
+    public function updateSmsStatus(Request $request): JsonResponse
+    {
+
+
+        $quoteId = $request->input('quote_id');
+        $status = $request->input('status');
+
+        if (empty($quoteId) || $status === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Missing quote_id or status'
+            ], 400);
+        }
+
+        try {
+            // Find the user (adjust model/table if needed)
+            $user = User::where('zoho_record_id', $quoteId)->first();
+
+            if (! $user) {
+                // not found: you can optionally create an audit record or return 404
+                FacadesLog::info('SMS status update: user not found', ['quote_id' => $quoteId, 'status' => $status]);
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No user found for this quote_id'
+                ], 404);
+            }
+
+            // Update the otp status column
+            $user->otp_sinch_status = $status;
+            $user->save();
+
+            FacadesLog::info('SMS status updated', ['quote_id' => $quoteId, 'status' => $status, 'user_id' => $user->id]);
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Status updated',
+                'quote_id' => $quoteId,
+                'status' => $status
+            ]);
+        } catch (\Throwable $e) {
+            FacadesLog::error('Error updating SMS status', ['error' => $e->getMessage(), 'payload' => $request->all()]);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Server error'
+            ], 500);
+        }
+    }
+
+
 
 }

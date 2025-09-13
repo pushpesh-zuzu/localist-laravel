@@ -37,8 +37,8 @@ Route::get('/test-function', [MyRequestController::class, 'sendNewLeadRequestAut
 
 // Route::get('/mail-test', [ContactUsController::class, 'sendMailInBackground']);
 Route::get('/mail-test', [ApiController::class, 'mailTest']);
-
-
+Route::post('/update-sms-status', [ApiController::class, 'updateSmsStatus']);
+Route::post('/resend-otp', [ApiController::class, 'resendOtp']);
 
 Route::post('/contact-us', [ContactUsController::class, 'store']);
 
@@ -61,7 +61,7 @@ Route::prefix('check')->group(function () {
 Route::prefix('cron')->group(function () {
     Route::get('closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::get('on-hourly-basis', [CronController::class,'onHourlyBasis']);
-    Route::get('on-day-basis', [CronController::class,'onDayBasis']);    
+    Route::get('on-day-basis', [CronController::class,'onDayBasis']);
 });
 
 Route::prefix('notification')->group(function () {
@@ -129,7 +129,7 @@ Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
     Route::get('/fetch_company_details/{regNumber}',[UserController::class, 'fetch_company_details']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
-    
+
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::get('/home-services', [ApiController::class, 'homeServices']);
@@ -202,7 +202,7 @@ Route::prefix('users')->group(function () {
         Route::post('/change-password', [UserController::class, 'changePassword']);
         Route::post('/update-profile', [UserController::class, 'updateProfile']);
         Route::post('/edit-profile', [UserController::class, 'editProfile']);
-        
+
 
         Route::post('/switch_user', [UserController::class, 'switchUser']);
         Route::post('/logout', [UserController::class, 'logout']);
