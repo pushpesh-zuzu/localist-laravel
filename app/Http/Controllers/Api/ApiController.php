@@ -491,10 +491,10 @@ class ApiController extends Controller
     }
 
 
-    public function updateSmsStatus(Request $request): JsonResponse
+    public function updateSmsStatus(Request $request)
     {
 
-        dd($request);
+        return ['message'=>$request];
         $quoteId = $request->input('quote_id');
         $status = $request->input('status');
 
