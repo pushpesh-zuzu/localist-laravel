@@ -514,7 +514,7 @@ class ApiController extends Controller
     public function updateSmsStatus(Request $request)
     {
 
-        return ['enable'=>true,'message'=>$request->getContent()];
+        return ['enable'=>true,'message'=>$request->getContent(),'quote_id'=>$request->input('quote_id')];
         $quoteId = $request->input('quote_id');
         $status = $request->input('status');
 
