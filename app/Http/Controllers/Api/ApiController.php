@@ -468,7 +468,6 @@ class ApiController extends Controller
 
         $user->save();
 
-
         // (Optional) send OTP via SMS here, e.g. using your Sinch function
 
 
@@ -495,7 +494,7 @@ class ApiController extends Controller
     public function updateSmsStatus(Request $request): JsonResponse
     {
 
-
+        dd($request);
         $quoteId = $request->input('quote_id');
         $status = $request->input('status');
 
