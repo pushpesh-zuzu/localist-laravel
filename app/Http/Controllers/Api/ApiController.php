@@ -514,11 +514,19 @@ class ApiController extends Controller
     public function updateSmsStatus(Request $request)
     {
 
-        return ['enable'=>true,'message'=>$request->getContent(),'quote_id'=>$request->input('quote_id')];
+        $validator = Validator::make($request->all(), [
+            'quote_id' => 'required',
+        ], [
+            'quote_id.required' => 'Something Went wrong.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
         $quoteId = $request->input('quote_id');
         $status = $request->input('status');
 
-        if (empty($quoteId) || $status === null) {
+        if (empty($quoteId)) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Missing quote_id or status'
