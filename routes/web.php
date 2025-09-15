@@ -77,6 +77,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('plans', PlansController::class);
     Route::resource('settings', SettingController::class);
     Route::resource('buyer', BuyerController::class);
+    Route::get('buyer/{type}/{id}', [BuyerController::class, 'show'])->name('buyer.show');
     Route::get('buyer-lead-details/{leadid}', [BuyerController::class, 'leadDetails'])->name('buyer.leadDetails');
     Route::get('buyer-incomplete-list', [BuyerController::class, 'incompletelist'])->name('buyer.incompletelist');
     Route::get('buyer-bids/{userid}', [BuyerController::class, 'buyerBids'])->name('buyer.buyerBids');

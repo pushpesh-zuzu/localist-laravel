@@ -9,6 +9,7 @@ use App\Models\LeadRequest;
 use App\Models\LoginHistory;
 use App\Models\Category;
 use App\Models\User;
+use App\Models\AbandonedUser;
 use DB;
 
 
@@ -26,7 +27,7 @@ class BuyerController extends Controller
 
     public function incompletelist()
     {
-        $aRows = User::whereIn('user_type', [2, 3])->where('form_status',0)->orderBy('id','DESC')->get();
+        $aRows = AbandonedUser::whereIn('user_type', [2, 3])->where('form_status',0)->orderBy('id','DESC')->get();
         return view('buyer.incomplete', compact('aRows'));
     }
 
@@ -49,10 +50,14 @@ class BuyerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $type, string $id)
     {
         $user_id = $id;
-        $aRows = User::where('id',$id)->with(['leadRequests.category'])->first();
+        if ($type === 'abandoned') {
+            $aRows = AbandonedUser::where('id', $id)->with(['leadRequests.category'])->first();
+        } else {
+            $aRows = User::where('id', $id)->with(['leadRequests.category'])->first();
+        }
         return view('buyer.view', compact('aRows','user_id'));
     }
 
@@ -91,10 +96,16 @@ class BuyerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         // dd($user);
-       \DB::table('users')->where('id',$id)->delete();
+        if($request->type == 'abandoned'){
+            \DB::table('abandoned_users')->where('id',$id)->delete();
+            return redirect()->route('buyer.incompletelist')
+                         ->with('success', 'Abandoned Buyer deleted successfully.');
+        }
+
+        \DB::table('users')->where('id',$id)->delete();
         \DB::table('user_accreditations')->where('user_id',$id)->delete();
         \DB::table('user_card_details')->where('user_id',$id)->delete();
         \DB::table('user_details')->where('user_id',$id)->delete();
