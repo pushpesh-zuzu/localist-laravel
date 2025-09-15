@@ -134,7 +134,7 @@ class ZohoHelper
 
         $response = Http::withToken($accessToken)
             ->get($baseUrl . '/Quote_Customers/search', [
-                'criteria' => "(User_auto_Id:equals:{$userId})"
+                'criteria' => "(User_Auto_Id:equals:{$recId})"
             ]);
 
         // $response = Http::withToken($accessToken)
