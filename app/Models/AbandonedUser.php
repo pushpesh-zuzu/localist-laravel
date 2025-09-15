@@ -95,6 +95,113 @@ class AbandonedUser extends Authenticatable
         ];
     }
 
+    public function details()
+    {
+        return $this->hasOne(UserDetail::class, 'user_id', 'id');
+    }
+
+    public function accreditations()
+    {
+        return $this->hasMany(UserAccreditation::class,'id','user_id');
+    }
+
+    public function services()
+    {
+        return $this->hasMany(UserService::class, 'user_id', 'id');
+    }
+
+    public function hiredLeads()
+    {
+        return $this->hasMany(LeadRequest::class, 'hired_by');
+    }
+
+    public function leadRequests()
+    {
+        return $this->hasMany(LeadRequest::class, 'customer_id', 'id');
+    }
+
+
+    public function responseTime()
+    {
+        return $this->hasOne(UserResponseTime::class, 'seller_id', 'id');
+    }
+
+    public function serviceLocations()
+    {
+        return $this->hasMany(UserServiceLocation::class, 'user_id', 'id');
+    }
+
+    public function profileQAs()
+    {
+        return $this->hasMany(ProfileQA::class, 'user_id', 'id');
+    }
+
+    public function getProfileCompletionPercentage(): int
+    {
+        // Fields directly in `users` table
+        $userFields = ['company_name', 'company_logo', 'name', 'profile_image', 'company_email',
+            'company_phone', 'company_website', 'company_location', 'company_locaion_reason', 'company_size',
+            'company_total_years', 'about_company'];
+
+        // Fields in `user_details` table
+        $detailsFields = ['company_photos', 'company_youtube_link', 'fb_link', 'twitter_link', 'tiktok_link',
+            'insta_link', 'linkedin_link', 'extra_links'];
+
+        // Each Q&A counts individually (question's count)
+        $qaSlots = 4;
+
+        // Total field count
+        $totalFields = count($userFields) + count($detailsFields) + 1 + $qaSlots;
+        $completed = 0;
+
+        // User fields
+        foreach ($userFields as $field) {
+            if (!empty($this->{$field})) {
+                $completed++;
+            }
+        }
+
+        // User detail fields
+        if ($this->details) {
+            foreach ($detailsFields as $field) {
+                if (!empty($this->details->{$field})) {
+                    $completed++;
+                }
+            }
+        }
+
+        // Accreditations count as 1 if at least one exists
+        if ($this->accreditations()->exists()) {
+            $completed++;
+        }
+
+        // Profile Q&A
+        $qaCount = min($this->profileQAs()->count(), $qaSlots);
+        $completed += $qaCount;
+
+        return (int) round(($completed / $totalFields) * 100);
+    }
+
+    public function primaryCategory()
+    {
+        return $this->belongsTo(Category::class, 'primary_category');
+    }
+
+    public function userDetail()
+    {
+        return $this->hasOne(UserDetail::class, 'user_id', 'id');
+    }
+
+    public function creditPurchases()
+    {
+        return $this->hasMany(UserCardDetail::class, 'user_id');
+    }
+
+    public function emailLogs()
+    {
+        return $this->hasMany(EmailLog::class, 'user_id', 'id');
+    }
+
     
 
 
