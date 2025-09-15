@@ -30,6 +30,7 @@ use App\Models\EmailLog;
 use App\Models\NotificationSetting;
 use App\Models\UserDetail;
 use App\Models\AutobidStatusLog;
+use App\Models\AbandonedUser;
 use App\Services\LeadService;
 
 class MyRequestController extends Controller
@@ -112,15 +113,97 @@ class MyRequestController extends Controller
             $dataUser['password'] = Hash::make($password);
             $dataUser['user_type'] = 2;
             $dataUser['active_status'] = 2;
-            $dataUser['form_status'] = 1;
+            $dataUser['form_status'] = 0;
             $dataUser['created_at'] = date('y-m-d H:i:s');
             $dataUser['updated_at'] = date('y-m-d H:i:s');
             //$phoneOtp = "1234";
             $phoneOtp = random_int(1000, 9999);
             $dataUser['otp'] = $phoneOtp;
 
-            $euId = User::insertGetId($dataUser);
+            $euId = AbandonedUser::insertGetId($dataUser);
 
+            $user = AbandonedUser::where('id',$euId)->first();
+            
+            $rel['user_id'] = $euId;
+
+            $rel['user_type'] = $user->user_type;
+            $rel['form_status'] = $user->form_status;
+            $rel['active_status'] = $user->active_status;
+            $rel['phone'] = $user->phone;
+
+            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
+
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+            }, [
+                'success' => true,
+                'message' => 'Quote Customer registered Successfully',
+                'data' => $rel
+            ]);
+        }else{
+
+            $euId = User::where('email',$request->email)->value('id');
+            if(!empty($euId)){
+                return $this->sendResponse('Abandoned Quote Customer already exists');
+            }
+            $dataUser['name'] = $request->name;
+            $dataUser['email'] = $request->email;
+            $dataUser['phone'] = $request->phone;
+            $password = Str::random(8);
+            $dataUser['password'] = Hash::make($password);
+            $dataUser['user_type'] = 2;
+            $dataUser['active_status'] = 2;
+            $dataUser['form_status'] = 0;
+            $dataUser['created_at'] = date('y-m-d H:i:s');
+            $dataUser['updated_at'] = date('y-m-d H:i:s');
+            $euId = AbandonedUser::insertGetId($dataUser);
+
+            return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                app(self::class)->sendEncouragementEmail(['userId' => $euId]);
+            }, [
+                    'success' => true,
+                    'message' => 'Abandoned Quote Customer'
+                ]
+            );
+        }
+
+    }
+
+    public function verifyPhoneNumber(Request $request){
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:abandoned_users,id',
+            'otp' => 'required',
+          ], [
+            'image_file.required' => 'Location Postcode is required.'
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $abUser = AbandonedUser::where('id',$request->user_id)->first();
+        $cOtp = $abUser->otp;
+        $otp = $request->otp;
+
+        if($cOtp == $otp){
+            $password =Str::random(8);
+            $nuData['name'] = $abUser->name;
+            $nuData['email'] = $abUser->email;
+            $nuData['phone'] = $abUser->phone;
+            $nuData['zipcode'] = $abUser->zipcode;
+            $nuData['city'] = $abUser->city;
+            $nuData['otp'] = $abUser->otp;
+            $nuData['otp_sinch_status'] = $abUser->otp_sinch_status;
+            $nuData['zoho_record_id'] = $abUser->zoho_record_id;
+            $nuData['password'] = Hash::make($password);
+            $nuData['user_type'] = 2;
+            $nuData['active_status'] = 2;
+            $nuData['form_status'] = 1;
+            $nuData['created_at'] = date('y-m-d H:i:s');
+            $nuData['updated_at'] = date('y-m-d H:i:s');
+            $euId = User::insertGetId($nuData);
+            AbandonedUser::where('id',$request->user_id)->delete();
+            
+            $phoneOtp = $abUser->otp;
             if(!empty($euId)){
 
                 UserDetail::create([
@@ -172,11 +255,10 @@ class MyRequestController extends Controller
             $user = User::where('id',$euId)->first();
             //dd($user);
             $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-            $user->update(['remember_token' => $token,'otp' => $phoneOtp]);
+            $user->update(['remember_token' => $token]);
             $user->remember_tokens = $token;
 
             $rel['user_id'] = $euId;
-
             $rel['user_type'] = $user->user_type;
             $rel['form_status'] = $user->form_status;
             $rel['active_status'] = $user->active_status;
@@ -192,44 +274,18 @@ class MyRequestController extends Controller
 
             return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel, $password, $phoneOtp, $user) {
 
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                // app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId); // change it to update form status in zoho crm
                 if($user->form_status ==1){
                     ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
                 }
-                app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
             }, [
                 'success' => true,
-                'message' => 'Quote Customer registered Successfully',
+                'message' => 'Phone verified Successfully',
                 'data' => $rel
             ]);
-        }else{
 
-            $euId = User::where('email',$request->email)->value('id');
-            if(!empty($euId)){
-                return $this->sendResponse('Abandoned Quote Customer already exists');
-            }
-            $dataUser['name'] = $request->name;
-            $dataUser['email'] = $request->email;
-            $dataUser['phone'] = $request->phone;
-            $password = Str::random(8);
-            $dataUser['password'] = Hash::make($password);
-            $dataUser['user_type'] = 2;
-            $dataUser['active_status'] = 2;
-            $dataUser['form_status'] = 0;
-            $dataUser['created_at'] = date('y-m-d H:i:s');
-            $dataUser['updated_at'] = date('y-m-d H:i:s');
-            $euId = User::insertGetId($dataUser);
-
-            return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                app(self::class)->sendEncouragementEmail(['userId' => $euId]);
-            }, [
-                    'success' => true,
-                    'message' => 'Abandoned Quote Customer'
-                ]
-            );
         }
-
+        return $this->sendError('Wrong OTP, try again!');
     }
 
     public function createNewRequest(Request $request, LeadService $leadService){
@@ -345,6 +401,7 @@ class MyRequestController extends Controller
 
             return ZohoHelper::dispatchAfterResponse(
                 function () use ($euId, $rel, $sId, $leadService, $fUser) {
+                    
 
                     User::where('form_status', 1)
                         ->whereIn('user_type', [1, 3])
@@ -368,6 +425,8 @@ class MyRequestController extends Controller
                                 }
                             }
                         });
+
+                    app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
 
                     $lead = LeadRequest::find($sId);
                     $sellers = $leadService->getAllSellers($lead);
@@ -913,48 +972,6 @@ class MyRequestController extends Controller
     }
 
 
-    public function verifyPhoneNumber(Request $request){
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|integer|exists:users,id',
-            'otp' => 'required',
-          ], [
-            'image_file.required' => 'Location Postcode is required.'
-        ]);
-        if($validator->fails()){
-            return $this->sendError($validator->errors());
-        }
-
-        $fUser = User::where('id',$request->user_id)->first();
-        $cOtp = $fUser->otp;
-        $otp = $request->otp;
-
-        if($cOtp == $otp){
-            $data['phone_verified'] = 1;
-            $data['updated_at'] = date('Y-m-d H:i:s');
-            User::where('id',$request->user_id)->update($data);
-
-            $dataLead['is_phone_verified'] = '1';
-            $dataLead['updated_at'] = date('Y-m-d H:i:s');
-            LeadRequest::where('customer_id', $request->user_id)->update($dataLead);
-            // $leadsDetails = LeadRequest::where('customer_id',$request->user_id)->first();
-            // $zohoService = new ZohoService();
-            // $zohoService->integrateUser('lead',null,$leadsDetails);
-            $rel['user_id'] = $request->user_id;
-
-            $rel['user_type'] = $fUser->user_type;
-            $rel['form_status'] = $fUser->form_status;
-            $rel['active_status'] = $fUser->active_status;
-            $rel['remember_tokens'] = $fUser->remember_token;
-            $rel['name'] = $fUser->name;
-            $rel['email'] = $fUser->email;
-            $rel['phone'] = $fUser->phone;
-            $rel['uuid'] = $fUser->uuid;
-            $rel['request_id'] = $request->request_id;
-
-            return $this->sendResponse('Phone number verified successfully!',$rel);
-
-        }
-        return $this->sendError('Wrong OTP, try again!');
-    }
+    
 
 }

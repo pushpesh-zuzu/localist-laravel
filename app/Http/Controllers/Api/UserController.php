@@ -31,7 +31,7 @@ use App\Models\LeadRequest;
 use App\Models\UserResponseTime;
 use App\Models\PlanHistory;
 use App\Models\Plan;
-
+use App\Models\AbandonedUser;
 use App\Services\LeadService;
 use App\Services\CompanyRegService;
 use App\Helpers\Zoho\ZohoServiceLocations;

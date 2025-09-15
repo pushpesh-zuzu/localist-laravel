@@ -18,6 +18,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Coupon;
 use App\Models\Otp;
+use App\Models\AbandonedUser;
 use App\Models\UserServiceLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
@@ -340,7 +341,7 @@ class ApiController extends Controller
     }
 
     public function regOtps(Request $request, $email){
-        $aRows = User::where('email', $email)->select(['name', 'email', 'otp'])->get();
+        $aRows = AbandonedUser::where('email', $email)->select(['name', 'email', 'otp'])->get();
         return $this->sendResponse('OTP Data',$aRows);
     }
 
