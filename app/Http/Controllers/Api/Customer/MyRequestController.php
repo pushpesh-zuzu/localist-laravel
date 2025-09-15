@@ -258,7 +258,7 @@ class MyRequestController extends Controller
             $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
             $user->update(['remember_token' => $token]);
             $user->remember_tokens = $token;
-
+            $userId = $user->id;
             $rel['user_id'] = $euId;
             $rel['user_type'] = $user->user_type;
             $rel['form_status'] = $user->form_status;
@@ -273,11 +273,11 @@ class MyRequestController extends Controller
             $rel['total_credit'] = $user->total_credit;
             $rel['nation_wide'] = $user->nation_wide;
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel, $password, $phoneOtp, $user) {
+            return ZohoHelper::dispatchAfterResponse(function () use ($userId, $rel, $password, $phoneOtp, $user) {
 
-                  app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId); // change it to update form status in zoho crm
+                  app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId); // change it to update form status in zoho crm
                 if($user->form_status ==1){
-                    ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
+                    ZohoEmails::sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp);
                 }
             }, [
                 'success' => true,
