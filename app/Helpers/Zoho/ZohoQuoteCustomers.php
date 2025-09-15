@@ -33,6 +33,16 @@ class ZohoQuoteCustomers
             isset($responseData['data'][0]['details']['id'])
         ) {
             $zohoRecordId = $responseData['data'][0]['details']['id'];
+
+            $updatePayload = [
+                    'data' => [[
+                        'id' => $zohoRecordId,
+                        'User_Auto_Id' => $zohoRecordId
+                    ]]
+                ];
+
+            Http::withToken($access_token)
+                ->put("https://www.zohoapis.eu/crm/v2/Quote_Customers", $updatePayload);
             if($type){
                 AbandonedUser::where('id', $userId)->update([
                     'zoho_record_id' => $zohoRecordId,
