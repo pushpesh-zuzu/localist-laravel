@@ -208,6 +208,16 @@ class UserController extends Controller
             return $this->sendError('Email already exists');
         }
 
+        if (isset($aVals['phone']) && !empty($aVals['phone'])) {
+            $cleanPhone = preg_replace('/\s+/', '', $aVals['phone']); // remove spaces
+            if (strpos($cleanPhone, '+44') !== 0) {
+                $cleanPhone = ltrim($cleanPhone, '0');
+                $aVals['phone'] = '+44' . $cleanPhone;
+            } else {
+                $aVals['phone'] = $cleanPhone;
+            }
+        }
+
 
         if($aVals['form_status'] == 1){
             $validator = self::validators($aVals,$loggedUser);
@@ -227,89 +237,78 @@ class UserController extends Controller
                     return $this->sendError('Company is Invalid');
                 }
             }
-        }
-        $passwordRandomString = Str::random(8);
-        $aVals['password'] = Hash::make($passwordRandomString);
-        $randomNumber = rand(1000, 5000);
-        $aVals['total_credit'] = 0;
-        $aVals['business_profile_name'] = $request->businessname;
-         if (isset($aVals['phone']) && !empty($aVals['phone'])) {
-            $cleanPhone = preg_replace('/\s+/', '', $aVals['phone']); // remove spaces
-            if (strpos($cleanPhone, '+44') !== 0) {
-                $cleanPhone = ltrim($cleanPhone, '0');
-                $aVals['phone'] = '+44' . $cleanPhone;
-            } else {
-                $aVals['phone'] = $cleanPhone;
+        
+            $passwordRandomString = Str::random(8);
+            $aVals['password'] = Hash::make($passwordRandomString);
+            $randomNumber = rand(1000, 5000);
+            $aVals['total_credit'] = 0;
+            $aVals['business_profile_name'] = $request->businessname;
+            
+            $user = User::create($aVals);
+            if ($user->id) {
+                $now = now();
+                NotificationSetting::insert([
+                    [
+                        'user_id'   => $user->id,
+                        'noti_name' => 'buyer_email_new_lead',
+                        'noti_value'=> 1,
+                        'user_type' => 'buyer',
+                        'noti_type' => 'email',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $user->id,
+                        'noti_name' => 'buyer_email_customer_closing_leads',
+                        'noti_value'=> 1,
+                        'user_type' => 'buyer',
+                        'noti_type' => 'email',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $user->id,
+                        'noti_name' => 'buyer_email_customer_hiring_me',
+                        'noti_value'=> 1,
+                        'user_type' => 'buyer',
+                        'noti_type' => 'email',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $user->id,
+                        'noti_name' => 'buyer_browser_new_lead',
+                        'noti_value'=> 1,
+                        'user_type' => 'buyer',
+                        'noti_type' => 'browser',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $user->id,
+                        'noti_name' => 'buyer_browser_customer_sending_message',
+                        'noti_value'=> 1,
+                        'user_type' => 'buyer',
+                        'noti_type' => 'browser',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                    [
+                        'user_id'   => $user->id,
+                        'noti_name' => 'buyer_browser_new_review',
+                        'noti_value'=> 1,
+                        'user_type' => 'buyer',
+                        'noti_type' => 'browser',
+                        'created_at'=> $now,
+                        'updated_at'=> $now,
+                    ],
+                ]);
             }
-        }
-        $user = User::create($aVals);
-        if ($user->id) {
-            $now = now();
-            NotificationSetting::insert([
-                [
-                    'user_id'   => $user->id,
-                    'noti_name' => 'buyer_email_new_lead',
-                    'noti_value'=> 1,
-                    'user_type' => 'buyer',
-                    'noti_type' => 'email',
-                    'created_at'=> $now,
-                    'updated_at'=> $now,
-                ],
-                [
-                    'user_id'   => $user->id,
-                    'noti_name' => 'buyer_email_customer_closing_leads',
-                    'noti_value'=> 1,
-                    'user_type' => 'buyer',
-                    'noti_type' => 'email',
-                    'created_at'=> $now,
-                    'updated_at'=> $now,
-                ],
-                [
-                    'user_id'   => $user->id,
-                    'noti_name' => 'buyer_email_customer_hiring_me',
-                    'noti_value'=> 1,
-                    'user_type' => 'buyer',
-                    'noti_type' => 'email',
-                    'created_at'=> $now,
-                    'updated_at'=> $now,
-                ],
-                [
-                    'user_id'   => $user->id,
-                    'noti_name' => 'buyer_browser_new_lead',
-                    'noti_value'=> 1,
-                    'user_type' => 'buyer',
-                    'noti_type' => 'browser',
-                    'created_at'=> $now,
-                    'updated_at'=> $now,
-                ],
-                [
-                    'user_id'   => $user->id,
-                    'noti_name' => 'buyer_browser_customer_sending_message',
-                    'noti_value'=> 1,
-                    'user_type' => 'buyer',
-                    'noti_type' => 'browser',
-                    'created_at'=> $now,
-                    'updated_at'=> $now,
-                ],
-                [
-                    'user_id'   => $user->id,
-                    'noti_name' => 'buyer_browser_new_review',
-                    'noti_value'=> 1,
-                    'user_type' => 'buyer',
-                    'noti_type' => 'browser',
-                    'created_at'=> $now,
-                    'updated_at'=> $now,
-                ],
-            ]);
-        }
 
 
-        $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-        $user->update(['remember_token' => $token]);
+            $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+            $user->update(['remember_token' => $token]);
 
-
-        if(!empty($user))
-        {
             $userdetails = UserDetail::where('user_id',$user->id)->first();
 
             if(empty($userdetails))
@@ -441,9 +440,25 @@ class UserController extends Controller
 
 
 
-        }
+        }else{
 
-        return $this->sendResponse('Registration Sucessful.', $user);
+            $user = AbandonedUser::create($aVals);
+            $rel = [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            return ZohoHelper::dispatchAfterResponse(function () use ($user, $rel) {
+
+                app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
+
+            }, [
+                'success' => true,
+                'message' => 'Abandoned Lead Buyers registered Successfully',
+                'data' => $rel
+            ]);
+        }
 
     }
 
@@ -496,10 +511,6 @@ class UserController extends Controller
 
                     if ($auto_bid == 0) {
                         app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
-                    }
-
-                     if ($user->form_status == 0) {
-                        app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
                     }
 
                 } elseif ($user->user_type == 2) {
