@@ -21,7 +21,7 @@ class ZohoService
         if($type =='user' && $user){
             $searchResponse = Http::withToken($access_token)
             ->get('https://www.zohoapis.in/crm/v2/Quote_Customers/search', [
-                'criteria' => "(User_auto_Id:equals:{$user->id})"
+                'criteria' => "(User_Auto_Id:equals:{$user->id})"
             ]);
         }
         elseif($type =='lead' && $lead){
@@ -39,7 +39,7 @@ class ZohoService
         if($type =='user' && $user){
             $payload = [
                 'data' => [[
-                    'User_auto_Id' => $user->id,
+                    'User_Auto_Id' => $user->id,
                     'Name' => $user->name,
                     'Email' => $user->email,
                     'Mobile' => $user->phone,
