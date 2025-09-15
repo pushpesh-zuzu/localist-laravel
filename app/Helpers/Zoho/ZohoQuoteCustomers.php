@@ -21,14 +21,15 @@ class ZohoQuoteCustomers
         }
 
         //$zohoId = $this->getZohoCustomerId($access_token, $user->id);
-        if (!$type) {
+
+        $payload = $this->buildCustomerPayload($userId,$type);
+
+         if (!$type) {
             $email = $payload['data'][0]['Email'] ?? null;
             if ($email) {
                 $this->deleteAbandonedIfExists($access_token, $email);
             }
         }
-        $payload = $this->buildCustomerPayload($userId,$type);
-
         $response = $this->upsertToZohoService($access_token, $payload);
 
         $responseData = $response->json();
