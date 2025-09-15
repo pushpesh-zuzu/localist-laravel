@@ -1,6 +1,7 @@
 <?php
 namespace App\Helpers\Zoho;
 
+use App\Models\AbandonedUser;
 use App\Models\User;
 use DateTime;
 use DateTimeZone;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoQuoteCustomers
 {
-    public function integrateQuoteCustomer($userId)
+    public function integrateQuoteCustomer($userId,$type=null)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -20,20 +21,21 @@ class ZohoQuoteCustomers
         }
 
         //$zohoId = $this->getZohoCustomerId($access_token, $user->id);
-        $payload = $this->buildCustomerPayload($userId);
+        $payload = $this->buildCustomerPayload($userId,$type);
         $response = $this->upsertToZohoService($access_token, $payload);
 
         $responseData = $response->json();
-
         if (
             isset($responseData['data'][0]['status']) &&
             $responseData['data'][0]['status'] === 'success' &&
             isset($responseData['data'][0]['details']['id'])
         ) {
             $zohoRecordId = $responseData['data'][0]['details']['id'];
-            User::where('id', $userId)->update([
-                'zoho_record_id' => $zohoRecordId,
-            ]);
+            if($type){
+                User::where('id', $userId)->update([
+                    'zoho_record_id' => $zohoRecordId,
+                ]);
+            }
         }
 
         Log::info('Zoho API Credit Used for LeadBuyer Sync', [
@@ -46,9 +48,15 @@ class ZohoQuoteCustomers
     }
 
 
-    protected function buildCustomerPayload($userId)
+    protected function buildCustomerPayload($userId,$type=null)
     {
-        $user = User::findOrFail($userId);
+
+        if($type){
+            $user = AbandonedUser::findOrFail($userId);
+        }
+        else{
+            $user = User::findOrFail($userId);
+        }
         $datetime = new DateTime($user->created_at, new DateTimeZone('Asia/Kolkata'));
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
         $payload = [

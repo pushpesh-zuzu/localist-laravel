@@ -123,7 +123,7 @@ class MyRequestController extends Controller
             $euId = AbandonedUser::insertGetId($dataUser);
 
             $user = AbandonedUser::where('id',$euId)->first();
-            
+
             $rel['user_id'] = $euId;
 
             $rel['user_type'] = $user->user_type;
@@ -133,8 +133,8 @@ class MyRequestController extends Controller
 
             return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
 
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
-                
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
+
             }, [
                 'success' => true,
                 'message' => 'Quote Customer registered Successfully',
@@ -159,7 +159,7 @@ class MyRequestController extends Controller
             $euId = AbandonedUser::insertGetId($dataUser);
 
             return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
                 app(self::class)->sendEncouragementEmail(['userId' => $euId]);
             }, [
                     'success' => true,
@@ -203,7 +203,7 @@ class MyRequestController extends Controller
             $nuData['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($nuData);
             AbandonedUser::where('id',$request->user_id)->delete();
-            
+
             $phoneOtp = $abUser->otp;
             if(!empty($euId)){
 
@@ -275,7 +275,7 @@ class MyRequestController extends Controller
 
             return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel, $password, $phoneOtp, $user) {
 
-                // app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId); // change it to update form status in zoho crm
+                  app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId); // change it to update form status in zoho crm
                 if($user->form_status ==1){
                     ZohoEmails::sendWelcomeEmailQuoteCustomer($euId, $password, $phoneOtp);
                 }
@@ -402,7 +402,7 @@ class MyRequestController extends Controller
 
             return ZohoHelper::dispatchAfterResponse(
                 function () use ($euId, $rel, $sId, $leadService, $fUser) {
-                    
+
 
                     User::where('form_status', 1)
                         ->whereIn('user_type', [1, 3])
@@ -452,7 +452,7 @@ class MyRequestController extends Controller
                 'data' => $rel
             ]);
         }
-        
+
        return $this->sendError('Something went wrong, try again!');
     }
 
@@ -973,6 +973,6 @@ class MyRequestController extends Controller
     }
 
 
-    
+
 
 }

@@ -471,7 +471,7 @@ class ApiController extends Controller
 
         try {
         // Find user
-        $user = User::find($userId);
+        $user = AbandonedUser::find($userId);
 
 
         if (! $user) {
@@ -489,11 +489,13 @@ class ApiController extends Controller
 
         $user->save();
 
+
+
         // (Optional) send OTP via SMS here, e.g. using your Sinch function
 
 
         return ZohoHelper::dispatchAfterResponse(function () use ($userId) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId);
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId,'abandon');
 
 
             }, [
@@ -536,7 +538,7 @@ class ApiController extends Controller
 
         try {
             // Find the user (adjust model/table if needed)
-            $user = User::where('zoho_record_id', $quoteId)->first();
+            $user = AbandonedUser::where('zoho_record_id', $quoteId)->first();
 
             if (! $user) {
                 // not found: you can optionally create an audit record or return 404
