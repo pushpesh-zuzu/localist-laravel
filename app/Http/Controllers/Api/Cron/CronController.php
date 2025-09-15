@@ -38,6 +38,7 @@ class CronController extends Controller
     public function onDayBasis()
     {
         $newLeadAfter7days = $this->sendLeadsAfter7Days();
+
         $newLeadAfter5days = $this->checkCreditAfter5Days();
         return response()->json([
             'status' => 'success',
@@ -52,7 +53,10 @@ class CronController extends Controller
 
     public function sendLeadsAfter7Days()
     {
+
         print_r("sendLeadsAfter7Days called\n");
+
+
         $totalUnsentLeadEmails = 0;
 
         $now = Carbon::now();
@@ -66,7 +70,7 @@ class CronController extends Controller
 
         print_r("From: ".$from." To: ".$to."\n");
 
-        $sellerLeadSummary = [];       
+        $sellerLeadSummary = [];
 
         User::whereNotNull('zoho_record_id')
             ->where('form_status', 1)
@@ -75,15 +79,19 @@ class CronController extends Controller
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
-                    print_r("Processing seller ID: " .$seller->id."\n");
+                    // print_r("Processing seller ID: " .$seller->id."\n");
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
                     $groupedLeadStats = [];
                     $nationwideLeadIds = [];
                     foreach ($serviceLocations as $location) {
+
                         $leadQuery = LeadRequest::with('category')
                             ->where('service_id', $location->service_id)
-                            ->whereBetween('created_at', [$from, $to]);
-                            
+                            ->where('status','!=', 'hired')
+                            ->orderBy('created_at', 'desc')   // latest first
+                            ->take(5);
+
+
 
                         if ($location->nation_wide != 1) {
 
@@ -97,18 +105,26 @@ class CronController extends Controller
 
                         $leads = $leadQuery->get();
 
-                        print_r("Leads Query: ".json_encode($leadQuery->toRawSql())."\n");
-                        print_r("Leads: ".json_encode($leads->toArray())."\n");
+                        // print_r("Leads Query: ".json_encode($leadQuery->toRawSql())."\n");
+                        // print_r("Leads: ".json_encode($leads->toArray())."\n");
 
                         foreach ($leads as $lead) {
 
-                            $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('created_at', '>=', Carbon::now()->subDays(7))
-                                ->exists();
+                            $latestRecommended = RecommendedLead::where('seller_id', $seller->id)
+                                ->latest('created_at')   // order by created_at DESC
+                                ->first();
+
+                            $alreadyRecommended = true;
+
+                            if ($latestRecommended && $latestRecommended->created_at->between($from, $to)) {
+                                $alreadyRecommended = false;
+                            }
 
                             if ($alreadyRecommended) {
                                 continue;
                             }
+
+
 
 
                             $serviceId = $location->service_id;
@@ -135,7 +151,7 @@ class CronController extends Controller
             return !empty($summary);
         });
 
-        print_r("Total sellers with leads: ".json_encode($sellerLeadSummary)."\n");
+        //print_r("Total sellers with leads: ".json_encode($sellerLeadSummary)."\n");
 
         foreach ($sellerLeadSummary as $sellerId => $leadStats) {
             $sellerTotalLeadCount = 0;
@@ -158,7 +174,7 @@ class CronController extends Controller
                 }
             }
 
-            print_r("seller Data: ".json_encode($sellerLeadData)."\n");
+            //print_r("seller Data: ".json_encode($sellerLeadData)."\n");
 
             if (!empty($sellerLeadData)) {
                 $emailPayload = [
@@ -174,7 +190,9 @@ class CronController extends Controller
 
 
                 if (!$alreadySent) {
+
                     ZohoEmails::sendLeadsAfterDays($sellerId, $emailPayload, $settingValue);
+
                 }
             }
         }
@@ -503,7 +521,7 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59); // Subtract 59 minutes to get the start of the 1-hour window
 
-        
+
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])
             ->where('status', 'new')
             ->get();
