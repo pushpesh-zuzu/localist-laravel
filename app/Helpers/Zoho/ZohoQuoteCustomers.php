@@ -63,7 +63,7 @@ class ZohoQuoteCustomers
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
         $payload = [
             'data' => [[
-                'User_auto_Id'      => $user->zoho_record_id,
+                'User_Auto_Id'      => $user->zoho_record_id,
                 'Name'              => $user->name,
                 'Email'             => $user->email,
                 'Mobile'            => $user->phone,
@@ -73,7 +73,7 @@ class ZohoQuoteCustomers
                 'registration_type' => $user->form_status ==1 ? 'completed' : 'abandoned',
                 'created_at'        => $formatted
             ]],
-            'duplicate_check_fields' => ['User_auto_Id']
+            'duplicate_check_fields' => ['User_Auto_Id']
         ];
 
         return $payload;
