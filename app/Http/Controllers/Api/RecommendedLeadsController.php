@@ -45,6 +45,7 @@ class RecommendedLeadsController extends Controller
     public function switchAutobid(Request $request): JsonResponse
     {
         $userdetails = UserDetail::where('user_id',$request->user_id)->first();
+           
         if(!empty($userdetails)){
             $user_id = $request->user_id;
             $autobid = $request->is_autobid;
@@ -66,6 +67,22 @@ class RecommendedLeadsController extends Controller
     public function getAutobid(Request $request){
         $aVals = $request->all();
         $isDataExists = UserDetail::where('user_id',$aVals['user_id'])->first();
+        if(empty($isDataExists)){
+            $user = User::where('id',$request->user_id)->first();
+            UserDetail::create([
+                'user_id'  => $user->id,
+                'is_autobid'  =>1,
+                'billing_contact_name' => $user->name,
+                'billing_phone' => $user->phone,
+                'billing_vat_register' => 1,
+            ]);
+
+            $dataAb['user_id'] = $user->id;
+            $dataAb['action'] = 'enabled';
+            AutobidStatusLog::insertGetId($dataAb);
+            $isDataExists = UserDetail::where('user_id',$request->user_id)->first();
+        }
+
         if(!empty($isDataExists)){
             return $this->sendResponse(__('Autobid Data'), [
                 'isautobid' => $isDataExists->is_autobid

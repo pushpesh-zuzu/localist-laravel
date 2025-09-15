@@ -120,6 +120,20 @@ class MyRequestController extends Controller
             $euId = User::insertGetId($dataUser);
 
             if(!empty($euId)){
+
+                UserDetail::create([
+                    'user_id'  => $euId,
+                    'is_autobid'  =>1,
+                    'billing_contact_name' => $dataUser['name'],
+                    'billing_phone' => $dataUser['phone'],
+                    'billing_vat_register' => 1,
+                ]);
+
+                $dataAb['user_id'] = $euId;
+                $dataAb['action'] = 'enabled';
+                AutobidStatusLog::insertGetId($dataAb);
+
+
                 $now = now();
                 NotificationSetting::insert([
                     [
