@@ -102,6 +102,7 @@ class SellerController extends Controller
             return redirect()->route('seller.incomplete')
                          ->with('success', 'Abandoned Seller deleted successfully.');
         }
+        
         \DB::table('users')->where('id',$id)->delete();
         \DB::table('user_accreditations')->where('user_id',$id)->delete();
         \DB::table('user_card_details')->where('user_id',$id)->delete();
