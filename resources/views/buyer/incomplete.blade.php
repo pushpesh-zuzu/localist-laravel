@@ -34,9 +34,8 @@
                 </a>
                 <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('buyer.destroy',$aRow->id) }}" method="post" style="display: none;">
                    {{ method_field('DELETE') }}
-                   <input type="hidden" name="type" value="abandoned">
                    {{ csrf_field() }}
-                       
+                   <input type="hidden" name="type" value="abandoned">    
                 </form>
 
             </td>
