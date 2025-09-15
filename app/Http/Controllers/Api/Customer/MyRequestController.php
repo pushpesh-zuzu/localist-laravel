@@ -202,7 +202,7 @@ class MyRequestController extends Controller
             $nuData['created_at'] = date('y-m-d H:i:s');
             $nuData['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($nuData);
-            AbandonedUser::where('id',$request->user_id)->delete();
+            AbandonedUser::where('email', $nuData['email'])->delete();
 
             $phoneOtp = $abUser->otp;
             if(!empty($euId)){
