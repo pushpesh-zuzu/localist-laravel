@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\ApiController;
 use App\Models\EmailLog;
 use App\Models\NotificationSetting;
 use App\Models\UserDetail;
+use App\Models\AutobidStatusLog;
 use App\Services\LeadService;
 
 class MyRequestController extends Controller
