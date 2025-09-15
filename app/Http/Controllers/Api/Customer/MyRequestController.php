@@ -28,6 +28,7 @@ use App\Models\LeadRequest;
 use App\Http\Controllers\Api\ApiController;
 use App\Models\EmailLog;
 use App\Models\NotificationSetting;
+use App\Models\UserDetail;
 use App\Services\LeadService;
 
 class MyRequestController extends Controller
