@@ -32,7 +32,7 @@ class ZohoQuoteCustomers
         ) {
             $zohoRecordId = $responseData['data'][0]['details']['id'];
             if($type){
-                User::where('id', $userId)->update([
+                AbandonedUser::where('id', $userId)->update([
                     'zoho_record_id' => $zohoRecordId,
                 ]);
             }
