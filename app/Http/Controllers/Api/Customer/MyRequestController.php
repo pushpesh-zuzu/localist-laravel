@@ -134,6 +134,7 @@ class MyRequestController extends Controller
             return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
 
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+                
             }, [
                 'success' => true,
                 'message' => 'Quote Customer registered Successfully',
@@ -209,8 +210,8 @@ class MyRequestController extends Controller
                 UserDetail::create([
                     'user_id'  => $euId,
                     'is_autobid'  =>1,
-                    'billing_contact_name' => $dataUser['name'],
-                    'billing_phone' => $dataUser['phone'],
+                    'billing_contact_name' => $nuData['name'],
+                    'billing_phone' => $nuData['phone'],
                     'billing_vat_register' => 1,
                 ]);
 
