@@ -142,7 +142,7 @@ class MyRequestController extends Controller
             ]);
         }else{
 
-            $euId = User::where('email',$request->email)->value('id');
+            $euId = AbandonedUser::where('email',$request->email)->value('id');
             if(!empty($euId)){
                 return $this->sendResponse('Abandoned Quote Customer already exists');
             }
