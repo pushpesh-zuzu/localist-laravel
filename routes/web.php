@@ -86,6 +86,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('buyer-contact-form', [BuyerController::class, 'contactForm'])->name('buyer.contact_form');
     Route::get('buyer-show-contact-form/{id}', [BuyerController::class, 'viewContactForm'])->name('buyer.show_contact_form');
     Route::resource('seller', SellerController::class);
+    Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show');
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-contact-form', [SellerController::class, 'contactForm'])->name('seller.contact_form');
     Route::get('seller-show-contact-form/{id}', [SellerController::class, 'viewContactForm'])->name('seller.show_contact_form');

@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\Plan;
 use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\DB;
+use App\Models\AbandonedUser;
 
 class SellerController extends Controller
 {
@@ -65,9 +66,13 @@ class SellerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $type, string $id)
     {
-        $aRows = User::where('id',$id)->with(['details'])->first();
+        if( $type === 'abandoned') {
+            $aRows = AbandonedUser::where('id',$id)->with(['details'])->first();
+        } else {
+            $aRows = User::where('id', $id)->with(['details'])->first();
+        }
         return view('seller.view', compact('aRows'));
     }
 
@@ -90,8 +95,14 @@ class SellerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+        if($request->type == 'abandoned'){
+            \DB::table('abandoned_users')->where('id',$id)->delete();
+            return redirect()->route('seller.incomplete')
+                         ->with('success', 'Abandoned Seller deleted successfully.');
+        }
+        
         \DB::table('users')->where('id',$id)->delete();
         \DB::table('user_accreditations')->where('user_id',$id)->delete();
         \DB::table('user_card_details')->where('user_id',$id)->delete();
