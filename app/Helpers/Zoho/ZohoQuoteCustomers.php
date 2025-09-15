@@ -24,12 +24,6 @@ class ZohoQuoteCustomers
 
         $payload = $this->buildCustomerPayload($userId,$type);
 
-         if (!$type) {
-            $email = $payload['data'][0]['Email'] ?? null;
-            if ($email) {
-                $this->deleteAbandonedIfExists($access_token, $email);
-            }
-        }
         $response = $this->upsertToZohoService($access_token, $payload);
 
         $responseData = $response->json();
@@ -69,7 +63,7 @@ class ZohoQuoteCustomers
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
         $payload = [
             'data' => [[
-                'User_auto_Id'      => $user->id,
+                'User_auto_Id'      => $user->zoho_record_id,
                 'Name'              => $user->name,
                 'Email'             => $user->email,
                 'Mobile'            => $user->phone,
