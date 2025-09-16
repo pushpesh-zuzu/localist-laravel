@@ -32,7 +32,7 @@
 			  PAID
 			</div>
 			<div style="margin-top: 20px; font-size: 16px;">TOTAL</div>
-            <div style="font-size: 28px; font-weight: bold; color: #6de1a7;">&pound;{{number_format($total_amount, 2)}}</div>
+            <div style="font-size: 28px; font-weight: bold; color: #6de1a7;">&pound;{{$total_amount}}</div>
 		  </div>
 		</div>
     </div>
@@ -53,7 +53,7 @@
         <tr style="border-bottom: 1px solid #eee;">
           <td style="padding: 10px 0;">{{$details}}</td>
           <td style="padding: 10px 0;">One off charge</td>
-          <td style="padding: 10px 0; text-align: right;">&pound;{{number_format($amount, 2)}}</td>
+          <td style="padding: 10px 0; text-align: right;">&pound;{{$amount}}</td>
         </tr>
       </tbody>
     </table>
@@ -62,15 +62,15 @@
     <div style="margin-top: 30px; font-size: 18px;">
         <div style="display: flex; justify-content: space-between;">
             <span style="margin-left:53%">Sub Total</span>
-            <span style="float: right;">&pound;{{number_format($amount, 2)}}</span>
+            <span style="float: right;">&pound;{{$amount}}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
             <span style="margin-left:53%">VAT(20%)</span>
-            <span style="float: right;">&pound;{{number_format($vat, 2)}}</span>
+            <span style="float: right;">&pound;{{$vat}}</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-top: 5px; font-weight: bold;">
             <span style="margin-left:53%">Total</span>
-            <span style="float: right;">&pound;{{number_format($total_amount, 2)}}</span>
+            <span style="float: right;">&pound;{{$total_amount}}</span>
         </div>
     </div>
 

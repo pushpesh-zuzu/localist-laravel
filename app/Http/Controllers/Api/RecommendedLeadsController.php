@@ -18,6 +18,7 @@ use App\Models\UserDetail;
 use App\Models\Category;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Invoice;
 use App\Models\RecommendedLead;
 use App\Models\AutobidStatusLog;
 use App\Models\NotificationSetting;
@@ -215,6 +216,8 @@ class RecommendedLeadsController extends Controller
         //start getting auto bid leads
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
+        //variable to atke count after how manys of plan purchase leads autobid should start
+        $afterPlanPurchseDays = CustomHelper::setting_value("after_plan_purchase_days", 7);
         //get Leads which are created N munites before and not closed and autobid is open for that lead
         $leads = LeadRequest::join('users', 'users.id', '=', 'lead_requests.customer_id')
             ->where('lead_requests.closed_status', 0)
@@ -235,34 +238,42 @@ class RecommendedLeadsController extends Controller
                     $leadCreatedAt = Carbon::parse($lead->created_at);
                     $sellerRegisteredAt = Carbon::parse($s->user_created_time);
 
-                    if($leadCreatedAt->greaterThan($sellerRegisteredAt)){
-                        $batch = CustomHelper::getCurrentAutobidBatch($s->id);
+                    //check plan purchase days
+                    $invoice = Invoice::where('user_id', $s->id)->first();
+                    if(!empty($invoice)){
+                        $planPurchaseDate = Carbon::parse($invoice->created_at);
 
-                        if(!empty($batch)){
-                            $dateStart = Carbon::parse($batch['start'])->startOfDay();
-                            $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
-                            $count = \DB::table('recommended_leads')
-                                ->where('seller_id', $s->id)
-                                ->where('purchase_type', 'Autobid')
-                                ->whereBetween('created_at', [$dateStart, $dateEnd])
-                                ->count();
+                        //start autobid process only if current date id more than afterPlanPurchseDays of plan purchase date and lead created date is greater than seller registered date
+                        if(
+                            $leadCreatedAt->greaterThan($sellerRegisteredAt) &&
+                            Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($afterPlanPurchseDays))
+                        ){
+                            $batch = CustomHelper::getCurrentAutobidBatch($s->id);
 
-                            if($count < $autobidLimit){
-                                $request->replace($request->only(['abc']));
-                                $request['bidtype'] = 'autobid';
-                                $request['lead_id'] = $lead->id;
-                                $request['service_id'] = $lead->service_id;
-                                $request['distance'] = $s->distance;
-                                $request['seller_id'] = $s->id;
-                                $request['user_id'] = $lead->customer_id;
-                                $this->addManualBid($request, $leadService);
+                            if(!empty($batch)){
+                                $dateStart = Carbon::parse($batch['start'])->startOfDay();
+                                $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
+                                $count = \DB::table('recommended_leads')
+                                    ->where('seller_id', $s->id)
+                                    ->where('purchase_type', 'Autobid')
+                                    ->whereBetween('created_at', [$dateStart, $dateEnd])
+                                    ->count();
+
+                                if($count < $autobidLimit){
+                                    $request->replace($request->only(['abc']));
+                                    $request['bidtype'] = 'autobid';
+                                    $request['lead_id'] = $lead->id;
+                                    $request['service_id'] = $lead->service_id;
+                                    $request['distance'] = $s->distance;
+                                    $request['seller_id'] = $s->id;
+                                    $request['user_id'] = $lead->customer_id;
+                                    $this->addManualBid($request, $leadService);
+                                }
                             }
                         }
                     }
-
-
+                    
                 }
-
             }
         }
 
