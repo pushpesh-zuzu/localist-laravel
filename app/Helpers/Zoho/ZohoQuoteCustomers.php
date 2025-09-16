@@ -69,7 +69,7 @@ class ZohoQuoteCustomers
         else{
             $user = User::findOrFail($userId);
         }
-        $datetime = new DateTime($user->created_at, new DateTimeZone('Asia/Kolkata'));
+        $datetime = new DateTime($user->created_at, new DateTimeZone('Europe/London'));
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
         $payload = [
             'data' => [[
