@@ -70,7 +70,7 @@ class ZohoPurchasedLeads
         $customerName=User::find($recommendedLeads->buyer_id)->name;
         $service=Category::find($recommendedLeads->service_id)->name;
         $creditScore=LeadRequest::find($recommendedLeads->lead_id)->credit_score;
-        $datetime = new DateTime($recommendedLeads->created_at, new DateTimeZone('Asia/Kolkata'));
+        $datetime = new DateTime($recommendedLeads->created_at, new DateTimeZone('Europe/London'));
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
 
         return [
