@@ -148,7 +148,16 @@ class MyRequestController extends Controller
             }
             $dataUser['name'] = $request->name;
             $dataUser['email'] = $request->email;
-            $dataUser['phone'] = $request->phone;
+            // $dataUser['phone'] = $request->phone;
+             if (isset($request->phone) && !empty($request->phone)) {
+                $cleanPhone = preg_replace('/\s+/', '', $request->phone); // remove spaces
+                if (strpos($cleanPhone, '+44') !== 0) {
+                    $cleanPhone = ltrim($cleanPhone, '0');
+                    $dataUser['phone'] = '+44' . $cleanPhone;
+                } else {
+                    $dataUser['phone'] = $cleanPhone;
+                }
+            }
             $password = Str::random(8);
             $dataUser['password'] = Hash::make($password);
             $dataUser['user_type'] = 2;
@@ -460,7 +469,7 @@ class MyRequestController extends Controller
     {
         $userId = $request['userId'];
         $sentCount = 0;
-        $users = User::whereNotNull('zoho_record_id')
+        $users = AbandonedUser::whereNotNull('zoho_record_id')
             ->where('id',$userId)
             ->where('form_status',0)
 
