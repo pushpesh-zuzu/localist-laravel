@@ -245,8 +245,9 @@ class RecommendedLeadsController extends Controller
 
                         //start autobid process only if current date id more than afterPlanPurchseDays of plan purchase date and lead created date is greater than seller registered date
                         if(
-                            $leadCreatedAt->greaterThan($sellerRegisteredAt) &&
-                            Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($afterPlanPurchseDays))
+                            $leadCreatedAt->greaterThan($sellerRegisteredAt) 
+                            // &&
+                            // Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($afterPlanPurchseDays))
                         ){
                             $batch = CustomHelper::getCurrentAutobidBatch($s->id);
 
