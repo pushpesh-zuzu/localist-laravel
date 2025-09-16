@@ -80,8 +80,7 @@
                 <p>Please use the following credentials to log in:</p>
                 <p>
                   Email: {{$email}} <br/>
-                  Password: <strong>{{$password}}</strong><br/>                  
-                  Phone OTP: <strong>{{$phone_otp}}</strong>
+                  Password: <strong>{{$password}}</strong>
                 </p>
                 <a href="{{$baseUrl}}/login" class="btn">Log in to Localists</a>
             </div>
