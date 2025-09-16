@@ -119,6 +119,9 @@ class CronController extends Controller
                             if ($latestRecommended && $latestRecommended->created_at->between($from, $to)) {
                                 $alreadyRecommended = false;
                             }
+                            if(!$latestRecommended){
+                                $alreadyRecommended = false;
+                            }
 
                             if ($alreadyRecommended) {
                                 continue;
