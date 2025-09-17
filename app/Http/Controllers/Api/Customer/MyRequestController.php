@@ -31,7 +31,10 @@ use App\Models\NotificationSetting;
 use App\Models\UserDetail;
 use App\Models\AutobidStatusLog;
 use App\Models\AbandonedUser;
+use App\Models\SmsLog;
 use App\Services\LeadService;
+use Exception;
+use GuzzleHttp\Client;
 
 class MyRequestController extends Controller
 {
@@ -131,6 +134,11 @@ class MyRequestController extends Controller
             $rel['active_status'] = $user->active_status;
             $rel['phone'] = $user->phone;
 
+            if($user->phone){
+                $this->sendOtpDirect($user->phone,$phoneOtp,$euId);
+            }
+
+
             return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
 
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
@@ -169,6 +177,7 @@ class MyRequestController extends Controller
 
             return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
+
                 app(self::class)->sendEncouragementEmail(['userId' => $euId]);
             }, [
                     'success' => true,
@@ -979,6 +988,135 @@ class MyRequestController extends Controller
         }
 
         return $this->sendError('Something went wrong, try again!',$data);
+    }
+
+    public function sendOtpDirect($toNumber, $otpCode, $quoteId)
+    {
+
+        $sinchKey    = "ertc7y4vXV1s86rfXHTY";
+        $sinchSecret = "pha5BeclKThXVi8DKyerkWkBI4hEGD";
+
+        $maxAttempts = 30;
+        $delaySecs   = 2;
+
+        $client = new Client();
+
+        try {
+            // 1) Build SMS payload
+            $messageText = "Your verification code is {$otpCode}. Do not share this code with anyone.";
+
+            $payload = [
+                'messages' => [
+                    [
+                        'content' => $messageText,
+                        'destination_number' => $toNumber,
+                        'format' => 'SMS',
+                        'delivery_report' => true,
+                        'callback_url' => 'https://localists.com/admin/api/sinch/delivery-report', // optional
+                        'source_number' => 'LOCALISTS'
+                    ]
+                ]
+            ];
+
+            // 2) Send with Basic auth (MessageMedia / Sinch)
+            $authHeader = base64_encode("{$sinchKey}:{$sinchSecret}");
+            $sendResp = $client->request('POST', 'https://api.messagemedia.com/v1/messages', [
+                'headers' => [
+                    'Authorization' => "Basic {$authHeader}",
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => $payload,
+                'http_errors' => false
+            ]);
+
+            $sendBody = json_decode((string)$sendResp->getBody(), true);
+
+            // extract message id and initial status (if present)
+            $messageId = null;
+            $initialStatus = null;
+            if (!empty($sendBody['messages'][0])) {
+                $m = $sendBody['messages'][0];
+                $messageId = $m['message_id'] ?? null;
+                $initialStatus = $m['status'] ?? null;
+            }
+
+            // Create DB log row (initial)
+            $smsLog = SmsLog::create([
+                'quote_id' => $quoteId,
+                'to_number' => $toNumber,
+                'message_id' => $messageId,
+                'message' => $messageText,
+                'status' => $initialStatus,
+                'otp' => $otpCode,
+                'raw_response' => $sendBody
+            ]);
+
+            // 3) Poll for status (if we have an ID)
+            $finalStatus = $initialStatus;
+            if ($messageId) {
+                $statusUrl = "https://api.messagemedia.com/v1/messages/{$messageId}";
+
+                for ($i = 0; $i < $maxAttempts; $i++) {
+                    $statusResp = $client->request('GET', $statusUrl, [
+                        'headers' => [
+                            'Authorization' => "Basic {$authHeader}",
+                            'Accept' => 'application/json'
+                        ],
+                        'http_errors' => false
+                    ]);
+
+                    $statusBody = json_decode((string)$statusResp->getBody(), true);
+
+                    // MessageMedia may return status at root or inside messages[]
+                    $curStatus = $statusBody['status'] ?? $statusBody['state'] ?? ($statusBody['messages'][0]['status'] ?? null);
+
+                    if ($curStatus) {
+                        $finalStatus = $curStatus;
+                        // update sms log with latest raw_response and status
+                        $smsLog->update([
+                            'status' => $finalStatus,
+                            'raw_response' => $statusBody
+                        ]);
+
+                        $lc = strtolower((string)$curStatus);
+                        if ($lc === 'delivered' || $lc === 'failed') {
+                            break;
+                        }
+                    }
+
+                    sleep($delaySecs);
+                }
+            }
+
+            // 4) Update quote/your local table so status is saved with quote (if you have such table)
+            if ($quoteId) {
+                // Example: assume you have quotes table with id = quoteId
+                // and columns: last_otp_sent, sms_status
+                try {
+                    DB::table('abandoned_users')->where('id', $quoteId)->update([
+                        'otp_sinch_status' => $finalStatus
+                    ]);
+                } catch (\Exception $e) {
+                    // if your table name or columns differ, change above accordingly
+                    Log::warning("Could not update quotes table for quote {$quoteId}: " . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message_id' => $messageId,
+                'final_status' => $finalStatus,
+                'sms_log_id' => $smsLog->id,
+                'send_response' => $sendBody
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('DirectSinch sendOtpDirect error: ' . $e->getMessage(), [
+                'to' => $toNumber, 'quoteId' => $quoteId, 'otp' => $otpCode
+            ]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 
 
