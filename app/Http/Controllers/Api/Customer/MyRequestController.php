@@ -990,11 +990,14 @@ class MyRequestController extends Controller
         return $this->sendError('Something went wrong, try again!',$data);
     }
 
+
     public function sendOtpDirect($toNumber, $otpCode, $quoteId)
     {
 
-        $sinchKey    = "ertc7y4vXV1s86rfXHTY";
-        $sinchSecret = "pha5BeclKThXVi8DKyerkWkBI4hEGD";
+        $sinchKey    = "morB1J2tPJPO8kkvx0A8";
+        $sinchSecret = "OvgetB5Fx6gwCxwRA719yrJEV6gVco";
+
+
 
         $maxAttempts = 30;
         $delaySecs   = 2;
