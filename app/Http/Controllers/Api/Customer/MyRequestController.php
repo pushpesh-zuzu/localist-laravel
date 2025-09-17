@@ -1032,6 +1032,10 @@ class MyRequestController extends Controller
 
             $sendBody = json_decode((string)$sendResp->getBody(), true);
 
+             Log::info('First Response', [
+                'response' => $sendBody
+            ]);
+
             // extract message id and initial status (if present)
             $messageId = null;
             $initialStatus = null;
@@ -1052,6 +1056,7 @@ class MyRequestController extends Controller
                 'raw_response' => $sendBody
             ]);
 
+             Log::info('First Response insert database');
             // 3) Poll for status (if we have an ID)
             $finalStatus = $initialStatus;
             if ($messageId) {
@@ -1067,6 +1072,9 @@ class MyRequestController extends Controller
                     ]);
 
                     $statusBody = json_decode((string)$statusResp->getBody(), true);
+                      Log::info('Second Response', [
+                        'response' => $statusBody
+                    ]);
 
                     // MessageMedia may return status at root or inside messages[]
                     $curStatus = $statusBody['status'] ?? $statusBody['state'] ?? ($statusBody['messages'][0]['status'] ?? null);
@@ -1096,6 +1104,9 @@ class MyRequestController extends Controller
                 try {
                     DB::table('abandoned_users')->where('id', $quoteId)->update([
                         'otp_sinch_status' => $finalStatus
+                    ]);
+                    Log::info('database abandon Response', [
+                        'status' => $finalStatus
                     ]);
                 } catch (\Exception $e) {
                     // if your table name or columns differ, change above accordingly
