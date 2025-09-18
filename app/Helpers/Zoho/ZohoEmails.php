@@ -339,7 +339,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
                     $toEmail = $user->email;
-                    $subject = 'Complete your registration!';
+                    $subject = 'Complete your registration – We’ve saved your spot!';
 
                      DB::table('zoho_logs')->insert([
                         'url' => $url,

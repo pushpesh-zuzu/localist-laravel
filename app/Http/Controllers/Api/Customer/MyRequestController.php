@@ -587,7 +587,7 @@ class MyRequestController extends Controller
 
                 foreach ($sellersChunk as $seller) {
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
-                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+                    $allLeads = $baseQuery->orderBy('id', 'desc')->limit(1)->get();
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
@@ -708,7 +708,7 @@ class MyRequestController extends Controller
                 foreach ($sellersChunk as $seller) {
 
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id, null, null, null, 'Autobid');
-                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+                    $allLeads = $baseQuery->orderBy('id', 'desc')->limit(1)->get();
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
