@@ -237,13 +237,13 @@ class UserController extends Controller
                     return $this->sendError('Company is Invalid');
                 }
             }
-        
+
             $passwordRandomString = Str::random(8);
             $aVals['password'] = Hash::make($passwordRandomString);
             $randomNumber = rand(1000, 5000);
             $aVals['total_credit'] = 0;
             $aVals['business_profile_name'] = $request->businessname;
-            
+
             $user = User::create($aVals);
             if ($user->id) {
                 $now = now();
@@ -510,7 +510,7 @@ class UserController extends Controller
                     app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);
 
                     if ($auto_bid == 0) {
-                        app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
+                        //app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
                     }
 
                 } elseif ($user->user_type == 2) {
@@ -529,28 +529,28 @@ class UserController extends Controller
         return;
     }
 
-    public function sendEncouragementEmail($payload)
-    {
-        $userId = $payload['userId'] ?? null;
-        $sentCount = 0;
-        $users = User::whereNotNull('zoho_record_id')
-            ->where('id',$userId)
-            ->whereHas('details', function ($q) {
-                $q->where('is_autobid', 0);
-            })
-            // ->with(['details', 'emailLogs' => function ($q) {
-            //     $q->where('setting_name', 'Send Autobid Encouragement Email')
-            //         ->latest();
-            // }])
-            ->get();
+    // public function sendEncouragementEmail($payload)
+    // {
+    //     $userId = $payload['userId'] ?? null;
+    //     $sentCount = 0;
+    //     $users = User::whereNotNull('zoho_record_id')
+    //         ->where('id',$userId)
+    //         ->whereHas('details', function ($q) {
+    //             $q->where('is_autobid', 0);
+    //         })
+    //         // ->with(['details', 'emailLogs' => function ($q) {
+    //         //     $q->where('setting_name', 'Send Autobid Encouragement Email')
+    //         //         ->latest();
+    //         // }])
+    //         ->get();
 
-        ZohoEmails::sendEncouragementEmail($userId);
-        return response()->json([
-            'status' => 'success',
-            'message' => "$sentCount encouragement email(s) sent.",
-            'timestamp' => now()->toDateTimeString()
-        ]);
-    }
+    //     ZohoEmails::sendEncouragementEmail($userId);
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => "$sentCount encouragement email(s) sent.",
+    //         'timestamp' => now()->toDateTimeString()
+    //     ]);
+    // }
 
     public function sendIncompleteRegEmail($payload)  // sendIncompleteRegEmail
     {
