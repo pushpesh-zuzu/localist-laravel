@@ -53,7 +53,9 @@ class CronController extends Controller
     }
     public function onTwoDayBasis()
     {
+
         $sendAutoBidOff = $this->sendEncouragementEmail();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
@@ -64,22 +66,30 @@ class CronController extends Controller
         ]);
     }
 
-    public function sendEncouragementEmail($payload)
+    public function sendEncouragementEmail()
     {
-        $userId = $payload['userId'] ?? null;
+
         $sentCount = 0;
         $users = User::whereNotNull('zoho_record_id')
-            ->where('id',$userId)
             ->whereHas('details', function ($q) {
                 $q->where('is_autobid', 0);
             })
-            // ->with(['details', 'emailLogs' => function ($q) {
-            //     $q->where('setting_name', 'Send Autobid Encouragement Email')
-            //         ->latest();
-            // }])
             ->get();
 
-        ZohoEmails::sendEncouragementEmail($userId);
+        foreach($users as $user){
+
+            $userId =$user->id;
+            $alreadySent = EmailLog::where('user_id', $userId)
+                    ->whereDate('created_at', Carbon::today())
+                    ->where('setting_name', 'Send Autobid Encouragement Email')
+                    ->exists();
+
+
+            if (!$alreadySent) {
+                ZohoEmails::sendEncouragementEmail($userId);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => "$sentCount encouragement email(s) sent.",
