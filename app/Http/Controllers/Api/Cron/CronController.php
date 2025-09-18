@@ -50,6 +50,80 @@ class CronController extends Controller
             'timestamp' => now()->toDateTimeString(),
         ]);
     }
+    public function onTwoDayBasis()
+    {
+        $sendAutoBidOff = $this->sendNewLeadRequestAutoBidOff();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Zoho email cron ran successfully.',
+            'details' => [
+                'autobidoff' => $sendAutoBidOff
+            ],
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function sendNewLeadRequestAutoBidOff()
+    {
+        $totalUnsentLeadEmails = 0;
+        $leadPref = new LeadService();
+
+        User::whereNotNull('zoho_record_id')
+            // ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
+            // ->where('recommended_leads.purchase_type', 'Autobid')
+            ->where('form_status', 1)
+            ->whereIn('user_type', [1, 3])
+            ->whereHas('details', function ($query) {
+                $query->where('autobid_pause', 1)
+                    ->orWhere('is_autobid', 0);
+            })
+            ->select('users.id')
+            ->distinct()
+            ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+
+                foreach ($sellersChunk as $seller) {
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
+                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+                    $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+                    $finalLeads = [];
+
+                    foreach ($filteredLeads as $lead) {
+                        $alreadySent = EmailLog::where('user_id', $seller->id)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')
+                            ->exists();
+
+                        if (!$alreadySent) {
+                            $finalLeads[] = $lead;
+                        }
+                    }
+
+                    if (!empty($finalLeads)) {
+                        // Send one email with all leads
+                        $result=ZohoEmails::sendLeadNotBidMultiple($seller->id, $finalLeads);
+
+                         Log::info('Zoho Email for autobidoff request', [
+                            'user_id' => $seller->id,
+                            'response' => $result,
+                        ]);
+
+                        // Log each lead to avoid re-sending later
+
+                         $totalUnsentLeadEmails++;
+
+                    }
+                }
+            });
+
+        unset($leadPref);
+        return [
+            'status' => 'success',
+            'unsent_lead_emails' => $totalUnsentLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ];
+    }
 
     public function sendLeadsAfter7Days()
     {

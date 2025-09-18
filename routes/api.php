@@ -62,6 +62,7 @@ Route::prefix('cron')->group(function () {
     Route::get('closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::get('on-hourly-basis', [CronController::class,'onHourlyBasis']);
     Route::get('on-day-basis', [CronController::class,'onDayBasis']);
+    Route::get('on-two-basis', [CronController::class,'onTwoDayBasis']);
 });
 
 Route::prefix('notification')->group(function () {

@@ -500,13 +500,13 @@ class MyRequestController extends Controller
     public function autoBidBased()
     {
 
-        $newLead = $this->sendNewLeadRequestAutoBidOff();
+        //$newLead = $this->sendNewLeadRequestAutoBidOff();
         $newLeadBidEnough = $this->sendLeadEmailCreditEnough();
         $newLeadBidNotEnough = $this->sendLeadEmailCreditNotEnough();
 
 
         return response()->json([
-            'step1' => $newLead,
+            //'step1' => $newLead,
             'step2' => $newLeadBidEnough,
             'step3' => $newLeadBidNotEnough,
             'summary' => 'All steps completed'

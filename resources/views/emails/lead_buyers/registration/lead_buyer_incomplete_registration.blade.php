@@ -103,6 +103,7 @@
           <li>✅ Access premium leads instantly</li>
           <li>✅ Appear in more buyer searches</li>
           <li>✅ Track engagement and conversions</li>
+          <li>✅ View all leads for free</li>
         </ul>
         <p>Finish registering and unlock your full potential on Localists.</p>
         <a href="{{$baseUrl}}/sellers/create/" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;"  class="btn">Join as a Professional</a>
