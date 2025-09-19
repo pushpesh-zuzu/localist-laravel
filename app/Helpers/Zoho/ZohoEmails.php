@@ -921,7 +921,7 @@ class ZohoEmails
         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
         $toEmail = $user->email;
-        $subject = 'Auto Bid Missed – Not Enough Credits for Your New Leads';
+        $subject = 'You Missed a New Lead – Not Enough Credits for Your New Leads';
 
         DB::table('zoho_logs')->insert([
             'url' => $url,
