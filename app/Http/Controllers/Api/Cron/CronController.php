@@ -623,7 +623,7 @@ class CronController extends Controller
                     $dataU3['userId'] = $seller->id;
                     $dataU3['leadId'] = $l->id;
                     $dataU3['setting_name'] = 'Unsold Leads (Discount)';
-                    $dataU3['subject'] = 'Exclusive Offer: '.$discountPercent.'% Discount on Lead Credits – Act Now!';
+                    $dataU3['subject'] = 'Exclusive Offer: '.$discountPercent.'% Discount on This Lead – Act Now!';
                     $dataU3['step'] = 3;
                     ZohoEmails::unsoldLeadEmail($dataU3);
                     $e = User::where('id', $seller->id)->value('email');
