@@ -116,7 +116,7 @@
                     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px">
                       <tbody><tr>
                         <td style="vertical-align:top; padding-right:12px; width:44px">
-                          <div style="background-color:rgb(0, 173, 239); color:rgb(255, 255, 255); border-radius:50%; width:32px; height:32px; text-align:center; line-height:32px; font-size:14px; font-family:Helvetica, Arial, sans-serif">1</div>
+                          <div style="background-color:rgb(0, 173, 239); color:rgb(255, 255, 255); border-radius:50%; width:32px; text-align:center; line-height:32px; font-size:14px; font-family:Helvetica, Arial, sans-serif">1</div>
                         </td>
                         <td style="vertical-align:top">
                           <strong>Customers tell us what they need</strong><br>
