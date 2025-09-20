@@ -57,12 +57,12 @@ Route::prefix('check')->group(function () {
 });
 
 //cron for lead buyer registration email
-//Route::post('users/registration', [UserController::class, 'registration']);
 Route::prefix('cron')->group(function () {
     Route::get('closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
     Route::get('on-hourly-basis', [CronController::class,'onHourlyBasis']);
     Route::get('on-day-basis', [CronController::class,'onDayBasis']);
     Route::get('on-two-basis', [CronController::class,'onTwoDayBasis']);
+    Route::get('on-evening-basis', [CronController::class,'onEveningBasis']);
 });
 
 Route::prefix('notification')->group(function () {

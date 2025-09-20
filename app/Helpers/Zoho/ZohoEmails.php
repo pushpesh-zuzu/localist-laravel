@@ -969,6 +969,136 @@ class ZohoEmails
     }
 
 
+    public static function sendGroupedLeadDetails($userId, $leads)
+    {
+
+        if (empty($leads) || empty($userId)) {
+            return;
+        }
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send Lead Details Email At Evening')->value('setting_value');
+        if (!$sendLeadRequestEmail) {
+            return;
+        }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            return;
+        }
+
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        if (empty($zohoId)) {
+            return;
+        }
+
+        $user = User::find($userId);
+        if (empty($user)) {
+            return;
+        }
+
+        $leadViews = [];
+
+        foreach ($leads as $leadId) {
+            if (!$leadId) continue;
+            $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+            if (!$lead) continue;
+
+            $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                ->map(fn($item) => [
+                    'question' => $item['ques'],
+                    'answer' => implode(', ', $item['ans'])
+                ])
+                ->toArray();
+
+            $leadViews[] = [
+                'id' => $lead->id,
+                'lead_name' => $lead->customer->name ?? '',
+                'postcode' => $lead->postcode ?? '',
+                'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                'masked_email' => $lead->customer?->email ? (function ($email) {
+                    [$name, $domain] = explode('@', $email);
+                    $visible = substr($name, 0, 2);
+                    $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                    return $visible . $masked . '@' . $domain;
+                })($lead->customer->email) : 'N/A',
+                'service_name' => $lead->category->name ?? '',
+                'has_additional_details' => $lead->has_additional_details ?? '',
+                'credit_score' => $lead->credit_score ?? '',
+                'is_frequent_user' => $lead->is_frequent_user ?? '',
+                'is_urgent' => $lead->is_urgent ?? '',
+                'is_high_hiring' => $lead->is_high_hiring ?? '',
+                'phone_verified' => $lead->is_phone_verified ?? '',
+                'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                'questionsAndAnswers' => $questionsAndAnswers,
+            ];
+        }
+
+        if (empty($leadViews)) {
+            return;
+        }
+
+        $htmlView = view('emails.lead_buyers.leads.lead_buyer_grouped_leads', [
+            'baseUrl' => config('app.react_base_url'),
+            'name' => $user->name,
+            'leadDetailsList' => $leadViews,
+        ])->render();
+
+
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+        $toEmail = $user->email;
+        $subject = 'You Missed a New Lead – Not Enough Credits for Your New Leads';
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'sendGroupedLeadEmailBidNotEnough',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [
+                [
+                    'from' => [
+                        'email' => $fromEmail,
+                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                    ],
+                    'to' => [
+                        ['email' => $toEmail]
+                    ],
+                    'subject' => $subject,
+                    'content' => $htmlContent,
+                    'mail_format' => 'html',
+                    'org_email' => true
+                ]
+            ]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+
+        foreach ($leads as $leadId) {
+            EmailLog::insertGetId([
+                'user_id' => $user->id,
+                'from_email' => $fromEmail,
+                'lead_id' => $leadId, // multiple leads
+                'to_email' => $toEmail,
+                'message_id' => $rel['message_id'],
+                'subject' => $subject,
+                'setting_name' => 'Send Lead Details Email At Evening',
+                'content' => $htmlContent,
+                'zoho_url' => $url,
+                'response' => json_encode($rel),
+            ]);
+        }
+
+
+    }
+
+
     // public static function sendLeadRequestReply($userId, $leadId)
     // {
 

@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\CustomHelper;
 use App\Models\AbandonedUser;
+use Illuminate\Support\Facades\Log;
 
 class CronController extends Controller
 {
@@ -35,6 +36,20 @@ class CronController extends Controller
             'message' => 'Zoho email cron ran successfully.',
             'timestamp' => now()->toDateTimeString(),
         ]);
+    }
+
+    public function onEveningBasis(){
+        $sendGroupedLeadEmail = $this->sendGroupedLeadEmail();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Zoho email cron ran successfully.',
+            'details' => [
+                'new_lead_after_evening' => $sendGroupedLeadEmail,
+            ],
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+
     }
 
     public function onDayBasis()
@@ -878,5 +893,67 @@ class CronController extends Controller
             'total_lead_emails' => $totalLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ]);
+    }
+
+    public function sendGroupedLeadEmail()
+    {
+        $totalUnsentLeadEmails = 0;
+        $leadPref = new LeadService();
+
+        User::whereNotNull('zoho_record_id')
+            ->where('form_status', 1)
+            ->where('user_type', 1)
+            ->select('id', 'total_credit')
+            ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
+
+                foreach ($sellersChunk as $seller) {
+
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
+
+                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+
+
+                    $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
+
+                   $emailedLeadIds = EmailLog::where('user_id', $seller->id)
+                        ->where('setting_name', 'Send Lead Details Email At Evening')
+                        ->pluck('lead_id')
+                        ->all();
+
+                    $emailedLookup = array_flip($emailedLeadIds); // O(1) lookup
+
+                    $finalLeads = $filteredLeads->filter(function ($lead) use ($emailedLookup) {
+                        return !isset($emailedLookup[$lead->id]);
+                    })->values();
+
+                    if ($finalLeads->isEmpty()) {
+                        continue;
+                    }
+
+                    if ($finalLeads->isNotEmpty()) {
+                        // Check if email was already sent today for this seller
+
+
+                            // Send one email for all leads
+                            $result=ZohoEmails::sendGroupedLeadDetails($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
+                            $totalUnsentLeadEmails++;
+
+                            Log::info('Zoho Email for bid-not-enough leads', [
+                                'user_id' => $seller->id,
+                                'response' => $result,
+                            ]);
+                            // Log one entry per seller to avoid re-sending
+
+                    }
+                }
+            });
+
+        unset($leadPref);
+
+        return [
+            'status' => 'success',
+            'unsent_lead_emails' => $totalUnsentLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ];
     }
 }

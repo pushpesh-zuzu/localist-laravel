@@ -822,7 +822,7 @@ class MyRequestController extends Controller
 
                     $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
 
-                    $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+                    $allLeads = $baseQuery->orderBy('id', 'desc')->limit(1)->get();
 
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
