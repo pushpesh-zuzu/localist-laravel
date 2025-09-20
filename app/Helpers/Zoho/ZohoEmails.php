@@ -1307,6 +1307,8 @@ class ZohoEmails
     public static function sendLeadsAfterDays($userId, $leadData, $settingValue)
     {
 
+
+
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $settingValue)->value('setting_value');
 
         if ($sendLeadRequestEmail) {
@@ -1321,7 +1323,6 @@ class ZohoEmails
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
 
-
                 if (!empty($user)) {
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
                         'baseUrl' => config('app.react_base_url'),
@@ -1332,6 +1333,7 @@ class ZohoEmails
                         'credit_purchase' => $creditPurchase,
                         'credit_value' => 0,
                     ])->render();
+
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
@@ -1744,7 +1746,7 @@ class ZohoEmails
 
                         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
                         $toEmail = $user->email;
-                        $subject = 'Hey! You hired a new lead!';
+                        $subject = 'You have purchased a new lead!';
 
                         DB::table('zoho_logs')->insert([
                             'url' => $url,

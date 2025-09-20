@@ -1,71 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Exciting Job Opportunities in Your Area</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #ffffff; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; color: #4a4a4a; -webkit-font-smoothing:antialiased; }
+    .outer { width: 100%; background-color: #ffffff; padding: 32px 0; -webkit-text-size-adjust: none; -ms-text-size-adjust: none; }
+    .container { max-width: 600px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; }
+    img.logo { max-height: 50px; display:block; margin: 0 auto; }
+    .card { background: #ffffff; padding: 28px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    h1 { font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 8px; text-align:center; }
+    p.lead-intro { color: #61696d; margin: 10px 0 0 0; text-align:center; }
+    .stat-block { margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 15px; color:#333; }
+    .stat-block strong { font-weight:600; }
+    .btn { display:block; background-color:#00afe3; color:#ffffff !important; text-decoration:none; font-size:16px; font-weight:700; padding:14px; border-radius:4px; text-align:center; margin-top:20px; }
+    .help-card { background:#ffffff; padding:28px; border-radius:4px; margin-top:20px; }
+    .help-header { background-color: #d8edf8; color: #1a588c; padding: 12px 20px; margin: -28px -28px 20px -28px; border-top-left-radius: 4px; border-top-right-radius: 4px; font-weight:700; }
+    .footer { text-align:center; padding: 20px; font-size:12px; color:#666666; }
+    @media only screen and (max-width: 600px) {
+      h1 { font-size:20px; }
+      .btn { font-size:16px; padding:12px; }
+      .card, .help-card { padding:18px; }
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 510; line-height: 25px; color: #4a4a4a;">
-
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; padding: 32px 0;">
+<body>
+  <table role="presentation" class="outer" width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" style="max-width: 600px; padding: 0 16px; box-sizing: border-box;">
-
+        <table role="presentation" class="container" width="100%" cellpadding="0" cellspacing="0">
           <!-- Logo -->
           <tr>
-            <td align="center" style="padding-bottom: 20px;">
-              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="max-height: 50px;">
+            <td align="center" style="padding-bottom:20px;">
+              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists" class="logo">
             </td>
           </tr>
 
-          <!-- Teaser Card -->
+          <!-- Main Teaser Card -->
           <tr>
-            <td style="background: #ffffff; padding: 32px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-              <h1 style="font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 10px; text-align: center;">
-                 Hi {{ $name }}, <p> New jobs are waiting for you! </p></h1>
-              @if($credit_purchase)
-                <p style="color: #61696d;">You haven't purchased any credit pack for  5 days, and your current balance is below 10. There are <strong>{{ $total_count }}</strong> jobs matching your preferences waiting — but you can’t bid on them!</p>
+            <td>
+              <div class="card">
+                <h1>Hi {{ $name }}</h1>
+                <p class="lead-intro">New jobs are waiting for you!</p>
+
+                @if($credit_purchase ?? false)
+                  <p style="text-align:center; color:#61696d; margin-top:12px;">
+                    You haven't purchased any credit pack for 5 days and your balance is low. There are <strong>{{ $total_count }}</strong> jobs matching your preferences — but you can’t bid on them.
+                  </p>
                 @else
-                <p style="color: #61696d;">You’ve missed out on <strong>{{ $total_count }}</strong> potential jobs  for your  all service  with an average credit value of £ {{ $total_credt_sum }} in last 7 days</p>
-              @endif
-              <!-- Stats -->
-              @foreach ($leadDataList as $lead)
-              <div style="margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 16px; line-height: 24px;">
-                <strong>📊 Total Jobs:</strong> {{ $lead['count'] }}<br>
-                @if(!$credit_value)
-                    <strong>💼 Job Value:</strong> £{{ number_format($lead['credit_sum'] / max($lead['count'], 1), 2) }}<br>
+                  <p style="text-align:center; color:#61696d; margin-top:12px;">
+                    You’ve missed out on <strong>{{ $total_count }}</strong> potential jobs for your services with an average value of £ {{ $total_credt_sum }} in the last 7 days.
+                  </p>
                 @endif
-                <strong>📍 Location:</strong> {{ ucfirst($lead['area']) }}<br>
-                <strong>🛠 Service:</strong> {{ $lead['category_name'] }}
+
+                <!-- Per-service stats -->
+                @foreach ($leadDataList as $lead)
+
+                  <div class="stat-block" role="listitem" aria-label="Service summary">
+                    <div style="margin-bottom:6px;"><strong>📊 Total Jobs:</strong> {{ $lead['count'] }}</div>
+                    <div style="margin-top:4px;"><strong>💼 {{ $lead['category_name'] }}:</strong> £{{ number_format($lead['credit_sum'] ?? 0, 0) }}</div>
+
+                    {{-- optional area display --}}
+                    {{-- <div style="margin-top:6px; color:#61696d;"><strong>📍 Location:</strong> {{ ucfirst($lead['area'] ?? '') }}</div> --}}
+                  </div>
+
+
+                @endforeach
+
+                <!-- CTA -->
+                @if ($credit_purchase ?? false)
+                  <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Buy Credits Now to Start Bidding</a>
+                @else
+                  <a href="{{ $baseUrl }}/sellers/leads" class="btn">Check Your Leads Now</a>
+                @endif
               </div>
-              @endforeach
-
-              <!-- CTA -->
-              @if ($credit_purchase)
-                  <a href="{{ $baseUrl }}/settings/billing/my-credits" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Buy Credits Now to Start Bidding</a>
-              @else
-                  <a href="{{ $baseUrl }}/sellers/leads" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Check Your Leads Now </a>
-              @endif
-
             </td>
           </tr>
 
           <!-- Help Section -->
           <tr>
-            <td style="background: #ffffff; padding: 32px; border-radius: 4px; margin-top: 20px;">
-              <div style="background-color: #d8edf8; color: #1a588c; padding: 12px 20px; margin: -32px -32px 20px -32px; border-top-left-radius: 4px; border-top-right-radius: 4px; font-weight: bold;">Need Help?</div>
-              <p style="color: #61696d;">
-                 Email us at
-                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
-              </p>
+            <td>
+              <div class="help-card">
+                <div class="help-header">Need Help?</div>
+                <p style="color:#61696d; margin:0;">
+                  Email us at
+                  <a href="mailto:{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}" style="color:#007bff;">
+                    {{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}
+                  </a>.
+                </p>
+              </div>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding: 20px; font-size: 12px; color: #666666;">
-              Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification" style="color: #007bff;">here</a>.<br>
+            <td class="footer">
+              Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification" style="color:#007bff;">here</a>.<br>
               {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
             </td>
           </tr>
@@ -74,6 +105,5 @@
       </td>
     </tr>
   </table>
-
 </body>
 </html>

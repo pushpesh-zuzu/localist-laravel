@@ -19,7 +19,8 @@ use App\Models\AbandonedUser;
 
 class CronController extends Controller
 {
-    public function onHourlyBasis(Request $request, LeadService $leadService){
+    public function onHourlyBasis(Request $request, LeadService $leadService)
+    {
         set_time_limit(0);
 
         $this->UnsoldLeadsStep1($request, $leadService);
@@ -76,13 +77,13 @@ class CronController extends Controller
             })
             ->get();
 
-        foreach($users as $user){
+        foreach ($users as $user) {
 
-            $userId =$user->id;
+            $userId = $user->id;
             $alreadySent = EmailLog::where('user_id', $userId)
-                    ->whereDate('created_at', Carbon::today())
-                    ->where('setting_name', 'Send Autobid Encouragement Email')
-                    ->exists();
+                ->whereDate('created_at', Carbon::today())
+                ->where('setting_name', 'Send Autobid Encouragement Email')
+                ->exists();
 
 
             if (!$alreadySent) {
@@ -114,28 +115,30 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59);
 
-        print_r("From: ".$from." To: ".$to."\n");
+        print_r("From: " . $from . " To: " . $to . "\n");
 
         $sellerLeadSummary = [];
 
         User::whereNotNull('zoho_record_id')
             ->where('form_status', 1)
-            ->whereIn('user_type', [1,3])
+            ->whereIn('user_type', [1, 3])
             ->select('users.id', 'total_credit')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
+                    //var_dump($seller->id);
                     // print_r("Processing seller ID: " .$seller->id."\n");
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
+
+
                     $groupedLeadStats = [];
                     $nationwideLeadIds = [];
                     foreach ($serviceLocations as $location) {
 
                         $leadQuery = LeadRequest::with('category')
                             ->where('service_id', $location->service_id)
-                            ->where('status','!=', 'hired')
-                            ->orderBy('created_at', 'desc')   // latest first
-                            ->take(5);
+                            ->where('status', '!=', 'hired')
+                            ->orderBy('created_at', 'desc');
 
 
 
@@ -154,6 +157,8 @@ class CronController extends Controller
                         // print_r("Leads Query: ".json_encode($leadQuery->toRawSql())."\n");
                         // print_r("Leads: ".json_encode($leads->toArray())."\n");
 
+                        //print_r("Leads: ".json_encode($leads->toArray())."\n");
+
                         foreach ($leads as $lead) {
 
                             $latestRecommended = RecommendedLead::where('seller_id', $seller->id)
@@ -165,8 +170,14 @@ class CronController extends Controller
                             if ($latestRecommended && $latestRecommended->created_at->between($from, $to)) {
                                 $alreadyRecommended = false;
                             }
-                            if(!$latestRecommended){
-                                $alreadyRecommended = false;
+                            if (!$latestRecommended) {
+                                $checkUsers = User::where('id', $seller->id)
+                                    ->whereBetween('created_at', [$from, $to])   // order by created_at DESC
+                                    ->first();
+
+                                if ($checkUsers) {
+                                    $alreadyRecommended = false;
+                                }
                             }
 
                             if ($alreadyRecommended) {
@@ -200,6 +211,7 @@ class CronController extends Controller
             return !empty($summary);
         });
 
+
         //print_r("Total sellers with leads: ".json_encode($sellerLeadSummary)."\n");
 
         foreach ($sellerLeadSummary as $sellerId => $leadStats) {
@@ -207,21 +219,86 @@ class CronController extends Controller
             $sellerTotalLeadCredit = 0;
             $sellerLeadData = [];
 
+            $categoryGrouped = [];
             foreach ($leadStats as $serviceId => $locations) {
                 foreach ($locations as $area => $leadData) {
+
                     $count = $leadData['count'] ?? 0;
                     if ($count === 0) {
                         continue;
                     }
                     $credit_sum = $leadData['credit_sum'] ?? 0;
-                    $sellerTotalLeadCredit += $credit_sum;
-                    $sellerTotalLeadCount += $count;
-                    $sellerLeadData[] = array_merge($leadData, [
-                        'area' => $area,
-                        'service_id' => $serviceId,
-                    ]);
+                    $categoryName = $leadData['category_name'] ?? 'N/A';
+                    $leadIds = $leadData['lead_ids'] ?? [];
+
+                    if (!isset($categoryGrouped[$categoryName])) {
+                        $categoryGrouped[$categoryName] = [
+                            'lead_ids'   => [],
+                            'raw_count'  => 0,   // sum of incoming 'count' values (before dedupe)
+                            'credit_sum' => 0,
+                            'services'   => [],  // optional per-service/area detail
+                        ];
+                    }
+
+                    $categoryGrouped[$categoryName]['lead_ids'] = array_merge(
+                        $categoryGrouped[$categoryName]['lead_ids'],
+                        $leadIds
+                    );
+
+                    $categoryGrouped[$categoryName]['raw_count'] += $count;
+                    $categoryGrouped[$categoryName]['credit_sum'] += $credit_sum;
+
+                    if (!isset($categoryGrouped[$categoryName]['services'][$serviceId])) {
+                        $categoryGrouped[$categoryName]['services'][$serviceId] = [];
+                    }
+                    $categoryGrouped[$categoryName]['services'][$serviceId][$area] = [
+                        'lead_ids'   => $leadIds,
+                        'count'      => $count,
+
+                        'credit_sum' => $credit_sum,
+                    ];
                 }
             }
+
+            $sellerTotalLeadCount = 0;
+            $sellerTotalLeadCredit = 0;
+            $sellerLeadData = [];
+            $alreadySent = EmailLog::where('user_id', $sellerId)
+                ->whereDate('created_at', Carbon::today())
+                ->where('setting_name', 'No Lead Purchased In 7 Days')
+                ->exists();
+
+            if ($alreadySent) {
+                continue;
+            }
+
+            foreach ($categoryGrouped as $catName => $info) {
+                // dedupe lead ids
+                $uniqueLeadIds = array_values(array_unique($info['lead_ids']));
+
+                // Choose how count should be derived:
+                // - Option A (recommended): count = number of unique lead ids
+                $finalCount = count($uniqueLeadIds);
+
+                // - Option B (raw sum): uncomment the next line to use the raw summed count (may double-count same lead)
+                // $finalCount = $info['raw_count'];
+
+                $finalCreditSum = (int) $info['credit_sum']; // aggregated credit sum across rows
+
+                // accumulate seller totals (based on finalCount & finalCreditSum)
+                $sellerTotalLeadCount += $finalCount;
+                $sellerTotalLeadCredit += $finalCreditSum;
+
+                // prepare flattened data entry per category
+                $sellerLeadData[] = [
+                    'category_name' => $catName,
+                    'lead_ids'      => $uniqueLeadIds,
+                    'count'         => $finalCount,
+                    'credit_sum'    => $finalCreditSum,
+                    'services'      => $info['services'],
+                ];
+            }
+
 
             //print_r("seller Data: ".json_encode($sellerLeadData)."\n");
 
@@ -229,19 +306,20 @@ class CronController extends Controller
                 $emailPayload = [
                     'total_lead_count' => $sellerTotalLeadCount,
                     'total_credit_sum' => $sellerTotalLeadCredit,
-                    'lead_data' => $sellerLeadData
+                    'lead_data'        => $sellerLeadData,
+                    'credit_purchase' => 1
                 ];
+
+
                 $settingValue = 'No Lead Purchased In 7 Days';
+
                 $alreadySent = EmailLog::where('user_id', $sellerId)
                     ->whereDate('created_at', Carbon::today())
-                    ->where('setting_name', 'No Lead Purchased In 7 Days')
+                    ->where('setting_name', $settingValue)
                     ->exists();
 
-
                 if (!$alreadySent) {
-
                     ZohoEmails::sendLeadsAfterDays($sellerId, $emailPayload, $settingValue);
-
                 }
             }
         }
@@ -288,25 +366,25 @@ class CronController extends Controller
         //     })
         //     ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
         //     ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
-            $latestPlanHistory = PlanHistory::select('user_id', DB::raw('MAX(created_at) as last_plan_date'))
-                ->groupBy('user_id')
-                ->toBase();
+        $latestPlanHistory = PlanHistory::select('user_id', DB::raw('MAX(created_at) as last_plan_date'))
+            ->groupBy('user_id')
+            ->toBase();
 
-            User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
-                $join->on('users.id', '=', 'latest_plan.user_id');
-            })
+        User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
+            $join->on('users.id', '=', 'latest_plan.user_id');
+        })
             ->where('users.form_status', 1)
             ->where('users.user_type', 1)
             ->whereNotNull('users.zoho_record_id')
             ->where(function ($query) use ($from, $to) {
                 $query->where(function ($q) use ($from, $to) {
                     $q->whereBetween('latest_plan.last_plan_date', [$from, $to])
-                    ->orWhereNull('latest_plan.last_plan_date'); // Include users with no plan
+                        ->orWhereNull('latest_plan.last_plan_date'); // Include users with no plan
                 })
-                ->where('users.total_credit', '<', 10); // Apply credit filter to both
+                    ->where('users.total_credit', '<', 10); // Apply credit filter to both
             })
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
-            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary) {
+            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
@@ -314,7 +392,8 @@ class CronController extends Controller
                     $nationwideLeadIds = [];
                     foreach ($serviceLocations as $location) {
                         $leadQuery = LeadRequest::with('category')
-                            ->where('service_id', $location->service_id);
+                            ->where('service_id', $location->service_id)
+                            ->where('status', '!=', 'hired');
 
                         if ($location->nation_wide != 1) {
 
@@ -330,9 +409,25 @@ class CronController extends Controller
 
                         foreach ($leads as $lead) {
 
-                            $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('lead_id', $lead->id)
-                                ->exists();
+                            $latestRecommended = RecommendedLead::where('seller_id', $seller->id)
+                                ->latest('created_at')   // order by created_at DESC
+                                ->first();
+
+                            $alreadyRecommended = true;
+
+                            if ($latestRecommended && $latestRecommended->created_at->between($from, $to)) {
+                                $alreadyRecommended = false;
+                            }
+                            if (!$latestRecommended) {
+                                $checkUsers = User::where('id', $seller->id)
+                                    ->whereBetween('created_at', [$from, $to])   // order by created_at DESC
+                                    ->first();
+
+
+                                if ($checkUsers) {
+                                    $alreadyRecommended = false;
+                                }
+                            }
 
                             if ($alreadyRecommended) {
                                 continue;
@@ -376,13 +471,74 @@ class CronController extends Controller
                         continue;
                     }
                     $credit_sum = $leadData['credit_sum'] ?? 0;
-                    $sellerTotalLeadCredit += $credit_sum;
-                    $sellerTotalLeadCount += $count;
-                    $sellerLeadData[] = array_merge($leadData, [
-                        'area' => $area,
-                        'service_id' => $serviceId,
-                    ]);
+                    $categoryName = $leadData['category_name'] ?? 'N/A';
+                    $leadIds = $leadData['lead_ids'] ?? [];
+
+                    if (!isset($categoryGrouped[$categoryName])) {
+                        $categoryGrouped[$categoryName] = [
+                            'lead_ids'   => [],
+                            'raw_count'  => 0,   // sum of incoming 'count' values (before dedupe)
+                            'credit_sum' => 0,
+                            'services'   => [],  // optional per-service/area detail
+                        ];
+                    }
+
+                    $categoryGrouped[$categoryName]['lead_ids'] = array_merge(
+                        $categoryGrouped[$categoryName]['lead_ids'],
+                        $leadIds
+                    );
+
+                    $categoryGrouped[$categoryName]['raw_count'] += $count;
+                    $categoryGrouped[$categoryName]['credit_sum'] += $credit_sum;
+
+                    if (!isset($categoryGrouped[$categoryName]['services'][$serviceId])) {
+                        $categoryGrouped[$categoryName]['services'][$serviceId] = [];
+                    }
+                    $categoryGrouped[$categoryName]['services'][$serviceId][$area] = [
+                        'lead_ids'   => $leadIds,
+                        'count'      => $count,
+
+                        'credit_sum' => $credit_sum,
+                    ];
                 }
+            }
+            $sellerTotalLeadCount = 0;
+            $sellerTotalLeadCredit = 0;
+            $sellerLeadData = [];
+            $alreadySent = EmailLog::where('user_id', $sellerId)
+                ->whereDate('created_at', Carbon::today())
+                ->where('setting_name', 'No Credit Purchased In 5 Days')
+                ->exists();
+
+            if ($alreadySent) {
+                continue;
+            }
+
+            foreach ($categoryGrouped as $catName => $info) {
+                // dedupe lead ids
+                $uniqueLeadIds = array_values(array_unique($info['lead_ids']));
+
+                // Choose how count should be derived:
+                // - Option A (recommended): count = number of unique lead ids
+                $finalCount = count($uniqueLeadIds);
+
+                // - Option B (raw sum): uncomment the next line to use the raw summed count (may double-count same lead)
+                // $finalCount = $info['raw_count'];
+
+                $finalCreditSum = (int) $info['credit_sum']; // aggregated credit sum across rows
+
+                // accumulate seller totals (based on finalCount & finalCreditSum)
+                $sellerTotalLeadCount += $finalCount;
+                $sellerTotalLeadCredit += $finalCreditSum;
+
+                // prepare flattened data entry per category
+                $sellerLeadData[] = [
+                    'category_name' => $catName,
+                    'lead_ids'      => $uniqueLeadIds,
+                    'count'         => $finalCount,
+                    'credit_sum'    => $finalCreditSum,
+                    'services'      => $info['services'],
+                ];
             }
 
 
@@ -418,13 +574,14 @@ class CronController extends Controller
 
 
 
-##################################################################################################################################################
-################################################       CRON FUNCTIONS       ######################################################################
-##################################################################################################################################################
+    ##################################################################################################################################################
+    ################################################       CRON FUNCTIONS       ######################################################################
+    ##################################################################################################################################################
 
 
 
-    private function UnsoldLeadsStep1(Request $request, LeadService $leadService){
+    private function UnsoldLeadsStep1(Request $request, LeadService $leadService)
+    {
         $totalUnsentLeadEmails = 0;
 
         $now = Carbon::now();
@@ -457,8 +614,8 @@ class CronController extends Controller
                         ->exists();
 
                     $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('lead_id', $lead->id)
-                                ->exists();
+                        ->where('lead_id', $lead->id)
+                        ->exists();
 
                     if ($alreadyRecommended) {
                         continue;
@@ -485,7 +642,8 @@ class CronController extends Controller
         ]);
     }
 
-    private function unSoldLeadsStep2(Request $request, LeadService $leadService){
+    private function unSoldLeadsStep2(Request $request, LeadService $leadService)
+    {
         $totalUnsentLeadEmails = 0;
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
@@ -514,8 +672,8 @@ class CronController extends Controller
                 foreach ($result['response']['sellers'] as $seller) {
 
                     $alreadyRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->where('lead_id', $lead->id)
-                                ->exists();
+                        ->where('lead_id', $lead->id)
+                        ->exists();
 
                     if ($alreadyRecommended) {
                         continue;
@@ -555,7 +713,8 @@ class CronController extends Controller
     }
 
 
-    public function unSoldLeadsStep3(Request $request, LeadService $leadService){
+    public function unSoldLeadsStep3(Request $request, LeadService $leadService)
+    {
         $totalLeadEmails = 0;
         $sentEmails = [];
 
@@ -575,19 +734,19 @@ class CronController extends Controller
             ->where('status', 'new')
             ->get();
 
-        print_r("Found ".count($leads)." leads\n");
-        print_r("Time window from ".$from->toDateTimeString()." to ".$to->toDateTimeString()."\n");
-        $discountPercent = CustomHelper::setting_value('discount_percent_of_unsold_leads',20);
+        print_r("Found " . count($leads) . " leads\n");
+        print_r("Time window from " . $from->toDateTimeString() . " to " . $to->toDateTimeString() . "\n");
+        $discountPercent = CustomHelper::setting_value('discount_percent_of_unsold_leads', 20);
 
-        foreach($leads as $l){
+        foreach ($leads as $l) {
             $discount_applied = $l->discount_applied;
-            if(!$discount_applied){
+            if (!$discount_applied) {
                 $curCredit = $l->credit_score;
-                $newCredit = floor($curCredit - (($discountPercent/100) * $curCredit));
+                $newCredit = floor($curCredit - (($discountPercent / 100) * $curCredit));
 
                 $dataUC['credit_score'] = $newCredit;
                 $dataUC['discount_applied'] = 1;
-                $dataUC['old_credit'] =$curCredit;
+                $dataUC['old_credit'] = $curCredit;
                 LeadRequest::where('id', $l->id)->update($dataUC);
 
                 $l->discount_applied = 1;
@@ -600,7 +759,7 @@ class CronController extends Controller
             $allSellers = $localSellers->merge($nationSellers)
                 ->unique('user_id')
                 ->values();
-            foreach($allSellers as $seller){
+            foreach ($allSellers as $seller) {
                 $hasStep1 = EmailLog::where('user_id', $seller->id)
                     ->where('lead_id', $l->id)
                     ->where('setting_name', 'Unsold Leads')
@@ -619,11 +778,11 @@ class CronController extends Controller
                     ->where('step', 3)
                     ->exists();
 
-                if($hasStep1 && $hasStep2 && !$hasStep3){
+                if ($hasStep1 && $hasStep2 && !$hasStep3) {
                     $dataU3['userId'] = $seller->id;
                     $dataU3['leadId'] = $l->id;
                     $dataU3['setting_name'] = 'Unsold Leads (Discount)';
-                    $dataU3['subject'] = 'Exclusive Offer: '.$discountPercent.'% Discount on This Lead – Act Now!';
+                    $dataU3['subject'] = 'Exclusive Offer: ' . $discountPercent . '% Discount on This Lead – Act Now!';
                     $dataU3['step'] = 3;
                     ZohoEmails::unsoldLeadEmail($dataU3);
                     $e = User::where('id', $seller->id)->value('email');
@@ -641,7 +800,8 @@ class CronController extends Controller
     }
 
 
-    public function leadPurchaseStatusUpdate48hrs(Request $request){
+    public function leadPurchaseStatusUpdate48hrs(Request $request)
+    {
         $totalLeadEmails = 0;
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
@@ -656,22 +816,21 @@ class CronController extends Controller
             ->where('status', 'pending')
             ->get();
 
-        foreach($leads as $lead){
+        foreach ($leads as $lead) {
             $rLeads = RecommendedLead::where('lead_id', $lead->id)
                 ->get();
 
-            foreach($rLeads as $rLead){
+            foreach ($rLeads as $rLead) {
                 $emailSent = EmailLog::where('user_id', $rLead->seller_id)
                     ->where('lead_id', $rLead->lead_id)
                     ->where('setting_name', 'Lead Purchase Status Update (48 hrs)')
                     ->exists();
 
-                if(!$emailSent){
+                if (!$emailSent) {
                     ZohoEmails::leadPurchaseStatusUpdateEmail($rLead, 'Lead Purchase Status Update (48 hrs)', 'Update your lead status');
                     $totalLeadEmails++;
                 }
             }
-
         }
 
         return response()->json([
@@ -679,11 +838,10 @@ class CronController extends Controller
             'total_lead_emails' => $totalLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ]);
-
-
     }
 
-    public function leadPurchaseStatusUpdate96hrs(Request $request){
+    public function leadPurchaseStatusUpdate96hrs(Request $request)
+    {
         $totalLeadEmails = 0;
         $now = Carbon::now();
         // Round down to last full hour if not exactly on the hour
@@ -698,22 +856,21 @@ class CronController extends Controller
             ->where('status', 'pending')
             ->get();
 
-        foreach($leads as $lead){
-           $rLeads = RecommendedLead::where('lead_id', $lead->id)
+        foreach ($leads as $lead) {
+            $rLeads = RecommendedLead::where('lead_id', $lead->id)
                 ->get();
 
-            foreach($rLeads as $rLead){
+            foreach ($rLeads as $rLead) {
                 $emailSent = EmailLog::where('user_id', $rLead->seller_id)
                     ->where('lead_id', $rLead->lead_id)
                     ->where('setting_name', 'Lead Purchase Status Update (96 hrs)')
                     ->exists();
 
-                if(!$emailSent){
+                if (!$emailSent) {
                     ZohoEmails::leadPurchaseStatusUpdateEmail($rLead, 'Lead Purchase Status Update (96 hrs)', 'Confirmation! Update your lead status');
                     $totalLeadEmails++;
                 }
             }
-
         }
 
         return response()->json([
@@ -721,9 +878,5 @@ class CronController extends Controller
             'total_lead_emails' => $totalLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ]);
-
-
     }
-
-
 }
