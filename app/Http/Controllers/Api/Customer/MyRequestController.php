@@ -111,6 +111,8 @@ class MyRequestController extends Controller
             }
             $dataUser['zipcode'] = $request->postcode;
             $dataUser['city'] = $request->city;
+            $dataUser['questions'] = $request->questions;
+            $dataUser['service_id'] = $request->service_id;
             //for
 
             $dataUser['password'] = Hash::make($password);
@@ -208,8 +210,6 @@ class MyRequestController extends Controller
             $nuData['name'] = $abUser->name;
             $nuData['email'] = $abUser->email;
             $nuData['phone'] = $abUser->phone;
-            $nuData['zipcode'] = $abUser->zipcode;
-            $nuData['city'] = $abUser->city;
             $nuData['otp'] = $abUser->otp;
             $nuData['otp_sinch_status'] = $abUser->otp_sinch_status;
             $nuData['zoho_record_id'] = $abUser->zoho_record_id;
