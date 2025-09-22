@@ -119,8 +119,8 @@ class MyRequestController extends Controller
             $dataUser['user_type'] = 2;
             $dataUser['active_status'] = 2;
             $dataUser['form_status'] = 0;
-            $dataUser['created_at'] = date('y-m-d H:i:s');
-            $dataUser['updated_at'] = date('y-m-d H:i:s');
+            $dataUser['created_at'] = date('Y-m-d H:i:s');
+            $dataUser['updated_at'] = date('Y-m-d H:i:s');
             //$phoneOtp = "1234";
             $phoneOtp = random_int(1000, 9999);
             $dataUser['otp'] = $phoneOtp;
@@ -173,8 +173,12 @@ class MyRequestController extends Controller
             $dataUser['user_type'] = 2;
             $dataUser['active_status'] = 2;
             $dataUser['form_status'] = 0;
-            $dataUser['created_at'] = date('y-m-d H:i:s');
-            $dataUser['updated_at'] = date('y-m-d H:i:s');
+            $dataUser['zipcode'] = $request->postcode;
+            $dataUser['city'] = $request->city;
+            $dataUser['questions'] = $request->questions;
+            $dataUser['service_id'] = $request->service_id;
+            $dataUser['created_at'] = date('Y-m-d H:i:s');
+            $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
 
             return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
