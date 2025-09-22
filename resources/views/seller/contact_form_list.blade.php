@@ -25,7 +25,7 @@
             <th scope="row">{{ $aKey+1 }}</th>
             <td>{{ $aRow->full_name }}</td>
             <td>{{ $aRow->phone }}</td>
-            <td class="text text-center">{{ $aRow->user_type }}</td>
+            <td class="text text-center">{{ $aRow->user_type == 1 ? 'Customer' : ($aRow->user_type == 2 ? 'Professional' : 'Unknown') }}</td>
             <td class="text text-center">{{ $aRow->message }}</td>
             <td style="color: {{ $aRow->status == 1 ? 'green' : 'red' }}">
                 {{ $aRow->status == 1 ? 'Viewed' : 'Not Viewed' }}
