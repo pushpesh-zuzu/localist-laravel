@@ -13,7 +13,7 @@
             <th scope="col" width="20px;">#</th>
             <th scope="col">Name</th>
             <th scope="col">Phone</th>
-            <th scope="col">Company</th>
+            <th scope="col">Type</th>
             <th scope="col">Message</th>
             <th scope="col">Status</th>
             <th scope="col">Action</th>
@@ -25,7 +25,7 @@
             <th scope="row">{{ $aKey+1 }}</th>
             <td>{{ $aRow->full_name }}</td>
             <td>{{ $aRow->phone }}</td>
-            <td class="text text-center">{{ $aRow->company }}</td>
+            <td class="text text-center">{{ $aRow->user_type }}</td>
             <td class="text text-center">{{ $aRow->message }}</td>
             <td style="color: {{ $aRow->status == 1 ? 'green' : 'red' }}">
                 {{ $aRow->status == 1 ? 'Viewed' : 'Not Viewed' }}
