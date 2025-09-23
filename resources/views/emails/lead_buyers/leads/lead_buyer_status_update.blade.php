@@ -11,7 +11,7 @@
     img.logo { max-height: 50px; display:block; margin: 0 auto; }
     .card { background: #ffffff; padding: 28px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
     h1 { font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 8px; text-align:center; }
-    .subtitle { color:#61696d; text-align:center; margin: 8px 0 12px; }
+    .subtitle { color:#61696d;margin: 8px 0 12px; }
     .tag { display:inline-block; padding:6px 10px; margin:6px 6px 6px 0; border-radius:20px; font-size:12px; color:#fff; }
     .tag-muted { background:#e6e6e6; color:#333; }
     .meta { margin-top: 16px; background-color: #f5f9fc; padding: 16px; border-radius: 4px; font-size: 15px; color:#333; line-height:22px; }
