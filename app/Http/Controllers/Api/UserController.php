@@ -42,6 +42,7 @@ use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoQuoteCustomers;
 use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoSocialMedia;
+use App\Models\EmailLog;
 use App\Models\EmailSetting;
 use App\Models\NotificationSetting;
 
@@ -811,10 +812,31 @@ class UserController extends Controller
             return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
 
                 if ($userType == 2) {
-                    ZohoEmails::switchEmailToQuoteAccount($userId);
+                    $alreadySent = EmailLog::where('user_id', $userId)
+                        ->whereDate('created_at', Carbon::today())
+                        ->where('setting_name', 'Switch Account From Lead Buyer')
+                        ->exists();
+
+
+                    if (!$alreadySent) {
+                        ZohoEmails::switchEmailToQuoteAccount($userId);
+                    }
+
+
                 }
                  if ($userType == 1) {
-                    ZohoEmails::switchEmailToLeadAccount($userId);
+
+                    $alreadySent = EmailLog::where('user_id', $userId)
+                        ->whereDate('created_at', Carbon::today())
+                        ->where('setting_name', 'Switch Account From Quote Customer')
+                        ->exists();
+
+
+                    if (!$alreadySent) {
+                        ZohoEmails::switchEmailToLeadAccount($userId);
+                    }
+
+
                 }
 
 
