@@ -15,7 +15,7 @@
     .card { background:#ffffff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.06); overflow:hidden; }
     .logo { max-height:48px; display:block; margin:0 auto; }
     h1 { margin:0; font-size:20px; line-height:26px; color:#333; font-weight:600; text-align:center; }
-    .lead-sub { color:#61696d; font-size:14px; margin-top:6px; text-align:center; }
+    .lead-sub { color:#61696d; font-size:14px; margin-top:6px; }
 
     @media only screen and (max-width:600px) {
       .email-container { padding:0 12px !important; }
