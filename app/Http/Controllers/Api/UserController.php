@@ -809,20 +809,16 @@ class UserController extends Controller
 
             $user->save();
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
+             return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
 
                 if ($userType == 2) {
                     $alreadySent = EmailLog::where('user_id', $userId)
                         ->whereDate('created_at', Carbon::today())
                         ->where('setting_name', 'Switch Account From Lead Buyer')
                         ->exists();
-
-
                     if (!$alreadySent) {
                         ZohoEmails::switchEmailToQuoteAccount($userId);
                     }
-
-
                 }
                  if ($userType == 1) {
 
@@ -830,20 +826,16 @@ class UserController extends Controller
                         ->whereDate('created_at', Carbon::today())
                         ->where('setting_name', 'Switch Account From Quote Customer')
                         ->exists();
-
-
                     if (!$alreadySent) {
                         ZohoEmails::switchEmailToLeadAccount($userId);
                     }
-
-
                 }
-
-
                 }, [
                     'success' => true,
                     'message' => 'Switched to' . $mode
                 ]);
+
+            return $this->sendResponse(__('Switched to ' . $mode));
         }
 
         // Update user_type and active_status if user_type is not 3 yet
@@ -868,6 +860,32 @@ class UserController extends Controller
         }
 
         $user->save();
+         return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
+
+                if ($userType == 2) {
+                    $alreadySent = EmailLog::where('user_id', $userId)
+                        ->whereDate('created_at', Carbon::today())
+                        ->where('setting_name', 'Switch Account From Lead Buyer')
+                        ->exists();
+                    if (!$alreadySent) {
+                        ZohoEmails::switchEmailToQuoteAccount($userId);
+                    }
+                }
+                 if ($userType == 1) {
+                    $alreadySent = EmailLog::where('user_id', $userId)
+                        ->whereDate('created_at', Carbon::today())
+                        ->where('setting_name', 'Switch Account From Quote Customer')
+                        ->exists();
+                    if (!$alreadySent) {
+                        ZohoEmails::switchEmailToLeadAccount($userId);
+                    }
+
+                }
+
+                }, [
+                    'success' => true,
+                    'message' => 'Switched to' . $mode
+                ]);
         return $this->sendResponse(__('Switched to ' . $mode));
     }
 
