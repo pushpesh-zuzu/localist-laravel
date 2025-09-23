@@ -90,6 +90,7 @@ class CronController extends Controller
             ->whereHas('details', function ($q) {
                 $q->where('is_autobid', 0);
             })
+            ->where('created_at', '<=', Carbon::now()->subDays(2))
             ->get();
 
         foreach ($users as $user) {
