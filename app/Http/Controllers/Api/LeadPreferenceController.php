@@ -70,7 +70,7 @@ class LeadPreferenceController extends Controller
         $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, $requestPostcode, $requestMiles, $filters);
 
 
-        
+
         $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
         //Macting as per seller pref
@@ -349,8 +349,8 @@ class LeadPreferenceController extends Controller
 
             $baseQuery = LeadRequest::with(['customer', 'category'])
                 ->whereIn('id', $savedLeadIds);
-            
-            $relType = "Saved Leads";            
+
+            $relType = "Saved Leads";
         }else{
             //for new leads page
             $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
@@ -492,7 +492,7 @@ class LeadPreferenceController extends Controller
             if($statusUpdate){
                 return ZohoHelper::dispatchAfterResponse(function () use ($sellerId, $recommendedId,$leadId) {
                     app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
-                    ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
+                    // ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
                     ZohoEmails::newLeadHiredEmail($leadId,$sellerId);
 
                 }, [
@@ -547,7 +547,7 @@ class LeadPreferenceController extends Controller
                 'status'=>'hired',
                 'hired_by' => $buyerId
             ]);
-            RecommendedLead::where('lead_id', $aVals['lead_id'])
+            $statusUpdate =RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)
                 ->update([
@@ -560,9 +560,22 @@ class LeadPreferenceController extends Controller
             if(empty($isActivity)){
                 self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, "hired", $leadTime);
             }
+            $leadId=$aVals['lead_id'];
         }else{
             $sendmessage = 'This lead is already hired!';
         }
+
+        if($statusUpdate){
+                return ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$leadId) {
+
+                    ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
+
+
+                }, [
+                    'success' => true,
+                    'message' => $sendmessage
+                ]);
+            }
 
         return $this->sendResponse($sendmessage, []);
     }
@@ -1026,7 +1039,7 @@ class LeadPreferenceController extends Controller
         //for saved leads page only
         if(!empty($page_type) && $page_type == 'saved_leads'){
             $relType = "Saved Leads";
-            
+
             $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
         }else{
             //for new leads page
@@ -1039,7 +1052,7 @@ class LeadPreferenceController extends Controller
         $location = self::getFilterLocations1($user_id, $leadService, $page_type);
         $credits = self::getFilterCreditList1($user_id, $leadService, $page_type);
 
-        
+
 
         return $this->sendResponse(__('Filter Data'), [
             [
@@ -1069,7 +1082,7 @@ class LeadPreferenceController extends Controller
             }else{
                 $query = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
             }
-            
+
             $allLeads = $query->orderBy('id', 'asc')->get();
             //Macting as per seller pref
             $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
@@ -1087,7 +1100,7 @@ class LeadPreferenceController extends Controller
     {
         $timeFilters = [
             'Today',
-            'Yesterday',    
+            'Yesterday',
             'Last 2-3 days',
             'Last 7 days',
             'Last 14+ days'
@@ -1101,7 +1114,7 @@ class LeadPreferenceController extends Controller
             }else{
                 $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
             }
-            
+
             $allLeads = $baseQuery->orderBy('id', 'asc')->get();
 
             //Macting as per seller pref
@@ -1141,7 +1154,7 @@ class LeadPreferenceController extends Controller
 
         foreach ($uniqueRows as $row) {
             // Use basequery and apply postcode match
-            
+
             if(!empty($page_type) && $page_type == 'saved_leads'){
                 $leadCount = $leadService->getSellerSavedLeadsBaseQuery($user_id)
                             ->where('postcode', $row->postcode)
@@ -1151,7 +1164,7 @@ class LeadPreferenceController extends Controller
                             ->where('postcode', $row->postcode)
                             ->count();
             }
-            
+
 
             $row['total_services'] = $aRows->where('postcode', $row->postcode)->count();
             $row['leadcount'] = $leadCount;

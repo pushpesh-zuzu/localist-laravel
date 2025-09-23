@@ -11,7 +11,7 @@
     .logo { max-height: 50px; display: block; margin: 0 auto 20px auto; max-width:100% }
     .btn { display: inline-block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 18px; border-radius: 4px }
     h1 { font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 8px 0; font-family: Helvetica, Arial, sans-serif }
-    .highlight { color: #00afe3; margin-bottom: 12px; font-size: 15px; font-family: Helvetica, Arial, sans-serif }
+    .highlight { color: #61696d; margin-bottom: 12px;margin-top: 32px; font-size: 15px; font-family: Helvetica, Arial, sans-serif }
     p { color: #61696d; margin: 0 0 12px 0; font-family: Helvetica, Arial, sans-serif }
     a { color: #007bff }
     .card { background: #ffffff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 20px; margin-bottom: 18px }
@@ -45,10 +45,8 @@
             <td>
               <div class="card">
                 <h1 style="text-align:center">Hi {{ $name }}</h1>
-                <div class="highlight" style="text-align:center">Lead Hired</div>
-                <p style="margin-bottom:12px; text-align:center; color:#61696d;">
-                  <strong>{{ $service_name }} lead is no longer available </strong>
-                </p>
+                <div class="highlight" ><strong>{{ $service_name }} lead is no longer available </strong></div>
+
 
                 <p style="margin-bottom:12px; text-align:center; color:#61696d;">
                   Don’t worry — new <strong>{{ $service_name }}</strong> leads are added regularly. We’ll notify you when a matching one becomes available.
