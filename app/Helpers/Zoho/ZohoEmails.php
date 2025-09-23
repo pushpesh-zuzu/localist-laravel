@@ -1460,10 +1460,9 @@ class ZohoEmails
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => $totalCreditSum,
                         'leadDataList' => $leadDataList,
-                        'credit_purchase' => $creditPurchase,
+                        'credit_purchase' => false,
                         'credit_value' => 0,
                     ])->render();
-
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
