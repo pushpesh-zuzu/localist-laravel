@@ -48,7 +48,7 @@
                 <div class="highlight" ><strong>{{ $service_name }} lead is no longer available </strong></div>
 
 
-                <p style="margin-bottom:12px; text-align:center; color:#61696d;">
+                <p style="margin-bottom:12px;color:#61696d;">
                   Don’t worry — new <strong>{{ $service_name }}</strong> leads are added regularly. We’ll notify you when a matching one becomes available.
                 </p>
 

@@ -47,7 +47,7 @@
                 <h1 style="text-align:center">Hi {{ $name }}</h1>
                 <div class="highlight">You have purchased a new lead</div>
 
-                <p style="margin-bottom:12px; text-align:center; color:#61696d;">Congratulations — you've successfully hired the <strong>{{ $service_name }}</strong> lead.</p>
+                <p style="margin-bottom:12px;color:#61696d;">Congratulations — you've successfully hired the <strong>{{ $service_name }}</strong> lead.</p>
 
                 <!-- tags -->
                 <div style="text-align:center; margin-bottom:12px;">
