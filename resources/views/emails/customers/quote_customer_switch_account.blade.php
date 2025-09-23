@@ -127,15 +127,13 @@
             <td style="padding:0 16px 24px 16px;">
               <table role="presentation" width="100%" class="card" style="border-radius:6px; background:#111637; color:#fff;">
                 <tr>
-                  <td style="padding:12px 14px; font-size:13px;">
+                  <td style="padding:12px 14px; font-size:13px;text-align:center">
                     Manage your email preferences <a href="http://127.0.0.1:5100/settings/notifications/e-mail-notification" style="color:#fff; text-decoration:underline;">here</a>.
                   </td>
-                  <td style="padding:12px 14px; text-align:right;">
-                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/c5dSX3CKrL/3yf04fji_expires_30_days.png" width="24" alt="">
-                  </td>
+
                 </tr>
                 <tr>
-                  <td colspan="2" style="padding:0 14px 14px 14px; font-size:12px; color:#d0d4e0;">
+                  <td colspan="2" style="padding:0 14px 14px 14px; font-size:12px; color:#d0d4e0;text-align:center">
                     {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
                   </td>
                 </tr>
