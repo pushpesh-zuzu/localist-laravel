@@ -43,7 +43,7 @@
                 <h1 style="text-align:center">Hi {{ $name }}</h1>
                 <div class="highlight" style="text-align:center">You've got a new lead!</div>
 
-                <p style="margin-bottom:12px; text-align:center; color:#61696d;"><strong>{{ $lead_name }}</strong> is looking for <strong>{{ $service_name }}</strong>.</p>
+                <p style="margin-bottom:12px; color:#61696d;"><strong>{{ $lead_name }}</strong> is looking for <strong>{{ $service_name }}</strong>.</p>
 
                 @if($step == 3)
                   <p style="color:#61696d; text-align:center; margin-bottom:12px">Great news — this lead has been specially discounted for a limited time. Grab it before the offer expires.</p>
