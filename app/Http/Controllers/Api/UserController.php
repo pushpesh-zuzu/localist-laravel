@@ -782,7 +782,7 @@ class UserController extends Controller
 
 
 
-    public function switchUser(Request $request): JsonResponse
+    public function switchUser(Request $request)
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
@@ -807,7 +807,21 @@ class UserController extends Controller
             }
 
             $user->save();
-            return $this->sendResponse(__('Switched to ' . $mode));
+
+            return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
+
+                if ($userType == 2) {
+                    ZohoEmails::switchEmailToQuoteAccount($userId);
+                }
+                 if ($userType == 1) {
+                    ZohoEmails::switchEmailToLeadAccount($userId);
+                }
+
+
+                }, [
+                    'success' => true,
+                    'message' => 'Switched to' . $mode
+                ]);
         }
 
         // Update user_type and active_status if user_type is not 3 yet

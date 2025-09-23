@@ -2110,7 +2110,146 @@ class ZohoEmails
         }
     }
 
+    public static function switchEmailToQuoteAccount($userId){
 
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Switch Account From Lead Buyer')->value('setting_value');
+
+        if ($sendLeadRequestEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::where('id', $userId)->first();
+
+                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_switch_to_quote',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'name' => $user->name
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = "You're Now a Quote Customer — Start Requesting Quotes Today!";
+
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'switchEmailToQuoteAccount',
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+                    $rel = self::getZohoMailResponse($response);
+
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Switch Account From Lead Buyer';
+
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+
+
+
+    }
+
+     public static function switchEmailToLeadAccount($userId){
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Switch Account From Quote Customer')->value('setting_value');
+
+        if ($sendLeadRequestEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::where('id', $userId)->first();
+                    $htmlView = view('emails.customers.quote_customer_switch_account',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'name' => $user->name
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = 'Your Account Has Been Transitioned to a Lead Buyer Account';
+
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'switchEmailToLeadAccount',
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+                    $rel = self::getZohoMailResponse($response);
+
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Switch Account From Quote Customer';
+
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+
+
+
+    }
     private static function getZohoMailResponse($response)
     {
         $zohoMailResult = [];
