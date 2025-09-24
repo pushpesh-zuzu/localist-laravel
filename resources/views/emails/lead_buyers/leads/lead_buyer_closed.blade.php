@@ -71,19 +71,20 @@
                 </div>
 
                 <!-- Bulletproof CTA -->
-                <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="margin:16px auto 0 auto;">
-                  <tr>
-                    <td align="center" bgcolor="#00afe3" style="border-radius:4px;">
-                      <a href="{{ $baseUrl }}/sellers/leads"
-                         style="display:inline-block; background-color:#00afe3; color:#ffffff; text-decoration:none;
+                <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="margin:16px 0 0 0;">
+                <tr>
+                    <td align="left" bgcolor="#00afe3" style="border-radius:4px;">
+                    <a href="{{ $baseUrl }}/sellers/leads"
+                        style="display:inline-block; background-color:#00afe3; color:#ffffff; text-decoration:none;
                                 font-size:14px; font-weight:700; padding:12px 24px; border-radius:4px;
                                 font-family: Helvetica, Arial, sans-serif;"
-                         class="btn-responsive">
+                        class="btn-responsive">
                         See Similar Leads
-                      </a>
+                    </a>
                     </td>
-                  </tr>
+                </tr>
                 </table>
+
 
               </div>
             </td>
