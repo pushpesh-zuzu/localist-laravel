@@ -50,7 +50,7 @@
                 <p style="margin-bottom:12px;color:#61696d;">Congratulations — you've successfully hired the <strong>{{ $service_name }}</strong> lead.</p>
 
                 <!-- tags -->
-                <div style="text-align:center; margin-bottom:12px;">
+                <div style="margin-bottom:12px;">
                   @if($phone_verified)
                     <span class="tag" style="background-color:#f39ac3; color:#fff">📞 Verified Phone</span>
                   @endif
