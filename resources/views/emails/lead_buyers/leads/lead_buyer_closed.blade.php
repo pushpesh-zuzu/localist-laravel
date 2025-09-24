@@ -53,7 +53,7 @@
                 </p>
 
                 <!-- tags -->
-                <div style="text-align:center; margin-bottom:12px">
+                <div style="margin-bottom:12px">
                   @if($phone_verified)<span class="tag" style="background-color:#f39ac3; color:#fff">📞 Verified Phone</span>@endif
                   @if($has_additional_details)<span class="tag" style="background-color:#e6e6e6; color:#333">📋 Additional details</span>@endif
                   @if($is_frequent_user)<span class="tag" style="background-color:#a0d8ef">🔁 Frequent user</span>@endif
