@@ -125,7 +125,7 @@
                       </label>
 
                       <!-- accordion content -->
-                      <div class="accordion-content" style="background:#ffffff;border-bottom-left-radius:8px;border-bottom-right-radius:8px;">
+                      <div class="accordion-content" style="max-height:none; overflow:visible;background:#ffffff;border-bottom-left-radius:8px;border-bottom-right-radius:8px;">
                         <div style="padding:12px 16px 16px 16px;border-top:1px solid #eee;">
                           <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="font-size:14px;color:#333;">
                             <tr><td style="padding-bottom:8px;">🏅 <strong>Credits to respond:</strong> {{ $lead['credit_score'] }}</td></tr>
