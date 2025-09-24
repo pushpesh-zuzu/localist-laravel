@@ -54,7 +54,7 @@ class CronController extends Controller
 
     public function onDayBasis()
     {
-        //$newLeadAfter7days = $this->sendLeadsAfter7Days();
+        $newLeadAfter7days = $this->sendLeadsAfter7Days();
 
         $newLeadAfter5days = $this->checkCreditAfter5Days();
 
@@ -62,7 +62,7 @@ class CronController extends Controller
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                //'new_lead_after_7_days' => $newLeadAfter7days,
+                'new_lead_after_7_days' => $newLeadAfter7days,
                 'new_lead_after_5_days' => $newLeadAfter5days
             ],
             'timestamp' => now()->toDateTimeString(),
