@@ -9,7 +9,6 @@
     .email-wrap { width: 100%; background-color: #f1f2f4; padding: 32px 0 }
     .email-container { max-width: 600px; margin: 0 auto; padding: 0 16px; box-sizing: border-box }
     .logo { max-height: 50px; display: block; margin: 0 auto 20px auto; max-width:100% }
-    .btn { display: inline-block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 18px; border-radius: 4px }
     h1 { font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 8px 0; font-family: Helvetica, Arial, sans-serif }
     .highlight { color: #61696d; margin-bottom: 12px;margin-top: 32px; font-size: 15px; font-family: Helvetica, Arial, sans-serif }
     p { color: #61696d; margin: 0 0 12px 0; font-family: Helvetica, Arial, sans-serif }
@@ -22,7 +21,7 @@
     del { color: #9aa1a6; margin-right:6px }
     @media only screen and (max-width: 600px) {
       .email-container { width: 100% !important; padding: 0 12px !important }
-      .btn { font-size: 16px !important; padding: 12px 20px !important; display:block; width:100%; box-sizing:border-box }
+      .btn-responsive { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important }
       h1 { font-size: 20px !important }
     }
   </style>
@@ -46,7 +45,6 @@
               <div class="card">
                 <h1 style="text-align:center">Hi {{ $name }}</h1>
                 <div class="highlight" ><strong>{{ $service_name }} lead is no longer available </strong></div>
-
 
                 <p style="margin-bottom:12px;color:#61696d;">
                   Don’t worry — new <strong>{{ $service_name }}</strong> leads are added regularly. We’ll notify you when a matching one becomes available.
@@ -72,10 +70,20 @@
                   <div><strong>✉️</strong> {{ $masked_email }}</div>
                 </div>
 
-                <!-- Optional CTA - show similar leads or view leads -->
-                <div style="margin-top:16px; text-align:center">
-                  <a href="{{ $baseUrl }}/sellers/leads" class="btn">See Similar Leads</a>
-                </div>
+                <!-- Bulletproof CTA -->
+                <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="margin:16px auto 0 auto;">
+                  <tr>
+                    <td align="center" bgcolor="#00afe3" style="border-radius:4px;">
+                      <a href="{{ $baseUrl }}/sellers/leads"
+                         style="display:inline-block; background-color:#00afe3; color:#ffffff; text-decoration:none;
+                                font-size:14px; font-weight:700; padding:12px 24px; border-radius:4px;
+                                font-family: Helvetica, Arial, sans-serif;"
+                         class="btn-responsive">
+                        See Similar Leads
+                      </a>
+                    </td>
+                  </tr>
+                </table>
 
               </div>
             </td>
