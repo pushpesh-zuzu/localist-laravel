@@ -391,7 +391,7 @@ class CronController extends Controller
                 $join->on('users.id', '=', 'latest_plan.user_id');
             })
             ->where('users.form_status', 1)
-            ->where('users.user_type', 1)
+            ->whereIn('users.user_type', [1, 3])
             ->whereNotNull('users.zoho_record_id')
             ->whereBetween(
                 DB::raw('COALESCE(latest_plan.last_plan_date, users.created_at)'),
