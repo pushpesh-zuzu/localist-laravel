@@ -1597,7 +1597,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'total_count' => $totalLeadCount,
-                        'total_credt_sum' => $totalCreditSum,
+                        'total_credt_sum' => (int) ($totalCreditSum / $totalLeadCount),
                         'leadDataList' => $leadDataList,
                         'credit_value' => 1,
                         'credit_purchase' => $creditPurchase
