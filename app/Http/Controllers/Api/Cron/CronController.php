@@ -54,14 +54,15 @@ class CronController extends Controller
 
     public function onDayBasis()
     {
-        $newLeadAfter7days = $this->sendLeadsAfter7Days();
+        //$newLeadAfter7days = $this->sendLeadsAfter7Days();
 
         $newLeadAfter5days = $this->checkCreditAfter5Days();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
-                'new_lead_after_7_days' => $newLeadAfter7days,
+                //'new_lead_after_7_days' => $newLeadAfter7days,
                 'new_lead_after_5_days' => $newLeadAfter5days
             ],
             'timestamp' => now()->toDateTimeString(),
@@ -386,23 +387,19 @@ class CronController extends Controller
             ->groupBy('user_id')
             ->toBase();
 
-        User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
-            $join->on('users.id', '=', 'latest_plan.user_id');
-        })
+         User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
+                $join->on('users.id', '=', 'latest_plan.user_id');
+            })
             ->where('users.form_status', 1)
             ->where('users.user_type', 1)
             ->whereNotNull('users.zoho_record_id')
-            ->where(function ($query) use ($from, $to) {
-                $query->where(function ($q) use ($from, $to) {
-                    $q->whereBetween('latest_plan.last_plan_date', [$from, $to]);
-                })
-                ->orWhere(function ($q) use ($from, $to) {
-                    $q->whereNull('latest_plan.last_plan_date')
-                    ->whereBetween('users.created_at', [$from, $to]);
-                });
-            })
+            ->whereBetween(
+                DB::raw('COALESCE(latest_plan.last_plan_date, users.created_at)'),
+                [$from, $to]
+            )
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
-            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
+
+                    ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
