@@ -971,7 +971,6 @@ class ZohoEmails
 
     public static function sendGroupedLeadDetails($userId, $leads)
     {
-
         if (empty($leads) || empty($userId)) {
             return;
         }
@@ -1007,29 +1006,29 @@ class ZohoEmails
                 ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
                 ->map(fn($item) => [
                     'question' => $item['ques'],
-                    'answer' => implode(', ', $item['ans'])
+                    'answer'   => implode(', ', $item['ans'])
                 ])
                 ->toArray();
 
             $leadViews[] = [
-                'id' => $lead->id,
-                'lead_name' => $lead->customer->name ?? '',
-                'postcode' => $lead->postcode ?? '',
-                'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
-                'masked_email' => $lead->customer?->email ? (function ($email) {
+                'id'                  => $lead->id,
+                'lead_name'           => $lead->customer->name ?? '',
+                'postcode'            => $lead->postcode ?? '',
+                'masked_phone'        => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                'masked_email'        => $lead->customer?->email ? (function ($email) {
                     [$name, $domain] = explode('@', $email);
                     $visible = substr($name, 0, 2);
-                    $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                    $masked  = str_repeat('*', max(strlen($name) - 2, 0));
                     return $visible . $masked . '@' . $domain;
                 })($lead->customer->email) : 'N/A',
-                'service_name' => $lead->category->name ?? '',
+                'service_name'        => $lead->category->name ?? '',
                 'has_additional_details' => $lead->has_additional_details ?? '',
-                'credit_score' => $lead->credit_score ?? '',
-                'is_frequent_user' => $lead->is_frequent_user ?? '',
-                'is_urgent' => $lead->is_urgent ?? '',
-                'is_high_hiring' => $lead->is_high_hiring ?? '',
-                'phone_verified' => $lead->is_phone_verified ?? '',
-                'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                'credit_score'        => $lead->credit_score ?? '',
+                'is_frequent_user'    => $lead->is_frequent_user ?? '',
+                'is_urgent'           => $lead->is_urgent ?? '',
+                'is_high_hiring'      => $lead->is_high_hiring ?? '',
+                'phone_verified'      => $lead->is_phone_verified ?? '',
+                'hasEnoughCredits'    => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
                 'questionsAndAnswers' => $questionsAndAnswers,
             ];
         }
@@ -1039,41 +1038,97 @@ class ZohoEmails
         }
 
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_grouped_leads', [
-            'baseUrl' => config('app.react_base_url'),
-            'name' => $user->name,
+            'baseUrl'         => config('app.react_base_url'),
+            'name'            => $user->name,
             'leadDetailsList' => $leadViews,
         ])->render();
 
+        // Extract CSS from <style> blocks
+         // (Assume $htmlView already built with Blade earlier)
+
+// 1) Extract CSS from <style> blocks (the same as you already do)
+        $allStyleContents = '';
+        if (preg_match_all('/<style\b[^>]*>(.*?)<\/style>/is', $htmlView, $matches)) {
+            foreach ($matches[1] as $cssText) {
+                $allStyleContents .= $cssText . "\n";
+            }
+        }
+
+        // 2) Extract accordion-related rules (keep only small set)
+        $accordionRules = '';
+        if (!empty($allStyleContents)) {
+            if (preg_match_all('/[^}]*?(ac-toggle|accordion-content|accordion-header|:checked)[^}]*}/i', $allStyleContents, $ruleMatches)) {
+                foreach ($ruleMatches[0] as $rule) {
+                    $accordionRules .= trim($rule) . "\n";
+                }
+            }
+        }
+        if (empty($accordionRules) && !empty($allStyleContents)) {
+            $accordionRules = $allStyleContents;
+        }
+
+        $styleBlockToKeep = '';
+        if (!empty(trim($accordionRules))) {
+            // Ensure the rules include input.ac-toggle + :checked rules
+            $styleBlockToKeep = "<style type=\"text/css\">\n" . $accordionRules . "\n</style>\n";
+        }
+
+        // ===== IMPORTANT: remove ALL <style> blocks before inlining =====
+        $htmlForInlining = preg_replace('/<style\b[^>]*>.*?<\/style>/is', '', $htmlView);
+
+        // 3) Inline CSS (now the accordion rules are not present to be inlined)
+        $converter   = new CssToInlineStyles();
+        $htmlInlined = $converter->convert($htmlForInlining);
+
+        // 4) Defensive: ensure accordion-content fallback is expanded (prevent collapse forced inline)
+        $htmlInlined = preg_replace(
+            '/class="accordion-content"([^>]*)style="[^"]*"/i',
+            'class="accordion-content"$1style="max-height:none; overflow:visible; background:#ffffff; border-bottom-left-radius:8px; border-bottom-right-radius:8px;"',
+            $htmlInlined
+        );
+
+        // 5) Reinsert the small accordion <style> block so supporting clients can collapse
+        if (!empty($styleBlockToKeep)) {
+            if (stripos($htmlInlined, '</head>') !== false) {
+                $htmlFinal = preg_replace('/<\/head>/i', $styleBlockToKeep . '</head>', $htmlInlined, 1);
+            } elseif (stripos($htmlInlined, '<body') !== false) {
+                $htmlFinal = preg_replace('/(<body[^>]*>)/i', "$1\n" . $styleBlockToKeep, $htmlInlined, 1);
+            } else {
+                $htmlFinal = $styleBlockToKeep . $htmlInlined;
+            }
+        } else {
+            $htmlFinal = $htmlInlined;
+        }
 
 
-        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-
-        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        // Send via Zoho API
+        $url      = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
-        $toEmail = $user->email;
-        $subject = 'You Missed a New Lead – Not Enough Credits for Your New Leads';
-
+        $toEmail   = $user->email;
+        $subject   = 'Today’s Missed Leads – Take Action Before It’s Too Late';
+        $hasAccordionStyle = stripos($htmlFinal, 'input.ac-toggle') !== false;
+        $hasInputs = stripos($htmlFinal, '<input type="checkbox"') !== false;
         DB::table('zoho_logs')->insert([
-            'url' => $url,
-            'function_name' => 'sendGroupedLeadEmailBidNotEnough',
-            'ipaddress' => request()->ip(),
-            'created_at' => now(),
+            'url'          => $url,
+            'function_name'=> 'sendGroupedLeadEmailBidNotEnough',
+            'ipaddress'    => request()->ip(),
+            'created_at'   => now(),
         ]);
 
         $response = Http::withToken($accessToken)->post($url, [
             'data' => [
                 [
                     'from' => [
-                        'email' => $fromEmail,
-                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                        'email'     => $fromEmail,
+                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com'),
                     ],
                     'to' => [
-                        ['email' => $toEmail]
+                        ['email' => $toEmail],
                     ],
-                    'subject' => $subject,
-                    'content' => $htmlContent,
-                    'mail_format' => 'html',
-                    'org_email' => true
+                    'subject'    => $subject,
+                    'content'    => $htmlFinal,
+                    'mail_format'=> 'html',
+                    'org_email'  => true,
                 ]
             ]
         ]);
@@ -1082,21 +1137,20 @@ class ZohoEmails
 
         foreach ($leads as $leadId) {
             EmailLog::insertGetId([
-                'user_id' => $user->id,
-                'from_email' => $fromEmail,
-                'lead_id' => $leadId, // multiple leads
-                'to_email' => $toEmail,
-                'message_id' => $rel['message_id'],
-                'subject' => $subject,
-                'setting_name' => 'Send Lead Details Email At Evening',
-                'content' => $htmlContent,
-                'zoho_url' => $url,
-                'response' => json_encode($rel),
+                'user_id'     => $user->id,
+                'from_email'  => $fromEmail .'-'.$hasAccordionStyle . '-' .$hasInputs,
+                'lead_id'     => $leadId,
+                'to_email'    => $toEmail,
+                'message_id'  => $rel['message_id'],
+                'subject'     => $subject,
+                'setting_name'=> 'Send Lead Details Email At Evening',
+                'content'     => $htmlFinal,
+                'zoho_url'    => $url,
+                'response'    => json_encode($rel),
             ]);
         }
-
-
     }
+
 
 
     // public static function sendLeadRequestReply($userId, $leadId)

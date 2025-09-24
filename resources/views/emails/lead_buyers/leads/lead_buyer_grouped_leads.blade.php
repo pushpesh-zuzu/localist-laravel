@@ -1,138 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>New Lead Matched for You</title>
-  <style>
-    body { margin:0; padding:0; background-color:#f1f2f4; font-family:'Lato', Helvetica, Arial, sans-serif; color:#4a4a4a; -webkit-font-smoothing:antialiased; }
-    img { border:0; display:block; max-width:100%; }
-    a { color:#007bff; text-decoration:none; }
-    .btn { display:inline-block; background:#00afe3; color:#fff !important; text-decoration:none; font-size:15px; font-weight:700; padding:10px 20px; border-radius:6px; }
-    h1 { font-size:20px; font-weight:600; color:#222; margin:0; text-align:center; }
-    p { margin:0; font-size:15px; line-height:1.4; color:#61696d; }
 
-    /* Accordion (checkbox hack). Inputs are hidden; fallback shows content. */
-    input.ac-toggle { display:none !important; mso-hide:all; }
-    .accordion-content { max-height:none; overflow:visible; transition:max-height 0.35s ease; }
-    input.ac-toggle + .accordion-header + .accordion-content { max-height:0; overflow:hidden; padding:0; }
-    input.ac-toggle:checked + .accordion-header + .accordion-content { max-height:800px; overflow:auto; padding:12px 16px; }
+  <style type="text/css">
+    /* hide checkbox off-screen but keep it focusable/clickable via the label */
+    input.ac-toggle {
+      position: absolute !important;
+      left: -9999px !important;
+      top: auto !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      mso-hide: all;
+    }
 
-    .accordion-header { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#f8fbfd; cursor:pointer; }
-    .accordion-header strong { font-size:15px; color:#222; }
-    .accordion-meta { font-size:13px; color:#666; text-align:right; }
+    /* collapsed by default for clients that support :checked */
+    input.ac-toggle + label.ac-header + .accordion-content {
+      max-height: 0 !important;
+      overflow: hidden !important;
+      padding: 0 16px !important;
+      transition: max-height .35s ease !important;
+      -webkit-transition: max-height .35s ease !important;
+    }
 
-    .lead-card { border-radius:8px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.06); overflow:hidden; }
-    .lead-details { font-size:14px; line-height:20px; color:#333; }
-    .lead-details div { margin-bottom:4px; }
+    /* expanded when checked */
+    input.ac-toggle:checked + label.ac-header + .accordion-content {
+      max-height: 900px !important;
+      padding: 12px 16px 16px 16px !important;
+      overflow: auto !important;
+    }
 
-    .tag { display:inline-block; font-size:12px; padding:4px 8px; border-radius:12px; margin-left:6px; }
+    /* caret rotation - single static text "Details" remains the same */
+    .ac-header .caret {
+      display:inline-block;
+      vertical-align:middle;
+      margin-left:6px;
+      transition: transform .18s ease;
+    }
+    input.ac-toggle:checked + label.ac-header .caret {
+      transform: rotate(180deg) !important;
+    }
 
+    /* make label clickable area */
+    label.ac-header {
+      display:block;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* small responsive tweak */
     @media only screen and (max-width:600px) {
       .email-container { width:100% !important; padding:0 12px !important; }
       h1 { font-size:18px !important; }
     }
   </style>
 </head>
-<body>
-  <!-- Outer wrapper -->
+<body style="margin:0;padding:0;background:#f1f2f4;font-family:'Lato', Arial, Helvetica, sans-serif;color:#4a4a4a;">
+
   <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f2f4" role="presentation">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" role="presentation" style="max-width:600px; width:100%;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:600px;max-width:600px;margin:0 auto;" class="email-container">
 
-          <!-- Logo (centered, tighter padding) -->
+          <!-- logo -->
           <tr>
-            <td style="padding:12px; text-align:center;">
-              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="max-height:45px; margin:0 auto; display:block;">
+            <td align="center" style="padding:12px 12px 8px 12px;">
+              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="display:block;max-height:45px;margin:0 auto;height:auto;">
             </td>
           </tr>
 
-          <!-- Header -->
+          <!-- header card -->
           <tr>
-            <td>
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" role="presentation" style="border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+            <td align="center" style="padding:0 0 10px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                     style="max-width:560px;width:100%;margin:0 auto;background:#ffffff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
                 <tr>
                   <td style="padding:16px;">
-                    <h1>Hi {{ $name }}</h1>
-                    <p style="text-align:center; margin-top:6px;"><strong>You've got new leads waiting for you!</strong></p>
+                    <h1 style="margin:0;font-size:20px;font-weight:600;color:#222;text-align:center;">Hi {{ $name }}</h1>
+                    <p style="margin:8px 0 0 0;font-size:15px;line-height:1.4;color:#61696d;text-align:center;"><strong>You've got new leads waiting for you!</strong></p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Loop through leads (compact spacing: padding:6px 0) -->
+          <!-- leads loop -->
           @foreach($leadDetailsList as $lead)
           <tr>
-            <td style="padding:6px 0;">
-              <!-- Card container -->
-              <div class="lead-card" style="margin:0 auto; max-width:560px;">
-                <!-- unique checkbox id per lead for accordion -->
-                <input type="checkbox" id="lead-{{ $lead['id'] }}" class="ac-toggle" />
+            <td align="center" style="padding:8px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                     style="max-width:560px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin:0 auto;">
+                <tr>
+                  <td style="padding:0;">
+                    <div style="padding:0;margin:0;">
 
-                <!-- Header (always visible summary) -->
-                <label for="lead-{{ $lead['id'] }}" class="accordion-header" style="border-top-left-radius:8px; border-top-right-radius:8px; margin:0;">
-                  <div style="line-height:1.1;">
-                    <strong style="display:block;">{{ $lead['lead_name'] }}</strong>
-                    <span style="font-size:13px; color:#666;">{{ $lead['service_name'] }}</span>
-                  </div>
-                  <div class="accordion-meta" style="white-space:nowrap;">
-                    {{ $lead['credit_score'] }} credits<br>
-                    <span style="font-size:13px;">📍 {{ $lead['postcode'] }}</span>
-                  </div>
-                </label>
+                      <!-- checkbox MUST be directly before label and accordion-content -->
+                      <input type="checkbox" id="lead-{{ $lead['id'] }}" class="ac-toggle" />
 
-                <!-- Content (collapsible on supporting clients; visible fallback otherwise) -->
-                <div class="accordion-content" style="background:#ffffff; border-bottom-left-radius:8px; border-bottom-right-radius:8px;">
-                  <div style="padding:12px 0 0 0; border-top:1px solid #eee;">
-                    <div class="lead-details" style="padding:0 16px 8px 16px;">
-                      <div>🏅 <strong>Credits to respond:</strong> {{ $lead['credit_score'] }}</div>
-                      <div>📍 <strong>Postcode:</strong> {{ $lead['postcode'] }}</div>
-                      <div>📞 <strong>Phone:</strong> {{ $lead['masked_phone'] }}</div>
-                      <div>✉️ <strong>Email:</strong> {{ $lead['masked_email'] }}</div>
+                      <!-- header label -->
+                      <label for="lead-{{ $lead['id'] }}" class="ac-header" style="display:block;cursor:pointer;padding:14px 16px;background:#f8fbfd;border-top-left-radius:8px;border-top-right-radius:8px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+                          <tr>
+                            <td valign="top" style="font-size:15px;font-weight:700;color:#222;padding-right:8px;">
+                              {{ $lead['lead_name'] }}
+                              <div style="font-size:13px;color:#666;font-weight:400;margin-top:4px;">{{ $lead['service_name'] }}</div>
+                            </td>
 
-                      <!-- Optional tags line -->
-                      <div style="margin-top:6px;">
-                        @if(!empty($lead['phone_verified']) && $lead['phone_verified'])
-                          <span class="tag" style="background:#f39ac3; color:#fff;">📞 Verified Phone</span>
-                        @endif
-                        @if(!empty($lead['has_additional_details']) && $lead['has_additional_details'])
-                          <span class="tag" style="background:#ccc; color:#333;">📋 Additional details</span>
-                        @endif
-                        @if(!empty($lead['is_urgent']) && $lead['is_urgent'])
-                          <span class="tag" style="background:#ffa07a; color:#000;">⏰ Urgent</span>
-                        @endif
-                        @if(!empty($lead['is_high_hiring']) && $lead['is_high_hiring'])
-                          <span class="tag" style="background:#90ee90; color:#000;">🚀 High hiring</span>
-                        @endif
+                            <td valign="top" align="right" style="width:160px;font-size:13px;color:#666;">
+                              <div style="font-size:14px;font-weight:700;color:#222;">{{ $lead['credit_score'] }} credits</div>
+                              <div style="margin-top:4px;">📍 {{ $lead['postcode'] }}</div>
+
+                              <!-- single static toggle text + rotating caret -->
+                              <div style="margin-top:6px;font-size:13px;">
+                                <span style="color:#007bff;text-decoration:underline;">Details</span>
+                                <span class="caret" aria-hidden="true">▾</span>
+                              </div>
+                            </td>
+                          </tr>
+                        </table>
+                      </label>
+
+                      <!-- accordion content -->
+                      <div class="accordion-content" style="background:#ffffff;border-bottom-left-radius:8px;border-bottom-right-radius:8px;">
+                        <div style="padding:12px 16px 16px 16px;border-top:1px solid #eee;">
+                          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="font-size:14px;color:#333;">
+                            <tr><td style="padding-bottom:8px;">🏅 <strong>Credits to respond:</strong> {{ $lead['credit_score'] }}</td></tr>
+                            <tr><td style="padding-bottom:8px;">📍 <strong>Postcode:</strong> {{ $lead['postcode'] }}</td></tr>
+                            <tr><td style="padding-bottom:8px;">📞 <strong>Phone:</strong> {{ $lead['masked_phone'] }}</td></tr>
+                            <tr><td style="padding-bottom:8px;">✉️ <strong>Email:</strong> {{ $lead['masked_email'] }}</td></tr>
+
+                            <!-- tags row -->
+                            <tr>
+                              <td style="padding-top:6px;">
+                                @if(!empty($lead['phone_verified']) && $lead['phone_verified'])
+                                  <span style="display:inline-block;font-size:12px;padding:4px 8px;border-radius:12px;background:#f39ac3;color:#fff;margin-right:6px;">📞 Verified Phone</span>
+                                @endif
+                                @if(!empty($lead['has_additional_details']) && $lead['has_additional_details'])
+                                  <span style="display:inline-block;font-size:12px;padding:4px 8px;border-radius:12px;background:#ccc;color:#333;margin-right:6px;">📋 Additional details</span>
+                                @endif
+                                @if(!empty($lead['is_urgent']) && $lead['is_urgent'])
+                                  <span style="display:inline-block;font-size:12px;padding:4px 8px;border-radius:12px;background:#ffa07a;color:#000;margin-right:6px;">⏰ Urgent</span>
+                                @endif
+                                @if(!empty($lead['is_high_hiring']) && $lead['is_high_hiring'])
+                                  <span style="display:inline-block;font-size:12px;padding:4px 8px;border-radius:12px;background:#90ee90;color:#000;margin-right:6px;">🚀 High hiring</span>
+                                @endif
+                              </td>
+                            </tr>
+
+                            <!-- CTA -->
+                            <tr>
+                              <td style="padding-top:12px;text-align:center;">
+                                @if(!empty($lead['hasEnoughCredits']))
+                                  <a href="{{ $baseUrl }}/sellers/leads" style="display:inline-block;background:#00afe3;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:10px 20px;border-radius:6px;">Contact Now</a>
+                                @else
+                                  <a href="{{ $baseUrl }}/settings/billing/my-credits" style="display:inline-block;background:#00afe3;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:10px 20px;border-radius:6px;">Buy Credits to Contact</a>
+                                @endif
+                              </td>
+                            </tr>
+
+                          </table>
+                        </div>
                       </div>
-                    </div>
+                      <!-- end accordion -->
 
-                    <!-- CTA -->
-                    <div style="text-align:center; padding:8px 16px 16px 16px;">
-                      @if(!empty($lead['hasEnoughCredits']))
-                        <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Now</a>
-                      @else
-                        <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Buy Credits to Contact</a>
-                      @endif
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           @endforeach
 
-          <!-- Help -->
+          <!-- help card -->
           <tr>
-            <td style="padding-top:10px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" role="presentation" style="border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+            <td align="center" style="padding-top:10px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                     style="max-width:560px;width:100%;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr>
-                  <td style="padding:12px; background:#d8edf8; font-weight:600; color:#1a588c;">Need Help?</td>
+                  <td style="padding:12px;background:#d8edf8;font-weight:600;color:#1a588c;">Need Help?</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px; font-size:14px; color:#555;">
+                  <td style="padding:12px;font-size:14px;color:#555;">
                     Email us at <a href="mailto:{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}">{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}</a>
                   </td>
                 </tr>
@@ -140,9 +192,9 @@
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- footer -->
           <tr>
-            <td align="center" style="padding:12px; font-size:12px; color:#888;">
+            <td align="center" style="padding:12px;font-size:12px;color:#888;">
               Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification">here</a>.<br>
               {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
             </td>
