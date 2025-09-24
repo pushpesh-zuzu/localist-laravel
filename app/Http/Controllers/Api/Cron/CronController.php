@@ -934,6 +934,16 @@ class CronController extends Controller
                     if ($finalLeads->isNotEmpty()) {
                         // Check if email was already sent today for this seller
 
+                        $alreadySents = EmailLog::where('user_id', $seller->id)
+                                ->whereDate('created_at', Carbon::today())
+                                ->where('setting_name', 'Send Lead Details Email At Evening')
+                                ->exists();
+
+
+                            if ($alreadySents) {
+                                continue;
+                            }
+
 
                             // Send one email for all leads
                             $result=ZohoEmails::sendGroupedLeadDetails($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
