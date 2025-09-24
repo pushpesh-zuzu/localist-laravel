@@ -98,8 +98,7 @@
 
                     <!-- Info text INSIDE card -->
                     <div style="margin-top:16px; font-size:14px; color:#4a4a4a;">
-                      Want to return to your Quote Customer account? Just click on your username and select
-                      <a href="http://127.0.0.1:5100/api/users/switch_user" style="color:#007bff; text-decoration:underline;">Switch Role</a>.
+                      Want to return to your Quote Customer account? Just click on your username and select Switch User
                     </div>
                   </td>
                 </tr>
