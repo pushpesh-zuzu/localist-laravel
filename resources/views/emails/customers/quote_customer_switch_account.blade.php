@@ -27,7 +27,7 @@
           <!-- Logo -->
           <tr>
             <td align="center" style="padding:0 16px 20px 16px;">
-              <img src="http://127.0.0.1:5100/assets/localist_logo.png" alt="Localists" class="logo" width="180" style="max-height:48px; display:block; margin:0 auto; max-width:100%; height:auto;">
+              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists" class="logo" width="180" style="max-height:48px; display:block; margin:0 auto; max-width:100%; height:auto;">
             </td>
           </tr>
 
@@ -127,7 +127,7 @@
               <table role="presentation" width="100%" class="card" style="border-radius:6px; background:#111637; color:#fff;">
                 <tr>
                   <td style="padding:12px 14px; font-size:13px;text-align:center">
-                    Manage your email preferences <a href="http://127.0.0.1:5100/settings/notifications/e-mail-notification" style="color:#fff; text-decoration:underline;">here</a>.
+                    Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification" style="color:#fff; text-decoration:underline;">here</a>.
                   </td>
 
                 </tr>
