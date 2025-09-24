@@ -394,10 +394,12 @@ class CronController extends Controller
             ->whereNotNull('users.zoho_record_id')
             ->where(function ($query) use ($from, $to) {
                 $query->where(function ($q) use ($from, $to) {
-                    $q->whereBetween('latest_plan.last_plan_date', [$from, $to])
-                        ->orWhereNull('latest_plan.last_plan_date'); // Include users with no plan
+                    $q->whereBetween('latest_plan.last_plan_date', [$from, $to]);
                 })
-                    ->where('users.total_credit', '<', 10); // Apply credit filter to both
+                ->orWhere(function ($q) use ($from, $to) {
+                    $q->whereNull('latest_plan.last_plan_date')
+                    ->whereBetween('users.created_at', [$from, $to]);
+                });
             })
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
             ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
@@ -425,29 +427,6 @@ class CronController extends Controller
 
                         foreach ($leads as $lead) {
 
-                            $latestRecommended = RecommendedLead::where('seller_id', $seller->id)
-                                ->latest('created_at')   // order by created_at DESC
-                                ->first();
-
-                            $alreadyRecommended = true;
-
-                            if ($latestRecommended && $latestRecommended->created_at->between($from, $to)) {
-                                $alreadyRecommended = false;
-                            }
-                            if (!$latestRecommended) {
-                                $checkUsers = User::where('id', $seller->id)
-                                    ->whereBetween('created_at', [$from, $to])   // order by created_at DESC
-                                    ->first();
-
-
-                                if ($checkUsers) {
-                                    $alreadyRecommended = false;
-                                }
-                            }
-
-                            if ($alreadyRecommended) {
-                                continue;
-                            }
 
 
                             $serviceId = $location->service_id;
