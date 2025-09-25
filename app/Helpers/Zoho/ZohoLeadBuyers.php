@@ -90,7 +90,7 @@ class ZohoLeadBuyers
                 'Company_Sales_Team'            => $user->company_sales_team  == 1 ? 'Yes' : 'No',
                 'total_credit'                  => $user->total_credit ?? 0,
                 'company_size'                  => $user->company_size ?? 'Nil',
-                'New_Jobs_Per_Month'            => $user->new_jobs ?? 0,
+                'New_Jobs_Per_Month'            => $user->new_jobs ?? 'Nil',
                 //'Social_Media'                => $user->social_media == 1 ? 'Yes' : 'No',
                 'phone'                         => $user->phone ?? 'Nil',
                 'Auto_Bid'                      => optional($user->details)->is_autobid == 1 ? 'Yes' : 'No',
