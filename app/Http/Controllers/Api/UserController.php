@@ -461,12 +461,12 @@ class UserController extends Controller
                 ]);
             }
 
-            return $this->sendResponse('Registration successful');
-            // return $this->sendJsonAndSyncZoho([
-            //     'success' => true,
-            //     'message' => 'Registration successful',
-            //     'data' => $user,
-            // ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
+            //return $this->sendResponse('Registration successful');
+            return $this->sendJsonAndSyncZoho([
+                'success' => true,
+                'message' => 'Registration successful',
+                'data' => $user,
+            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
 
 
 
