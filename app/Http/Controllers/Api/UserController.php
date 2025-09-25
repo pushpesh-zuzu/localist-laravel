@@ -432,12 +432,41 @@ class UserController extends Controller
 
             // $zohoService->integrateServiceLocations($user);
             // $zohoQa->integrateServiceQa($user);
+            try {
+                if ($user->user_type == 1) {
 
-            return $this->sendJsonAndSyncZoho([
-                'success' => true,
-                'message' => 'Registration successful',
-                'data' => $user,
-            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
+                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+                    if($user->form_status ==1){
+                        ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+                    }
+
+                    //app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
+                    app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
+                    app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
+                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);
+
+                    if ($auto_bid == 0) {
+                        //app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
+                    }
+
+                } elseif ($user->user_type == 2) {
+                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
+                }
+
+
+            } catch (\Throwable $e) {
+                Log::error('Zoho background sync failed', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return $this->sendResponse('Registration successful');
+            // return $this->sendJsonAndSyncZoho([
+            //     'success' => true,
+            //     'message' => 'Registration successful',
+            //     'data' => $user,
+            // ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
 
 
 
