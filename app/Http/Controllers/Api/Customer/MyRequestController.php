@@ -113,6 +113,10 @@ class MyRequestController extends Controller
             $dataUser['city'] = $request->city;
             $dataUser['questions'] = $request->questions;
             $dataUser['service_id'] = $request->service_id;
+
+            $dataUser['campaignid'] = $request->campaignid;
+            $dataUser['gclid'] = $request->gclid;
+            $dataUser['keyword'] = $request->keyword;
             //for
 
             $dataUser['password'] = Hash::make($password);
@@ -177,6 +181,9 @@ class MyRequestController extends Controller
             $dataUser['city'] = $request->city;
             $dataUser['questions'] = $request->questions;
             $dataUser['service_id'] = $request->service_id;
+            $dataUser['campaignid'] = $request->campaignid;
+            $dataUser['gclid'] = $request->gclid;
+            $dataUser['keyword'] = $request->keyword;
             $dataUser['created_at'] = date('Y-m-d H:i:s');
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
@@ -217,6 +224,9 @@ class MyRequestController extends Controller
             $nuData['otp'] = $abUser->otp;
             $nuData['otp_sinch_status'] = $abUser->otp_sinch_status;
             $nuData['zoho_record_id'] = $abUser->zoho_record_id;
+            $nuData['campaignid'] = $abUser->campaignid;
+            $nuData['gclid'] = $abUser->gclid;
+            $nuData['keyword'] = $abUser->keyword;
             $nuData['password'] = Hash::make($password);
             $nuData['user_type'] = 2;
             $nuData['active_status'] = 2;
