@@ -71,13 +71,23 @@
 
                     <!-- === BULLETPROOF CTA: keep inside card and aligned left/center/right by changing td align === -->
 
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;text-align:center;">
-                      <tbody><tr>
-                        <td style="padding:0 16px">
-                          <a href="{{ $baseUrl }}/sellers/leads" class="btn">See Similar Leads</a>
-                        </td>
-                      </tr>
-                    </tbody></table>
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;">
+                        <tr>
+                            <td align="center">
+                            <table cellpadding="0" cellspacing="0" border="0" align="center">
+                                <tr>
+                                <td style="border-radius:4px; background:#007bff; text-align:center;">
+                                    <a href="{{ $baseUrl }}/sellers/leads"
+                                    style="display:inline-block; padding:12px 24px; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif;">
+                                    See Similar Leads
+                                    </a>
+                                </td>
+                                </tr>
+                            </table>
+                            </td>
+                        </tr>
+                        </table>
+
                     <!-- === end CTA === -->
 
                   </td>
