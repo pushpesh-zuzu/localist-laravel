@@ -451,7 +451,7 @@ class UserController extends Controller
                 'updated_at' => now(),
             ];
             return ZohoHelper::dispatchAfterResponse(function () use ($user, $rel) {
-                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
                 app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
 
             }, [

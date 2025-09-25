@@ -1,6 +1,7 @@
 <?php
 namespace App\Helpers\Zoho;
 
+use App\Models\AbandonedUser;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Models\User;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoLeadBuyers
 {
-    public function integrateZohoLeadBuyers($userId)
+    public function integrateZohoLeadBuyers($userId,$type=null)
     {
 
 
@@ -21,7 +22,7 @@ class ZohoLeadBuyers
 
         //$zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
-        $payload = $this->buildLeadBuyerPayload($userId);
+        $payload = $this->buildLeadBuyerPayload($userId,$type);
 
         $response = $this->upsertToZohoService($access_token, $payload);
 
@@ -33,9 +34,16 @@ class ZohoLeadBuyers
             isset($responseData['data'][0]['details']['id'])
         ) {
             $zohoRecordId = $responseData['data'][0]['details']['id'];
-            User::where('id', $userId)->update([
-                'zoho_record_id' => $zohoRecordId,
-            ]);
+            if($type){
+                AbandonedUser::where('id', $userId)->update([
+                    'zoho_record_id' => $zohoRecordId,
+                ]);
+            }else{
+                User::where('id', $userId)->update([
+                    'zoho_record_id' => $zohoRecordId,
+                ]);
+            }
+
         }
         $usedCredits = $response->header('X-API-COST'); // this may return 24
 
@@ -49,9 +57,14 @@ class ZohoLeadBuyers
     }
 
 
-    protected function buildLeadBuyerPayload($userId)
+    protected function buildLeadBuyerPayload($userId,$type=null)
     {
-        $user = User::with('details','primaryCategory')->findOrFail($userId);
+        if($type){
+            $user = AbandonedUser::findOrFail($userId);
+        }
+        else{
+           $user = User::with('details','primaryCategory')->findOrFail($userId);
+        }
         $payload = [
             'data' => [[
                 'Lead_buyer_auto_id'            => $user->id,
