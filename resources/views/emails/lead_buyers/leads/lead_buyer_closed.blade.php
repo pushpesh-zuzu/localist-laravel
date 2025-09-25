@@ -70,21 +70,14 @@
                     </div>
 
                     <!-- === BULLETPROOF CTA: keep inside card and aligned left/center/right by changing td align === -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:16px;">
-                      <tr>
-                        <!-- change align="left" to "center" or "right" if needed -->
-                        <td align="left" style="padding:0;">
-                          <!-- Use inline styles on the anchor so it renders in most email clients -->
-                          <a href="{{ $baseUrl }}/sellers/leads"
-                             style="background-color:#00afe3; color:#ffffff; text-decoration:none;
-                                    font-size:14px; font-weight:700; padding:12px 24px; border-radius:4px;
-                                    font-family:Helvetica, Arial, sans-serif; display:inline-block; line-height:1;"
-                             class="btn">
-                            See Similar Leads
-                          </a>
+
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;text-align:center;">
+                      <tbody><tr>
+                        <td style="padding:0 16px">
+                          <a href="{{ $baseUrl }}/sellers/leads" class="btn">See Similar Leads</a>
                         </td>
                       </tr>
-                    </table>
+                    </tbody></table>
                     <!-- === end CTA === -->
 
                   </td>
