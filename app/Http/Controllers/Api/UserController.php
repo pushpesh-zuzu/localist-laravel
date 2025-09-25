@@ -557,7 +557,7 @@ class UserController extends Controller
     {
         $sentCount = 0;
         $userId = $payload['userId'] ?? null;
-        $users = User::whereNotNull('zoho_record_id')
+        $users = AbandonedUser::whereNotNull('zoho_record_id')
             ->whereNull('form_status')
             ->where('id',$userId)
             // ->with(['emailLogs' => function ($q) {
