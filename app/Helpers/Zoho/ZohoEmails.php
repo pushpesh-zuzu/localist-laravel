@@ -5,6 +5,7 @@ namespace App\Helpers\Zoho;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\CustomHelper;
+use App\Models\AbandonedUser;
 use App\Models\User;
 use App\Models\EmailLog;
 use App\Models\EmailSetting;
@@ -324,7 +325,7 @@ class ZohoEmails
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
             if (!empty($zohoId)) {
-                $user = User::where('id', $userId)->first();
+                $user = AbandonedUser::where('id', $userId)->first();
 
                 if (!empty($user)) {
 
