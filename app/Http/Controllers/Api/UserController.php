@@ -555,6 +555,8 @@ class UserController extends Controller
 
     public function sendIncompleteRegEmail($payload)  // sendIncompleteRegEmail
     {
+        Log::info('Incomplete registrtion inserted');
+
         $sentCount = 0;
         $userId = $payload['userId'] ?? null;
         $users = AbandonedUser::whereNotNull('zoho_record_id')
@@ -564,8 +566,14 @@ class UserController extends Controller
             //     $q->where('setting_name', 'Send Incomplete Registration Email')->latest();
             // }])
             ->get();
-        ZohoEmails::sendIncompleteRegistrationEmail($userId);
 
+        Log::info('Incomplete registrtion second',[
+            'message'=>$users
+        ]);
+        $x=ZohoEmails::sendIncompleteRegistrationEmail($userId);
+        Log::info('Incomplete registrtion third',[
+            'message'=>$x
+        ]);
         return response()->json([
             'status' => 'success',
             'message' => "$sentCount incomplete registration email(s) sent.",
