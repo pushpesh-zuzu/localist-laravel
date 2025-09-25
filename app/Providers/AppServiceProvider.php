@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Providers;
-
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use App\Providers\BroadcastServiceProvider;
 // use Illuminate\Pagination\Paginator;
@@ -23,5 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Paginator::useBootstrap();
+        URL::forceRootUrl(config('app.url')); // make Laravel use APP_URL
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
     }
 }

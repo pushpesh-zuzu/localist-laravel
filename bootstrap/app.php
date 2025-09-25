@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'authMiddleware' => \App\Http\Middleware\ApiAuthMiddleware::class, //✅ Register Middlewares
+            'trustProxies' => \App\Http\Middleware\TrustProxies::class,
             // 'prevent-back' => \App\Http\Middleware\PreventBackHistory::class, // ✅ Register Middleware
         ]);
     })
