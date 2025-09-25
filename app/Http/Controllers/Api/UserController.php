@@ -444,21 +444,11 @@ class UserController extends Controller
         }else{
 
             $user = AbandonedUser::create($aVals);
-            $rel = [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-            return ZohoHelper::dispatchAfterResponse(function () use ($user, $rel) {
-                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
-                app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
 
-            }, [
-                'success' => true,
-                'message' => 'Abandoned Lead Buyers registered Successfully',
-                'data' => $rel
-            ]);
+            app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
+            app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
+
+            return $this->sendResponse('Abandoned Lead Buyers registered Successfully');
         }
 
     }
@@ -570,10 +560,8 @@ class UserController extends Controller
         Log::info('Incomplete registrtion second',[
             'message'=>$users
         ]);
-        $x=ZohoEmails::sendIncompleteRegistrationEmail($userId);
-        Log::info('Incomplete registrtion third',[
-            'message'=>$x
-        ]);
+        ZohoEmails::sendIncompleteRegistrationEmail($userId);
+
         return response()->json([
             'status' => 'success',
             'message' => "$sentCount incomplete registration email(s) sent.",
