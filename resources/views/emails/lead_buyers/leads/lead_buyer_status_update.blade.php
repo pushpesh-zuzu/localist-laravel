@@ -76,12 +76,83 @@
 
                     <!-- Status Update Buttons -->
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr><td style="padding:6px 0"><a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Attempted Contact (no response)') }}" class="btn">Attempted Contact (no response)</a></td></tr>
-                      <tr><td style="padding:6px 0"><a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with the Buyer (in process of providing  quotes)') }}" class="btn">Contact made (in process of providing quotes)</a></td></tr>
-                      <tr><td style="padding:6px 0"><a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with the Buyer (Quote Provided)') }}" class="btn">Contact made — Quote Provided</a></td></tr>
-                      <tr><td style="padding:6px 0"><a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with Buyer & Quote Provided (no hire)') }}" class="btn">Contact made & Quote Provided (no hire)</a></td></tr>
-                      <tr><td style="padding:6px 0"><a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with Buyer & Quote Provided (hired)') }}" class="btn">Contact made & Quote Provided (hired)</a></td></tr>
-                    </table>
+  <tr>
+    <td align="center" style="padding:6px 0;">
+      <table cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr>
+          <td style="border-radius:4px; background:#007bff; text-align:center;">
+            <a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Attempted Contact (no response)') }}"
+               style="display:inline-block; width:280px; padding:12px 0; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif; text-align:center;">
+               Attempted Contact (no response)
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding:6px 0;">
+      <table cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr>
+          <td style="border-radius:4px; background:#007bff; text-align:center;">
+            <a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with the Buyer (in process of providing  quotes)') }}"
+               style="display:inline-block; width:280px; padding:12px 0; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif; text-align:center;">
+               Contact made (in process of providing quotes)
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding:6px 0;">
+      <table cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr>
+          <td style="border-radius:4px; background:#007bff; text-align:center;">
+            <a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with the Buyer (Quote Provided)') }}"
+               style="display:inline-block; width:280px; padding:12px 0; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif; text-align:center;">
+               Contact made — Quote Provided
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding:6px 0;">
+      <table cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr>
+          <td style="border-radius:4px; background:#007bff; text-align:center;">
+            <a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with Buyer & Quote Provided (no hire)') }}"
+               style="display:inline-block; width:280px; padding:12px 0; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif; text-align:center;">
+               Contact made & Quote Provided (no hire)
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding:6px 0;">
+      <table cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr>
+          <td style="border-radius:4px; background:#007bff; text-align:center;">
+            <a href="{{ url('/api/lead-purchase-status-update-log/' . $lead_id . '/' . $seller_id . '/' . $buyer_id . '/Contact made with Buyer & Quote Provided (hired)') }}"
+               style="display:inline-block; width:280px; padding:12px 0; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif; text-align:center;">
+               Contact made & Quote Provided (hired)
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
                   </td>
                 </tr>
               </table>
