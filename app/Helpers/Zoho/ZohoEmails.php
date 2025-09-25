@@ -322,14 +322,18 @@ class ZohoEmails
         if ($sendIncompleteRegEmail) {
             $accessToken = ZohoHelper::getAccessToken();
 
-            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
-
+            $zohoId = ZohoHelper::getZohoAbandonLeadBuyerId($accessToken, $userId);
+Log::info('Incomplete registrtion p1',[
+            'message'=>$zohoId
+        ]);
             if (!empty($zohoId)) {
                 $user = AbandonedUser::where('id', $userId)->first();
 
                 if (!empty($user)) {
 
-
+Log::info('Incomplete registrtion p2',[
+            'message'=>$user
+        ]);
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_incomplete_registration',  [
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name

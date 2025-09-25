@@ -4,6 +4,7 @@ namespace App\Helpers\Zoho;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Helpers\CustomHelper;
+use App\Models\AbandonedUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -122,6 +123,37 @@ class ZohoHelper
         }
         return null;
     }
+
+    public static function getZohoAbandonLeadBuyerId($accessToken, $userId)
+    {
+        $recId = AbandonedUser::where('id', $userId)->value('zoho_record_id');
+        if(!empty($recId)){
+            return $recId;
+        }
+
+        $baseUrl = CustomHelper::setting_value('zoho_email_api_url');
+
+        $response = Http::withToken($accessToken)
+            ->get($baseUrl . '/Lead_Buyer_Registration/search', [
+                'criteria' => "(Lead_buyer_auto_id:equals:{$recId})"
+            ]);
+
+        // $response = Http::withToken($accessToken)
+        //     ->get('https://crmsandbox.zoho.eu/crm/v2/Lead_Buyer_Registration/search', [
+        //         'criteria' => "(Lead_buyer_auto_id:equals:{$userId})"
+        //     ]);
+
+        $data = $response->json();
+
+        if(!empty($data['data'][0]['id'])){
+            $zohoId = AbandonedUser::where('id', $userId)->update([
+                'zoho_record_id' => $data['data'][0]['id']
+            ]);
+            return $data['data'][0]['id'];
+        }
+        return null;
+    }
+
 
     public static function getZohoQuoteCustomerId($accessToken, $userId)
     {
