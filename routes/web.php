@@ -77,7 +77,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('plans', PlansController::class);
     Route::resource('settings', SettingController::class);
     Route::resource('buyer', BuyerController::class);
-    Route::get('buyer/{type}/{id}', [BuyerController::class, 'show'])->name('buyer.show');
+    Route::get('buyer/{type}/{id}', [BuyerController::class, 'show'])->name('buyer.show.custom');
     Route::get('buyer-lead-details/{leadid}', [BuyerController::class, 'leadDetails'])->name('buyer.leadDetails');
     Route::get('buyer-incomplete-list', [BuyerController::class, 'incompletelist'])->name('buyer.incompletelist');
     Route::get('buyer-bids/{userid}', [BuyerController::class, 'buyerBids'])->name('buyer.buyerBids');
@@ -86,7 +86,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('buyer-contact-form', [BuyerController::class, 'contactForm'])->name('buyer.contact_form');
     Route::get('buyer-show-contact-form/{id}', [BuyerController::class, 'viewContactForm'])->name('buyer.show_contact_form');
     Route::resource('seller', SellerController::class);
-    Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show');
+    Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show.custom');
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-contact-form', [SellerController::class, 'contactForm'])->name('seller.contact_form');
     Route::get('seller-show-contact-form/{id}', [SellerController::class, 'viewContactForm'])->name('seller.show_contact_form');
