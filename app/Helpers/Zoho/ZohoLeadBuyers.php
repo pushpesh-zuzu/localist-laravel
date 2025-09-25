@@ -67,7 +67,7 @@ class ZohoLeadBuyers
         }
         $payload = [
             'data' => [[
-                'Lead_buyer_auto_id'            => $user->id,
+                'Lead_buyer_auto_id'            => $user->zoho_record_id,
                 'Lead Buyer Registration Name'  => $user->name,
                 'Name'                          => $user->name ?? 'Nil',
                 'Company_Registration_Number'   => $user->company_reg_number ?? 'Nil',
