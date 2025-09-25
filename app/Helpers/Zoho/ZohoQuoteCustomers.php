@@ -80,6 +80,9 @@ class ZohoQuoteCustomers
                 'zipcode'           => $user->zipcode,
                 'city'              => $user->city,
                 'otp'               => $user->otp ?? 0,
+                'Campaign_Id'      => $user->campaignid ?? '',
+                'GCLID'             => $user->gclid ?? '',
+                'Keyword'           => $user->keyword ?? '',
                 'registration_type' => $user->form_status ==1 ? 'completed' : 'abandoned',
                 'created_at'        => $formatted
             ]],
