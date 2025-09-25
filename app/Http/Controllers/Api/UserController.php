@@ -432,52 +432,33 @@ class UserController extends Controller
 
             // $zohoService->integrateServiceLocations($user);
             // $zohoQa->integrateServiceQa($user);
-            try {
-                if ($user->user_type == 1) {
 
-                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
-                    if($user->form_status ==1){
-                        ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
-                    }
-
-                    //app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
-                    app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
-                    app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
-                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);
-
-                    if ($auto_bid == 0) {
-                        //app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
-                    }
-
-                } elseif ($user->user_type == 2) {
-                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
-                }
-
-
-            } catch (\Throwable $e) {
-                Log::error('Zoho background sync failed', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            return $this->sendResponse('Registration successful');
-            // return $this->sendJsonAndSyncZoho([
-            //     'success' => true,
-            //     'message' => 'Registration successful',
-            //     'data' => $user,
-            // ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
+            return $this->sendJsonAndSyncZoho([
+                'success' => true,
+                'message' => 'Registration successful',
+                'data' => $user,
+            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
 
 
 
         }else{
 
             $user = AbandonedUser::create($aVals);
+            $rel = [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            return ZohoHelper::dispatchAfterResponse(function () use ($user, $rel) {
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
+                app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
 
-            app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
-            app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
-
-            return $this->sendResponse('Abandoned Lead Buyers registered Successfully');
+            }, [
+                'success' => true,
+                'message' => 'Abandoned Lead Buyers registered Successfully',
+                'data' => $rel
+            ]);
         }
 
     }
