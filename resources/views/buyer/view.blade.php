@@ -45,6 +45,10 @@
                 <div class="col-md-4">
                   <b>Badges: </b> {{$badges}} </div>
               </div>
+              <br /> <br />
+              <div class="col-md-4"><b>Campaign Id: </b> {{ $aRows->campaignid }}</div>
+              <div class="col-md-4"><b>GCLID: </b> {{ $aRows->gclid }}</div>
+              <div class="col-md-4"><b>Keyword: </b> {{ $aRows->keyword }}</div>
               @endif
               
               
