@@ -558,7 +558,7 @@ class UserController extends Controller
         $sentCount = 0;
         $userId = $payload['userId'] ?? null;
         $users = AbandonedUser::whereNotNull('zoho_record_id')
-            ->whereNull('form_status')
+            ->where('form_status',0)
             ->where('id',$userId)
             // ->with(['emailLogs' => function ($q) {
             //     $q->where('setting_name', 'Send Incomplete Registration Email')->latest();
