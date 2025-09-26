@@ -730,7 +730,7 @@ class ApiController extends Controller
                 $statusUrl = "https://api.messagemedia.com/v1/messages/{$messageId}";
 
                 // Wait 30 seconds before checking status
-                sleep(30);
+                sleep(50);
 
                 $statusResp = $client->request('GET', $statusUrl, [
                     'headers' => [
@@ -765,7 +765,7 @@ class ApiController extends Controller
                             $moduleAPIName = "twiliosmsextension0__Sent_SMS";
 
                             $recordData = [
-                                "Message" => $messageText,
+                                "Message" => $messageText .'test',
                                 "Name" => "Sinch Sms",
                                 "twiliosmsextension0__Status" => $curStatus,
                                 "twiliosmsextension0__Activity_ID" => $messageId,
