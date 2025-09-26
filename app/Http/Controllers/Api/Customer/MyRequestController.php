@@ -130,7 +130,7 @@ class MyRequestController extends Controller
             $dataUser['otp'] = $phoneOtp;
 
             $euId = AbandonedUser::insertGetId($dataUser);
-            
+
 
             $user = AbandonedUser::where('id',$euId)->first();
 
@@ -141,11 +141,9 @@ class MyRequestController extends Controller
             $rel['active_status'] = $user->active_status;
             $rel['phone'] = $user->phone;
 
-            if($user->phone){
-                $this->sendOtpDirect($user->phone,$phoneOtp,$euId);
-            }
+            $phone=$user->phone;
 
-            
+
             // CustomHelper::runInBackground(function() use ($euId) {
             //     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
             // });
@@ -153,9 +151,12 @@ class MyRequestController extends Controller
             // return $this->sendResponse('Quote Customer registered Successfully',$rel);
 
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
+            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel,$phone,$phoneOtp) {
 
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
+                if($phone){
+                    $this->sendOtpDirect($phone,$phoneOtp,$euId);
+                }
 
             }, [
                 'success' => true,
@@ -1013,11 +1014,12 @@ class MyRequestController extends Controller
     }
 
 
-    public function sendOtpDirect($toNumber, $otpCode, $quoteId)
+    public function sendOtpDirect($toNumber, $otpCode, $userId)
     {
         $sinchKey    = CustomHelper::setting_value('sinch_key'); //"morB1J2tPJPO8kkvx0A8";
         $sinchSecret = CustomHelper::setting_value('sinch_secret'); //"OvgetB5Fx6gwCxwRA719yrJEV6gVco";
-
+        $user = AbandonedUser::where('id',$userId)->first();
+        $quoteId = $user->zoho_record_id;
         $maxAttempts = 30;
         $delaySecs   = 2;
 
@@ -1069,7 +1071,7 @@ class MyRequestController extends Controller
 
             // Create DB log row (initial)
             $smsLog = SmsLog::create([
-                'quote_id' => $quoteId,
+                'quote_id' => $quoteId ?? $userId,
                 'to_number' => $toNumber,
                 'message_id' => $messageId,
                 'message' => $messageText,
@@ -1113,39 +1115,41 @@ class MyRequestController extends Controller
                         $lc = strtolower((string)$curStatus);
                         if ($lc === 'delivered' || $lc === 'failed') {
 
-                            $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
+                            if($quoteId){
+                                $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
 
-                            $recordData = [
-                                "Message" => $messageText,
-                                "Name" => "Sinch Sms ",            // from Sinch response
-                                "twiliosmsextension0__Status" => $curStatus,    // message body
-                                "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
-                                "Quote_CustomerName" => $quoteId
-                            ];
+                                $recordData = [
+                                    "Message" => $messageText,
+                                    "Name" => "Sinch Sms ",            // from Sinch response
+                                    "twiliosmsextension0__Status" => $curStatus,    // message body
+                                    "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
+                                    "Quote_CustomerName" => $quoteId
+                                ];
 
-                            $record = [
-                                "data" => [$recordData]
-                            ];
+                                $record = [
+                                    "data" => [$recordData]
+                                ];
 
-                             Log::info('record from sinch api ', [
-                                'request' => $record
-                            ]);
+                                Log::info('record from sinch api ', [
+                                    'request' => $record
+                                ]);
 
-                            $access_token = ZohoHelper::getAccessToken();
-                            $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
-                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                                "Authorization: Zoho-oauthtoken $access_token",
-                                "Content-Type: application/json"
-                            ]);
-                            curl_setopt($ch, CURLOPT_POST, 1);
-                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                $access_token = ZohoHelper::getAccessToken();
+                                $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
+                                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                    "Authorization: Zoho-oauthtoken $access_token",
+                                    "Content-Type: application/json"
+                                ]);
+                                curl_setopt($ch, CURLOPT_POST, 1);
+                                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-                            $response = curl_exec($ch);
+                                $response = curl_exec($ch);
 
-                            Log::info('response from sinch api ', [
-                                'response' => $response
-                            ]);
+                                Log::info('response from sinch api ', [
+                                    'response' => $response
+                                ]);
+                            }
 
                             break;
                         }

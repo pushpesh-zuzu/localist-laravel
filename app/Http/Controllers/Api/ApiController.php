@@ -578,12 +578,14 @@ class ApiController extends Controller
         }
     }
 
-    public function sendOtpDirect($toNumber, $otpCode, $quoteId)
+    public function sendOtpDirect($toNumber, $otpCode, $userId)
     {
 
         $sinchKey    = CustomHelper::setting_value('sinch_key'); //"morB1J2tPJPO8kkvx0A8";
         $sinchSecret = CustomHelper::setting_value('sinch_secret'); //"OvgetB5Fx6gwCxwRA719yrJEV6gVco";
 
+        $user = AbandonedUser::where('id',$userId)->first();
+        $quoteId = $user->zoho_record_id;
 
         $maxAttempts = 30;
         $delaySecs   = 2;
@@ -683,36 +685,37 @@ class ApiController extends Controller
 
                         $lc = strtolower((string)$curStatus);
                         if ($lc === 'delivered' || $lc === 'failed') {
+                            if($quoteId){
+                                $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
 
-                            $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
+                                $recordData = [
+                                    "Message" => $messageText,
+                                    "Name" => "Sinch Sms ",            // from Sinch response
+                                    "twiliosmsextension0__Status" => $curStatus,    // message body
+                                    "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
+                                    "Quote_CustomerName" => $quoteId
+                                ];
 
-                            $recordData = [
-                                "Message" => $messageText,
-                                "Name" => "Sinch Sms ",            // from Sinch response
-                                "twiliosmsextension0__Status" => $curStatus,    // message body
-                                "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
-                                "Quote_CustomerName" => $quoteId
-                            ];
+                                $record = [
+                                    "data" => [$recordData]
+                                ];
 
-                            $record = [
-                                "data" => [$recordData]
-                            ];
+                                $access_token = ZohoHelper::getAccessToken();
+                                $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
+                                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                    "Authorization: Zoho-oauthtoken $access_token",
+                                    "Content-Type: application/json"
+                                ]);
+                                curl_setopt($ch, CURLOPT_POST, 1);
+                                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-                            $access_token = ZohoHelper::getAccessToken();
-                            $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
-                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                                "Authorization: Zoho-oauthtoken $access_token",
-                                "Content-Type: application/json"
-                            ]);
-                            curl_setopt($ch, CURLOPT_POST, 1);
-                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                $response = curl_exec($ch);
 
-                            $response = curl_exec($ch);
-
-                            Log::info('response from sinch resend api ', [
-                                'response' => $response
-                            ]);
+                                Log::info('response from sinch resend api ', [
+                                    'response' => $response
+                                ]);
+                            }
                             break;
                         }
                     }
