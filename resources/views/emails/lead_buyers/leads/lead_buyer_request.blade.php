@@ -104,9 +104,9 @@
                       <tr>
                         <td align="center" style="padding:0 12px;">
                           @if($lead['hasEnoughCredits'])
-                            <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Now</a>
+                            <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Lead Now</a>
                           @else
-                            <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Buy Credits to Contact</a>
+                            <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Contact Lead Now</a>
                           @endif
                         </td>
                       </tr>
