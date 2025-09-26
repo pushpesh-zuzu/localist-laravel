@@ -1124,7 +1124,7 @@ class MyRequestController extends Controller
 
                             $recordData = [
                                 "Message" => $messageText .'test',
-                                "Name" => "Sinch Sms",
+                                "Name" => "Sinch Sms test",
                                 "twiliosmsextension0__Status" => $curStatus,
                                 "twiliosmsextension0__Activity_ID" => $messageId,
                                 "Quote_CustomerName" => $quoteId
