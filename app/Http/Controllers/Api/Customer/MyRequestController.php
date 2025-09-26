@@ -144,25 +144,25 @@ class MyRequestController extends Controller
             $phone=$user->phone;
 
 
-            CustomHelper::runInBackground(function() use ($euId) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
-            });
+            // CustomHelper::runInBackground(function() use ($euId) {
+            //     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+            // });
 
-            return $this->sendResponse('Quote Customer registered Successfully',$rel);
+            // return $this->sendResponse('Quote Customer registered Successfully',$rel);
 
 
-            // return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel,$phone,$phoneOtp) {
+            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel,$phone,$phoneOtp) {
 
-            //     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
-            //     if($phone){
-            //         $this->sendOtpDirect($phone,$phoneOtp,$euId);
-            //     }
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
+                if($phone){
+                    $this->sendOtpDirect($phone,$phoneOtp,$euId);
+                }
 
-            // }, [
-            //     'success' => true,
-            //     'message' => 'Quote Customer registered Successfully',
-            //     'data' => $rel
-            // ]);
+            }, [
+                'success' => true,
+                'message' => 'Quote Customer registered Successfully',
+                'data' => $rel
+            ]);
         }else{
 
             $euId = AbandonedUser::where('email',$request->email)->value('id');
