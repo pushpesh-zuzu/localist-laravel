@@ -1007,11 +1007,8 @@ class MyRequestController extends Controller
 
     public function sendOtpDirect($toNumber, $otpCode, $quoteId)
     {
-
-        $sinchKey    = "morB1J2tPJPO8kkvx0A8";
-        $sinchSecret = "OvgetB5Fx6gwCxwRA719yrJEV6gVco";
-
-
+        $sinchKey    = CustomHelper::setting_value('sinch_key'); //"morB1J2tPJPO8kkvx0A8";
+        $sinchSecret = CustomHelper::setting_value('sinch_secret'); //"OvgetB5Fx6gwCxwRA719yrJEV6gVco";
 
         $maxAttempts = 30;
         $delaySecs   = 2;
@@ -1104,8 +1101,36 @@ class MyRequestController extends Controller
                             'raw_response' => $statusBody
                         ]);
 
+
                         $lc = strtolower((string)$curStatus);
                         if ($lc === 'delivered' || $lc === 'failed') {
+
+                            $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
+
+                            $recordData = [
+                                "Message" => $messageText,
+                                "Name" => "Sinch Sms ",            // from Sinch response
+                                "twiliosmsextension0__Status" => $lc,    // message body
+                                "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
+                                "Quote_CustomerName" => $quoteId
+                            ];
+
+                            $record = [
+                                "data" => [$recordData]
+                            ];
+
+                            $access_token = ZohoHelper::getAccessToken();
+                            $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                "Authorization: Zoho-oauthtoken $access_token",
+                                "Content-Type: application/json"
+                            ]);
+                            curl_setopt($ch, CURLOPT_POST, 1);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                            $response = curl_exec($ch);
+
                             break;
                         }
                     }
