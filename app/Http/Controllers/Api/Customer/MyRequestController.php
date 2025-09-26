@@ -130,6 +130,7 @@ class MyRequestController extends Controller
             $dataUser['otp'] = $phoneOtp;
 
             $euId = AbandonedUser::insertGetId($dataUser);
+            
 
             $user = AbandonedUser::where('id',$euId)->first();
 
@@ -144,16 +145,23 @@ class MyRequestController extends Controller
                 $this->sendOtpDirect($user->phone,$phoneOtp,$euId);
             }
 
+            
+            CustomHelper::runInBackground(function() use ($euId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+            });
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
+            return $this->sendResponse('Quote Customer registered Successfully',$rel);
 
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
 
-            }, [
-                'success' => true,
-                'message' => 'Quote Customer registered Successfully',
-                'data' => $rel
-            ]);
+            // return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel) {
+
+            //     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
+
+            // }, [
+            //     'success' => true,
+            //     'message' => 'Quote Customer registered Successfully',
+            //     'data' => $rel
+            // ]);
         }else{
 
             $euId = AbandonedUser::where('email',$request->email)->value('id');

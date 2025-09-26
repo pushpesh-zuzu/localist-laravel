@@ -13,9 +13,20 @@ use App\Models\Setting;
 use App\Models\Postcode;
 use Illuminate\Support\Carbon;
 use App\Jobs\IntegrateZohoPurchaseHistory;
+use App\Jobs\RunCallableJob;
 
 class CustomHelper
 {
+    /**
+     * Run any callable in the background.
+     *
+     * @param callable $callable
+     * @return void
+     */
+    public static function runInBackground(callable $callable)
+    {
+        RunCallableJob::dispatch($callable);
+    }
 
     public static function createSectorsRecursive($data, $index = '1', $space = 40){
         if (count($data['subsectors']) > 0) {

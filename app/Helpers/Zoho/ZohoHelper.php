@@ -230,40 +230,7 @@ class ZohoHelper
     }
 
 
-    public static function executeTaskInBackground(callable $callback)
-    {
-
-        register_shutdown_function(function () use ($callback) {
-            try {
-                $callback();
-            } catch (\Throwable $e) {
-                Log::error('Zoho background task failed', [
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-            }
-        });
-
-    }
-
-    public static function respondAndContinue(array $responseData = ['success' => true])
-    {
-        $json = json_encode($responseData);
-
-        if (!headers_sent()) {
-            header("Content-Type: application/json");
-            header("Content-Length: " . strlen($json));
-            header("Connection: close");
-        }
-
-        echo $json;
-
-        if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
-        } else {
-            flush();
-        }
-    }
+    
 
 
     // public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
