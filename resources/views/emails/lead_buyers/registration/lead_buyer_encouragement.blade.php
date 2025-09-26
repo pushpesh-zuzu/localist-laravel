@@ -15,7 +15,7 @@
       color: #4a4a4a;
       -webkit-font-smoothing: antialiased;
     }
-    img { border:0; display:block; }
+    img { border:0; }
     a { color: #007bff; }
 
     /* Button (inline on desktop; larger tap target on mobile) */

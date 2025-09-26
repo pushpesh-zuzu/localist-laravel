@@ -7,7 +7,7 @@
   <style>
     body { margin:0; padding:0; background:#f1f2f4; -webkit-font-smoothing:antialiased; }
     table { border-collapse:collapse; }
-    img { border:0; display:block; }
+    img { border:0; }
     a { color:#007bff; text-decoration:none; }
 
     .email-wrap { width:100%; background:#f1f2f4; padding:24px 0; }
