@@ -6,7 +6,7 @@
   <title>New Lead Matched for You</title>
   <style>
     body { margin:0; padding:0; background-color:#f1f2f4; font-family:'Lato', Helvetica, Arial, sans-serif; color:#4a4a4a; -webkit-font-smoothing:antialiased; }
-    img { border:0; display:block; max-width:100%; }
+    img { border:0;max-width:100%; }
     a { color:#007bff; }
 
     .btn {
