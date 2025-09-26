@@ -1119,6 +1119,10 @@ class MyRequestController extends Controller
                                 "data" => [$recordData]
                             ];
 
+                             Log::info('record from sinch api ', [
+                                'request' => $record
+                            ]);
+
                             $access_token = ZohoHelper::getAccessToken();
                             $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
                             curl_setopt($ch, CURLOPT_HTTPHEADER, [
