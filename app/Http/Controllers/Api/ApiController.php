@@ -652,77 +652,150 @@ class ApiController extends Controller
             Log::info('First Response insert database');
 
             // 3) Poll for status (if we have an ID)
+            // $finalStatus = $initialStatus;
+            // if ($messageId) {
+            //     $statusUrl = "https://api.messagemedia.com/v1/messages/{$messageId}";
+
+            //     for ($i = 0; $i < $maxAttempts; $i++) {
+            //         $statusResp = $client->request('GET', $statusUrl, [
+            //             'headers' => [
+            //                 'Authorization' => "Basic {$authHeader}",
+            //                 'Accept' => 'application/json'
+            //             ],
+            //             'http_errors' => false
+            //         ]);
+
+            //         $statusBody = json_decode((string)$statusResp->getBody(), true);
+
+            //          Log::info('Second Response', [
+            //             'response' => $statusBody
+            //         ]);
+
+
+            //         // MessageMedia may return status at root or inside messages[]
+            //         $curStatus = $statusBody['status'] ?? $statusBody['state'] ?? ($statusBody['messages'][0]['status'] ?? null);
+
+            //         if ($curStatus) {
+            //             $finalStatus = $curStatus;
+            //             // update sms log with latest raw_response and status
+            //             $smsLog->update([
+            //                 'status' => $finalStatus,
+            //                 'raw_response' => $statusBody
+            //             ]);
+
+            //             $lc = strtolower((string)$curStatus);
+            //             if ($lc === 'delivered' || $lc === 'failed') {
+            //                 if($quoteId){
+            //                     $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
+
+            //                     $recordData = [
+            //                         "Message" => $messageText,
+            //                         "Name" => "Sinch Sms ",            // from Sinch response
+            //                         "twiliosmsextension0__Status" => $curStatus,    // message body
+            //                         "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
+            //                         "Quote_CustomerName" => $quoteId
+            //                     ];
+
+            //                     $record = [
+            //                         "data" => [$recordData]
+            //                     ];
+
+            //                     $access_token = ZohoHelper::getAccessToken();
+            //                     $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
+            //                     curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            //                         "Authorization: Zoho-oauthtoken $access_token",
+            //                         "Content-Type: application/json"
+            //                     ]);
+            //                     curl_setopt($ch, CURLOPT_POST, 1);
+            //                     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+            //                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            //                     $response = curl_exec($ch);
+
+            //                     Log::info('response from sinch resend api ', [
+            //                         'response' => $response
+            //                     ]);
+            //                 }
+            //                 break;
+            //             }
+            //         }
+
+            //         sleep($delaySecs);
+            //     }
+            // }
+
             $finalStatus = $initialStatus;
+
             if ($messageId) {
                 $statusUrl = "https://api.messagemedia.com/v1/messages/{$messageId}";
 
-                for ($i = 0; $i < $maxAttempts; $i++) {
-                    $statusResp = $client->request('GET', $statusUrl, [
-                        'headers' => [
-                            'Authorization' => "Basic {$authHeader}",
-                            'Accept' => 'application/json'
-                        ],
-                        'http_errors' => false
+                // Wait 30 seconds before checking status
+                sleep(30);
+
+                $statusResp = $client->request('GET', $statusUrl, [
+                    'headers' => [
+                        'Authorization' => "Basic {$authHeader}",
+                        'Accept' => 'application/json'
+                    ],
+                    'http_errors' => false
+                ]);
+
+                $statusBody = json_decode((string)$statusResp->getBody(), true);
+
+                Log::info('Second Response', [
+                    'response' => $statusBody
+                ]);
+
+                $curStatus = $statusBody['status']
+                    ?? $statusBody['state']
+                    ?? ($statusBody['messages'][0]['status'] ?? null);
+
+                if ($curStatus) {
+                    $finalStatus = $curStatus;
+
+                    $smsLog->update([
+                        'status' => $finalStatus,
+                        'raw_response' => $statusBody
                     ]);
 
-                    $statusBody = json_decode((string)$statusResp->getBody(), true);
+                    $lc = strtolower((string)$curStatus);
 
-                     Log::info('Second Response', [
-                        'response' => $statusBody
-                    ]);
+                    if ($lc === 'delivered' || $lc === 'failed') {
+                        if ($quoteId) {
+                            $moduleAPIName = "twiliosmsextension0__Sent_SMS";
 
+                            $recordData = [
+                                "Message" => $messageText,
+                                "Name" => "Sinch Sms",
+                                "twiliosmsextension0__Status" => $curStatus,
+                                "twiliosmsextension0__Activity_ID" => $messageId,
+                                "Quote_CustomerName" => $quoteId
+                            ];
 
-                    // MessageMedia may return status at root or inside messages[]
-                    $curStatus = $statusBody['status'] ?? $statusBody['state'] ?? ($statusBody['messages'][0]['status'] ?? null);
+                            $record = [
+                                "data" => [$recordData]
+                            ];
 
-                    if ($curStatus) {
-                        $finalStatus = $curStatus;
-                        // update sms log with latest raw_response and status
-                        $smsLog->update([
-                            'status' => $finalStatus,
-                            'raw_response' => $statusBody
-                        ]);
+                            $access_token = ZohoHelper::getAccessToken();
+                            $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
+                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                "Authorization: Zoho-oauthtoken $access_token",
+                                "Content-Type: application/json"
+                            ]);
+                            curl_setopt($ch, CURLOPT_POST, 1);
+                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-                        $lc = strtolower((string)$curStatus);
-                        if ($lc === 'delivered' || $lc === 'failed') {
-                            if($quoteId){
-                                $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
+                            $response = curl_exec($ch);
 
-                                $recordData = [
-                                    "Message" => $messageText,
-                                    "Name" => "Sinch Sms ",            // from Sinch response
-                                    "twiliosmsextension0__Status" => $curStatus,    // message body
-                                    "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
-                                    "Quote_CustomerName" => $quoteId
-                                ];
-
-                                $record = [
-                                    "data" => [$recordData]
-                                ];
-
-                                $access_token = ZohoHelper::getAccessToken();
-                                $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
-                                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                                    "Authorization: Zoho-oauthtoken $access_token",
-                                    "Content-Type: application/json"
-                                ]);
-                                curl_setopt($ch, CURLOPT_POST, 1);
-                                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-                                $response = curl_exec($ch);
-
-                                Log::info('response from sinch resend api ', [
-                                    'response' => $response
-                                ]);
-                            }
-                            break;
+                            Log::info('response from sinch resend api ', [
+                                'response' => $response
+                            ]);
                         }
                     }
-
-                    sleep($delaySecs);
                 }
             }
+
 
             // 4) Update quote/your local table so status is saved with quote (if you have such table)
             if ($quoteId) {
