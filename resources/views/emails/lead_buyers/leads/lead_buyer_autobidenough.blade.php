@@ -104,7 +104,7 @@
                           @if($lead['hasEnoughCredits'])
                             <a href="{{ $baseUrl }}/sellers/leads/save-for-later" class="btn">Contact Lead Now</a>
                           @else
-                            <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Top Up Credits to Contact</a>
+                            <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Contact Lead Now</a>
                           @endif
                         </td>
                       </tr>

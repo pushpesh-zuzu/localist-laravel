@@ -78,7 +78,7 @@
                   @if($hasEnoughCredits)
                     <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Lead Now</a>
                   @else
-                    <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Add Credits to Contact</a>
+                    <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Contact Lead Now</a>
                   @endif
                 </div>
 

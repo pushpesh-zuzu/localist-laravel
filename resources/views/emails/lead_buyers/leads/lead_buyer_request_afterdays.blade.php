@@ -64,9 +64,9 @@
 
                 <!-- CTA -->
                 @if ($credit_purchase)
-                  <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Buy Credits Now to Start Bidding</a>
+                  <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Contact Lead Now</a>
                 @else
-                  <a href="{{ $baseUrl }}/sellers/leads" class="btn">Check Your Leads Now</a>
+                  <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Lead Now</a>
                 @endif
               </div>
             </td>

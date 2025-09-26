@@ -91,10 +91,10 @@
 
                     <!-- Contact details box -->
                     <div style="margin-top:10px; background-color:#f5f9fc; padding:12px; border-radius:4px; font-size:14px; line-height:20px; color:#333;">
-                      <div style="margin-bottom:4px;"><strong>🏅</strong> <span style="margin-left:6px;">{{ $lead['credit_score'] }} credits to respond</span></div>
-                      <div style="margin-bottom:4px;"><strong>📍</strong> <span style="margin-left:6px;">{{ $lead['postcode'] }}</span></div>
-                      <div style="margin-bottom:4px;"><strong>📞</strong> <span style="margin-left:6px;">{{ $lead['masked_phone'] }}</span></div>
-                      <div><strong>✉️</strong> <span style="margin-left:6px;">{{ $lead['masked_email'] }}</span></div>
+                      <div style="margin-bottom:4px;">🏅 <span style="margin-left:6px;">{{ $lead['credit_score'] }} credits to respond</span></div>
+                      <div style="margin-bottom:4px;">📍<span style="margin-left:6px;">{{ $lead['postcode'] }}</span></div>
+                      <div style="margin-bottom:4px;">📞<span style="margin-left:6px;">{{ $lead['masked_phone'] }}</span></div>
+                      <div>✉️<span style="margin-left:6px;">{{ $lead['masked_email'] }}</span></div>
                     </div>
 
                     <!-- CTA button -->
@@ -102,9 +102,9 @@
                       <tr>
                         <td align="center" style="padding:0 12px;">
                           @if($lead['hasEnoughCredits'])
-                            <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Now</a>
+                            <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Lead  Now</a>
                           @else
-                            <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Buy Credits to Contact</a>
+                            <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Contact Lead  Now</a>
                           @endif
                         </td>
                       </tr>

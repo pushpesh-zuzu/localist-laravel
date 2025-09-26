@@ -114,7 +114,7 @@
                     <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:16px;">
                       <tr>
                         <td align="center" style="padding:0 16px;">
-                          <a href="{{$baseUrl}}/settings/billing/my-credits" class="btn" style="background-color:#28c199; display:inline-block;">Top Up Credits</a>
+                          <a href="{{$baseUrl}}/settings/billing/my-credits" class="btn" style="background-color:#28c199; display:inline-block;">Contact Lead Now</a>
                         </td>
                       </tr>
                     </table>
