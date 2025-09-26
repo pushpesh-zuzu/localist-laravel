@@ -689,7 +689,7 @@ class ApiController extends Controller
                             $recordData = [
                                 "Message" => $messageText,
                                 "Name" => "Sinch Sms ",            // from Sinch response
-                                "twiliosmsextension0__Status" => $lc,    // message body
+                                "twiliosmsextension0__Status" => $curStatus,    // message body
                                 "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
                                 "Quote_CustomerName" => $quoteId
                             ];
@@ -710,6 +710,9 @@ class ApiController extends Controller
 
                             $response = curl_exec($ch);
 
+                            Log::info('response from sinch resend api ', [
+                                'response' => $response
+                            ]);
                             break;
                         }
                     }

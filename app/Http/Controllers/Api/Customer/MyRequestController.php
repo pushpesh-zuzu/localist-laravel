@@ -1110,7 +1110,7 @@ class MyRequestController extends Controller
                             $recordData = [
                                 "Message" => $messageText,
                                 "Name" => "Sinch Sms ",            // from Sinch response
-                                "twiliosmsextension0__Status" => $lc,    // message body
+                                "twiliosmsextension0__Status" => $curStatus,    // message body
                                 "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
                                 "Quote_CustomerName" => $quoteId
                             ];
@@ -1130,6 +1130,10 @@ class MyRequestController extends Controller
                             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
                             $response = curl_exec($ch);
+
+                            Log::info('response from sinch api ', [
+                                'response' => $response
+                            ]);
 
                             break;
                         }
