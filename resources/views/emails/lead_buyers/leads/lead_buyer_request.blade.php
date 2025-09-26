@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>New Lead Matched for You</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f1f2f4; font-family:Helvetica, Arial, sans-serif; color:#4a4a4a; -webkit-font-smoothing:antialiased;">
+<body style="margin:0; padding:0; background-color:#f1f2f4;">
 
   <!-- Full background -->
   <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f2f4" role="presentation">

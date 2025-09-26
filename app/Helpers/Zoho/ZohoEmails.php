@@ -953,6 +953,10 @@ Log::info('Incomplete registrtion p2',[
             ]
         ]);
 
+        Log::info('htmlview', [
+                            'content' => $response->json(),
+
+                        ]);
         $rel = self::getZohoMailResponse($response);
 
         foreach ($leads as $leadId) {
