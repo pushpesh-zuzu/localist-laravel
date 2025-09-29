@@ -99,18 +99,18 @@ class ZohoCustomerQuestionAnswer
         return [
             'data' => [[
                 'Question_Id' => $requestId,
-                'Customer_QA' => $lookUpId,
-                'Unique_QA_Key' => "{$lookUpId}_{$requestId}",
+                'Quote_Customer_Lookup' => $lookUpId,
                 'Name' => $category->name ?? 'Service Q&A',
-                'Question_Answers' => $formattedQA,
+                'Unique_QA_Key' => "{$lookUpId}_{$requestId}",
+                'QuestionAnswers' => $formattedQA,
             ]],
-            'duplicate_check_fields' => ['Unique_QA_Key']
+            'duplicate_check_fields' => ['Question_Id']
         ];
     }
 
     protected function upsertToZohoService($accessToken, array $payload)
     {
-        $url = "https://www.zohoapis.eu/crm/v2/Customers_Question_Answer";
+        $url = "https://www.zohoapis.eu/crm/v2/Customer_Question_Answer";
 
         $method =  'post';
 

@@ -478,7 +478,7 @@ class MyRequestController extends Controller
                         });
 
                     app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
-
+                    app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
                     $lead = LeadRequest::find($sId);
                     $sellers = $leadService->getAllSellers($lead);
                     if(!empty($sellers['response']['sellers'])){
