@@ -253,7 +253,7 @@ class ZohoEmails
             $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
 
             if (!empty($zohoId)) {
-                $user = User::where('id', $userId)->first();
+                $user = AbandonedUser::where('id', $userId)->first();
 
                 if (!empty($user)) {
 
