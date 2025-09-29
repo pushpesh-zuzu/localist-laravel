@@ -250,7 +250,7 @@ class ZohoEmails
         if ($sendEncouragementEmail) {
             $accessToken = ZohoHelper::getAccessToken();
 
-            $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+            $zohoId = ZohoHelper::getZohoAbandonedQuoteCustomerId($accessToken, $userId);
 
             if (!empty($zohoId)) {
                 $user = AbandonedUser::where('id', $userId)->first();

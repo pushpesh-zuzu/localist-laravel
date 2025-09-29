@@ -186,6 +186,37 @@ class ZohoHelper
     }
 
 
+    public static function getZohoAbandonedQuoteCustomerId($accessToken, $userId)
+    {
+        $recId = AbandonedUser::where('id', $userId)->value('zoho_record_id');
+        if(!empty($recId)){
+            return $recId;
+        }
+
+        $baseUrl = CustomHelper::setting_value('zoho_email_api_url');
+
+        $response = Http::withToken($accessToken)
+            ->get($baseUrl . '/Quote_Customers/search', [
+                'criteria' => "(User_Auto_Id:equals:{$recId})"
+            ]);
+
+        // $response = Http::withToken($accessToken)
+        //     ->get('https://crmsandbox.zoho.eu/crm/v2/Quote_Customers/search', [
+        //         'criteria' => "(User_auto_Id:equals:{$userId})"
+        //     ]);
+
+        $data = $response->json();
+
+        if(!empty($data['data'][0]['id'])){
+            $zohoId = AbandonedUser::where('id', $userId)->update([
+                'zoho_record_id' => $data['data'][0]['id']
+            ]);
+            return $data['data'][0]['id'];
+        }
+        return null;
+    }
+
+
     public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
     {
 
@@ -230,7 +261,7 @@ class ZohoHelper
     }
 
 
-    
+
 
 
     // public static function dispatchAfterResponse(callable $callback, array $responseData = ['success' => true])
