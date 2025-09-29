@@ -117,6 +117,11 @@ class MyRequestController extends Controller
             $dataUser['campaignid'] = $request->campaignid;
             $dataUser['gclid'] = $request->gclid;
             $dataUser['keyword'] = $request->keyword;
+
+            $dataUser['campaign'] = $request->campaign;
+            $dataUser['adgroup'] = $request->adgroup;
+            $dataUser['targetid'] = $request->targetid;
+            $dataUser['msclickid'] = $request->msclickid;
             //for
 
             $dataUser['password'] = Hash::make($password);
