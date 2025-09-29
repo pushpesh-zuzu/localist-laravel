@@ -83,6 +83,10 @@ class ZohoQuoteCustomers
                 'Campaign_Id'      => $user->campaignid ?? '',
                 'GCLID'             => $user->gclid ?? '',
                 'Keyword'           => $user->keyword ?? '',
+                'Campaign'          => $user->campaign ?? '',
+                'AdGroup'           => $user->adgroup ?? '',
+                'Target_Id'          => $user->targetid ?? '',
+                'MS_Click_Id'         => $user->msclickid ?? '',
                 'registration_type' => $user->form_status ==1 ? 'completed' : 'abandoned',
                 'created_at'        => $formatted
             ]],
