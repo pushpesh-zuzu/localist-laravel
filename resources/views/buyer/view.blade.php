@@ -50,6 +50,11 @@
                 <div class="col-md-4"><b>Campaign Id: </b> {{ $aRows->campaignid }}</div>
                 <div class="col-md-4"><b>GCLID: </b> {{ $aRows->gclid }}</div>
                 <div class="col-md-4"><b>Keyword: </b> {{ $aRows->keyword }}</div>
+
+                <div class="col-md-4"><b>Campaign: </b> {{ $aRows->Campaign }}</div>
+                <div class="col-md-4"><b>AdGroup: </b> {{ $aRows->adgroup }}</div>
+                <div class="col-md-4"><b>Target Id: </b> {{ $aRows->targetid }}</div>
+                <div class="col-md-4"><b>MS Click Id: </b> {{ $aRows->msclickid }}</div>
               </div>
               
               
