@@ -241,6 +241,10 @@ class MyRequestController extends Controller
             $nuData['campaignid'] = $abUser->campaignid;
             $nuData['gclid'] = $abUser->gclid;
             $nuData['keyword'] = $abUser->keyword;
+            $nuData['campaign'] = $abUser->campaign;
+            $nuData['adgroup'] = $abUser->adgroup;
+            $nuData['targetid'] = $abUser->targetid;
+            $nuData['msclickid'] = $abUser->msclickid;
             $nuData['password'] = Hash::make($password);
             $nuData['user_type'] = 2;
             $nuData['active_status'] = 2;
