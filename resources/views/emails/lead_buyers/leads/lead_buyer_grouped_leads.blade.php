@@ -108,17 +108,16 @@
                             <td valign="top" style="font-size:15px;font-weight:700;color:#222;padding-right:8px;">
                               {{ $lead['lead_name'] }}
                               <div style="font-size:13px;color:#666;font-weight:400;margin-top:4px;">{{ $lead['service_name'] }}</div>
+                              <div style="margin-top:4px;font-size:13px;color:#666;font-weight:400;">✉️ {{ $lead['masked_email'] }}</div>
                             </td>
 
                             <td valign="top" align="right" style="width:160px;font-size:13px;color:#666;">
                               <div style="font-size:14px;font-weight:700;color:#222;">{{ $lead['credit_score'] }} credits</div>
                               <div style="margin-top:4px;">📍 {{ $lead['postcode'] }}</div>
+                              <div style="margin-top:4px;">📞 {{ $lead['masked_phone'] }}</div>
 
                               <!-- single static toggle text + rotating caret -->
-                              <div style="margin-top:6px;font-size:13px;">
-                                <span style="color:#007bff;text-decoration:underline;">Details</span>
-                                <span class="caret" aria-hidden="true">▾</span>
-                              </div>
+
                             </td>
                           </tr>
                         </table>

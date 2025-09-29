@@ -1021,9 +1021,9 @@ Log::info('Incomplete registrtion p2',[
 
             $leadViews[] = [
                 'id'                  => $lead->id,
-                'lead_name'           => $lead->customer->name ?? '',
-                'postcode'            => $lead->postcode ?? '',
-                'masked_phone'        => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                'lead_name'           => $lead->customer->name ? explode(' ', trim($lead->customer->name))[0] : '',
+                'postcode'            => $lead->postcode ? explode(' ', trim($lead->postcode))[0] : '',
+                'masked_phone'        => $lead->customer?->phone ? substr($lead->customer->phone, 0, 5) . str_repeat('*', strlen($lead->customer->phone) - 5) : 'N/A',
                 'masked_email'        => $lead->customer?->email ? (function ($email) {
                     [$name, $domain] = explode('@', $email);
                     $visible = substr($name, 0, 2);
