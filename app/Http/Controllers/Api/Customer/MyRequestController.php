@@ -910,7 +910,7 @@ class MyRequestController extends Controller
 
                     if ($lc === 'delivered' || $lc === 'failed') {
                         if ($quoteId) {
-                            CustomHelper::runInBackground(function() use ($euId) {
+                            CustomHelper::runInBackground(function() use ($messageText, $curStatus, $messageId, $quoteId) {
                                 $moduleAPIName = "twiliosmsextension0__Sent_SMS";
                                 $recordData = [
                                     "Message" => $messageText .'test',
