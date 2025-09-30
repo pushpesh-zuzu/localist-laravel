@@ -152,7 +152,7 @@ class MyRequestController extends Controller
             CustomHelper::runInBackground(function() use ($euId, $rel,$phone,$phoneOtp) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
                 if($phone){
-                    $this->sendOtpDirect($phone,$phoneOtp,$euId);
+                    app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
                 }
                 
             });
