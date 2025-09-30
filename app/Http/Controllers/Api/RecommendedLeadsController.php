@@ -523,7 +523,7 @@ class RecommendedLeadsController extends Controller
         }
 
         if($aVals['bidtype'] == 'reply'){
-            CustomHelper::runInBackground(function() use ($euId) {
+            CustomHelper::runInBackground(function() {
                 app(self::class)->sendLeadRequestReply();
             });            
         }
