@@ -1315,7 +1315,7 @@ Log::info('Incomplete registrtion p2',[
                 'is_high_hiring' => $lead->is_high_hiring ?? '',
                 'phone_verified' => $lead->is_phone_verified ?? '',
                 'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
-                'remaining_credit' => intval($user->total_credit - $lead->credit_score),
+                'remaining_credit' => max(0, intval($user->total_credit - $lead->credit_score)),
                 'questionsAndAnswers' => $questionsAndAnswers,
             ];
         });
@@ -1323,7 +1323,7 @@ Log::info('Incomplete registrtion p2',[
         // Render single email with all leads grouped
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply', [
             'baseUrl' => config('app.react_base_url'),
-            'name' => $user->name,
+            'name' => $user->name ? explode(' ', trim($user->name))[0] : '',
             'leads' => $groupedLeadsData
         ])->render();
 
