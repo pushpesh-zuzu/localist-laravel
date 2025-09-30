@@ -138,13 +138,11 @@ class LeadPreferenceController extends Controller
         $user->updated_at = date('Y-m-d H:i:s');
         $user->save();
 
-        return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
-                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
-            }, [
-                'success' => true,
-                'message' => 'Primary service changed successfully'
-            ]);
-        //return $this->sendResponse("Primary service changed successfully");
+        CustomHelper::runInBackground(function() use ($user_id) {
+            app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
+        });
+        
+        return $this->sendResponse("Primary service changed successfully");
     }
 
     public function getservices(Request $request){
@@ -263,14 +261,7 @@ class LeadPreferenceController extends Controller
                 // Update existing record
                 $leadPreference->update(['answers' => $cleanedAnswer]);
                 $userId=$request->user_id;
-                // ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
-                //     app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
-                // }, [
-                //     'success' => true,
-                //     'message' => 'Data processed successfully'
-                // ]);
-                //app(ZohoQuestionAnswer::class)->integrateServiceQa($request->user_id, $questionActualId);
-                //dd($x);
+                
             } else {
                 // Create a new record
                 $leadPreference = LeadPrefrence::create([
@@ -287,15 +278,13 @@ class LeadPreferenceController extends Controller
 
         $userId = $request->user_id;
         $serviceIdZoho = $request->service_id;
-        return ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceIdZoho) {
-            app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
-        }, [
-                'success' => true,
-                'message' => 'Data processed successfully',
-                'data' => $insertedOrUpdatedData
-            ]);
 
-        //return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
+        CustomHelper::runInBackground(function() use ($userId, $serviceIdZoho) {
+            app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
+        });
+        
+
+        return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
     }
 
     public function removeService(Request $request){
@@ -308,26 +297,13 @@ class LeadPreferenceController extends Controller
         UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
         LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
 
-        return ZohoHelper::dispatchAfterResponse(function () use ($user_id, $user_service_id, $user_service_locations, $user_lead_prefrences,$serviceid) {
-            app(ZohoService::class)->deleteBuyerService($user_service_id);
+        CustomHelper::runInBackground(function() use ($user_id, $user_service_id, $user_service_locations, $user_lead_prefrences,$serviceid) {
+             app(ZohoService::class)->deleteBuyerService($user_service_id);
             app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
             app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrences,$user_id,$serviceid);
-            }, [
-                'success' => true,
-                'message' => 'Service deleted Sucessfully'
-            ]);
-        // app(ZohoService::class)->deleteBuyerService($user_service_id);
-        // foreach ($user_service_locations as $location_id) {
-        //     app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($location_id);
-
-        // }
-        // foreach ($user_lead_prefrences as $user_lead_prefrence) {
-        //    app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrence);
-
-        // }
-
-
-        //return $this->sendResponse(__('Service deleted Sucessfully'));
+		});
+        
+        return $this->sendResponse(__('Service deleted Sucessfully'));
     }
 
 
@@ -490,18 +466,16 @@ class LeadPreferenceController extends Controller
             }
 
             if($statusUpdate){
-                return ZohoHelper::dispatchAfterResponse(function () use ($sellerId, $recommendedId,$leadId) {
-                    app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
+                CustomHelper::runInBackground(function() use ($sellerId, $recommendedId,$leadId) {
+	                app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
                     // ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
                     ZohoEmails::newLeadHiredEmail($leadId,$sellerId);
-
-                }, [
-                    'success' => true,
-                    'message' => 'Request Submitted Successfully'
-                ]);
+                });
+                return $this->sendResponse('Request Submitted Successfully');
+                
             }
             else{
-                return $this->sendResponse($sendmessage, []);
+                return $this->sendError('Request Submission Failed');
             }
 
 
@@ -566,16 +540,12 @@ class LeadPreferenceController extends Controller
         }
 
         if($statusUpdate){
-                return ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$leadId) {
-
-                    ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
-
-
-                }, [
-                    'success' => true,
-                    'message' => $sendmessage
-                ]);
-            }
+            CustomHelper::runInBackground(function() use ($sellerId,$leadId) {
+                ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
+		    });
+            return $this->sendResponse($sendmessage);
+            
+        }
 
         return $this->sendResponse($sendmessage, []);
     }
@@ -698,15 +668,12 @@ class LeadPreferenceController extends Controller
                 }
             }
 
-            ZohoHelper::dispatchAfterResponse(function () use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
+            CustomHelper::runInBackground(function() use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
                 app(ZohoService::class)->integrateService($userId, $serviceAllIds);
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
                 app(ZohoQuestionAnswer::class)->integrateServiceQa($userId,$serviceIds);
-            }, [
-                'success' => true,
-                'message' => 'Service added to your profile successfully'
-            ]);
-            //return $this->sendResponse(__('Service added to your profile successfully'));
+		    });
+            return $this->sendResponse(__('Service added to your profile successfully'));
         }else{
             return $this->sendResponse(__('Select Service to proceed'));
         }
@@ -748,13 +715,12 @@ class LeadPreferenceController extends Controller
         UserServiceLocation::where('id',$request->location_id)->update($data);
 
         $locationId = $request->location_id;
-        return ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationId) {
-                app(ZohoServiceLocations::class)->integrateServiceSingleLocations($userId, $locationId);
-            }, [
-                'success' => true,
-                'message' => 'Radius Expaned'
-            ]);
-        //return $this->sendResponse('Radius Expaned');
+
+        CustomHelper::runInBackground(function() use ($userId, $locationId) {
+            app(ZohoServiceLocations::class)->integrateServiceSingleLocations($userId, $locationId);
+		});
+
+        return $this->sendResponse('Radius Expaned');
 
     }
 
@@ -834,14 +800,11 @@ class LeadPreferenceController extends Controller
 
             }
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationIds) {
+            CustomHelper::runInBackground(function() use ($userId, $locationIds) {
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
-            }, [
-                'success' => true,
-                'message' => 'Location updated successfully'
-            ]);
+		    });
 
-            //return $this->sendResponse(__('Location updated successfully'));
+            return $this->sendResponse(__('Location updated successfully'));
         }else{
             return $this->sendResponse(__('Select Service to proceed'));
         }
@@ -992,15 +955,12 @@ class LeadPreferenceController extends Controller
         $locationIdsList = UserServiceLocation::where('user_id', $userId)
             ->pluck('id');
 
-        return ZohoHelper::dispatchAfterResponse(function () use ($userId, $locationIds,$locationIdsList) {
+        CustomHelper::runInBackground(function() use ($userId, $locationIds,$locationIdsList) {
             app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($locationIds);
             app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIdsList);
-        }, [
-            'success' => true,
-            'message' => 'Location updated successfully'
-        ]);
+		});
 
-        //return $this->sendResponse(__('Location updated successfully'));
+        return $this->sendResponse(__('Location updated successfully'));
     }
 
 
@@ -1023,9 +983,12 @@ class LeadPreferenceController extends Controller
 
         $user_service_locations = $query->pluck('zoho_location_id');
 
-        app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
+        CustomHelper::runInBackground(function() use ($user_service_locations) {
+            app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
+		});
 
         $query->delete();
+        
 
         return $this->sendResponse('Location deleted successfully');
     }
@@ -1333,13 +1296,13 @@ class LeadPreferenceController extends Controller
             $isonline  = $aVals['is_online'];
             // return $this->sendResponse('Switched update', $isonline);
             $userId = $aVals['user_id'];
-            return ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+
+
+            CustomHelper::runInBackground(function() use ($userId) {
                 app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
-            }, [
-                'success' => true,
-                'message' => 'Switched update'
-            ]);
-            //return $this->sendResponse(__('Switched update'), []);
+		    });
+
+            return $this->sendResponse(__('Switched update'));
         }
         return $this->sendError('User not found');
     }

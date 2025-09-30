@@ -515,22 +515,18 @@ class RecommendedLeadsController extends Controller
 
 
         // $bidId = $bids->id;
-        // if($bidId){
-        //     ZohoHelper::dispatchAfterResponse(function () use ($sellerId,$bidId,$tId) {
-        //                 app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
-        //                 app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
-        //             }, [
-        //                 'success' => true,
-        //                 'message' => 'Bid placed successfully - M'
-        //             ]);
-        // }
+        if($bidId){
+            CustomHelper::runInBackground(function() use ($sellerId,$bidId,$tId) {	
+                app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
+                app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
+            });
+        }
 
-        // if($aVals['bidtype'] == 'reply'){
-        //     ZohoHelper::dispatchAfterResponse([$this, 'sendLeadRequestReply'], [
-        //             'success' => true,
-        //             'message' => 'Bid placed successfully - I',
-        //         ]);
-        // }
+        if($aVals['bidtype'] == 'reply'){
+            CustomHelper::runInBackground(function() use ($euId) {
+                app(self::class)->sendLeadRequestReply();
+            });            
+        }
 
         return $this->sendResponse('Your request has been sent.');
     }

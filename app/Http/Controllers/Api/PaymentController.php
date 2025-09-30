@@ -124,18 +124,13 @@ class PaymentController extends Controller
                 Invoice::insertGetId($dataInv);
 
                 if($tId){
-                    return ZohoHelper::dispatchAfterResponse(function () use ($user_id, $tId) {
+
+                    CustomHelper::runInBackground(function() use ($user_id, $tId){
                         app(ZohoFinance::class)->integratePurchaseHistory($user_id, $tId);
-                    }, [
-                        'success' => true,
-                        'message' => 'Payment successful!'
-                    ]);
-                }
-                else{
-                    return $this->sendResponse('Payment successful!');
+                    });
                 }
 
-                //return $this->sendResponse('Payment successful!');
+                return $this->sendResponse('Payment successful!');
             }else{
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');

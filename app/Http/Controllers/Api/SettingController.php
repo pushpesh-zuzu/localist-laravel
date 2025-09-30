@@ -148,44 +148,7 @@ class SettingController extends Controller
             }
 
         }
-        // if($aValues['type'] == 'accreditations'){
-
-        //     //uploading multiple accres
-        //     $files = $request->file('accre_image');
-        //     $names = $request->input('accre_name', []);
-        //     foreach($files as $index => $img){
-        //         $imagePath =  CustomHelper::accfileUpload($img,'accreditations');
-        //         $accreditations = UserAccreditation::create([
-        //             'user_id'  => $user_id,
-        //             'name' => $names[$index],
-        //             'image' => $imagePath
-        //         ]);
-        //     }
-
-        // }
-
-        // if ($aValues['type'] == 'accreditations') {
-        //     $files = $request->file('accre_image'); // can be single or array
-        //     $names = $request->input('accre_name', []);
-
-        //     return ['message'=>$request];
-        //     if ($files) {
-        //         // normalize to array
-        //         if (!is_array($files)) {
-        //             $files = [$files];
-        //         }
-
-        //         foreach ($files as $index => $img) {
-        //             $imagePath = CustomHelper::accfileUpload($img, 'accreditations');
-
-        //             UserAccreditation::create([
-        //                 'user_id' => $user_id,
-        //                 'name'    => $names[$index] ?? null, // safe access
-        //                 'image'   => $imagePath,
-        //             ]);
-        //         }
-        //     }
-        // }
+        
 
         if ($aValues['type'] == 'accreditations') {
             $ids      = $request->input('accre_id', []);        // indexed ids
@@ -235,16 +198,11 @@ class SettingController extends Controller
 
         }
 
-        return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
-            //app(ZohoSocialMedia::class)->integrateSocialLinks($user_id);
+        CustomHelper::runInBackground(function() use ($euId) {
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
-        }, [
-            'success' => true,
-            'message' => 'Profile updated successfully'
-        ]);
-
-
-        //return $this->sendResponse(__('Profile updated successfully'));
+        });
+        
+        return $this->sendResponse(__('Profile updated successfully'));
     }
 
     public function sellerProfileQues(){
@@ -326,15 +284,10 @@ class SettingController extends Controller
             ]);
         }
 
-        return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
-                    app(ZohoLeadBuyers::class)->integrateZohoDetails($user_id);
-                }, [
-                    'success' => true,
-                    'message' => 'Billing details submitted successfully!',
-                    'data' => $userdetails
-                ]);
-
-        //return $userdetails;
+        CustomHelper::runInBackground(function() use ($user_id) {
+            app(ZohoLeadBuyers::class)->integrateZohoDetails($user_id);
+        });
+        return $this->sendResponse('Billing details submitted successfully!', $userdetails);
     }
 
     public function sellerCardDetails(Request $request){

@@ -149,25 +149,12 @@ class MyRequestController extends Controller
             $phone=$user->phone;
 
 
-            // CustomHelper::runInBackground(function() use ($euId) {
-            //     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
-            // });
+            CustomHelper::runInBackground(function() use ($euId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+            });
 
-            // return $this->sendResponse('Quote Customer registered Successfully',$rel);
+            return $this->sendResponse('Quote Customer registered Successfully',$rel);
 
-
-            return ZohoHelper::dispatchAfterResponse(function () use ($euId, $rel,$phone,$phoneOtp) {
-
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
-                if($phone){
-                    $this->sendOtpDirect($phone,$phoneOtp,$euId);
-                }
-
-            }, [
-                'success' => true,
-                'message' => 'Quote Customer registered Successfully',
-                'data' => $rel
-            ]);
         }else{
 
             $euId = AbandonedUser::where('email',$request->email)->value('id');
@@ -202,15 +189,13 @@ class MyRequestController extends Controller
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($euId) {
+            CustomHelper::runInBackground(function() use ($euId) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
 
                 app(self::class)->sendEncouragementEmail(['userId' => $euId]);
-            }, [
-                    'success' => true,
-                    'message' => 'Abandoned Quote Customer'
-                ]
-            );
+            });
+            return $this->sendResponse('Abandoned Quote Customer');
+            
         }
 
     }
@@ -323,17 +308,14 @@ class MyRequestController extends Controller
             $rel['total_credit'] = $user->total_credit;
             $rel['nation_wide'] = $user->nation_wide;
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($userId, $rel, $password, $phoneOtp, $user) {
-
-                  app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId); // change it to update form status in zoho crm
+            CustomHelper::runInBackground(function() use ($userId, $rel, $password, $phoneOtp, $user) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId); // change it to update form status in zoho crm
                 if($user->form_status ==1){
                     ZohoEmails::sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp);
                 }
-            }, [
-                'success' => true,
-                'message' => 'Phone verified Successfully',
-                'data' => $rel
-            ]);
+	
+            });
+            return $this->sendResponse('Phone verified Successfully',$rel);
 
         }
         return $this->sendError('Wrong OTP, try again!');
@@ -450,57 +432,52 @@ class MyRequestController extends Controller
             $rel['nation_wide'] = $fUser->nation_wide;
             $rel['request_id'] = $sId;
 
-            return ZohoHelper::dispatchAfterResponse(
-                function () use ($euId, $rel, $sId, $leadService, $fUser) {
+            CustomHelper::runInBackground(function() use ($euId, $rel, $sId, $leadService, $fUser) {
+                User::where('form_status', 1)
+                    ->whereIn('user_type', [1, 3])
+                    ->select('id')
+                    ->chunk(800, function ($sellersChunk) use ($leadService) {
+                        foreach ($sellersChunk as $seller) {
+                            $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
+                            $allLeads = $baseQuery->orderBy('id', 'desc')->get();
 
+                            $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
-                    User::where('form_status', 1)
-                        ->whereIn('user_type', [1, 3])
-                        ->select('id')
-                        ->chunk(800, function ($sellersChunk) use ($leadService) {
-                            foreach ($sellersChunk as $seller) {
-                                $baseQuery = $leadService->getSellerLeadsBaseQuery($seller->id);
-                                $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
-                                $allLeads = $leadService->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-                                foreach ($allLeads as $lead) {
-                                    CustomHelper::logNotifications(
-                                        $seller->id,
-                                        $lead->id,
-                                        'buyer_browser_new_lead',
-                                        'New Lead',
-                                        'You have got a new lead',
-                                        true
-                                    );
-                                }
+                            foreach ($allLeads as $lead) {
+                                CustomHelper::logNotifications(
+                                    $seller->id,
+                                    $lead->id,
+                                    'buyer_browser_new_lead',
+                                    'New Lead',
+                                    'You have got a new lead',
+                                    true
+                                );
                             }
-                        });
-
-                    app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
-                    app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
-                    $lead = LeadRequest::find($sId);
-                    $sellers = $leadService->getAllSellers($lead);
-                    if(!empty($sellers['response']['sellers'])){
-                        $sortedSellers = $sellers['response']['sellers']
-                            ->sortByDesc('total_credit')
-                            ->values()
-                            ->take(7);
-                        foreach($sortedSellers as $seller){
-                            ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                         }
+                    });
+
+                app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
+                $lead = LeadRequest::find($sId);
+                $sellers = $leadService->getAllSellers($lead);
+                if(!empty($sellers['response']['sellers'])){
+                    $sortedSellers = $sellers['response']['sellers']
+                        ->sortByDesc('total_credit')
+                        ->values()
+                        ->take(7);
+                    foreach($sortedSellers as $seller){
+                        ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                     }
-                    $this->autoBidBased([
-                        'success' => true,
-                        'message' => 'Quote Submitted Successfully',
-                        'data' => $rel,
-                        'euId' => $euId,
-                    ]);
-            }, [
-                'success' => true,
-                'message' => 'Quote Submitted Successfully',
-                'data' => $rel
-            ]);
+                }
+                
+
+                //Auto bid related emails
+                app(self::class)->sendNewLeadRequestAutoBidOff();
+                app(self::class)->sendLeadEmailCreditEnough();
+                app(self::class)->sendLeadEmailCreditNotEnough();
+            });
+            return $this->sendResponse('Quote Submitted Successfully',$rel);
+
         }
 
        return $this->sendError('Something went wrong, try again!');
@@ -529,75 +506,6 @@ class MyRequestController extends Controller
         ]);
     }
 
-    public function autoBidBased()
-    {
-
-        $newLead = $this->sendNewLeadRequestAutoBidOff();
-        $newLeadBidEnough = $this->sendLeadEmailCreditEnough();
-        $newLeadBidNotEnough = $this->sendLeadEmailCreditNotEnough();
-
-
-        return response()->json([
-            'step1' => $newLead,
-            'step2' => $newLeadBidEnough,
-            'step3' => $newLeadBidNotEnough,
-            'summary' => 'All steps completed'
-        ]);
-
-
-    }
-
-    // public function sendNewLeadRequestAutoBidOff()
-    // {
-
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         ->where('recommended_leads.purchase_type', 'Autobid')
-    //         ->where('form_status', 1)
-    //         ->where('user_type', 1)
-    //         ->whereHas('details', function ($query) {
-    //             $query->where('autobid_pause', 1)
-    //                  ->orWhere('is_autobid', 0);
-    //         })
-    //         ->select('users.id')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-    //             //dd($sellersChunk);
-    //             foreach ($sellersChunk as $seller) {
-
-    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
-    //                     // ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
-    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-    //                 foreach ($filteredLeads as $lead) {
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         //->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadNotBid($seller->id, $lead->id);
-
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-    //      return [
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ];
-    // }
 
     public function sendNewLeadRequestAutoBidOff()
     {
@@ -662,63 +570,6 @@ class MyRequestController extends Controller
     }
 
 
-    // public function sendLeadEmailCreditEnough()
-    // {
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         ->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         ->where('recommended_leads.purchase_type', 'Autobid')
-    //         ->where('form_status', 1)
-    //         ->where('total_credit', '>', 0)
-    //         ->where('user_type', 1)
-    //         // ->whereHas('details', function ($query) {
-    //         //     $query->where('autobid_pause', 0)
-    //         //         ->where('is_autobid', 1);
-    //         // })
-    //         ->select('users.id', 'total_credit')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-    //             foreach ($sellersChunk as $seller) {
-
-    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
-    //                    //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-
-    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-    //                 $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
-    //                     return $lead->credit_score <= $seller->total_credit;
-    //                 });
-
-
-
-    //                 foreach ($finalLeads as $lead) {
-
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         //->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadEmailBidEnough($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-    //     return [
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ];
-    // }
     public function sendLeadEmailCreditEnough()
     {
         $totalUnsentLeadEmails = 0;
@@ -781,63 +632,6 @@ class MyRequestController extends Controller
             'timestamp' => now()->toDateTimeString(),
         ];
     }
-
-
-    // public function sendLeadEmailCreditNotEnough()
-    // {
-    //     $totalUnsentLeadEmails = 0;
-    //     $leadPref = new LeadService();
-
-    //     User::whereNotNull('zoho_record_id')
-    //         //->join('recommended_leads', 'users.id', '=', 'recommended_leads.seller_id')
-    //         //->where('recommended_leads.purchase_type', 'Autobid')
-    //         ->where('form_status', 1)
-    //         ->where('user_type', 1)
-    //         // ->whereHas('details', function ($query) {
-    //         //     $query->where('autobid_pause', 0)
-    //         //         ->where('is_autobid', 1);
-    //         // })
-    //         ->select('id', 'total_credit')
-    //         ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
-
-    //             foreach ($sellersChunk as $seller) {
-
-    //                 $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id);
-    //                     //->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()]);
-
-    //                 $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-    //                 $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
-
-    //                 $finalLeads = $filteredLeads->filter(function ($lead) use ($seller) {
-    //                     return $lead->credit_score > $seller->total_credit;
-    //                 });
-
-
-
-    //                 foreach ($finalLeads as $lead) {
-    //                     $alreadySent = EmailLog::where('user_id', $seller->id)
-    //                         ->where('lead_id', $lead->id)
-    //                         //->whereDate('created_at', Carbon::today())
-    //                         ->where('setting_name', 'New Lead- Auto Bid Enabled (Without  Enough Credits)')
-    //                         ->exists();
-
-
-    //                     if (!$alreadySent) {
-    //                         ZohoEmails::sendLeadEmailBidNotEnough($seller->id, $lead->id);
-    //                         $totalUnsentLeadEmails++;
-    //                     }
-    //                 }
-    //             }
-    //         });
-
-    //     unset($leadPref);
-
-    //     return [
-    //         'status' => 'success',
-    //         'unsent_lead_emails' => $totalUnsentLeadEmails,
-    //         'timestamp' => now()->toDateTimeString(),
-    //     ];
-    // }
 
     public function sendLeadEmailCreditNotEnough()
     {
@@ -929,9 +723,6 @@ class MyRequestController extends Controller
             $data['images'] = $prevImages. $dir .'/' .$file_name;
             $data['updated_at'] = date('y-m-d H:i:s');
             LeadRequest::where('id',$request->request_id)->update($data);
-            // $leadsDetails = LeadRequest::where('id',$request->request_id)->first();
-            // $zohoService = new ZohoService();
-            // $zohoService->integrateUser('lead',null,$leadsDetails);
             return $this->sendResponse('Image Uploaded');
         }
 
@@ -955,21 +746,12 @@ class MyRequestController extends Controller
         $data['has_additional_details'] = '1';
         $sId = LeadRequest::where('id',$leadRequestId)->update($data);
 
-
-        // $leadsDetails = LeadRequest::where('id',$request->request_id)->first();
-        // $zohoService = new ZohoService();
-        // $zohoService->integrateUser('lead',null,$leadsDetails);
         if($sId){
-            return ZohoHelper::dispatchAfterResponse(
-                    function () use ($user_id, $leadRequestId) {
-                        app(ZohoQuoteRequest::class)->integrateQuoteRequest($user_id,$leadRequestId);
-                    },
-                    [
-                        'success' => true,
-                        'message' => 'Details Added',
-                    ]
-                );
-            //return $this->sendResponse('Details Added');
+
+            CustomHelper::runInBackground(function() use ($user_id, $leadRequestId) {
+                app(ZohoQuoteRequest::class)->integrateQuoteRequest($user_id,$leadRequestId);
+            });
+            return $this->sendResponse('Details Added');
         }
 
         return $this->sendError('Something went wrong, try again!');
@@ -1089,7 +871,6 @@ class MyRequestController extends Controller
                 'raw_response' => $sendBody
             ]);
 
-             Log::info('First Response insert database');
             // 3) Poll for status (if we have an ID)
             $finalStatus = $initialStatus;
 
@@ -1109,10 +890,6 @@ class MyRequestController extends Controller
 
                 $statusBody = json_decode((string)$statusResp->getBody(), true);
 
-                Log::info('Second Response', [
-                    'response' => $statusBody
-                ]);
-
                 $curStatus = $statusBody['status']
                     ?? $statusBody['state']
                     ?? ($statusBody['messages'][0]['status'] ?? null);
@@ -1129,117 +906,38 @@ class MyRequestController extends Controller
 
                     if ($lc === 'delivered' || $lc === 'failed') {
                         if ($quoteId) {
-                            $moduleAPIName = "twiliosmsextension0__Sent_SMS";
+                            CustomHelper::runInBackground(function() use ($euId) {
+                                $moduleAPIName = "twiliosmsextension0__Sent_SMS";
+                                $recordData = [
+                                    "Message" => $messageText .'test',
+                                    "Name" => "Sinch Sms test",
+                                    "twiliosmsextension0__Status" => $curStatus,
+                                    "twiliosmsextension0__Activity_ID" => $messageId,
+                                    "Quote_CustomerName" => $quoteId
+                                ];
 
-                            $recordData = [
-                                "Message" => $messageText .'test',
-                                "Name" => "Sinch Sms test",
-                                "twiliosmsextension0__Status" => $curStatus,
-                                "twiliosmsextension0__Activity_ID" => $messageId,
-                                "Quote_CustomerName" => $quoteId
-                            ];
+                                $record = [
+                                    "data" => [$recordData]
+                                ];
 
-                            $record = [
-                                "data" => [$recordData]
-                            ];
+                                $access_token = ZohoHelper::getAccessToken();
+                                $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
+                                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                                    "Authorization: Zoho-oauthtoken $access_token",
+                                    "Content-Type: application/json"
+                                ]);
+                                curl_setopt($ch, CURLOPT_POST, 1);
+                                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-                            $access_token = ZohoHelper::getAccessToken();
-                            $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
-                            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                                "Authorization: Zoho-oauthtoken $access_token",
-                                "Content-Type: application/json"
-                            ]);
-                            curl_setopt($ch, CURLOPT_POST, 1);
-                            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-                            $response = curl_exec($ch);
-
-                            Log::info('response from sinch resend api ', [
-                                'response' => $response
-                            ]);
-
-
+                                $response = curl_exec($ch);
+                            });
                         }
                     }
                 }
             }
 
-            // if ($messageId) {
-            //     $statusUrl = "https://api.messagemedia.com/v1/messages/{$messageId}";
-
-            //     for ($i = 0; $i < $maxAttempts; $i++) {
-            //         $statusResp = $client->request('GET', $statusUrl, [
-            //             'headers' => [
-            //                 'Authorization' => "Basic {$authHeader}",
-            //                 'Accept' => 'application/json'
-            //             ],
-            //             'http_errors' => false
-            //         ]);
-
-            //         $statusBody = json_decode((string)$statusResp->getBody(), true);
-            //           Log::info('Second Response', [
-            //             'response' => $statusBody
-            //         ]);
-
-            //         // MessageMedia may return status at root or inside messages[]
-            //         $curStatus = $statusBody['status'] ?? $statusBody['state'] ?? ($statusBody['messages'][0]['status'] ?? null);
-
-            //         if ($curStatus) {
-            //             $finalStatus = $curStatus;
-            //             // update sms log with latest raw_response and status
-            //             $smsLog->update([
-            //                 'status' => $finalStatus,
-            //                 'raw_response' => $statusBody
-            //             ]);
-
-
-            //             $lc = strtolower((string)$curStatus);
-            //             if ($lc === 'delivered' || $lc === 'failed') {
-
-            //                 if($quoteId){
-            //                     $moduleAPIName = "twiliosmsextension0__Sent_SMS"; // use the exact API name of your Sinch Messages module
-
-            //                     $recordData = [
-            //                         "Message" => $messageText,
-            //                         "Name" => "Sinch Sms ",            // from Sinch response
-            //                         "twiliosmsextension0__Status" => $curStatus,    // message body
-            //                         "twiliosmsextension0__Activity_ID" => $messageId,               // recipient
-            //                         "Quote_CustomerName" => $quoteId
-            //                     ];
-
-            //                     $record = [
-            //                         "data" => [$recordData]
-            //                     ];
-
-            //                     Log::info('record from sinch api ', [
-            //                         'request' => $record
-            //                     ]);
-
-            //                     $access_token = ZohoHelper::getAccessToken();
-            //                     $ch = curl_init("https://www.zohoapis.eu/crm/v2/$moduleAPIName");
-            //                     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            //                         "Authorization: Zoho-oauthtoken $access_token",
-            //                         "Content-Type: application/json"
-            //                     ]);
-            //                     curl_setopt($ch, CURLOPT_POST, 1);
-            //                     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($record));
-            //                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-            //                     $response = curl_exec($ch);
-
-            //                     Log::info('response from sinch api ', [
-            //                         'response' => $response
-            //                     ]);
-            //                 }
-
-            //                 break;
-            //             }
-            //         }
-
-            //         sleep($delaySecs);
-            //     }
-            // }
+            
 
             // 4) Update quote/your local table so status is saved with quote (if you have such table)
             if ($quoteId) {
@@ -1248,9 +946,6 @@ class MyRequestController extends Controller
                 try {
                     DB::table('abandoned_users')->where('id', $quoteId)->update([
                         'otp_sinch_status' => $finalStatus
-                    ]);
-                    Log::info('database abandon Response', [
-                        'status' => $finalStatus
                     ]);
                 } catch (\Exception $e) {
                     // if your table name or columns differ, change above accordingly

@@ -114,14 +114,11 @@ class ReviewController extends Controller{
             //Add Notification Log for new review
             CustomHelper::logNotifications($user_id,0,'buyer_browser_new_review', 'New Review', $request->review);
 
-            return ZohoHelper::dispatchAfterResponse(function () use ($user_id) {
-                    app(ZohoReview::class)->integrateZohoReview($user_id);
-                }, [
-                    'success' => true,
-                    'message' => 'Review submitted successfully!'
-                ]);
+            CustomHelper::runInBackground(function() use ($user_id) {
+                app(ZohoReview::class)->integrateZohoReview($user_id);
+            });
 
-            //return $this->sendResponse('Review submitted successfully!');
+            return $this->sendResponse('Review submitted successfully!');
         }
         return $this->sendError('Something went wrong, try again!');
 

@@ -427,78 +427,8 @@ class UserController extends Controller
             }
             $user->remember_tokens = $token;
 
-            // $zohoService =new ZohoServiceLocations();
-            // $zohoQa = new ZohoQuestionAnswer();
-
-            // $zohoService->integrateServiceLocations($user);
-            // $zohoQa->integrateServiceQa($user);
-
-            return $this->sendJsonAndSyncZoho([
-                'success' => true,
-                'message' => 'Registration successful',
-                'data' => $user,
-            ], $user,$passwordRandomString, $serviceAllIds, $locationIds, $questionIds,$auto_bid,$serviceIds);
-
-
-
-        }else{
-
-            $user = AbandonedUser::create($aVals);
-            $rel = [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-            return ZohoHelper::dispatchAfterResponse(function () use ($user, $rel) {
-                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
-                app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
-
-            }, [
-                'success' => true,
-                'message' => 'Abandoned Lead Buyers registered Successfully',
-                'data' => $rel
-            ]);
-        }
-
-    }
-
-    private function sendJsonAndSyncZoho($responseData, $user,$passwordRandomString, $serviceAllIds = [], $locationIds = [], $questionIds = [],$auto_bid,$serviceIds){
-        $json = json_encode($responseData);
-
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-        header('Content-Type: application/json');
-        header('Content-Length: ' . strlen($json));
-        header('Connection: close');
-
-        if (!ob_get_level()) {
-            ob_start();
-        }
-
-        echo $json;
-
-        if (ob_get_length()) {
-            ob_flush();
-            flush();
-            ob_end_clean();
-        }
-
-        register_shutdown_function(function () use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString,$auto_bid,$serviceIds) {
-            try {
+            CustomHelper::runInBackground(function() use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString, $auto_bid, $serviceIds) {
                 if ($user->user_type == 1) {
-
-
-                    // Log::info('Integrating service locations for user', [
-                    //     'user_id' => $user->id,
-                    //     'location_ids' => $locationIds,
-                    // ]);
-
-                    // Log::info('Integrating questions for user', [
-                    //     'user_id' => $user->id,
-                    //     'question_ids' => $questionIds,
-                    // ]);
 
                     app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
                     if($user->form_status ==1){
@@ -517,41 +447,28 @@ class UserController extends Controller
                 } elseif ($user->user_type == 2) {
                     app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
                 }
+            });
+            return $this->sendResponse('Registration successfully.', $user);
+
+        }else{
+
+            $user = AbandonedUser::create($aVals);
+            $rel = [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
 
 
-            } catch (\Throwable $e) {
-                Log::error('Zoho background sync failed', [
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        });
+            CustomHelper::runInBackground(function() use ($user, $rel) {
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id,'abandon');
+                app(self::class)->sendIncompleteRegEmail(['userId' => $user->id]);
+            });
+            return $this->sendResponse('Abandoned Lead Buyers registered Successfully', $rel);
+        }
 
-        return;
     }
-
-    // public function sendEncouragementEmail($payload)
-    // {
-    //     $userId = $payload['userId'] ?? null;
-    //     $sentCount = 0;
-    //     $users = User::whereNotNull('zoho_record_id')
-    //         ->where('id',$userId)
-    //         ->whereHas('details', function ($q) {
-    //             $q->where('is_autobid', 0);
-    //         })
-    //         // ->with(['details', 'emailLogs' => function ($q) {
-    //         //     $q->where('setting_name', 'Send Autobid Encouragement Email')
-    //         //         ->latest();
-    //         // }])
-    //         ->get();
-
-    //     ZohoEmails::sendEncouragementEmail($userId);
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => "$sentCount encouragement email(s) sent.",
-    //         'timestamp' => now()->toDateTimeString()
-    //     ]);
-    // }
 
     public function sendIncompleteRegEmail($payload)  // sendIncompleteRegEmail
     {
@@ -567,9 +484,6 @@ class UserController extends Controller
             // }])
             ->get();
 
-        Log::info('Incomplete registrtion second',[
-            'message'=>$users
-        ]);
         ZohoEmails::sendIncompleteRegistrationEmail($userId);
 
         return response()->json([
@@ -814,9 +728,7 @@ class UserController extends Controller
             }
 
             $user->save();
-
-             return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
-
+            CustomHelper::runInBackground(function() use  ($userId,$userType) {
                 if ($userType == 2) {
                     $alreadySent = EmailLog::where('user_id', $userId)
                         ->whereDate('created_at', Carbon::today())
@@ -836,12 +748,8 @@ class UserController extends Controller
                         ZohoEmails::switchEmailToLeadAccount($userId);
                     }
                 }
-                }, [
-                    'success' => true,
-                    'message' => 'Switched to' . $mode
-                ]);
-
-            return $this->sendResponse(__('Switched to ' . $mode));
+            });
+            return $this->sendResponse('Switched to ' . $mode);
         }
 
         // Update user_type and active_status if user_type is not 3 yet
@@ -866,33 +774,29 @@ class UserController extends Controller
         }
 
         $user->save();
-         return ZohoHelper::dispatchAfterResponse(function () use ($userId,$userType) {
 
-                if ($userType == 2) {
-                    $alreadySent = EmailLog::where('user_id', $userId)
-                        ->whereDate('created_at', Carbon::today())
-                        ->where('setting_name', 'Switch Account From Lead Buyer')
-                        ->exists();
-                    if (!$alreadySent) {
-                        ZohoEmails::switchEmailToQuoteAccount($userId);
-                    }
+        CustomHelper::runInBackground(function() use ($userId,$userType){
+            if ($userType == 2) {
+                $alreadySent = EmailLog::where('user_id', $userId)
+                    ->whereDate('created_at', Carbon::today())
+                    ->where('setting_name', 'Switch Account From Lead Buyer')
+                    ->exists();
+                if (!$alreadySent) {
+                    ZohoEmails::switchEmailToQuoteAccount($userId);
                 }
-                 if ($userType == 1) {
-                    $alreadySent = EmailLog::where('user_id', $userId)
-                        ->whereDate('created_at', Carbon::today())
-                        ->where('setting_name', 'Switch Account From Quote Customer')
-                        ->exists();
-                    if (!$alreadySent) {
-                        ZohoEmails::switchEmailToLeadAccount($userId);
-                    }
-
+            }
+            if ($userType == 1) {
+                $alreadySent = EmailLog::where('user_id', $userId)
+                    ->whereDate('created_at', Carbon::today())
+                    ->where('setting_name', 'Switch Account From Quote Customer')
+                    ->exists();
+                if (!$alreadySent) {
+                    ZohoEmails::switchEmailToLeadAccount($userId);
                 }
 
-                }, [
-                    'success' => true,
-                    'message' => 'Switched to' . $mode
-                ]);
-        return $this->sendResponse(__('Switched to ' . $mode));
+            }
+        });
+        return $this->sendResponse('Switched to ' . $mode);
     }
 
 
@@ -919,15 +823,10 @@ class UserController extends Controller
             'sms_notification_no'=>$request->sms_notification_no,
         ]);
 
-        return ZohoHelper::dispatchAfterResponse(function () use ($userId) {
+        CustomHelper::runInBackground(function() use ($userId) {
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
-        }, [
-            'success' => true,
-            'message' => 'User Profile updated'
-        ]);
-
-        //app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
-        //return $this->sendResponse(__('User Profile updated'));
+        });
+        return $this->sendResponse('User Profile updated');
     }
 
     public function logout(Request $request)
