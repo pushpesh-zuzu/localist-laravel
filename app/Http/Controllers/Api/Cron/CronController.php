@@ -959,7 +959,6 @@ class CronController extends Controller
         }
         $from = $to->copy()->subMinutes(59);
 
-
         $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
 
         if ($leads->isEmpty()) {
@@ -988,7 +987,7 @@ class CronController extends Controller
 
                 $finalSorted = $topN->merge($remaining);
 
-                $sellersFinalList = $finalSorted->values()->toArray();
+                $sellersFinalList = $finalSorted->take(10)->values()->toArray();
 
                     $alreadySent = EmailLog::where('user_id',$userId)
                         ->where('lead_id', $lead->id)

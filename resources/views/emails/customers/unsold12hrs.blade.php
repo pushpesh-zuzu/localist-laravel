@@ -1,249 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Frame1321319177</title>
-	<style>
-    body {
-        margin: 0;
-        background-color: #f1f2f4;
-        font-family: 'Lato', Helvetica, Arial, sans-serif;
-        font-size: 16px;
-        line-height: 24px;
-        color: #4a4a4a;
-        -webkit-font-smoothing: antialiased;
+  <meta charset="UTF-8">
+  <meta content="width=device-width,initial-scale=1.0" name="viewport">
+  <title>Recommended Pros</title>
+  <style>
+    /* Email-safe resets */
+    body{margin:0;padding:0;background:#f1f2f4;-webkit-font-smoothing:antialiased;}
+    table{border-collapse:collapse !important;}
+    img{border:0;display:block;height:auto;line-height:100%;outline:none;text-decoration:none;max-width:100%;}
+    .ExternalClass{width:100%}.ExternalClass *{line-height:100%}
+    /* Mobile */
+    @media only screen and (max-width:600px){
+      .email-container{width:100% !important;padding:0 12px !important;}
+      .card-pad{padding:16px !important;}
+      .stack{display:block !important;width:100% !important;}
+      .right{text-align:left !important;}
     }
-    /* Container */
-    div[style*="display: flex; flex-direction: column; background: #FFFFFF;"] {
-        max-width: 600px;
-        margin: 32px auto;
-        background: #ffffff !important;
-        border-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,.08);
-        padding: 24px 32px;
-    }
-    /* Headings */
-    span[style*="font-size: 16px; font-weight: bold;"] {
-        font-size: 20px !important;
-        font-weight: 600 !important;
-        color: #333333 !important;
-        margin: 0 0 12px 0 !important;
-    }
-    /* Subheading */
-    span[style*="font-size: 12px; font-weight: bold;"] {
-        font-size: 15px !important;
-        font-weight: 500 !important;
-        margin-bottom: 12px !important;
-    }
-    /* Paragraph text */
-    span[style*="font-size: 12px;"]:not([style*="font-weight: bold"]) {
-        font-size: 14px !important;
-        line-height: 22px !important;
-        margin: 0 0 16px 0 !important;
-        display: block;
-    }
-    /* Cards / Highlight sections */
-    div[style*="background: #E3F6FC"] {
-        background-color: #d8edf8 !important;
-        border-radius: 6px;
-        padding: 20px !important;
-    }
-    /* Pro List Section */
-    div[style*="background: #FBFBFBAD"] {
-        background: #fafafa !important;
-        border-radius: 6px;
-        padding: 20px;
-    }
-    /* CTA Buttons */
-    button {
-        display: inline-block !important;
-        background-color: #00afe3 !important;
-        border-radius: 4px !important;
-        border: none !important;
-        padding: 12px 18px !important;
-        text-align: center !important;
-        cursor: pointer !important;
-    }
-    button span {
-        color: #ffffff !important;
-        font-size: 15px !important;
-        font-weight: bold !important;
-        text-align: center !important;
-    }
-    /* Dark Button */
-    button[style*="background: #111637"] {
-        background-color: #111637 !important;
-    }
-    /* Footer */
-    div[style*="background: #111637"] span {
-        font-size: 12px !important;
-        color: #ffffff !important;
-    }
-     .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-</style>
-
+  </style>
 </head>
-<body>
-		<div style="display: flex; flex-direction: column; background: #FFFFFF;">
-		<div style="align-self: stretch;">
-			<div style="align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; background: #FFFFFF;">
+<body style="margin:0;padding:0;background:#f1f2f4;">
+  <!-- Outer wrapper -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f2f4">
+    <tr>
+      <td align="center">
 
+        <!-- Center column -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width:600px;width:100%;margin:0 auto;font-family:'Lato',Helvetica,Arial,sans-serif;">
 
-        <div style="background-image: url('https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/n5bm7ooy_expires_30_days.png');
-            background-size: cover;
-            background-position: center;
-            text-align: center;
-            width:100%;
-            padding: 40px 0px;">
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding:16px;">
+              <img src="https://localists.com/assets/localist_logo.png" alt="Localists Logo" style="max-height:45px;margin:0 auto;">
+            </td>
+          </tr>
 
-            <!-- Logo -->
-            <div class="logo-container" style="margin-bottom: 20px;">
-                <img src="https://localists.com/assets/localist_logo.png" alt="Localists Logo" style="max-height: 60px;">
-            </div>
+          <!-- Main card -->
+          <tr>
+            <td style="padding:0 16px 12px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;">
 
-            <!-- Foreground Hero Image -->
+                <!-- Intro -->
+                <tr>
+                  <td class="card-pad" style="padding:24px 32px;color:#4a4a4a;">
+                    <p style="margin:0 0 10px 0;font-size:16px;line-height:22px;color:#00AFE3;font-weight:700;">Hi {{ $name }},</p>
+                    <p style="margin:0 0 10px 0;font-size:14px;line-height:20px;color:#000;font-weight:700;">We noticed you haven’t connected with a professional yet – we’re here to help!</p>
+                    <p style="margin:0;font-size:14px;line-height:22px;color:#000;">
+                      To make things easier, we’ve selected a few top-rated professionals who are ready to help with your <b>{{ $service_name }}</b> request.
+                    </p>
+                  </td>
+                </tr>
 
-        </div>
+                <!-- Feature chips -->
+                <tr>
+                  <td style="padding:0 0 8px 0;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#E3F6FC">
+                      <tr>
+                        <td style="padding:20px 24px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <!-- Chip 1 -->
+                              <td class="stack" align="center" valign="top" style="padding:8px;">
+                                <img src="https://stratus.campaign-image.eu/images/3r4jt58wexpires30dayszcv1_zc_v1_237907000000625261.png" width="41" height="41" alt="" style="margin:0 auto -20px auto;">
+                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" bgcolor="#00AFE3" style="border-radius:7px;margin-top:8px;">
+                                  <tr><td style="padding:13px 12px;text-align:center;"><span style="color:#fff;font-size:14px;font-weight:700;">Trusted by customers</span></td></tr>
+                                </table>
+                              </td>
+                              <!-- Chip 2 -->
+                              <td class="stack" align="center" valign="top" style="padding:8px;">
+                                <img src="https://stratus.campaign-image.eu/images/k8j3jgw3expires30dayszcv1_zc_v1_237907000000625261.png" width="41" height="41" alt="" style="margin:0 auto -20px auto;">
+                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" bgcolor="#00AFE3" style="border-radius:7px;margin-top:8px;">
+                                  <tr><td style="padding:13px 12px;text-align:center;"><span style="color:#fff;font-size:14px;font-weight:700;">Quick to respond</span></td></tr>
+                                </table>
+                              </td>
+                              <!-- Chip 3 -->
+                              <td class="stack" align="center" valign="top" style="padding:8px;">
+                                <img src="https://stratus.campaign-image.eu/images/r7723utvexpires30dayszcv1_zc_v1_237907000000625261.png" width="41" height="41" alt="" style="margin:0 auto -20px auto;">
+                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" bgcolor="#00AFE3" style="border-radius:7px;margin-top:8px;">
+                                  <tr><td style="padding:13px 12px;text-align:center;"><span style="color:#fff;font-size:14px;font-weight:700;">Highly rated for quality and reliability</span></td></tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
 
+                <!-- Section header -->
+                <tr>
+                  <td style="padding:23px 24px 6px 24px;">
+                    <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #00AFE3;border-radius:2px;">
+                      <tr><td style="padding:6px 22px;"><span style="color:#00AFE3;font-weight:700;font-size:18px;line-height:22px;">Here are a few you might like:</span></td></tr>
+                    </table>
+                  </td>
+                </tr>
 
-				<span style="color: #00AFE3; font-size: 16px;margin-top:30px; font-weight: bold; margin-bottom: 14px; margin-left: 0px;" >
-					Hi {{ $name }},
-				</span>
-				<span style="color: #000000; font-size: 12px; font-weight: bold; margin-bottom: 14px; margin-left: 0px;" >
-					We noticed you haven’t connected with a professional yet – we’re here to help!
-				</span>
-				<span style="color: #000000; font-size: 12px; margin-bottom: 28px; margin-left: 52px; margin-right: 52px;" >
-					To make things easier, we’ve selected a few top-rated professionals who are ready to help with your {{ $service_name }} request.
-				</span>
-				<div style="align-self: stretch; display: flex; align-items: flex-start; background: #E3F6FC; padding: 31px 81px; position: relative;">
+                <!-- Sellers loop -->
 
-          <div style="flex: 1; display: flex; flex-direction: column; background: #00AFE3; border-radius: 7px; padding-top: 30px; padding-bottom: 7px; margin-top: 18px; margin-bottom: 1px; margin-right: 30px;">
-						<span style="color: #FFFFFF; font-size: 12px; font-weight: bold; text-align: center; margin-left: 11px; margin-right: 11px;" >
-							Trusted by other customers
-						</span>
-					</div>
-
-					<div style="flex: 1; display: flex; flex-direction: column; background: #00AFE3; border-radius: 7px; padding-top: 30px; padding-bottom: 30px; margin-top: 18px; margin-bottom: 1px; margin-right: 30px;">
-						<span style="color: #FFFFFF; font-size: 12px; font-weight: bold; text-align: center; margin-left: 11px; margin-right: 11px;" >
-							Quick to respond
-						</span>
-					</div>
-					<div style="flex: 1; display: flex; flex-direction: column; padding-top: 18px; position: relative;">
-						<div style="align-self: stretch; display: flex; flex-direction: column; background: #00AFE3; border-radius: 7px; padding-top: 30px; padding-bottom: 7px;">
-							<span style="color: #FFFFFF; font-size: 12px; font-weight: bold; text-align: center; margin-left: 3px; margin-right: 3px;" >
-								Highly rated for quality and reliability
-							</span>
-						</div>
-						<img
-							src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/8ru0b7hu_expires_30_days.png"
-							style="position: absolute; top: 10px; right: 42px; left: 57px; height: 41px; align-self: stretch; object-fit: fill;"
-						/>
-					</div>
-          	<img
-							src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/rq3hfddl_expires_30_days.png"
-							style="position: absolute; top: 30px; right: 42px; left:77px; height: 41px; align-self: stretch; object-fit: fill;"
-						/>
-					<img
-						src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/7xi2wpxh_expires_30_days.png"
-						style="position: absolute; top: 31px; right: 279px; left: 279px; height: 41px; flex: 1; object-fit: fill;"
-					/>
-
-				</div>
-				<div style="align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; background: #FBFBFBAD; padding-top: 29px; padding-bottom: 29px; margin-bottom: 29px;">
-					<div style="display: flex; flex-direction: column; align-items: flex-start; border: 1px solid #00AFE3; padding: 3px 22px; margin-bottom: 39px; margin-left: 136px;">
-						<span style="color: #00AFE3; font-size: 18px; font-weight: bold;" >
-							Here are a few you might like:
-						</span>
-					</div>
-                    @foreach ($sellerDetails as $sellerDetail)
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-left: 52px; margin-right: 52px; width: calc(100% - 104px);">
-
-                        <!-- Left section (name + rating) -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <img
-                                src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/h2vyi0hf_expires_30_days.png"
-                                style="width: 24px; height: 24px; object-fit: fill;"
-                            />
-                            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">
-                                <span style="color: #00AFE3; font-size: 12px; font-weight: bold;">
-                                    {{ $sellerDetail->name }}
-                                </span>
-
-                                @if ($sellerDetail->avg_rating == 5)
-                                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/kkl0x465_expires_30_days.png" style="width: 61px; height: 11px;" />
-                                @elseif ($sellerDetail->avg_rating == 4)
-                                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/jh29vurp_expires_30_days.png" style="width: 61px; height: 11px;" />
-                                @elseif ($sellerDetail->avg_rating == 3)
-                                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/py0eo3ve_expires_30_days.png" style="width: 61px; height: 11px;" />
-                                @elseif ($sellerDetail->avg_rating == 2)
-                                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/c4kxuti3_expires_30_days.png" style="width: 61px; height: 11px;" />
-                                @elseif ($sellerDetail->avg_rating == 1)
-                                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/2e2l2oe8_expires_30_days.png" style="width: 61px; height: 11px;" />
+                <!-- Sellers loop -->
+                @foreach ($sellerDetails as $sellerDetail)
+                <tr>
+                <td style="padding:10px 24px 0 24px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <!-- Row 1: avatar + name + rating | service -->
+                    <tr>
+                        <!-- Left: avatar + name -->
+                        <td class="stack" valign="top" style="width:70%; padding-right:8px;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                            <td valign="top" style="padding-right:8px;">
+                                @if(!empty($sellerDetail->profile_image))
+                                <img
+                                    src="{{ $baseUrl }}/admin/storage/app/public/images//users/{{ $sellerDetail->profile_image }}"
+                                    width="24" height="24" alt="{{ $sellerDetail->name }}">
                                 @else
-                                    <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/e5i7wye0_expires_30_days.png" style="width: 61px; height: 11px;" />
+                                <img
+                                    src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/h2vyi0hf_expires_30_days.png"
+                                    width="24" height="24" alt="{{ $sellerDetail->name }}">
                                 @endif
-                            </div>
-                        </div>
+                            </td>
+                            <td valign="top">
+                                <div style="font-weight:700; font-size:12px; line-height:16px; color:#00AFE3; margin-bottom:6px;">
+                                {{ $sellerDetail->name ? explode(' ', trim($sellerDetail->name))[0] : '' }}
+                                </div>
 
-                        <!-- Right section (service) -->
-                        <span style="color: #000000; font-size: 12px !important; font-weight: bold !important; text-align: right;">
-                            {{ $service_name }}
-                        </span>
+                            </td>
+                            </tr>
+                        </table>
+                        </td>
+
+                        <!-- Right: service -->
+                        <td class="stack right" valign="top" align="right"
+                            style="width:30%; font-weight:700; font-size:12px; line-height:16px; color:#000;">
+                        {{ $service_name }}
+                        </td>
+                    </tr>
+
+                    <!-- Row 2: postcode + distance -->
+                    <tr>
+                        <td colspan="2" align="center"
+                            style="padding-top:8px; font:400 11px/16px Helvetica,Arial,sans-serif; color:#000;">
+                        @if(!empty($sellerDetail->postcode))
+                            {{ explode(' ', trim($sellerDetail->postcode))[0] }}
+                            &nbsp;&bull;&nbsp;
+                        @endif
+                        {{ $sellerDetail->distance }} miles away
+                        </td>
+                    </tr>
+                    </table>
+                </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                <td style="padding:10px 24px 0 24px;">
+                    <div style="border-bottom:1px solid #EFEFEF; height:1px; line-height:1px; font-size:0;">&nbsp;</div>
+                </td>
+                </tr>
+                @endforeach
+
+
+                <!-- End main card spacer -->
+                <tr><td style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Help strip -->
+          <tr>
+            <td style="padding:10px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#d8edf8" style="border-radius:6px;">
+                <tr>
+                  <td align="center" style="padding:19px 16px;">
+                    <div style="font:700 18px/22px Helvetica,Arial,sans-serif;color:#000;max-width:482px;">
+                      Need help or have questions? contact@localists.com
                     </div>
-
-                    <!-- Distance -->
-                    <div style="align-self: stretch; display: flex; flex-direction: column; align-items: center; margin-bottom: 14px;">
-                        <span style="color: #000000; font-size: 11px; width: 492px; text-align: center;">
-                            {{ $sellerDetail->distance }} miles away
-                        </span>
+                    <div style="font:400 12px/18px Helvetica,Arial,sans-serif;color:#000;margin-top:6px;">
+                      – The Localists Team
                     </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-                    <!-- Divider -->
-                    <div style="align-self: stretch; display: flex; flex-direction: column; align-items: center; margin-bottom: 14px;">
-                        <div style="width: 498px; height: 1px; background: #EFEFEF;"></div>
-                    </div>
+          <!-- Optional footer (commented in your original) -->
+          <!--
+          <tr>
+            <td align="center" style="padding:10px 12px;background:#111637;border-radius:4px;color:#fff;font:400 10px/14px Helvetica,Arial,sans-serif;">
+              Manage your email preferences <a href="{{$baseUrl}}/user/notifications/e-mail-notification" style="color:#fff;text-decoration:underline;">here</a>.<br>
+              {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
+            </td>
+          </tr>
+          -->
 
-                    @endforeach
+        </table>
 
-
-				</div>
-				{{-- <div style="align-self: stretch; display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;">
-					<button style="display: flex; flex-direction: column; align-items: flex-start; background: #00AFE3; border-radius: 5px; border: none; padding: 10px 12px; text-align: left;"
-						onclick="alert('Pressed!')">
-						<span style="color: #FFFFFF; font-size: 12px; font-weight: bold; text-align: center; width: 401px;" >
-							Get matched and get it done — the right pro could be just one click away!
-						</span>
-					</button>
-				</div>
-				<div style="align-self: stretch; display: flex; flex-direction: column; align-items: center; margin-bottom: 30px;">
-					<button style="display: flex; flex-direction: column; align-items: flex-start; background: #111637; border-radius: 4px; border: none; padding: 3px 15px; text-align: left;"
-						onclick="alert('Pressed!')"}>
-						<span style="color: #FFFFFF; font-size: 18px; font-weight: bold;" >
-							View Recommended Pros
-						</span>
-					</button>
-				</div> --}}
-				<div style="align-self: stretch;">
-					<div style="align-self: stretch; display: flex; flex-direction: column; align-items: center; background: #E3F6FC; padding: 19px 55px; gap: 6px;">
-						<span style="color: #000000; font-size: 18px; font-weight: bold; text-align: center; width: 482px;" >
-							Need help or have questions? Just reply to this email contact@localists.com
-						</span>
-						<span style="color: #000000; font-size: 12px;" >
-							– The Localists Team
-						</span>
-					</div>
-					<div style="align-self: stretch; display: flex; flex-direction: column; background: #111637; padding-top: 10px; padding-bottom: 10px;">
-						<span style="color: #FFFFFF; font-size: 10px; text-align: center;" >
-							Manage your email preferences here
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
