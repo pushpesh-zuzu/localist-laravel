@@ -22,11 +22,13 @@ class CronController extends Controller
 {
     public function onHourlyBasis(Request $request, LeadService $leadService)
     {
+
         set_time_limit(0);
 
         $this->UnsoldLeadsStep1($request, $leadService);
         $this->unSoldLeadsStep2($request, $leadService);
         $this->unSoldLeadsStep3($request, $leadService);
+        $this->UnsoldLeadsAfter12hrs($request, $leadService);
 
         $this->leadPurchaseStatusUpdate48hrs($request);
         $this->leadPurchaseStatusUpdate96hrs($request);
@@ -942,5 +944,82 @@ class CronController extends Controller
             'unsent_lead_emails' => $totalUnsentLeadEmails,
             'timestamp' => now()->toDateTimeString(),
         ];
+    }
+
+    private function UnsoldLeadsAfter12hrs(Request $request, LeadService $leadService)
+    {
+        $totalUnsentLeadEmails = 0;
+
+        $now = Carbon::now();
+        // Round down to last full hour if not exactly on the hour
+        if ($now->minute === 0) {
+            $to = $now->copy()->subHours(12); // Full hour, use this hour
+        } else {
+            $to = $now->copy()->subMinutes($now->minute)->subHours(12); // Not a full hour, roll back to previous full hour
+        }
+        $from = $to->copy()->subMinutes(59);
+
+
+        $leads = LeadRequest::whereBetween('created_at', [$from, $to])->where('status', 'new')->get();
+
+        if ($leads->isEmpty()) {
+            return $this->sendError(__('No leads found older than 12 hours'), 404);
+        }
+
+        foreach ($leads as $lead) {
+
+            $userId=$lead->customer_id;
+            $result = $leadService->getAllSellers($lead);
+
+            if (isset($result['response']['sellers'])) {
+
+                $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
+                $w80 = (int) ($recommendedCount * 0.8);
+
+                $sorted = $result['response']['sellers']
+                ->sortByDesc('total_credit')
+                ->values();
+
+                $topN = $sorted->take($w80);
+                $remaining = $sorted->slice($w80)
+                    ->sortBy('distance')
+                    ->values();
+
+
+                $finalSorted = $topN->merge($remaining);
+
+                $sellersFinalList = $finalSorted->values()->toArray();
+
+                    $alreadySent = EmailLog::where('user_id',$userId)
+                        ->where('lead_id', $lead->id)
+                        ->where('setting_name', 'Unsold Leads After 12 hrs')
+                        ->exists();
+
+                    $alreadyRecommended = RecommendedLead::where('lead_id', $lead->id)
+                        ->exists();
+
+                    if ($alreadyRecommended) {
+                        continue;
+                    }
+
+
+                    if (!$alreadySent) {
+                        $dataU1['userId'] = $userId;
+                        $dataU1['leadId'] = $lead->id;
+                        $dataU1['sellerDetails'] = $sellersFinalList;
+                        $dataU1['setting_name'] = 'Unsold Leads After 12 hrs';
+                        $dataU1['subject'] = 'Opportunity Alert: A Lead Needs Your Service';
+                        ZohoEmails::unsoldLeadEmailAfter12hrs($dataU1);
+                        $totalUnsentLeadEmails++;
+                    }
+
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'unsent_lead_emails' => $totalUnsentLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
     }
 }

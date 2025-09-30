@@ -323,17 +323,17 @@ class ZohoEmails
             $accessToken = ZohoHelper::getAccessToken();
 
             $zohoId = ZohoHelper::getZohoAbandonLeadBuyerId($accessToken, $userId);
-Log::info('Incomplete registrtion p1',[
-            'message'=>$zohoId
-        ]);
-            if (!empty($zohoId)) {
-                $user = AbandonedUser::where('id', $userId)->first();
+            Log::info('Incomplete registrtion p1',[
+                        'message'=>$zohoId
+                    ]);
+                        if (!empty($zohoId)) {
+                            $user = AbandonedUser::where('id', $userId)->first();
 
-                if (!empty($user)) {
+                            if (!empty($user)) {
 
-Log::info('Incomplete registrtion p2',[
-            'message'=>$user
-        ]);
+            Log::info('Incomplete registrtion p2',[
+                        'message'=>$user
+                    ]);
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_incomplete_registration',  [
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name
@@ -1055,7 +1055,7 @@ Log::info('Incomplete registrtion p2',[
         // Extract CSS from <style> blocks
          // (Assume $htmlView already built with Blade earlier)
 
-// 1) Extract CSS from <style> blocks (the same as you already do)
+        // 1) Extract CSS from <style> blocks (the same as you already do)
         $allStyleContents = '';
         if (preg_match_all('/<style\b[^>]*>(.*?)<\/style>/is', $htmlView, $matches)) {
             foreach ($matches[1] as $cssText) {
@@ -2312,6 +2312,121 @@ Log::info('Incomplete registrtion p2',[
 
 
     }
+
+    public static function unsoldLeadEmailAfter12hrs($data)
+    {
+
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', $data['setting_name'])->value('setting_value');
+
+        if ($sendLeadRequestEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $data['userId']);
+
+            if (!empty($zohoId)) {
+                $user = User::where('id', $data['userId'])->first();
+
+                if (!empty($user)) {
+
+
+                    $lead = LeadRequest::with([
+                        'category',
+                        'customer'
+                    ])
+                        ->where('id', $data['leadId'])
+                        ->first();
+
+                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                        ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                        ->map(fn($item) => [
+                            'question' => $item['ques'],
+                            'answer' => implode(', ', $item['ans'])
+                        ])
+                        ->toArray();
+
+
+                    $htmlView = view('emails.customers.unsold12hrs',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'name' => $user->name,
+                        'lead_name' => $lead->customer->name ?? '',
+                        'service_name' =>$lead->category->name,
+                        'postcode' => $lead->postcode ?? '',
+                        'sellerDetails' => $data['sellerDetails'] ?? '',
+                        'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
+                        'masked_email' => $lead->customer?->email ? (function ($email) {
+                            [$name, $domain] = explode('@', $email);
+                            $visible = substr($name, 0, 2);
+                            $masked = str_repeat('*', max(strlen($name) - 2, 0));
+                            return $visible . $masked . '@' . $domain;
+                        })($lead->customer->email) : 'N/A',
+
+                        'service_name' => $lead->category->name ?? '',
+                        'has_additional_details' => $lead->has_additional_details ?? '',
+                        'credit_score' => $lead->credit_score ?? '',
+                        'old_credit_score' => $lead->old_credit ?? '',
+                        'is_frequent_user' => $lead->is_frequent_user ?? '',
+                        'is_urgent' => $lead->is_urgent ?? '',
+                        'is_high_hiring' => $lead->is_high_hiring ?? '',
+                        'phone_verified' => $lead->is_phone_verified ?? '',
+                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                        'questionsAndAnswers' => $questionsAndAnswers,
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = $data['subject'];
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'unsoldLead12HrsEmail',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+                    $rel = self::getZohoMailResponse($response);
+
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['lead_id'] = $data['leadId'];
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = $data['setting_name'];
+
+                    $dataE['lead_id'] = $data['leadId'];
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+        }
+    }
+
     private static function getZohoMailResponse($response)
     {
         $zohoMailResult = [];
