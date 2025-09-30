@@ -111,7 +111,7 @@
                  Hi {{ $name }},
                 <p> You’re almost there! </p></h1>
                 <div class="highlight">Just one more step to activate your Localists account.</div>
-                <p>We noticed you started signing up but didn’t finish. Complete your registration to get access to top local leads, auto-bidding, and more.</p>
+                <p>We noticed you started signing up but didn’t finish. Complete your registration to get access to top local professionals - your just 1 step away.</p>
                 <p>By registering, you can:</p>
                 <ul>
                     <li>✅ Connect with verified local professionals</li>
