@@ -114,11 +114,11 @@
                                 @if(!empty($sellerDetail->profile_image))
                                 <img
                                     src="{{ $baseUrl }}/admin/storage/app/public/images//users/{{ $sellerDetail->profile_image }}"
-                                    width="24" height="24" alt="{{ $sellerDetail->name }}">
+                                    width="24" height="24" >
                                 @else
                                 <img
                                     src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/WxmUAzbzpK/h2vyi0hf_expires_30_days.png"
-                                    width="24" height="24" alt="{{ $sellerDetail->name }}">
+                                    width="24" height="24" >
                                 @endif
                             </td>
                             <td valign="top">
