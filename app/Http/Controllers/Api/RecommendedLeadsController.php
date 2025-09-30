@@ -514,7 +514,7 @@ class RecommendedLeadsController extends Controller
             ->delete();
 
 
-        // $bidId = $bids->id;
+        $bidId = $bids->id;
         if($bidId){
             CustomHelper::runInBackground(function() use ($sellerId,$bidId,$tId) {	
                 app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $bidId);
