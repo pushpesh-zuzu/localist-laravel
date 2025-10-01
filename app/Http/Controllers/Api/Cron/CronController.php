@@ -28,7 +28,7 @@ class CronController extends Controller
         $this->UnsoldLeadsStep1($request, $leadService);
         $this->unSoldLeadsStep2($request, $leadService);
         $this->unSoldLeadsStep3($request, $leadService);
-        $this->UnsoldLeadsAfter12hrs($request, $leadService);
+        // $this->UnsoldLeadsAfter12hrs($request, $leadService);
 
         $this->leadPurchaseStatusUpdate48hrs($request);
         $this->leadPurchaseStatusUpdate96hrs($request);
