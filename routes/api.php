@@ -103,8 +103,6 @@ Route::prefix('payment')->group(function () {
 });
 
 
-Route::post('auth/callback',[GoogleAuthController::class,'getAuthToken']);
-
 Route::prefix('google')->group(function () {
     Route::post('get-auth-token',[GoogleAuthController::class,'getAuthToken']);
     
