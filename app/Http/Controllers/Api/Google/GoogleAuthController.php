@@ -57,7 +57,7 @@ class GoogleAuthController extends Controller
             return $this->sendResponse('Google authentication successful', $data);
 
         } catch (\Exception $e) {
-            return $this->sendError($e->getMessage());
+            return $this->sendError("catchError: " . $e->getMessage());
         }
     }
 }
