@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Helpers\CustomHelper;
 use Google\Client as GoogleClient;
+use Google\Service\Oauth2;
+use Google\Service\MyBusinessAccountManagement;
 
 class GoogleAuthController extends Controller
 {
@@ -14,7 +16,7 @@ class GoogleAuthController extends Controller
         $code = $request->input('code');
 
         if (!$code) {
-            return response()->json(['error' => 'Authorization code is required'], 400);
+            return $this->sendError('Authorization code is required');
         }
 
         // Collect config
@@ -26,28 +28,34 @@ class GoogleAuthController extends Controller
         $client->setClientId($clientId);
         $client->setClientSecret($clientSecret);
         $client->setRedirectUri($redirectUri);
-        $client->setAccessType("offline");
-        $client->setPrompt("consent");
+        $client->setAccessType("offline"); // needed for refresh token
+        $client->setPrompt("consent"); // force prompt to get refresh token
+        $client->setRedirectUri("postmessage");
 
         try {
+            // Exchange code for tokens
             $token = $client->fetchAccessTokenWithAuthCode($code);
 
             if (isset($token['error'])) {
-                // Include full debug info
                 $debug = [
-                    'google_error'     => $token,
-                    'used_client_id'   => $clientId,
-                    'used_client_secret' => substr($clientSecret, 0, 6) . '********', // mask
-                    'used_redirect_uri'=> $redirectUri,
-                    'received_code'    => $code,
+                    'google_error'      => $token,
+                    'used_client_id'    => $clientId,
+                    'used_redirect_uri' => $redirectUri,
+                    'received_code'     => $code,
                 ];
-                return $this->sendError($token['error_description'], $debug);
+                return $this->sendError($token['error_description'] ?? 'Google auth error', $debug);
             }
 
-            // Fetch user info if token works
-            $oauth2 = new \Google\Service\Oauth2($client);
-            $client->setAccessToken($token['access_token']);
+            // Set token to client
+            $client->setAccessToken($token);
+
+            // Fetch user profile
+            $oauth2 = new Oauth2($client);
             $googleUser = $oauth2->userinfo->get();
+
+            // Example: Fetch accounts (Google Business Profile API)
+            $myBusinessService = new MyBusinessAccountManagement($client);
+            $accounts = $myBusinessService->accounts->listAccounts();
 
             $data = [
                 'access_token'  => $token['access_token'],
@@ -60,8 +68,15 @@ class GoogleAuthController extends Controller
                     'email'  => $googleUser->email,
                     'name'   => $googleUser->name,
                     'avatar' => $googleUser->picture,
-                ]
+                ],
+                'accounts' => $accounts->getAccounts() ?? [],
             ];
+
+            /**
+             * 🔐 TODO:
+             * Save $token['refresh_token'] in your DB against the logged-in user
+             * so you can refresh access tokens later without asking the user again.
+             */
 
             return $this->sendResponse('Google authentication successful', $data);
 
@@ -69,7 +84,6 @@ class GoogleAuthController extends Controller
             $debug = [
                 'exception_message' => $e->getMessage(),
                 'used_client_id'    => $clientId,
-                'used_client_secret'=> substr($clientSecret, 0, 6) . '********',
                 'used_redirect_uri' => $redirectUri,
                 'received_code'     => $code,
             ];
