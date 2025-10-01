@@ -49,9 +49,7 @@ class GoogleAuthController extends Controller
             $data = [
                 'access_token'  => $token['access_token'],
                 'refresh_token' => $token['refresh_token'] ?? null,
-                'expires_in'    => $token['expires_in'],
-                'id_token'      => $token['id_token'] ?? null,
-                'redirect_uri'  => $redirectUri,
+                'expires_in'    => $token['expires_in']
             ];
 
             /**
@@ -65,7 +63,6 @@ class GoogleAuthController extends Controller
         } catch (\Exception $e) {
             $debug = [
                 'exception_message' => $e->getMessage(),
-                'used_client_id'    => $clientId,
                 'used_redirect_uri' => $redirectUri,
                 'received_code'     => $code,
             ];
