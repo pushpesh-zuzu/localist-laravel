@@ -913,7 +913,7 @@ class MyRequestController extends Controller
                             CustomHelper::runInBackground(function() use ($messageText, $curStatus, $messageId, $quoteId) {
                                 $moduleAPIName = "twiliosmsextension0__Sent_SMS";
                                 $recordData = [
-                                    "Message" => $messageText .'test',
+                                    "Message" => $messageText,
                                     "Name" => "Sinch Sms test",
                                     "twiliosmsextension0__Status" => $curStatus,
                                     "twiliosmsextension0__Activity_ID" => $messageId,
