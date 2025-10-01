@@ -46,30 +46,12 @@ class GoogleAuthController extends Controller
                 return $this->sendError($token['error_description'] ?? 'Google auth error', $debug);
             }
 
-            // Set token to client
-            $client->setAccessToken($token);
-
-            // Fetch user profile
-            $oauth2 = new Oauth2($client);
-            $googleUser = $oauth2->userinfo->get();
-
-            // Example: Fetch accounts (Google Business Profile API)
-            $myBusinessService = new MyBusinessAccountManagement($client);
-            $accounts = $myBusinessService->accounts->listAccounts();
-
             $data = [
                 'access_token'  => $token['access_token'],
                 'refresh_token' => $token['refresh_token'] ?? null,
                 'expires_in'    => $token['expires_in'],
                 'id_token'      => $token['id_token'] ?? null,
                 'redirect_uri'  => $redirectUri,
-                'user' => [
-                    'id'     => $googleUser->id,
-                    'email'  => $googleUser->email,
-                    'name'   => $googleUser->name,
-                    'avatar' => $googleUser->picture,
-                ],
-                'accounts' => $accounts->getAccounts() ?? [],
             ];
 
             /**
