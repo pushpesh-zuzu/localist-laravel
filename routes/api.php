@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
 use App\Http\Controllers\ContactUsController;
+use App\Http\Controllers\Api\Google\GoogleAuthController;
 
 // use App\Http\Controllers\Api\ZohoController;
 
@@ -98,6 +99,18 @@ Route::prefix('payment')->group(function () {
         Route::post('/download-invoice', [PaymentController::class, 'downloadInvoice']);
     });
 
+
+});
+
+
+Route::post('auth/callback',[GoogleAuthController::class,'getAuthCallback']);
+
+Route::prefix('google')->group(function () {
+    Route::post('get-auth-token',[GoogleAuthController::class,'getAuthToken']);
+    
+    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+        
+    });
 
 });
 
