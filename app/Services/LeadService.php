@@ -26,7 +26,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{
     Auth, Hash, DB , Mail, Validator, Http
 };
-
+use App\Models\Postcode;
 use Illuminate\Support\Facades\Storage;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
