@@ -199,10 +199,7 @@ class RecommendedLeadsController extends Controller
         }
 
         $result = $leadService->getAllSellers($lead);
-        print_r($result);exit;
         $result['response']['repliesListCount'] = RecommendedLead::where('buyer_id', $request->user_id)->where('lead_id', $lead->id)->count();
-        print_r($result);
-        exit;
         if(!empty($result['response']['sellers'])){
             // for weightage sorting
             $recommendedCount = CustomHelper::setting_value("recommended_list_count", 0);
