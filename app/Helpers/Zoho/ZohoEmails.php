@@ -50,7 +50,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
@@ -122,7 +122,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
@@ -200,7 +200,7 @@ class ZohoEmails
                         'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Boost Your Sales with Auto Buy !';
 
@@ -272,7 +272,7 @@ class ZohoEmails
                         'ipaddress' => request()->ip(),
                         'created_at' => now(),
                     ]);
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Complete your registration – we’ve saved your spot!';
 
@@ -342,7 +342,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Complete your registration – We’ve saved your spot!';
 
@@ -451,7 +451,7 @@ class ZohoEmails
     //                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
     //                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
     //                 $toEmail = $user->email;
     //                 $subject = 'Don’t Let This Lead Slip – Enable Auto Bid Today ';
 
@@ -565,7 +565,7 @@ class ZohoEmails
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
         $toEmail = $user->email;
         $subject = 'You Have New Leads – Enable Auto Bid to Save Time!';
 
@@ -677,7 +677,7 @@ class ZohoEmails
     //                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
     //                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
     //                 $toEmail = $user->email;
 
     //                 $subject = 'New Lead Secured – Auto Bid Active & Contact Details Inside';
@@ -795,7 +795,7 @@ class ZohoEmails
 
             $htmlContent = (new CssToInlineStyles())->convert($htmlView);
             $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-            $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+            $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
             $toEmail = $user->email;
             $subject = 'New Leads Secured – Auto Bid Active & Contact Details Inside';
 
@@ -924,7 +924,7 @@ class ZohoEmails
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
 
         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
         $toEmail = $user->email;
         $subject = 'You Missed a New Lead – Not Enough Credits for Your New Leads';
 
@@ -1112,7 +1112,7 @@ class ZohoEmails
 
         // Send via Zoho API
         $url      = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
         $toEmail   = $user->email;
         $subject   = 'Today’s Missed Leads – Take Action Before It’s Too Late';
         $hasAccordionStyle = stripos($htmlFinal, 'input.ac-toggle') !== false;
@@ -1222,7 +1222,7 @@ class ZohoEmails
     //                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
     //                 $url = ZohoHelper::getUrl(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+    //                 $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
     //                 $toEmail = $user->email;
     //                 $subject = 'New Lead Request – Prompt Reply Appreciated';
 
@@ -1330,7 +1330,7 @@ class ZohoEmails
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
         $toEmail = $user->email;
         $subject = 'You Have New Leads – Reply Promptly';
 
@@ -1444,7 +1444,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = $data['subject'];
 
@@ -1530,7 +1530,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = "7 Days, 0 Leads – Let’s Fix That";
                     if($creditPurchase){
@@ -1615,7 +1615,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = "Jobs Matching Your Preferences Are Waiting – You're Just 1 Top-Up Away";
                     if($creditPurchase){
@@ -1713,7 +1713,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
 
                     DB::table('zoho_logs')->insert([
@@ -1829,7 +1829,7 @@ class ZohoEmails
 
                         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                         $toEmail = $user->email;
                         $subject = 'Lead Closed: ' . $lead->category->name .' request has been taken';
 
@@ -1936,7 +1936,7 @@ class ZohoEmails
                         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                         $toEmail = $user->email;
                         $subject = 'You have purchased a new lead!';
 
@@ -2043,7 +2043,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Hey! You have got a new lead!';
 
@@ -2125,7 +2125,7 @@ class ZohoEmails
                         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
                     }
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Here is your magic link';
 
@@ -2191,7 +2191,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = "You're Now a Quote Customer — Start Requesting Quotes Today!";
 
@@ -2261,7 +2261,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Your Account Has Been Transitioned to a Lead Buyer Account';
 
@@ -2376,7 +2376,7 @@ class ZohoEmails
 
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'noreply@localistscustomers.com');
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = $data['subject'];
 

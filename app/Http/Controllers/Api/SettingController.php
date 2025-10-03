@@ -198,7 +198,7 @@ class SettingController extends Controller
 
         }
 
-        CustomHelper::runInBackground(function() use ($euId) {
+        CustomHelper::runInBackground(function() use ($user_id) {
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
         });
         
