@@ -601,7 +601,28 @@ class LeadService
             ->first();
 
         if (!$ref) {
-            throw new \Exception("Reference postcode not found: $refPostcode; lead_id: " . $lead->id);
+            $reqPostcode = $refPostcode;
+            if(!empty($reqPostcode)){
+                $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
+                if(empty($dbPostcode)){
+                    $tempCord = CustomHelper::getCoordinates($reqPostcode);
+                    if(!empty($tempCord)){
+                        $cordArr = json_decode($tempCord, true);
+                        if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                            Postcode::create([
+                                'postcode' => $reqPostcode,
+                                'latitude' => $cordArr['lat'],
+                                'longitude' => $cordArr['lng'],
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            $ref = DB::table('postcodes')
+                ->select('latitude', 'longitude')
+                ->where('postcode', $refPostcode)
+                ->first();
         }
 
         $refLat = $ref->latitude;

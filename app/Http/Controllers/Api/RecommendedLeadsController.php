@@ -179,6 +179,25 @@ class RecommendedLeadsController extends Controller
         $responseTimeFilter = $request->responseTimeFilter ?? [];
         $ratingFilter = $request->rating ?? [];
 
+        // check if request postcode exists in postcode table, if not then get coordinates and save
+        $reqPostcode = $lead->postcode;
+        if(!empty($reqPostcode)){
+            $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
+            if(empty($dbPostcode)){
+                $tempCord = CustomHelper::getCoordinates($reqPostcode);
+                if(!empty($tempCord)){
+                    $cordArr = json_decode($tempCord, true);
+                    if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                        Postcode::create([
+                            'postcode' => $reqPostcode,
+                            'latitude' => $cordArr['lat'],
+                            'longitude' => $cordArr['lng'],
+                        ]);
+                    }
+                }
+            }
+        }
+
         $result = $leadService->getAllSellers($lead);
         $result['response']['repliesListCount'] = RecommendedLead::where('buyer_id', $request->user_id)->where('lead_id', $lead->id)->count();
         if(!empty($result['response']['sellers'])){
