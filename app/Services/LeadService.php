@@ -352,6 +352,26 @@ class LeadService
 
                 foreach ($ulDistance as $item) {
                     // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
+
+                    // check if request postcode exists in postcode table, if not then get coordinates and save
+                    if(!empty($item['postcode'])){
+                        $dbPostcode = Postcode::where('postcode', $item['postcode'])->first();
+                        if(empty($dbPostcode)){
+                            $tempCord = CustomHelper::getCoordinates($item['postcode']);
+                            if(!empty($tempCord)){
+                                $cordArr = json_decode($tempCord, true);
+                                if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                                    Postcode::create([
+                                        'postcode' => $item['postcode'],
+                                        'latitude' => $cordArr['lat'],
+                                        'longitude' => $cordArr['lng'],
+                                    ]);
+                                }
+                            }
+                        } 
+                    }
+
+
                     $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($item['postcode'], $item['miles']);
 
                     $query->orWhere(function ($q) use ($item, $radiusPostcodeQuery) {
@@ -374,6 +394,25 @@ class LeadService
             $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
                 //for distance type
                 // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
+
+
+                // check if request postcode exists in postcode table, if not then get coordinates and save
+                if(!empty($requestPostcode)){
+                    $dbPostcode = Postcode::where('postcode', $requestPostcode)->first();
+                    if(empty($dbPostcode)){
+                        $tempCord = CustomHelper::getCoordinates($requestPostcode);
+                        if(!empty($tempCord)){
+                            $cordArr = json_decode($tempCord, true);
+                            if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                                Postcode::create([
+                                    'postcode' => $requestPostcode,
+                                    'latitude' => $cordArr['lat'],
+                                    'longitude' => $cordArr['lng'],
+                                ]);
+                            }
+                        }
+                    } 
+                }
                 $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($requestPostcode, $requestMiles);
                 foreach($allServices as $item){
 
