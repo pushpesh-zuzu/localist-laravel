@@ -596,7 +596,7 @@ class LeadService
 
                 $intersect = array_intersect($expectedAnswers, $leadAnswers);
 
-                if (empty($intersect) && !in_array('Something else (please describe)', $expectedAnswers)) {
+                if (empty($intersect) && !in_array(strtolower('Something else (please describe)'), array_map('strtolower', $expectedAnswers))) {
                     // logger("Lead ID {$lead->id} failed on question: $question");
                     // logger("Lead answers: " . json_encode($leadAnswers));
                     // logger("Expected answers: " . json_encode($expectedAnswers));
@@ -736,7 +736,7 @@ class LeadService
                 'users.created_at as user_created_time'
             )
             ->get();
-
+           
         // Step 3: Group sellers by user_id + postcode
         $grouped = $rows->groupBy(fn($row) => $row->user_id . '_' . $row->postcode)
             ->map(function ($items) use ($serviceName, $leadCreditScore) {
@@ -756,13 +756,12 @@ class LeadService
                 || $row->postcode == $refPostcode
                 || $row->miles >= $row->distance;
         });
-
         // Step 5: Apply distance sorting logic
         $distanceOrder = strtolower($filters['distance_order'] ?? '');
         $final = $this->usersAccordingToPrefs($question, $filteredUsers, $serviceId)
             ->when($distanceOrder === '' || $distanceOrder === 'nearest to farthest', fn($c) => $c->sortBy('distance'))
             ->when($distanceOrder === 'farthest to nearest', fn($c) => $c->sortByDesc('distance'));
-
+       
         // Step 6: Ensure unique sellers (keep nearest one per seller id)
         $seen = [];
         $finalUniqueSellers = $final->filter(function ($seller) use (&$seen) {
@@ -957,7 +956,7 @@ class LeadService
                 // logger("User Prefs: ", $userAnswers);
 
                 // Case 4: match if user pref contains "other"
-                if (in_array('Something else (please describe)', $userAnswers)) {
+                if (in_array(strtolower('Something else (please describe)'), array_map('strtolower', $userAnswers))) {
                     continue;
                 }
 
