@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Helpers\CustomHelper;
 use App\Http\Controllers\Api\Customer\AccountSettingController;
 use App\Http\Controllers\Api\LeadPreferenceController;
 use App\Http\Controllers\Api\Customer\MyRequestController;
@@ -33,6 +34,12 @@ Route::get('/otps/{email}', [ApiController::class, 'regOtps']);
 Route::get('/check_api', function () {
     return "api is working!-all-ok-final-1";
 });
+
+Route::get('/test-postcode', function () {
+    $cordinates = json_decode(CustomHelper::getCoordinates('ST6 2FD'), true);
+    dd($cordinates);
+});
+
 
 Route::get('/test-function', [MyRequestController::class, 'sendNewLeadRequestAutoBidOff']);
 

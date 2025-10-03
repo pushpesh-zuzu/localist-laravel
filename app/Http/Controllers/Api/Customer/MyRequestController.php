@@ -32,6 +32,7 @@ use App\Models\UserDetail;
 use App\Models\AutobidStatusLog;
 use App\Models\AbandonedUser;
 use App\Models\SmsLog;
+use App\Models\Postcode;
 use App\Services\LeadService;
 use Exception;
 use GuzzleHttp\Client;
@@ -140,7 +141,7 @@ class MyRequestController extends Controller
             $user = AbandonedUser::where('id',$euId)->first();
 
             $rel['user_id'] = $euId;
-
+            $rel['postcode'] = $request->postcode;
             $rel['user_type'] = $user->user_type;
             $rel['form_status'] = $user->form_status;
             $rel['active_status'] = $user->active_status;
@@ -154,6 +155,9 @@ class MyRequestController extends Controller
                 if($phone){
                     app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
                 }
+
+
+                
                 
             });
 
@@ -200,6 +204,27 @@ class MyRequestController extends Controller
             });
             return $this->sendResponse('Abandoned Quote Customer');
             
+        }
+
+        // check if request postcode exists in postcode table, if not then get coordinates and save
+        $reqPostcode = $request->postcode;
+        if(!empty($reqPostcode)){
+            CustomHelper::runInBackground(function() use ($reqPostcode) {
+                $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
+                if(empty($dbPostcode)){
+                    $tempCord = CustomHelper::getCoordinates($reqPostcode);
+                    if(!empty($tempCord)){
+                        $cordArr = json_decode($tempCord, true);
+                        if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                            Postcode::create([
+                                'postcode' => $reqPostcode,
+                                'latitude' => $cordArr['lat'],
+                                'longitude' => $cordArr['lng'],
+                            ]);
+                        }
+                    }
+                }                
+            });
         }
 
     }
@@ -354,6 +379,27 @@ class MyRequestController extends Controller
         $euId = $accessToken->abilities['user_id'] ?? null;
         if (!$euId) {
             return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+        }
+
+        // check if request postcode exists in postcode table, if not then get coordinates and save
+        $reqPostcode = $request->postcode;
+        if(!empty($reqPostcode)){
+            CustomHelper::runInBackground(function() use ($reqPostcode) {
+                $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
+                if(empty($dbPostcode)){
+                    $tempCord = CustomHelper::getCoordinates($reqPostcode);
+                    if(!empty($tempCord)){
+                        $cordArr = json_decode($tempCord, true);
+                        if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                            Postcode::create([
+                                'postcode' => $reqPostcode,
+                                'latitude' => $cordArr['lat'],
+                                'longitude' => $cordArr['lng'],
+                            ]);
+                        }
+                    }
+                }                
+            });
         }
 
         $serviceId =$request->service_id;
