@@ -361,12 +361,15 @@ class CustomHelper
             }
             $imagename = uniqid() . '_' . time() . '.' . $imageext;
 
-            if(env('APP_ENV', config('app.env')) == 'local'){
-                $folderPath = 'images/' . $destinationFolder;
-                $image->storeAs($folderPath, $imagename, 'public');
-            }else if(env('APP_ENV', config('app.env')) == 'production'){
-                $imagename = 'profile.png';
-            }
+            // if(env('APP_ENV', config('app.env')) == 'local'){
+            //     $folderPath = 'images/' . $destinationFolder;
+            //     $image->storeAs($folderPath, $imagename, 'public');
+            // }else if(env('APP_ENV', config('app.env')) == 'production'){
+            //     $imagename = 'profile.png';
+            // }
+
+            $folderPath = 'images/' . $destinationFolder;
+            $image->storeAs($folderPath, $imagename, 'public');
         }
         return  $imagename;
     }
