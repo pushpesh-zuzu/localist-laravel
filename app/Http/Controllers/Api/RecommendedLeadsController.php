@@ -188,7 +188,7 @@ class RecommendedLeadsController extends Controller
                 if(!empty($tempCord)){
                     $cordArr = json_decode($tempCord, true);
                     if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
-                        Postcode::create([
+                        Postcode::insertGetId([
                             'postcode' => $reqPostcode,
                             'latitude' => $cordArr['lat'],
                             'longitude' => $cordArr['lng'],
