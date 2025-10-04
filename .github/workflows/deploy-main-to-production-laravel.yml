@@ -1,14 +1,14 @@
 name: Deploy main → production (Laravel)
 
 on:
-  workflow_dispatch: # Manual trigger only
+  workflow_dispatch: # Allows manual trigger
 
 permissions:
   contents: write
 
 jobs:
   deploy:
-    name: Mirror main → production (without workflows)
+    name: Push main to production
     runs-on: ubuntu-latest
 
     steps:
@@ -18,26 +18,16 @@ jobs:
           echo "❌ Unauthorized user: ${{ github.actor }}"
           exit 1
 
-      - name: Checkout main branch
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Mirror main to production (excluding workflows)
+      - name: Push main to production
         run: |
           git config user.name "Pushpesh Sharma"
           git config user.email "pushpeshsh@zuzucodes.com"
-
-          # Remove .github/workflows from local copy before pushing
-          rm -rf .github/workflows
-
-          # Create a temporary branch identical to main (no new commits)
-          git checkout -b mirror-temp
-
-          # Force push main content to production, without adding commits
-          git push origin mirror-temp:production --force
-
-          # Clean up temp branch locally
+          git fetch origin
           git checkout main
-          git branch -D mirror-temp
+          git push origin main:production --force
