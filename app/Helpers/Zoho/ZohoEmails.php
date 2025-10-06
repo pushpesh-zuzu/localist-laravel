@@ -1119,7 +1119,7 @@ class ZohoEmails
         $hasInputs = stripos($htmlFinal, '<input type="checkbox"') !== false;
         DB::table('zoho_logs')->insert([
             'url'          => $url,
-            'function_name'=> 'sendGroupedLeadEmailBidNotEnough',
+            'function_name'=> 'sendGroupedLeadDetails',
             'ipaddress'    => request()->ip(),
             'created_at'   => now(),
         ]);

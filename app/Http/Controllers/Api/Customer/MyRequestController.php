@@ -516,7 +516,7 @@ class MyRequestController extends Controller
                         ->values()
                         ->take(7);
                     foreach($sortedSellers as $seller){
-                        // ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
+                        ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                     }
                 }
                 
@@ -524,7 +524,7 @@ class MyRequestController extends Controller
                 //Auto bid related emails
                 app(self::class)->sendNewLeadRequestAutoBidOff();
                 app(self::class)->sendLeadEmailCreditEnough();
-                app(self::class)->sendLeadEmailCreditNotEnough();
+                // app(self::class)->sendLeadEmailCreditNotEnough();
             });
             return $this->sendResponse('Quote Submitted Successfully',$rel);
 
