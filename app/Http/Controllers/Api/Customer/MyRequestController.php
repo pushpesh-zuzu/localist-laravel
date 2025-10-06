@@ -516,7 +516,7 @@ class MyRequestController extends Controller
                         ->values()
                         ->take(7);
                     foreach($sortedSellers as $seller){
-                        ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
+                        // ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                     }
                 }
                 
