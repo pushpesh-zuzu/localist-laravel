@@ -82,7 +82,7 @@ class MyRequestController extends Controller
             $validator2 = Validator::make($request->all(), [
                 'name' => 'required',
                 'email' => 'required|unique:users,email',
-                'phone' => 'required'
+                'phone' => 'sometimes'
               ], [
                 'name.required' => 'Name is required.',
                 'email.required' => 'Email is required.',
@@ -233,6 +233,7 @@ class MyRequestController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:abandoned_users,id',
             'otp' => 'required',
+            'no_otp' => 'sometimes'
           ], [
             'image_file.required' => 'Location Postcode is required.'
         ]);
@@ -240,9 +241,23 @@ class MyRequestController extends Controller
             return $this->sendError($validator->errors());
         }
 
+        $abUser1 = AbandonedUser::where('id',$request->user_id)->first();
+        if(empty($abUser1->phone)){
+            if(!empty($request->phone)){
+                $phData['phone'] = $request->phone;
+                $phData['updated_at'] = date('y-m-d H:i:s');
+                AbandonedUser::where('id',$request->user_id)->update($phData);
+            }        
+        }
+        
+
         $abUser = AbandonedUser::where('id',$request->user_id)->first();
         $cOtp = $abUser->otp;
         $otp = $request->otp;
+
+        if(!empty($request->no_otp) && $request->no_otp == "1"){
+            $otp = $cOtp;
+        }
 
         if($cOtp == $otp){
             $password =Str::random(8);
