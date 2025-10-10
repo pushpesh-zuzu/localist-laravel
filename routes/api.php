@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CreditPlanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\Cron\CronController;
+use App\Http\Controllers\Api\FacebookController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
@@ -253,6 +254,8 @@ Route::prefix('users')->group(function () {
         //My Payment details
         Route::post('/seller-card-details', [SettingController::class, 'sellerCardDetails']);
         Route::get('/get-seller-card', [SettingController::class, 'getSellerCard']);
+        Route::post('seller-card-remove', [SettingController::class, 'removeCard']);
+        Route::post('/seller-card-make-primary', [SettingController::class, 'makePrimaryCard']);
 
         //My Profile
         Route::post('/seller-myprofile-qa', [SettingController::class, 'sellerMyprofileqa']);
@@ -260,6 +263,11 @@ Route::prefix('users')->group(function () {
         Route::post('/update-seller-profile', [SettingController::class, 'updateSellerProfile']);
 
         Route::post('/add-suggested-que', [SuggestedQuestionController::class, 'addSuggestedQue']);
+
+
+
+        Route::post('/facebook/create-token', [FacebookController::class, 'exchangeToken']);
+        Route::post('/facebook/get-token', [FacebookController::class, 'getSellerToken']);
 
 
     });
