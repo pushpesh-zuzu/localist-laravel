@@ -8,6 +8,7 @@ use App\Helpers\CustomHelper;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2;
 use Google\Service\MyBusinessAccountManagement;
+use Google\Service\MyBusinessBusinessInformation;
 
 class GoogleAuthController extends Controller
 {
@@ -51,6 +52,7 @@ class GoogleAuthController extends Controller
                 'refresh_token' => $token['refresh_token'] ?? null,
                 'expires_in'    => $token['expires_in'],
                 'profile'      => self::getGoogleProfileData($token['access_token']),
+                'locations'    => self::getGoogleLocations($token['access_token']),
             ];
            
             /**
@@ -91,6 +93,51 @@ class GoogleAuthController extends Controller
             return null;
         }
     }
+
+    public static function getGoogleLocations($accessToken)
+    {
+        $client = new GoogleClient();
+        $client->setAccessToken($accessToken);
+
+        try {
+            // 1️⃣ Get account info
+            $myBusinessService = new MyBusinessAccountManagement($client);
+            $accounts = $myBusinessService->accounts->listAccounts();
+
+            $locations = [];
+
+            foreach ($accounts->getAccounts() as $account) {
+                $accountId = $account->name; // e.g., accounts/123456789
+
+                // Use MyBusinessBusinessInformation instead of old MyBusiness for newer APIs
+                $locationsService = new \Google\Service\MyBusinessBusinessInformation($client);
+                $locList = $locationsService->accounts_locations->listAccountsLocations($accountId);
+
+                foreach ($locList->getLocations() as $location) {
+                    // Extract numeric location ID from full resource name
+                    preg_match('/locations\/(\d+)/', $location->name, $matches);
+                    $locationId = $matches[1] ?? null;
+
+                    $locations[] = [
+                        'account_id'   => $accountId,
+                        'location_id'  => $locationId,
+                        'name'         => $location->name,
+                        'title'        => $location->locationName,
+                        'address'      => $location->address ? json_decode(json_encode($location->address), true) : null,
+                        'primaryPhone' => $location->primaryPhone ?? null,
+                        'websiteUrl'   => $location->websiteUrl ?? null,
+                        'latlng'       => $location->latlng ? json_decode(json_encode($location->latlng), true) : null,
+                    ];
+                }
+            }
+
+            return $locations;
+
+        } catch (\Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
 }
 
 
