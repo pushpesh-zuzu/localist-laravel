@@ -1,50 +1,55 @@
 <x-app-layout>
     <x-slot name="header">{{ __('Email Setting') }} </x-slot>
 
-    <div class="card mb-4">
-      <div class="card-header">
-          <strong>{{ __('Email Setting') }}</strong>
-          <a href="{{ route('email-settings.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Email Setting') }}</a>
-      </div>
-      <div class="card-body">
-        @if(session()->has('success'))
-        <div class="alert alert-success">{{ session()->get('success') }}</div>
-        @endif
-        @if(session()->has('error'))
-        <div class="alert alert-danger">{{ session()->get('error') }}</div>
-        @endif
-        @php
-            // echo "<pre>";
-            // print_r($settings);
-        @endphp
-        <div class="row" style="margin-left:10%; margin-right:10%;">
-            {{-- @if(in_array('Send Welcome Email', array_column($settings, 'setting_name')))
-                @php
-                    $s1 = collect($settings)->firstWhere('setting_name', 'Send Welcome Email')['setting_value'] ?? 0;
-                @endphp
-                <div class="d-flex justify-content-between align-items-center p-3">
-                    <label class="form-check-label mb-0">Send Welcome Email</label>
-                    <div class="form-check form-switch m-0">
-                        <input class="form-check-input" type="checkbox" role="switch" id="newLeadsSwitch" data-setting="Send Welcome Email" data-value="{{$s1}}" @if($s1) checked @endif>
-                    </div>
-                </div>
-            @endif --}}
-            
-            @foreach($settings as $s)
-                <div class="d-flex justify-content-between align-items-center p-3">
-                    <label class="form-check-label mb-0">{{$s['setting_name']}}</label>
-                    <div class="form-check form-switch m-0">
-                        <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-value="{{$s['setting_value']}}" @if($s['setting_value']) checked @endif>
-                    </div>
-                </div>
-            @endforeach
-                                    
+    <div class="row">
+        <div class="md-col-12 mb-4">
+            <a href="{{ route('email-settings.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Email Setting') }}</a>
         </div>
-      </div>
+        <div class="md-col-12 mb-4">
+            @if(session()->has('success'))
+                <div class="alert alert-success">{{ session()->get('success') }}</div>
+            @endif
+            @if(session()->has('error'))
+                <div class="alert alert-danger">{{ session()->get('error') }}</div>
+            @endif
+        </div>
     </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <table id="email-settings-table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>{{ __('Setting Name') }}</th>
+                        <th>{{ __('Email') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($settings as $s)
+                        <tr>
+                            <td>{{$s['setting_name']}}</td>
+                            <td>
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-value="{{$s['setting_value']}}" @if($s['setting_value']) checked @endif>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             $(document).ready(function () {
+                $('#email-settings-table').DataTable({
+                    paging: true,
+                    info: false,
+                    pageLength: 50,
+                    ordering: false, // prevent breaking nested order
+                    dom: 'lfrtip', // length menu, filter, table, info, pagination
+                });
                 $('.toggle').on('change', function (e) {
                     const $checkbox = $(this);
                     const id = $checkbox.data('id');
