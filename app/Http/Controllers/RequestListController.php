@@ -44,6 +44,9 @@ class RequestListController extends Controller
                 $quesArr = json_decode($item->questions, true);
                 if (is_array($quesArr)) {
                     foreach ($quesArr as $index => $q) {
+                        if (!is_array($q) || !isset($q['ques'], $q['ans'])) {
+                          continue; // skip null or invalid entries
+                        }
                         $output .= "<b>Q" . ($index + 1) . ".</b> " . e($q['ques']) . "<br>";
                         $output .= "<b>Ans: </b>" . e($q['ans']) . "<br><br>";
                     }

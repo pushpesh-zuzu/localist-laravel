@@ -165,9 +165,11 @@ class MyRequestController extends Controller
 
         }else{
 
-            $euId = AbandonedUser::where('email',$request->email)->value('id');
-            if(!empty($euId)){
-                return $this->sendResponse('Abandoned Quote Customer already exists');
+            if(!empty($request->email)){
+                $euId = AbandonedUser::where('email',$request->email)->value('id');
+                if(!empty($euId)){
+                    return $this->sendResponse('Abandoned Quote Customer already exists');
+                }
             }
             $dataUser['name'] = $request->name;
             $dataUser['email'] = $request->email;
