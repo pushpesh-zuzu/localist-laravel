@@ -139,12 +139,7 @@
                 {{ __('Plans') }}
             </a>
         </li>
-        <li class="nav-item">
-            <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.index') ? 'active' : '' }}">
-                <i class="bi bi-gear nav-icon"></i>
-                {{ __('Settings') }}
-            </a>
-        </li>
+        
         <li class="nav-item">
             <a href="{{ route('coupon.index') }}" class="nav-link {{ request()->routeIs('coupon.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-gift nav-icon"></i>
@@ -153,19 +148,19 @@
         </li>
         <li class="nav-group" aria-expanded="false">
             <a class="nav-link nav-group-toggle" href="#">
-            <i class="fa-solid fa-envelope nav-icon"></i> Emails</a>
+            <i class="bi bi-gear nav-icon"></i> Settings</a>
               <ul class="nav-group-items compact" style="height: 100px;">
 
                 <li class="nav-item">
-                  <a href="{{ route('seller.incomplete') }}" class="nav-link {{ request()->routeIs('seller.incomplete') ? 'active' : '' }}">
-                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                      Templates
+                  <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.index') ? 'active' : '' }}">
+                      <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      General Settings
                   </a>
                 </li>
                 <li class="nav-item">
                   <a href="{{ route('email-settings.index') }}" class="nav-link {{ request()->routeIs('email-settings.index') ? 'active' : '' }}">
                     <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-                      Settings
+                      Email Settings
                   </a>
                 </li>
               </ul>
