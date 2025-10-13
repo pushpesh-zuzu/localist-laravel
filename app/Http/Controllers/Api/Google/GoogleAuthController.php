@@ -66,7 +66,15 @@ class GoogleAuthController extends Controller
                 );
 
             } catch (\Exception $e) {
-                return $this->sendError($e->getMessage());
+                $debug = [
+                    'access_token'  => $token['access_token'],
+                    'refresh_token' => $token['refresh_token'] ?? null,
+                    'expires_in'    => $token['expires_in'],
+                    'exception_message' => $e->getMessage(),
+                    'used_redirect_uri' => $redirectUri,
+                    'received_code'     => $code,
+                ];
+                return $this->sendError("catchError: " . $e->getMessage(), $debug);
             }
 
             /**
@@ -78,12 +86,12 @@ class GoogleAuthController extends Controller
             return $this->sendResponse('Google authentication successful', $data);
 
         } catch (\Exception $e1) {
-            $debug = [
+            $debug1 = [
                 'exception_message' => $e1->getMessage(),
                 'used_redirect_uri' => $redirectUri,
                 'received_code'     => $code,
             ];
-            return $this->sendError("catchError: " . $e1->getMessage(), $debug);
+            return $this->sendError("catchError: " . $e1->getMessage(), $debug1);
         }
     }
 }
