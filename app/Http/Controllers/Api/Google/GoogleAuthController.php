@@ -52,6 +52,23 @@ class GoogleAuthController extends Controller
                 'expires_in'    => $token['expires_in']
             ];
 
+            try {
+                // Optionally fetch user info
+                $oauth2 = new \Google\Service\Oauth2($client);
+                $client->setAccessToken($token['access_token']);
+                $googleUser = $oauth2->userinfo->get();
+
+                $data['user'] = array(
+                    'id' => $googleUser->id,
+                    'email' => $googleUser->email,
+                    'name' => $googleUser->name,
+                    'avatar' => $googleUser->picture
+                );
+
+            } catch (\Exception $e) {
+                return $this->sendError($e->getMessage());
+            }
+
             /**
              * 🔐 TODO:
              * Save $token['refresh_token'] in your DB against the logged-in user
@@ -60,13 +77,13 @@ class GoogleAuthController extends Controller
 
             return $this->sendResponse('Google authentication successful', $data);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $e1) {
             $debug = [
-                'exception_message' => $e->getMessage(),
+                'exception_message' => $e1->getMessage(),
                 'used_redirect_uri' => $redirectUri,
                 'received_code'     => $code,
             ];
-            return $this->sendError("catchError: " . $e->getMessage(), $debug);
+            return $this->sendError("catchError: " . $e1->getMessage(), $debug);
         }
     }
 }
