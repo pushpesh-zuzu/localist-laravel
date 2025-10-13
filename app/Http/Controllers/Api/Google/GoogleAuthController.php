@@ -49,34 +49,10 @@ class GoogleAuthController extends Controller
             $data = [
                 'access_token'  => $token['access_token'],
                 'refresh_token' => $token['refresh_token'] ?? null,
-                'expires_in'    => $token['expires_in']
+                'expires_in'    => $token['expires_in'],
+                'profile'      => self::getGoogleProfileData($token['access_token']),
             ];
-
-            try {
-                // Optionally fetch user info
-                $oauth2 = new \Google\Service\Oauth2($client);
-                $client->setAccessToken($token['access_token']);
-                $googleUser = $oauth2->userinfo->get();
-
-                $data['user'] = array(
-                    'id' => $googleUser->id,
-                    'email' => $googleUser->email,
-                    'name' => $googleUser->name,
-                    'avatar' => $googleUser->picture
-                );
-
-            } catch (\Exception $e) {
-                $debug = [
-                    'access_token'  => $token['access_token'],
-                    'refresh_token' => $token['refresh_token'] ?? null,
-                    'expires_in'    => $token['expires_in'],
-                    'exception_message' => $e->getMessage(),
-                    'used_redirect_uri' => $redirectUri,
-                    'received_code'     => $code,
-                ];
-                return $this->sendError("catchError: " . $e->getMessage(), $debug);
-            }
-
+           
             /**
              * 🔐 TODO:
              * Save $token['refresh_token'] in your DB against the logged-in user
@@ -94,4 +70,27 @@ class GoogleAuthController extends Controller
             return $this->sendError("catchError: " . $e1->getMessage(), $debug1);
         }
     }
+
+    public static function getGoogleProfileData($accessToken)
+    {
+        $client = new GoogleClient();
+        $client->setAccessToken($accessToken);
+
+        try {
+            $oauth2 = new Oauth2($client);
+            $googleUser = $oauth2->userinfo->get();
+
+            return [
+                'id' => $googleUser->id,
+                'email' => $googleUser->email,
+                'name' => $googleUser->name,
+                'avatar' => $googleUser->picture
+            ];
+
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 }
+
+
