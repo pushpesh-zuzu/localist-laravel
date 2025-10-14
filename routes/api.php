@@ -128,6 +128,8 @@ Route::prefix('customer')->group(function () {
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
 
+        Route::post('update-phone-number',[MyRequestController::class,'updatePhoneNumber']);
+        
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);

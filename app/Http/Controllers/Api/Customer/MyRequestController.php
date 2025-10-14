@@ -231,6 +231,48 @@ class MyRequestController extends Controller
 
     }
 
+    public  function updatePhoneNumber(Request $request){
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required'
+            ], [
+            'phone.required' => 'Phone number is required.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $euId = $request->user_id;
+        $phoneOtp = random_int(1000, 9999);
+        $dataUser['otp'] = $phoneOtp;
+        $phone = $request->phone;
+
+        if (isset($request->phone) && !empty($request->phone)) {
+            $cleanPhone = preg_replace('/\s+/', '', $request->phone); // remove spaces
+            if (strpos($cleanPhone, '+44') !== 0) {
+                $cleanPhone = ltrim($cleanPhone, '0');
+                $dataUser['phone'] = '+44' . $cleanPhone;                
+            } else {
+                $dataUser['phone'] = $cleanPhone;
+            }
+            $phone = $dataUser['phone'];
+        }
+
+        
+
+        $dataUser['updated_at'] = date('Y-m-d H:i:s');
+
+        AbandonedUser::where('id',$request->user_id)->update($dataUser);
+
+        CustomHelper::runInBackground(function() use ($euId, $phone, $phoneOtp) {
+            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+            if($phone){
+                app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
+            }
+        });
+        return $this->sendResponse('Phone Number updated Successfully');
+    }
+
     public function verifyPhoneNumber(Request $request){
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:abandoned_users,id',
