@@ -259,6 +259,8 @@ class MyRequestController extends Controller
         }
 
         
+        $rel['phone'] = $dataUser['phone'];
+        $rel['user_id'] = $euId;
 
         $dataUser['updated_at'] = date('Y-m-d H:i:s');
 
@@ -270,7 +272,7 @@ class MyRequestController extends Controller
                 app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
             }
         });
-        return $this->sendResponse('Phone Number updated Successfully');
+        return $this->sendResponse('Phone Number updated Successfully', $rel);
     }
 
     public function verifyPhoneNumber(Request $request){
