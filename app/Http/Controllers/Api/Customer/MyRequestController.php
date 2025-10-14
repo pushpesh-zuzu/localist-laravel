@@ -231,7 +231,7 @@ class MyRequestController extends Controller
 
     }
 
-    public  function updatePhoneNumber(Request $request){
+    public  function updateRegisterPhoneNumber(Request $request){
         $validator = Validator::make($request->all(), [
             'phone' => 'required'
             ], [
