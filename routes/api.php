@@ -112,8 +112,8 @@ Route::prefix('payment')->group(function () {
 
 
 Route::prefix('google')->group(function () {
-    Route::post('get-auth-token',[GoogleAuthController::class,'getAuthToken']);
-    
+    Route::get('get-auth-url',[GoogleAuthController::class,'getAuthUrl']);
+    Route::match(['get', 'post'], 'get-auth-token',[GoogleAuthController::class,'getAuthToken']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         
     });

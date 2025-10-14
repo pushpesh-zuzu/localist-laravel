@@ -12,6 +12,39 @@ use Google\Service\MyBusinessBusinessInformation;
 
 class GoogleAuthController extends Controller
 {
+
+    public function getAuthUrl()
+    {
+        // Collect config
+        $clientId     = trim(CustomHelper::setting_value('google_reviews_client_id','YOUR_GOOGLE_CLIENT_ID'));
+        $clientSecret = trim(CustomHelper::setting_value('google_reviews_client_secret', 'YOUR_GOOGLE_CLIENT_SECRET'));
+        $redirectUri  = trim(CustomHelper::setting_value('google_reviews_redirect_uri', 'YOUR_GOOGLE_REDIRECT_URI'));
+
+        $client = new GoogleClient();
+        $client->setClientId($clientId);
+        $client->setClientSecret($clientSecret);
+        $client->setRedirectUri($redirectUri);
+
+        // Important scopes for Business Profile (reviews)
+        $scopes = [
+            'openid',
+            'email',
+            'profile',
+            'https://www.googleapis.com/auth/business.manage'
+        ];
+        $client->addScope($scopes);
+        $client->setAccessType('offline');      // to get refresh_token
+        $client->setPrompt('consent');          // force showing consent to obtain refresh token
+
+        $authUrl = $client->createAuthUrl();
+
+        return $this->sendResponse('OK', [
+            'message' => 'Google authentication URL generated successfully',
+            'client_id' => $clientId,
+            'redirect_uri' => $redirectUri,
+            'auth_url' => $authUrl
+        ]);
+    }
     public function getAuthToken(Request $request)
     {
         $code = $request->input('code');
@@ -31,7 +64,7 @@ class GoogleAuthController extends Controller
         $client->setRedirectUri($redirectUri);
         $client->setAccessType("offline"); // needed for refresh token
         $client->setPrompt("consent"); // force prompt to get refresh token
-        $client->setRedirectUri("postmessage");
+        // $client->setRedirectUri("postmessage");
 
         try {
             // Exchange code for tokens
