@@ -10,7 +10,7 @@ use Google\Service\Oauth2;
 use Google\Service\MyBusinessAccountManagement;
 use Google\Service\MyBusinessBusinessInformation;
 
-class GoogleAuthController extends Controller
+class GoogleController extends Controller
 {
 
     public function getAuthUrl()

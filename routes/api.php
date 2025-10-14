@@ -19,7 +19,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
 use App\Http\Controllers\ContactUsController;
-use App\Http\Controllers\Api\Google\GoogleAuthController;
+use App\Http\Controllers\Api\Google\GoogleController;
 
 // use App\Http\Controllers\Api\ZohoController;
 
@@ -32,15 +32,7 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/otps/{email}', [ApiController::class, 'regOtps']);
 
-Route::get('/check_api', function () {
-    return "api is working!-all-ok-final-1";
-});
-
-Route::get('/test-postcode', function () {
-    $cordinates = json_decode(CustomHelper::getCoordinates('ST6 2FD'), true);
-    dd($cordinates);
-});
-
+Route::post('get-city-name', [ApiController::class, 'getCityName']);
 
 Route::get('/test-function', [MyRequestController::class, 'sendNewLeadRequestAutoBidOff']);
 
@@ -112,9 +104,9 @@ Route::prefix('payment')->group(function () {
 
 
 Route::prefix('google')->group(function () {
-    Route::get('get-auth-url',[GoogleAuthController::class,'getAuthUrl']);
-    Route::match(['get', 'post'], 'get-auth-token',[GoogleAuthController::class,'getAuthToken']);
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+        Route::get('get-auth-url',[GoogleController::class,'getAuthUrl']);
+        Route::match(['get', 'post'], 'get-auth-token',[GoogleController::class,'getAuthToken']);
+        Route::middleware('auth:sanctum','authMiddleware')->group(function () {
         
     });
 
@@ -128,7 +120,7 @@ Route::prefix('customer')->group(function () {
     Route::post('update-register-phone-number',[MyRequestController::class,'updateRegisterPhoneNumber']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-                
+
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);

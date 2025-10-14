@@ -39,6 +39,24 @@ use GuzzleHttp\Client;
 
 class ApiController extends Controller
 {
+    public function getCityName(Request $request){
+        $validator = Validator::make($request->all(), [
+            'postcode' => 'required'
+            ], [
+            'postcode.required' => 'Postcode is required.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $res = CustomHelper::getCityNameFromPostcode($request->postcode);
+        if(!empty($res['valid']) && $res['valid'] == true){
+            return $this->sendResponse('City Name Found', $res);        
+        }else{
+            return $this->sendError('City Name Not Found', $res);
+        }
+    }
     public function getCategories()
     {
         $aRows = Category::where('status',1)->get();

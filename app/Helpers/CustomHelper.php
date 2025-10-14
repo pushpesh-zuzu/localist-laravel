@@ -239,6 +239,95 @@ class CustomHelper
         return $pureArray;
     }
 
+    public static function getCityNameFromPostcode($postcode)
+    {
+        $apiKey = CustomHelper::setting_value('google_maps_api');
+
+        // Normalize input
+        $postcode = strtoupper(trim($postcode));
+        $postcode = preg_replace('/\s+/', '', $postcode); // remove all spaces
+
+        // Auto-insert a space before the last 3 characters (if not present)
+        if (strlen($postcode) > 3) {
+            $postcode = substr($postcode, 0, -3) . ' ' . substr($postcode, -3);
+        }
+
+        // ✅ Strict UK postcode regex (no extra characters allowed)
+        $isValidFormat = preg_match('/^(GIR 0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/', $postcode);
+
+        if (!$isValidFormat) {
+            return [
+                'valid' => false,
+                'postcode' => $postcode,
+                'error' => 'Invalid UK postcode format.',
+            ];
+        }
+
+        // Call Google API
+        $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
+            'address' => $postcode,
+            'key' => $apiKey,
+            'region' => 'uk',
+            'components' => 'country:GB',
+        ]);
+
+        if (!$response->successful()) {
+            return [
+                'valid' => false,
+                'postcode' => $postcode,
+                'error' => 'Failed to connect to Google Maps API.',
+            ];
+        }
+
+        $data = $response->json();
+
+        if (!empty($data['results'][0])) {
+            $result = $data['results'][0];
+            $country = null;
+            $city = null;
+            $gPostcode = null;
+
+            foreach ($result['address_components'] as $component) {
+                if (in_array('country', $component['types'])) {
+                    $country = $component['short_name']; // e.g., 'GB'
+                }
+                if (in_array('postal_town', $component['types']) || in_array('locality', $component['types'])) {
+                    $city = $component['long_name']; // e.g., 'London'
+                }
+                if (in_array('postal_code', $component['types'])) {
+                    $gPostcode = $component['long_name']; // e.g., 'SW1A 1AA'
+                }
+                if (in_array('administrative_area_level_1', $component['types'])) {
+                    $region = $component['long_name']; // e.g., 'England'
+                }
+            }
+
+            // Validate UK postcode
+            if ($country === 'GB') {
+                return [
+                    'valid' => true,
+                    'city' => $city ?? 'Unknown City',
+                    'postcode' => $gPostcode ?? $postcode,
+                    'region' => $region ?? null,
+                    'formatted_address' => $result['formatted_address'],
+                ];
+            } else {
+                return [
+                    'valid' => false,
+                    'postcode' => $postcode,
+                    'error' => 'Postcode does not belong to the UK.',
+                ];
+            }
+        }
+
+        return [
+            'valid' => false,
+            'postcode' => $postcode,
+            'error' => 'Invalid or unrecognized postcode.',
+        ];
+    }
+
+
     public static function getCoordinates($postcode){
         $apiKey = CustomHelper::setting_value('google_maps_api');
         $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
