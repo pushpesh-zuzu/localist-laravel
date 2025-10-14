@@ -125,11 +125,10 @@ Route::prefix('customer')->group(function () {
     Route::post('register-quote-customer',[MyRequestController::class,'registerQuoteCustomer']);
     Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
     Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
+    Route::post('update-register-phone-number',[MyRequestController::class,'updateRegisterPhoneNumber']);
     Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
     Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-
-        Route::post('update-register-phone-number',[MyRequestController::class,'updateRegisterPhoneNumber']);
-        
+                
         Route::prefix('my-request')->group(function () {
             Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
             Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);

@@ -233,6 +233,7 @@ class MyRequestController extends Controller
 
     public  function updateRegisterPhoneNumber(Request $request){
         $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:abandoned_users,id',
             'phone' => 'required'
             ], [
             'phone.required' => 'Phone number is required.'
