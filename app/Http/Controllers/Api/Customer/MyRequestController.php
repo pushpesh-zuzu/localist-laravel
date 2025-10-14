@@ -268,7 +268,7 @@ class MyRequestController extends Controller
         AbandonedUser::where('id',$request->user_id)->update($dataUser);
 
         CustomHelper::runInBackground(function() use ($euId, $phone, $phoneOtp) {
-            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId);
+            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
             if($phone){
                 app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
             }
