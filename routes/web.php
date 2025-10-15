@@ -19,7 +19,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\EmailSettingsController;
-
+use App\Helpers\WhatsAppMessage;
+use App\Http\Controllers\GoogleReviewController;
+use Illuminate\Http\Request;
 
 Route::get('phpinfo', function(){
     phpinfo();
@@ -35,7 +37,42 @@ Route::get('/clear-cache', function() {
 });
 
 
+Route::get('/send-whatsapp-test', function () {
+    // recipient's phone number with country code
+    $message = 'Hello! This is a test message from Laravel WhatsApp API 🚀';
 
+    $response = WhatsAppMessage::sendMessage(
+        userId: null,
+        phoneNumber: "917007520258",
+        message: $message,
+        imageUrl: null, // optional
+        // optional
+        subject: 'Testing WhatsApp'
+    );
+
+    return response()->json($response);
+});
+
+Route::get('/send-whatsapp-template-test', function () {
+    $response = WhatsAppMessage::sendTemplate(
+    userId: null,
+    phoneNumber: 919026141516,
+    templateName: "lead_buyer_registration", 
+    languageCode: "en_US",
+    components: [
+        [
+            'type' => 'body',
+            'parameters' => [
+                ['type' => 'text', 'text' => 'Ashish'], 
+            ],
+        ],
+    ]
+);
+
+    
+
+    return response()->json($response);
+});
 
 Route::get('/install-api', function() {
     $exitCode = Artisan::call('install:api');
@@ -108,5 +145,20 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('email-settings/change-status', [EmailSettingsController::class,'changeSettingStatus'])->name('email-settings.change-status');
 
 });
+
+
+Route::get('/facebook-webhook', function (Request $request) {
+    return WhatsAppMessage::verifyWebhook($request);
+});
+
+Route::post('/facebook-webhook', function (Request $request) {
+    return WhatsAppMessage::handleWebhook($request);
+});
+
+
+Route::get('/google/login', [GoogleReviewController::class, 'redirectToGoogle'])->name('google.login');
+    Route::get('/google/callback', [GoogleReviewController::class, 'handleGoogleCallback'])->name('google.callback');
+    Route::post('/google/reviews', [GoogleReviewController::class, 'getReviews']);
+
 
 require __DIR__.'/auth.php';
