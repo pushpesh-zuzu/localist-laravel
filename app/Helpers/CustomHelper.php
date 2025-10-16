@@ -257,7 +257,7 @@ class CustomHelper
         return $pureArray;
     }
 
-    public static function getCoordinates($postcode)
+    public static function getCityNameFromPostcode($postcode)
     {
         $apiKey = CustomHelper::setting_value('google_maps_api');
 
@@ -360,20 +360,20 @@ class CustomHelper
 
 
 
-    // public static function getCoordinates($postcode){
-    //     $apiKey = CustomHelper::setting_value('google_maps_api');
-    //     $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
-    //         'address' => $postcode,
-    //         'key' => $apiKey,
-    //     ]);
+    public static function getCoordinates($postcode){
+        $apiKey = CustomHelper::setting_value('google_maps_api');
+        $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
+            'address' => $postcode,
+            'key' => $apiKey,
+        ]);
 
-    //     $data = $response->json();
-    //     if (!empty($data['results'][0])) {
-    //         return json_encode($data['results'][0]['geometry']['location']); // ['lat' => ..., 'lng' => ...]
-    //     }
+        $data = $response->json();
+        if (!empty($data['results'][0])) {
+            return json_encode($data['results'][0]['geometry']['location']); // ['lat' => ..., 'lng' => ...]
+        }
 
-    //     return null;
-    // }
+        return null;
+    }
 
     public static function update_setting_value($key, $value)
     {

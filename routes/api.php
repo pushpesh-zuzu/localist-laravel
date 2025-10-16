@@ -56,7 +56,7 @@ Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
 
-Route::post('/get-city-name', [LocationController::class, 'getCityNameFromPostcode']);
+Route::post('get-city-name', [ApiController::class, 'getCityName']);
 
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 Route::prefix('check')->group(function () {
