@@ -24,10 +24,10 @@ class BuyerController extends Controller
 
         $query = User::whereIn('user_type', [2, 3])
             ->where('form_status', 1)
-            ->where(function ($q) {
-                $q->where('name', 'not like', '%test%')
-                    ->where('email', 'not like', '%test%');
-            })
+            // ->where(function ($q) {
+            //     $q->where('name', 'not like', '%test%')
+            //         ->where('email', 'not like', '%test%');
+            // })
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -50,10 +50,10 @@ class BuyerController extends Controller
     {
         $query = User::whereIn('user_type', [2, 3])
             ->where('form_status', 1)
-            ->where(function ($q) {
-                $q->where('name', 'like', '%test%')
-                    ->orWhere('email', 'like', '%test%');
-            })
+            // ->where(function ($q) {
+            //     $q->where('name', 'like', '%test%')
+            //         ->orWhere('email', 'like', '%test%');
+            // })
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -78,10 +78,10 @@ class BuyerController extends Controller
 
         $query = AbandonedUser::whereIn('user_type', [2, 3])
             ->where('form_status', 0)
-            ->where(function ($q) {
-                $q->where('name', 'not like', '%test%')
-                    ->where('email', 'not like', '%test%');
-            })
+            // ->where(function ($q) {
+            //     $q->where('name', 'not like', '%test%')
+            //         ->where('email', 'not like', '%test%');
+            // })
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
