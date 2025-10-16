@@ -70,7 +70,9 @@ class User extends Authenticatable
         'active_status',
         'form_status',
         'remember_token',
-        'zoho_record_id'
+        'zoho_record_id',
+        'stripe_customer_id',
+        'stripe_payment_method_id'
     ];
 
     /**
@@ -103,7 +105,7 @@ class User extends Authenticatable
 
     public function accreditations()
     {
-        return $this->hasMany(UserAccreditation::class,'id','user_id');
+        return $this->hasMany(UserAccreditation::class, 'id', 'user_id');
     }
 
     public function services()
@@ -140,13 +142,32 @@ class User extends Authenticatable
     public function getProfileCompletionPercentage(): int
     {
         // Fields directly in `users` table
-        $userFields = ['company_name', 'company_logo', 'name', 'profile_image', 'company_email',
-            'company_phone', 'company_website', 'company_location', 'company_locaion_reason', 'company_size',
-            'company_total_years', 'about_company'];
+        $userFields = [
+            'company_name',
+            'company_logo',
+            'name',
+            'profile_image',
+            'company_email',
+            'company_phone',
+            'company_website',
+            'company_location',
+            'company_locaion_reason',
+            'company_size',
+            'company_total_years',
+            'about_company'
+        ];
 
         // Fields in `user_details` table
-        $detailsFields = ['company_photos', 'company_youtube_link', 'fb_link', 'twitter_link', 'tiktok_link',
-            'insta_link', 'linkedin_link', 'extra_links'];
+        $detailsFields = [
+            'company_photos',
+            'company_youtube_link',
+            'fb_link',
+            'twitter_link',
+            'tiktok_link',
+            'insta_link',
+            'linkedin_link',
+            'extra_links'
+        ];
 
         // Each Q&A counts individually (question's count)
         $qaSlots = 4;
@@ -202,6 +223,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(EmailLog::class, 'user_id', 'id');
     }
-
-
 }

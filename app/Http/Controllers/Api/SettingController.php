@@ -385,6 +385,186 @@ class SettingController extends Controller
         return $this->sendResponse("Card $type successfully!");
     }
 
+
+
+    // public function sellerCardDetails(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'user_id' => 'required|exists:users,id',
+    //         'card_number' => 'required',
+    //         'expiry_date' => 'required',
+    //         'cvc' => 'required',
+    //         'stripe_payment_method_id' => 'required',
+    //     ], [
+    //         'user_id.required' => 'User ID is required.',
+    //         'card_number.required' => 'Card Number is required.',
+    //         'expiry_date.required' => 'Card expiry date is required.',
+    //         'stripe_payment_method_id.required' => 'Stripe payment method ID is required.',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return $this->sendError($validator->errors());
+    //     }
+
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         $user = User::findOrFail($request->user_id);
+    //         $existingCards = UserCardDetail::where('user_id', $user->id)->get();
+    //         foreach ($existingCards as $existingCard) {
+    //             try {
+    //                 if (decrypt($existingCard->card_number) === $request->card_number) {
+    //                     DB::rollBack();
+    //                     return $this->sendError("This card is already added for the user.");
+    //                 }
+    //             } catch (\Exception $e) {
+    //                 continue;
+    //             }
+    //         }
+
+    //         $encryptedCardNumber = encrypt($request->card_number);
+    //         $encryptedCvc = encrypt($request->cvc);
+
+    //         Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
+    //         $stripeCustomerId = $user->stripe_customer_id;
+
+    //         if (empty($stripeCustomerId)) {
+    //             $customer = Customer::create([
+    //                 'name' => $user->name,
+    //                 'email' => $user->email,
+    //                 'payment_method' => $request->stripe_payment_method_id,
+    //             ]);
+
+    //             $stripeCustomerId = $customer->id;
+    //             $user->update([
+    //                 'stripe_customer_id' => $stripeCustomerId,
+    //                 'updated_at' => now(),
+    //             ]);
+    //         } else {
+
+    //             $paymentMethod = PaymentMethod::retrieve($request->stripe_payment_method_id);
+    //             $paymentMethod->attach(['customer' => $stripeCustomerId]);
+    //         }
+
+    //         $stripeCardId = $request->stripe_payment_method_id;
+    //         $isPrimary = !UserCardDetail::where('user_id', $user->id)->exists();
+
+    //         $userCard = UserCardDetail::create([
+    //             'user_id' => $user->id,
+    //             'card_number' => $encryptedCardNumber,
+    //             'expiry_date' => $request->expiry_date,
+    //             'cvc' => $encryptedCvc,
+    //             'stripe_card_id' => $stripeCardId,
+    //             'is_primary' => $isPrimary ? 1 : 0,
+    //         ]);
+
+    //         if ($isPrimary) {
+    //             $user->update([
+    //                 'stripe_payment_method_id' => $stripeCardId,
+    //                 'updated_at' => now(),
+    //             ]);
+    //         }
+
+    //         DB::commit();
+
+    //         return $this->sendResponse("Card added successfully!", [
+    //             'card_id' => $userCard->id,
+    //             'last4' => substr($request->card_number, -4),
+    //             'is_primary' => $userCard->is_primary,
+    //             'stripe_card_id' => $stripeCardId,
+    //         ]);
+
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return $this->sendError("Failed to add card. ERROR: " . $e->getMessage());
+    //     }
+    // }
+
+    public function removeCard(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'card_id' => 'required|exists:user_card_details,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $user = User::findOrFail($request->user_id);
+            $card = UserCardDetail::where('user_id', $user->id)
+                ->where('id', $request->card_id)
+                ->firstOrFail();
+
+            Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
+
+            if ($card->stripe_card_id && $user->stripe_customer_id) {
+                $paymentMethod = PaymentMethod::retrieve($card->stripe_card_id);
+                $paymentMethod->detach();
+            }
+
+            $card->delete();
+
+            DB::commit();
+
+            return $this->sendResponse("Card removed successfully.", []);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError("Failed to remove card. ERROR: " . $e->getMessage());
+        }
+    }
+
+
+    public function makePrimaryCard(Request $request)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'card_id' => 'required|exists:user_card_details,id',
+        ], [
+            'user_id.required' => 'User ID is required.',
+            'card_id.required' => 'Card ID is required.',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $card = UserCardDetail::where('id', $request->card_id)
+                ->where('user_id', $request->user_id)
+                ->firstOrFail();
+
+            UserCardDetail::where('user_id', $request->user_id)
+                ->where('id', '!=', $card->id)
+                ->update(['is_primary' => 0]);
+
+            // Mark this card as primary
+            $card->update(['is_primary' => 1]);
+
+
+            User::where('id', $request->user_id)
+                ->update([
+                    'stripe_payment_method_id' => $card->stripe_card_id,
+                    'updated_at' => now(),
+                ]);
+
+            DB::commit();
+
+            return $this->sendResponse("Card marked as primary successfully!");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError("Failed to update card. ERROR: " . $e->getMessage());
+        }
+    }
+
     public function getSellerCard(Request $request){
         $user_id = $request->user_id;
         $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();

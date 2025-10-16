@@ -55,6 +55,9 @@ Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{lo
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
+
+Route::post('/get-city-name', [LocationController::class, 'getCityNameFromPostcode']);
+
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 Route::prefix('check')->group(function () {
     Route::post('/email-id', [UserController::class, 'checkEmailId']);
@@ -62,92 +65,81 @@ Route::prefix('check')->group(function () {
     Route::post('/company-name', [UserController::class, 'checkCompanyName']);
     Route::post('/company-location', [UserController::class, 'checkCompanyLocation']);
     Route::post('/company-name-without-reg', [UserController::class, 'checkCompanyNameWithoutReg']);
-
 });
 
 //cron for lead buyer registration email
 Route::prefix('cron')->group(function () {
     Route::get('closed-leads', [RecommendedLeadsController::class, 'closeLeads']);
-    Route::get('on-hourly-basis', [CronController::class,'onHourlyBasis']);
-    Route::get('on-day-basis', [CronController::class,'onDayBasis']);
-    Route::get('on-two-basis', [CronController::class,'onTwoDayBasis']);
-    Route::get('on-evening-basis', [CronController::class,'onEveningBasis']);
+    Route::get('on-hourly-basis', [CronController::class, 'onHourlyBasis']);
+    Route::get('on-day-basis', [CronController::class, 'onDayBasis']);
+    Route::get('on-two-basis', [CronController::class, 'onTwoDayBasis']);
+    Route::get('on-evening-basis', [CronController::class, 'onEveningBasis']);
 });
 
 Route::prefix('notification')->group(function () {
 
-    Route::get('notification-cron-logs', [NotificationController::class,'notificationCronLogs']);
+    Route::get('notification-cron-logs', [NotificationController::class, 'notificationCronLogs']);
 
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-        Route::post('add-update-notification-settings',[NotificationController::class,'addUpdateNotificationSettings']);
-        Route::post('get-notification-settings',[NotificationController::class,'getNotificationSettings']);
-        Route::post('fetch-all-notifications',[NotificationController::class,'getAllNotifications']);
-        Route::post('mark-all-read',[NotificationController::class,'markAllNotifications']);
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
+        Route::post('add-update-notification-settings', [NotificationController::class, 'addUpdateNotificationSettings']);
+        Route::post('get-notification-settings', [NotificationController::class, 'getNotificationSettings']);
+        Route::post('fetch-all-notifications', [NotificationController::class, 'getAllNotifications']);
+        Route::post('mark-all-read', [NotificationController::class, 'markAllNotifications']);
     });
-
 });
 
 Route::prefix('review')->group(function () {
-    Route::post('submit-review',[ReviewController::class,'submitReview']);
-    Route::get('get-reviews/{id}',[ReviewController::class,'getReviews']);
-    Route::post('get-profile',[ReviewController::class,'getProfile']);
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-        Route::get('get-customer-link',[ReviewController::class,'getCustomerLink']);
-
+    Route::post('submit-review', [ReviewController::class, 'submitReview']);
+    Route::get('get-reviews/{id}', [ReviewController::class, 'getReviews']);
+    Route::post('get-profile', [ReviewController::class, 'getProfile']);
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
+        Route::get('get-customer-link', [ReviewController::class, 'getCustomerLink']);
     });
-
-
 });
 Route::prefix('payment')->group(function () {
 
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
         Route::post('/buy-credits', [PaymentController::class, 'buyCredits']);
         Route::get('/get-transaction-logs', [PaymentController::class, 'getTransactionLogs']);
         Route::get('/get-invoices', [PaymentController::class, 'getInvoices']);
         Route::post('/download-invoice', [PaymentController::class, 'downloadInvoice']);
     });
-
-
 });
 
 
 Route::prefix('google')->group(function () {
-    Route::post('get-auth-token',[GoogleAuthController::class,'getAuthToken']);
-    
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
-        
-    });
+    Route::post('get-auth-token', [GoogleAuthController::class, 'getAuthToken']);
 
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {});
 });
 
 
 Route::prefix('customer')->group(function () {
-    Route::post('register-quote-customer',[MyRequestController::class,'registerQuoteCustomer']);
-    Route::post('my-request/check-paragraph-quality',[MyRequestController::class,'checkParagraphQuality']);
-    Route::post('my-request/create-new-request',[MyRequestController::class,'createNewRequest']);
-    Route::post('verify-phone-number',[MyRequestController::class,'verifyPhoneNumber']);
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+    Route::post('register-quote-customer', [MyRequestController::class, 'registerQuoteCustomer']);
+    Route::post('my-request/check-paragraph-quality', [MyRequestController::class, 'checkParagraphQuality']);
+    Route::post('my-request/create-new-request', [MyRequestController::class, 'createNewRequest']);
+    Route::post('verify-phone-number', [MyRequestController::class, 'verifyPhoneNumber']);
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
 
         Route::prefix('my-request')->group(function () {
-            Route::get('get-submitted-request-list',[MyRequestController::class,'getSubmittedRequestList']);
-            Route::get('get-submitted-request-info',[MyRequestController::class,'getSubmittedRequestInfo']);
-            Route::post('add-image-to-submitted-request',[MyRequestController::class,'addImageToSubmittedRequest']);
-            Route::post('add-details-to-request',[MyRequestController::class,'addDetailsToRequest']);
+            Route::get('get-submitted-request-list', [MyRequestController::class, 'getSubmittedRequestList']);
+            Route::get('get-submitted-request-info', [MyRequestController::class, 'getSubmittedRequestInfo']);
+            Route::post('add-image-to-submitted-request', [MyRequestController::class, 'addImageToSubmittedRequest']);
+            Route::post('add-details-to-request', [MyRequestController::class, 'addDetailsToRequest']);
         });
 
         Route::prefix('setting')->group(function () {
-            Route::get('get-profile-info',[AccountSettingController::class,'getProfileInfo']);
-            Route::post('update-profile-image',[AccountSettingController::class,'updateProfileImage']);
-            Route::post('update-profile-info',[AccountSettingController::class,'updateProfileInfo']);
-            Route::post('change-password',[AccountSettingController::class,'changePassword']);
+            Route::get('get-profile-info', [AccountSettingController::class, 'getProfileInfo']);
+            Route::post('update-profile-image', [AccountSettingController::class, 'updateProfileImage']);
+            Route::post('update-profile-info', [AccountSettingController::class, 'updateProfileInfo']);
+            Route::post('change-password', [AccountSettingController::class, 'changePassword']);
         });
     });
-
 });
 
 Route::prefix('users')->group(function () {
     //Route::get('/', [UserController::class, 'index']);
-    Route::get('/fetch_company_details/{regNumber}',[UserController::class, 'fetch_company_details']);
+    Route::get('/fetch_company_details/{regNumber}', [UserController::class, 'fetch_company_details']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
 
     Route::post('/pending-leads', [LeadPreferenceController::class, 'pendingLeads']);
@@ -167,16 +159,16 @@ Route::prefix('users')->group(function () {
     Route::post('/create-login-magic-link', [UserController::class, 'createLoginMagicLink']);
     Route::post('/get-seller-profile', [UserController::class, 'getSellerProfile']);
 
-    Route::get('test-api',[ApiController::class,'testApi']);
-    Route::post('test-api',[ApiController::class,'testApi']);
+    Route::get('test-api', [ApiController::class, 'testApi']);
+    Route::post('test-api', [ApiController::class, 'testApi']);
 
 
-    Route::middleware('auth:sanctum','authMiddleware')->group(function () {
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
 
 
 
         Route::post('change-primary-service', [LeadPreferenceController::class, 'changePrimaryService']);
-        Route::post('expand-radius',[LeadPreferenceController::class, 'expandRadius']);
+        Route::post('expand-radius', [LeadPreferenceController::class, 'expandRadius']);
 
         Route::post('/get-seller-recommended-leads', [LeadPreferenceController::class, 'getSellerRecommendedLeads']);
         Route::post('get-seven-days-autobid-pause', [LeadPreferenceController::class, 'getSevenDaysAutobidPause']);
@@ -268,8 +260,6 @@ Route::prefix('users')->group(function () {
 
         Route::post('/facebook/create-token', [FacebookController::class, 'exchangeToken']);
         Route::post('/facebook/get-token', [FacebookController::class, 'getSellerToken']);
-
-
+        Route::post('/facebook/fetch-reviews', [FacebookController::class, 'fetchReviews']);
     });
-
 });

@@ -1,282 +1,186 @@
 <?php
 
-// namespace App\Http\Controllers\Api;
-
-
 namespace App\Http\Controllers;
 
+use App\Helpers\CustomHelper;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Seller; // Your seller model
-// use App\Models\Review; // Your review model
+use App\Models\Seller;
+use App\Models\SellerGoogleToken;
+use Carbon\Carbon;
+use Google\Client as GoogleClient;
+use Google\Service\MyBusinessBusinessInformation;
+use Google\Service\MyBusiness;
 
 class GoogleReviewController extends Controller
 {
-
-//     GOOGLE_CLIENT_ID=your_google_client_id
-// GOOGLE_CLIENT_SECRET=your_google_client_secret
-// GOOGLE_REDIRECT_URL=http://localhost:8000/google/callback
-
-
-
-
-
-    // Step 3a: Redirect seller to Google OAuth
+    /**
+     * Step 1: Redirect seller to Google OAuth
+     */
     public function redirectToGoogle()
     {
-        $client_id = '98795367891-erp3k9241b3k152r4eb88m8mnpmc9eui.apps.googleusercontent.com';
-        $redirect_uri = "https://dev.localists.com/google/callback";
-        $scope = urlencode('https://www.googleapis.com/auth/business.manage');
+        $client = new GoogleClient();
 
-        $auth_url = "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={$client_id}&redirect_uri={$redirect_uri}&scope={$scope}&access_type=offline&prompt=consent";
+        $clientId     = trim(CustomHelper::setting_value('google_reviews_client_id', 'YOUR_GOOGLE_CLIENT_ID'));
+        $clientSecret = trim(CustomHelper::setting_value('google_reviews_client_secret', 'YOUR_GOOGLE_CLIENT_SECRET'));
+        $redirectUri  = trim(CustomHelper::setting_value('google_reviews_redirect_uri', 'YOUR_GOOGLE_REDIRECT_URI'));
 
-        return redirect($auth_url);
+
+        $client->setClientId($clientId);
+        $client->setClientSecret($clientSecret);
+        $client->setRedirectUri($redirectUri);
+        $client->addScope('https://www.googleapis.com/auth/business.manage');
+        $client->setAccessType('offline'); // to get refresh token
+        $client->setPrompt('consent');
+
+        return redirect($client->createAuthUrl());
     }
 
-
-
-
-
-
-public function handleGoogleCallback(Request $request)
-{
-    $code = $request->get('code');
-
-    if (!$code) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Authorization failed!',
-        ], 400);
-    }
-
-    // Exchange authorization code for tokens
-    $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
-        'code' => $code,
-        'client_id' => '98795367891-erp3k9241b3k152r4eb88m8mnpmc9eui.apps.googleusercontent.com',
-        'client_secret' => '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',
-        'redirect_uri' => 'https://dev.localists.com/google/callback',
-        'grant_type' => 'authorization_code',
-    ]);
-
-    $data = $response->json();
-
-    if (!isset($data['access_token'])) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to get access token!',
-            'error' => $data,
-        ], 400);
-    }
-
-    $access_token = $data['access_token'];
-    $refresh_token = $data['refresh_token'] ?? null;
-    $expires_in = $data['expires_in'] ?? null;
-
-    // ✅ Optionally save tokens for logged-in seller
-    /*
-    $seller = Auth::user();
-    $seller->google_access_token = $access_token;
-    $seller->google_refresh_token = $refresh_token;
-    $seller->save();
-    */
-
-    // ✅ Return token data for Postman or frontend
-    return response()->json([
-        'success' => true,
-        'message' => 'Google Business Profile connected successfully!',
-        'data' => [
-            'access_token' => $access_token,
-            'refresh_token' => $refresh_token,
-            'expires_in' => $expires_in,
-        ],
-    ]);
-}
-
-
-
-
-
-
-
-
-
-    // Step 3b: Handle callback from Google
-    // public function handleGoogleCallback(Request $request)
-    // {
-    //     $code = $request->get('code');
-
-    //     if (!$code) {
-    //         return redirect('/')->with('error', 'Authorization failed!');
-    //     }
-
-    //     // Exchange code for access token
-    //     $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
-    //         'code' => $code,
-    //         'client_id' => '98795367891-erp3k9241b3k152r4eb88m8mnpmc9eui.apps.googleusercontent.com',
-    //         'client_secret' => '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',
-    //         'redirect_uri' => "https://dev.localists.com/google/callback",
-    //         'grant_type' => 'authorization_code',
-    //     ]);
-
-    //     $data = $response->json();
-
-    //     if (!isset($data['access_token'])) {
-    //         return redirect('/')->with('error', 'Failed to get access token!');
-    //     }
-
-    //     $access_token = $data['access_token'];
-    //     $refresh_token = $data['refresh_token'] ?? null;
-
-    //     // // Store tokens for the seller
-    //     // $seller = Auth::user(); // Make sure seller is logged in
-    //     // $seller->google_access_token = $access_token;
-    //     // $seller->google_refresh_token = $refresh_token;
-    //     // $seller->save();
-
-    //     // // Optionally fetch reviews immediately
-    //     // $this->fetchReviews($seller);
-
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Google Business Profile connected successfully!',
-    //         'data' => [
-    //             'access_token' => $access_token,
-    //             'refresh_token' => $refresh_token,
-    //             'expires_in' => $googleUser->expiresIn ?? null,
-    //             'email' => $googleUser->getEmail(),
-    //             'name' => $googleUser->getName(),
-    //         ],
-    //     ]);
-
-    //     return redirect('/dashboard')->with('success', 'Google Business Profile connected!');
-    // }
-
-
-
-
-
-   
-public function getReviews(Request $request)
-{
-    $request->validate([
-        'google_access_token' => 'required|string',
-    ]);
-
-    $access_token = $request->input('google_access_token');
-    $allReviews = [];
-
-    try {
-        // 1️⃣ Get the seller’s linked Google accounts
-        $accountsResponse = Http::withToken($access_token)
-            ->get('https://mybusiness.googleapis.com/v4/accounts')
-            ->json();
-
-        if (empty($accountsResponse['accounts'][0]['name'])) {
+    /**
+     * Step 2: Handle Google OAuth Callback
+     */
+    public function handleGoogleCallback(Request $request)
+    {
+        $code = $request->get('code');
+        if (!$code) {
             return response()->json([
                 'success' => false,
-                'message' => 'No Google Business accounts found for this token.',
-                'raw_response' => $accountsResponse,
+                'message' => 'Authorization code missing.',
+            ], 400);
+        }
+
+        try {
+            $client = new GoogleClient();
+
+            $clientId     = trim(CustomHelper::setting_value('google_reviews_client_id', 'YOUR_GOOGLE_CLIENT_ID'));
+            $clientSecret = trim(CustomHelper::setting_value('google_reviews_client_secret', 'YOUR_GOOGLE_CLIENT_SECRET'));
+            $redirectUri  = trim(CustomHelper::setting_value('google_reviews_redirect_uri', 'YOUR_GOOGLE_REDIRECT_URI'));
+
+
+            $client->setClientId($clientId);
+            $client->setClientSecret($clientSecret);
+            $client->setRedirectUri($redirectUri);
+
+            $token = $client->fetchAccessTokenWithAuthCode($code);
+
+            if (isset($token['error'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to get access token.',
+                    'error' => $token
+                ], 400);
+            }
+
+            $accessToken = $token['access_token'];
+            $refreshToken = $token['refresh_token'] ?? null;
+            $expiresAt = isset($token['expires_in']) ? Carbon::now()->addSeconds($token['expires_in']) : null;
+
+            // Save tokens in DB
+            // $seller = Auth::user();
+            // SellerGoogleToken::updateOrCreate(
+            //     ['seller_id' => $seller->id],
+            //     [
+            //         'access_token' => $accessToken,
+            //         'refresh_token' => $refreshToken,
+            //         'token_expires_at' => $expiresAt
+            //     ]
+            // );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Google Business Profile connected successfully!',
+                'data' => $token
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error during Google OAuth',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Step 3: Fetch Google reviews for seller
+     */
+    public function getReviews(Request $request)
+    {
+        $seller = Auth::user();
+
+        $tokenData = SellerGoogleToken::where('seller_id', $seller->id)->first();
+
+        if (!$tokenData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Google token not found for this seller.'
             ], 404);
         }
 
-        $accountId = $accountsResponse['accounts'][0]['name']; // Example: accounts/123456
+        try {
+            $client = new GoogleClient();
+            $client->setAccessToken([
+                'access_token' => $tokenData->access_token,
+                'refresh_token' => $tokenData->refresh_token,
+                'expires_in' => $tokenData->token_expires_at ? $tokenData->token_expires_at->diffInSeconds(now()) : 3600
+            ]);
 
-        // 2️⃣ Get locations under that account
-        $locationsResponse = Http::withToken($access_token)
-            ->get("https://mybusiness.googleapis.com/v4/$accountId/locations")
-            ->json();
+            // Refresh token if expired
+            if ($client->isAccessTokenExpired() && $tokenData->refresh_token) {
+                $client->fetchAccessTokenWithRefreshToken($tokenData->refresh_token);
+                $tokenData->access_token = $client->getAccessToken()['access_token'];
+                $tokenData->token_expires_at = Carbon::now()->addSeconds($client->getAccessToken()['expires_in']);
+                $tokenData->save();
+            }
 
-        if (empty($locationsResponse['locations'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No locations found under this Google account.',
-                'raw_response' => $locationsResponse,
-            ], 404);
-        }
+            $myBusinessService = new MyBusiness($client);
 
-        // 3️⃣ Loop through locations → Fetch reviews
-        foreach ($locationsResponse['locations'] as $location) {
-            $locationId = $location['name'];
-            $locationName = $location['locationName'] ?? 'Unknown Location';
+            // Get accounts
+            $accountsList = $myBusinessService->accounts->listAccounts();
+            if (empty($accountsList->getAccounts())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No Google Business accounts found for this seller.'
+                ], 404);
+            }
 
-            $reviewsResponse = Http::withToken($access_token)
-                ->get("https://mybusiness.googleapis.com/v4/$locationId/reviews")
-                ->json();
+            $allReviews = [];
 
-            if (!empty($reviewsResponse['reviews'])) {
-                foreach ($reviewsResponse['reviews'] as $review) {
-                    $allReviews[] = [
-                        'location_name' => $locationName,
-                        'review_id' => $review['reviewId'] ?? null,
-                        'reviewer_name' => $review['reviewer']['displayName'] ?? 'Anonymous',
-                        'rating' => $review['starRating'] ?? null,
-                        'review_text' => $review['comment'] ?? '',
-                        'review_date' => $review['createTime'] ?? null,
-                    ];
+            foreach ($accountsList->getAccounts() as $account) {
+                $accountName = $account->name; // e.g., accounts/123456
+
+                // Get locations
+                $locations = $myBusinessService->accounts_locations->listAccountsLocations($accountName);
+
+                foreach ($locations->getLocations() as $location) {
+                    $locationId = $location->name; // e.g., accounts/123456/locations/987654
+                    $locationName = $location->locationName ?? 'Unknown Location';
+
+                    // Get reviews
+                    $reviews = $myBusinessService->accounts_locations_reviews->listAccountsLocationsReviews($locationId);
+
+                    foreach ($reviews->getReviews() ?? [] as $review) {
+                        $allReviews[] = [
+                            'location_name' => $locationName,
+                            'review_id' => $review->reviewId ?? null,
+                            'reviewer_name' => $review->reviewer->displayName ?? 'Anonymous',
+                            'rating' => $review->starRating ?? null,
+                            'review_text' => $review->comment ?? '',
+                            'review_date' => $review->createTime ?? null,
+                        ];
+                    }
                 }
             }
+
+            return response()->json([
+                'success' => true,
+                'reviews' => $allReviews
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching Google reviews',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // ✅ Return all reviews
-        return response()->json([
-            'success' => true,
-            'reviews' => $allReviews,
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error fetching Google reviews',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
-
-
-    // Step 3c: Fetch seller reviews
-    // public function fetchReviews($seller)
-    // {
-    //     $access_token = $seller->google_access_token;
-
-    //     // 1. Get Google accounts linked to this seller
-    //     $accounts = Http::withToken($access_token)
-    //         ->get('https://mybusiness.googleapis.com/v4/accounts')
-    //         ->json();
-
-    //     if (!isset($accounts['accounts'][0]['name'])) return;
-
-    //     $accountId = $accounts['accounts'][0]['name']; // Example: accounts/123456
-
-    //     // 2. Get locations for this account
-    //     $locations = Http::withToken($access_token)
-    //         ->get("https://mybusiness.googleapis.com/v4/$accountId/locations")
-    //         ->json();
-
-    //     foreach ($locations['locations'] ?? [] as $location) {
-    //         $locationId = $location['name']; // accounts/123456/locations/987654
-
-    //         // 3. Fetch reviews for each location
-    //         $reviews = Http::withToken($access_token)
-    //             ->get("https://mybusiness.googleapis.com/v4/$locationId/reviews")
-    //             ->json();
-
-    //         // foreach ($reviews['reviews'] ?? [] as $review) {
-    //         //     Review::updateOrCreate(
-    //         //         [
-    //         //             'review_id' => $review['reviewId'],
-    //         //             'seller_id' => $seller->id,
-    //         //         ],
-    //         //         [
-    //         //             'reviewer_name' => $review['reviewer']['displayName'] ?? 'Anonymous',
-    //         //             'rating' => $review['starRating'] ?? null,
-    //         //             'review_text' => $review['comment'] ?? '',
-    //         //             'review_date' => $review['createTime'] ?? now(),
-    //         //             'source' => 'google',
-    //         //         ]
-    //         //     );
-    //         // }
-    //     }
-    // }
 }

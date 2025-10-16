@@ -7,10 +7,10 @@
         </div>
         <div class="md-col-12 mb-4">
             @if(session()->has('success'))
-                <div class="alert alert-success">{{ session()->get('success') }}</div>
+            <div class="alert alert-success">{{ session()->get('success') }}</div>
             @endif
             @if(session()->has('error'))
-                <div class="alert alert-danger">{{ session()->get('error') }}</div>
+            <div class="alert alert-danger">{{ session()->get('error') }}</div>
             @endif
         </div>
     </div>
@@ -22,18 +22,24 @@
                     <tr>
                         <th>{{ __('Setting Name') }}</th>
                         <th>{{ __('Email') }}</th>
+                        <th>{{ __('Whatsapp') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($settings as $s)
-                        <tr>
-                            <td>{{$s['setting_name']}}</td>
-                            <td>
-                                <div class="form-check form-switch m-0">
-                                    <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-value="{{$s['setting_value']}}" @if($s['setting_value']) checked @endif>
-                                </div>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td>{{$s['setting_name']}}</td>
+                        <td>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-settingtype="email" data-value="{{$s['setting_value']}}" @if($s['setting_value']) checked @endif>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-settingtype="whatsapp" data-value="{{$s['whatsapp_setting_value']}}" @if($s['whatsapp_setting_value']) checked @endif>
+                            </div>
+                        </td>
+                    </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -41,53 +47,54 @@
     </div>
 
     @push('scripts')
-        <script>
-            $(document).ready(function () {
-                $('#email-settings-table').DataTable({
-                    paging: true,
-                    info: false,
-                    pageLength: 50,
-                    ordering: false, // prevent breaking nested order
-                    dom: 'lfrtip', // length menu, filter, table, info, pagination
-                });
-                $('.toggle').on('change', function (e) {
-                    const $checkbox = $(this);
-                    const id = $checkbox.data('id');
-                    const settingName = $checkbox.data('setting');
-
-                    // Get intended new value
-                    const newValue = $checkbox.is(':checked') ? 1 : 0;
-
-                    // Prevent toggle until confirmed
-                    e.preventDefault();
-
-                    $.ajax({
-                        url: "{{ route('email-settings.change-status') }}",
-                        type: 'POST',
-                        data: {
-                            id: id,
-                            setting_name: settingName,
-                            setting_value: newValue,
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function (response) {
-                        // Only toggle on success
-                            $checkbox.prop('checked', newValue === 1);
-                            console.log('Setting updated:', response);
-                        },
-                        error: function (xhr) {
-                            // Revert the toggle
-                            $checkbox.prop('checked', newValue !== 1);
-                            console.error('Error updating setting:', xhr.responseText);
-                        }
-                    });
-
-                    // Temporarily disable checkbox to prevent rapid toggle
-                    $checkbox.prop('disabled', true);
-                    setTimeout(() => $checkbox.prop('disabled', false), 500);
-                });
+    <script>
+        $(document).ready(function() {
+            $('#email-settings-table').DataTable({
+                paging: true,
+                info: false,
+                pageLength: 50,
+                ordering: false, // prevent breaking nested order
+                dom: 'lfrtip', // length menu, filter, table, info, pagination
             });
-        </script>
+            $('.toggle').on('change', function(e) {
+                const $checkbox = $(this);
+                const id = $checkbox.data('id');
+                const settingName = $checkbox.data('setting');
+                const settingType = $checkbox.data('settingtype');
+                // Get intended new value
+                const newValue = $checkbox.is(':checked') ? 1 : 0;
+
+                // Prevent toggle until confirmed
+                e.preventDefault();
+
+                $.ajax({
+                    url: "{{ route('email-settings.change-status') }}",
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        setting_name: settingName,
+                        setting_value: newValue,
+                         settingType: settingType,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        // Only toggle on success
+                        $checkbox.prop('checked', newValue === 1);
+                        console.log('Setting updated:', response);
+                    },
+                    error: function(xhr) {
+                        // Revert the toggle
+                        $checkbox.prop('checked', newValue !== 1);
+                        console.error('Error updating setting:', xhr.responseText);
+                    }
+                });
+
+                // Temporarily disable checkbox to prevent rapid toggle
+                $checkbox.prop('disabled', true);
+                setTimeout(() => $checkbox.prop('disabled', false), 500);
+            });
+        });
+    </script>
 
     @endpush
-</x-app-layout>           
+</x-app-layout>

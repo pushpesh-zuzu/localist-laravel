@@ -5,6 +5,7 @@ namespace App\Helpers\Zoho;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\CustomHelper;
+use App\Helpers\WhatsAppMessage;
 use App\Models\AbandonedUser;
 use App\Models\User;
 use App\Models\EmailLog;
@@ -96,6 +97,37 @@ class ZohoEmails
                 }
             }
         }
+
+
+        //start comment by ashish//
+        // $sendWhatsapp = EmailSetting::where('setting_name', 'Send Welcome Email')->value('whatsapp_setting_value');
+
+        // if ($sendWhatsapp) {
+        //     $user = User::find($userId);
+        //     if ($user && !empty($user->phone)) {
+        //         try {
+        //             $response = WhatsAppMessage::sendTemplate(
+        //                 userId: $user->id,
+        //                 phoneNumber: null,
+        //                 templateName: "lead_buyer_registration",
+        //                 languageCode: "en_US",
+        //                 components: [
+        //                     [
+        //                         'type' => 'body',
+        //                         'parameters' => [
+        //                             ['type' => 'text', 'text' => $user->name],
+        //                         ],
+        //                     ],
+        //                 ]
+        //             );
+        //         } catch (\Exception $e) {
+        //             Log::error('WhatsApp send failed for user ' . $userId . ': ' . $e->getMessage());
+        //         }
+        //     }
+        // }
+
+
+        //end comment by ashish//
     }
 
     public static function sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp)
@@ -168,6 +200,35 @@ class ZohoEmails
                 }
             }
         }
+        //start comment by ashish//
+
+        // $sendWhatsapp = EmailSetting::where('setting_name', 'Send Welcome Email For Customer')->value('whatsapp_setting_value');
+
+        // if ($sendWhatsapp) {
+        //     $user = User::find($userId);
+        //     if ($user && !empty($user->phone)) {
+        //         try {
+        //             $response = WhatsAppMessage::sendTemplate(
+        //                 userId: $user->id,
+        //                 phoneNumber: null,
+        //                 templateName: "quote_customer_registration",
+        //                 languageCode: "en_US",
+        //                 components: [
+        //                     [
+        //                         'type' => 'body',
+        //                         'parameters' => [
+        //                             ['type' => 'text', 'text' => $user->name],
+        //                         ],
+        //                     ],
+        //                 ]
+        //             );
+        //         } catch (\Exception $e) {
+        //             Log::error('WhatsApp send failed for user ' . $userId . ': ' . $e->getMessage());
+        //         }
+        //     }
+        // }
+
+        //end comment by ashish//
     }
 
     public static function sendEncouragementEmail($userId)
@@ -194,7 +255,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                     DB::table('zoho_logs')->insert([
+                    DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendEncouragementEmail',
                         'ipaddress' => request()->ip(),
@@ -266,7 +327,7 @@ class ZohoEmails
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
 
-                     DB::table('zoho_logs')->insert([
+                    DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendAbandonedEncouragementEmail',
                         'ipaddress' => request()->ip(),
@@ -323,16 +384,16 @@ class ZohoEmails
             $accessToken = ZohoHelper::getAccessToken();
 
             $zohoId = ZohoHelper::getZohoAbandonLeadBuyerId($accessToken, $userId);
-            Log::info('Incomplete registrtion p1',[
-                        'message'=>$zohoId
-                    ]);
-                        if (!empty($zohoId)) {
-                            $user = AbandonedUser::where('id', $userId)->first();
+            Log::info('Incomplete registrtion p1', [
+                'message' => $zohoId
+            ]);
+            if (!empty($zohoId)) {
+                $user = AbandonedUser::where('id', $userId)->first();
 
-                            if (!empty($user)) {
+                if (!empty($user)) {
 
-            Log::info('Incomplete registrtion p2',[
-                        'message'=>$user
+                    Log::info('Incomplete registrtion p2', [
+                        'message' => $user
                     ]);
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_incomplete_registration',  [
                         'baseUrl' => config('app.react_base_url'),
@@ -346,7 +407,7 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'Complete your registration – We’ve saved your spot!';
 
-                     DB::table('zoho_logs')->insert([
+                    DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendIncompleteRegistrationEmail',
                         'ipaddress' => request()->ip(),
@@ -585,7 +646,7 @@ class ZohoEmails
                         'email' => $fromEmail,
                         'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
                     ],
-                    'to' => [[ 'email' => $toEmail ]],
+                    'to' => [['email' => $toEmail]],
                     'subject' => $subject,
                     'content' => $htmlContent,
                     'mail_format' => 'html',
@@ -614,6 +675,37 @@ class ZohoEmails
                 'response' => json_encode($rel),
             ]);
         }
+
+
+
+
+        //start comment by ashish//
+        // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')->value('whatsapp_setting_value');
+
+        // if ($sendWhatsapp) {
+        //     $user = User::find($userId);
+        //     if ($user && !empty($user->phone)) {
+        //         try {
+        //             $response = WhatsAppMessage::sendTemplate(
+        //                 userId: $user->id,
+        //                 phoneNumber: null,
+        //                 templateName: "lead_buyer_request",
+        //                 languageCode: "en_US",
+        //                 components: [
+        //                     [
+        //                         'type' => 'body',
+        //                         'parameters' => [
+        //                             ['type' => 'text', 'text' => $user->name],
+        //                         ],
+        //                     ],
+        //                 ]
+        //             );
+        //         } catch (\Exception $e) {
+        //             Log::error('WhatsApp send failed for user ' . $userId . ': ' . $e->getMessage());
+        //         }
+        //     }
+        // }
+        //end comment by ashish//
     }
 
 
@@ -843,6 +935,36 @@ class ZohoEmails
                 ]);
             }
         }
+
+
+        //start comment by ashish//
+        // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')->value('whatsapp_setting_value');
+
+        // if ($sendWhatsapp) {
+        //     $user = User::find($userId);
+        //     if ($user && !empty($user->phone)) {
+        //         try {
+        //             $response = WhatsAppMessage::sendTemplate(
+        //                 userId: $user->id,
+        //                 phoneNumber: null,
+        //                 templateName: "lead_buyer_autobidenough",
+        //                 languageCode: "en_US",
+        //                 components: [
+        //                     [
+        //                         'type' => 'body',
+        //                         'parameters' => [
+        //                             ['type' => 'text', 'text' => $user->name],
+        //                         ],
+        //                     ],
+        //                 ]
+        //             );
+        //         } catch (\Exception $e) {
+        //             Log::error('WhatsApp send failed for user ' . $userId . ': ' . $e->getMessage());
+        //         }
+        //     }
+        // }
+
+        //end comment by ashish//
     }
 
 
@@ -954,9 +1076,9 @@ class ZohoEmails
         ]);
 
         Log::info('htmlview', [
-                            'content' => $response->json(),
+            'content' => $response->json(),
 
-                        ]);
+        ]);
         $rel = self::getZohoMailResponse($response);
 
         foreach ($leads as $leadId) {
@@ -973,8 +1095,6 @@ class ZohoEmails
                 'response' => json_encode($rel),
             ]);
         }
-
-
     }
 
 
@@ -1053,7 +1173,7 @@ class ZohoEmails
         ])->render();
 
         // Extract CSS from <style> blocks
-         // (Assume $htmlView already built with Blade earlier)
+        // (Assume $htmlView already built with Blade earlier)
 
         // 1) Extract CSS from <style> blocks (the same as you already do)
         $allStyleContents = '';
@@ -1119,7 +1239,7 @@ class ZohoEmails
         $hasInputs = stripos($htmlFinal, '<input type="checkbox"') !== false;
         DB::table('zoho_logs')->insert([
             'url'          => $url,
-            'function_name'=> 'sendGroupedLeadDetails',
+            'function_name' => 'sendGroupedLeadDetails',
             'ipaddress'    => request()->ip(),
             'created_at'   => now(),
         ]);
@@ -1136,7 +1256,7 @@ class ZohoEmails
                     ],
                     'subject'    => $subject,
                     'content'    => $htmlFinal,
-                    'mail_format'=> 'html',
+                    'mail_format' => 'html',
                     'org_email'  => true,
                 ]
             ]
@@ -1147,12 +1267,12 @@ class ZohoEmails
         foreach ($leads as $leadId) {
             EmailLog::insertGetId([
                 'user_id'     => $user->id,
-                'from_email'  => $fromEmail .'-'.$hasAccordionStyle . '-' .$hasInputs,
+                'from_email'  => $fromEmail . '-' . $hasAccordionStyle . '-' . $hasInputs,
                 'lead_id'     => $leadId,
                 'to_email'    => $toEmail,
                 'message_id'  => $rel['message_id'],
                 'subject'     => $subject,
-                'setting_name'=> 'Send Lead Details Email At Evening',
+                'setting_name' => 'Send Lead Details Email At Evening',
                 'content'     => $htmlFinal,
                 'zoho_url'    => $url,
                 'response'    => json_encode($rel),
@@ -1533,11 +1653,11 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = "7 Days, 0 Leads – Let’s Fix That";
-                    if($creditPurchase){
+                    if ($creditPurchase) {
                         $subject = "7 Days, 0 Leads – Let’s Fix That";
                     }
 
-                     DB::table('zoho_logs')->insert([
+                    DB::table('zoho_logs')->insert([
                         'url' => $url,
                         'function_name' => 'sendLeadsAfterDays',
                         'ipaddress' => request()->ip(),
@@ -1618,7 +1738,7 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = "Jobs Matching Your Preferences Are Waiting – You're Just 1 Top-Up Away";
-                    if($creditPurchase){
+                    if ($creditPurchase) {
                         $subject = "Jobs Matching Your Preferences Are Waiting – You're Just 1 Top-Up Away";
                     }
 
@@ -1668,7 +1788,8 @@ class ZohoEmails
         }
     }
 
-    public static function leadPurchaseStatusUpdateEmail($rlead, $setting_name, $subject){
+    public static function leadPurchaseStatusUpdateEmail($rlead, $setting_name, $subject)
+    {
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $setting_name)->value('setting_value');
         if ($sendLeadRequestEmail) {
             $userId = $rlead->seller_id;
@@ -1677,9 +1798,9 @@ class ZohoEmails
 
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
-                if(!empty($user)){
+                if (!empty($user)) {
 
-                    $lead = LeadRequest::with(['category','customer'])
+                    $lead = LeadRequest::with(['category', 'customer'])
                         ->where('id', $rlead->lead_id)
                         ->first();
 
@@ -1760,20 +1881,20 @@ class ZohoEmails
                 }
             }
         }
-
     }
 
     //
 
-    public static function newLeadClosedEmail($leadId, $sellerId){
+    public static function newLeadClosedEmail($leadId, $sellerId)
+    {
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Lead Buyer - New Lead Closed (Email Notification)')->value('setting_value');
 
-        $allSellers = RecommendedLead::where('lead_id',$leadId)->where('seller_id','!=',$sellerId)->get();
+        $allSellers = RecommendedLead::where('lead_id', $leadId)->where('seller_id', '!=', $sellerId)->get();
 
         foreach ($allSellers as $user) {
-            $userId =$user->seller_id;
-            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_closing_leads','buyer','email');
+            $userId = $user->seller_id;
+            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId, 'buyer_email_customer_closing_leads', 'buyer', 'email');
 
             if ($sendLeadRequestEmail && $sendEmailSettings) {
                 $accessToken = ZohoHelper::getAccessToken();
@@ -1783,7 +1904,7 @@ class ZohoEmails
 
                 if (!empty($zohoId)) {
                     $user = User::where('id', $userId)->first();
-                    if(!empty($user)){
+                    if (!empty($user)) {
                         $lead = LeadRequest::with([
                             'category',
                             'customer'
@@ -1831,7 +1952,7 @@ class ZohoEmails
 
                         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                         $toEmail = $user->email;
-                        $subject = 'Lead Closed: ' . $lead->category->name .' request has been taken';
+                        $subject = 'Lead Closed: ' . $lead->category->name . ' request has been taken';
 
 
                         DB::table('zoho_logs')->insert([
@@ -1885,121 +2006,122 @@ class ZohoEmails
         }
     }
 
-    public static function newLeadHiredEmail($leadId,$userId){
+    public static function newLeadHiredEmail($leadId, $userId)
+    {
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Lead Buyer - New Lead Hired (Email Notification)')->value('setting_value');
-            $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_customer_hiring_me','buyer','email');
-            if ($sendLeadRequestEmail && $sendEmailSettings) {
-                $accessToken = ZohoHelper::getAccessToken();
+        $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId, 'buyer_email_customer_hiring_me', 'buyer', 'email');
+        if ($sendLeadRequestEmail && $sendEmailSettings) {
+            $accessToken = ZohoHelper::getAccessToken();
 
 
-                $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
-                if (!empty($zohoId)) {
-                    $user = User::where('id', $userId)->first();
-                    if(!empty($user)){
-                        $lead = LeadRequest::with([
-                            'category',
-                            'customer'
+            if (!empty($zohoId)) {
+                $user = User::where('id', $userId)->first();
+                if (!empty($user)) {
+                    $lead = LeadRequest::with([
+                        'category',
+                        'customer'
+                    ])
+                        ->where('id', $leadId)
+                        ->first();
+
+                    $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                        ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                        ->map(fn($item) => [
+                            'question' => $item['ques'],
+                            'answer' => implode(', ', $item['ans'])
                         ])
-                            ->where('id', $leadId)
-                            ->first();
-
-                        $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
-                            ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
-                            ->map(fn($item) => [
-                                'question' => $item['ques'],
-                                'answer' => implode(', ', $item['ans'])
-                            ])
-                            ->toArray();
+                        ->toArray();
 
 
-                        $htmlView = view('emails.lead_buyers.leads.lead_buyer_hired',  [
-                            'baseUrl' => config('app.react_base_url'),
-                            'name' => $user->name,
-                            'lead_name' => $lead->customer->name ?? '',
-                            'postcode' => $lead->postcode ?? '',
-                            'phone' => $lead->customer?->phone ?? 'N/A',
-                            'email' => $lead->customer?->email ?? 'N/A',
+                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_hired',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'name' => $user->name,
+                        'lead_name' => $lead->customer->name ?? '',
+                        'postcode' => $lead->postcode ?? '',
+                        'phone' => $lead->customer?->phone ?? 'N/A',
+                        'email' => $lead->customer?->email ?? 'N/A',
 
-                            'service_name' => $lead->category->name ?? '',
-                            'has_additional_details' => $lead->has_additional_details ?? '',
-                            'credit_score' => $lead->credit_score ?? '',
-                            'is_frequent_user' => $lead->is_frequent_user ?? '',
-                            'is_urgent' => $lead->is_urgent ?? '',
-                            'is_high_hiring' => $lead->is_high_hiring ?? '',
-                            'phone_verified' => $lead->is_phone_verified ?? '',
-                            'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
-                            'questionsAndAnswers' => $questionsAndAnswers,
-                        ])->render();
+                        'service_name' => $lead->category->name ?? '',
+                        'has_additional_details' => $lead->has_additional_details ?? '',
+                        'credit_score' => $lead->credit_score ?? '',
+                        'is_frequent_user' => $lead->is_frequent_user ?? '',
+                        'is_urgent' => $lead->is_urgent ?? '',
+                        'is_high_hiring' => $lead->is_high_hiring ?? '',
+                        'phone_verified' => $lead->is_phone_verified ?? '',
+                        'hasEnoughCredits' => ($lead->credit_score <= $user->total_credit) ? '1' : '0',
+                        'questionsAndAnswers' => $questionsAndAnswers,
+                    ])->render();
 
-                        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-                        $toEmail = $user->email;
-                        $subject = 'You have purchased a new lead!';
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = 'You have purchased a new lead!';
 
-                        DB::table('zoho_logs')->insert([
-                            'url' => $url,
-                            'function_name' => 'newLeadHiredEmail',
-                            'created_at' => now(),
-                        ]);
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'newLeadHiredEmail',
+                        'created_at' => now(),
+                    ]);
 
-                        $response = Http::withToken($accessToken)
-                            ->post($url, [
-                                'data' => [
-                                    [
-                                        'from' => [
-                                            'email' => $fromEmail,
-                                            'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
-                                        ],
-                                        'to' => [
-                                            [
-                                                'email' => $toEmail
-                                            ]
-                                        ],
-                                        'subject' => $subject,
-                                        'content' => $htmlContent,
-                                        'mail_format' => 'html',
-                                        'org_email' => true
-                                    ]
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
                                 ]
-                            ]);
-                        $rel = self::getZohoMailResponse($response);
-                         Log::info('New Lead Hired -when pending to hired', [
-                            'user_id' => $userId,
-                            'response' => $response->json(),
+                            ]
                         ]);
-                        $dataE['user_id'] = $user->id;
-                        $dataE['from_email'] = $fromEmail;
-                        $dataE['to_email'] = $toEmail;
-                        $dataE['message_id'] = $rel['message_id'];
-                        $dataE['subject'] = $subject;
-                        $dataE['setting_name'] = 'Lead Buyer - New Lead Hired (Email Notification)';
-                        $dataE['lead_id'] = $leadId;
-                        $dataE['content'] = $htmlContent;
-                        $dataE['zoho_url'] = $url;
-                        $dataE['response'] = json_encode($rel);
+                    $rel = self::getZohoMailResponse($response);
+                    Log::info('New Lead Hired -when pending to hired', [
+                        'user_id' => $userId,
+                        'response' => $response->json(),
+                    ]);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Lead Buyer - New Lead Hired (Email Notification)';
+                    $dataE['lead_id'] = $leadId;
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
 
-                        EmailLog::insertGetId($dataE);
-                    }
+                    EmailLog::insertGetId($dataE);
                 }
-
+            }
         }
     }
 
 
-    public static function newLeadPoolOf7LeadBuyerEmail($leadId, $userId){
+    public static function newLeadPoolOf7LeadBuyerEmail($leadId, $userId)
+    {
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Pool of 7 Lead Buyer')->value('setting_value');
-        $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId,'buyer_email_new_lead','buyer','email');
+        $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId, 'buyer_email_new_lead', 'buyer', 'email');
         if ($sendLeadRequestEmail && $sendEmailSettings) {
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
 
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
-                if(!empty($user)){
+                if (!empty($user)) {
                     $lead = LeadRequest::with([
                         'category',
                         'customer'
@@ -2091,26 +2213,59 @@ class ZohoEmails
                 }
             }
         }
+
+
+        //start comment by ashish//
+        // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead Pool of 7 Lead Buyer')
+        //     ->value('whatsapp_setting_value');
+
+        // if ($sendWhatsapp) {
+        //     $user = User::find($userId);
+        //     $lead = LeadRequest::with('category', 'customer')->find($leadId);
+
+        //     if ($user && !empty($user->phone) && $lead) {
+        //         try {
+        //             $response = WhatsAppMessage::sendTemplate(
+        //                 userId: $user->id,
+        //                 phoneNumber: $user->phone, // pass actual phone number
+        //                 templateName: "lead_buyer_pool_of_7_lead_buyer", // make sure this template is approved
+        //                 languageCode: "en_US",
+        //                 components: [
+        //                     [
+        //                         'type' => 'body',
+        //                         'parameters' => [
+        //                             ['type' => 'text', 'text' => $user->name],                        // {{1}}
+        //                             ['type' => 'text', 'text' => $lead->customer->name ?? ''],         // {{2}}
+        //                             ['type' => 'text', 'text' => $lead->category->name ?? ''],         // {{3}}
+        //                         ],
+        //                     ],
+        //                 ]
+        //             );
+        //         } catch (\Exception $e) {
+        //             Log::error('WhatsApp send failed for user ' . $userId . ': ' . $e->getMessage());
+        //         }
+        //     }
+        // }
+        //end comment by ashish//
     }
 
 
     public static function sendLoginMagicLinkEmail($user, $token)
     {
 
-        $sendLeadRequestEmail = EmailSetting::where('setting_name','Send Login Magic Link')->value('setting_value');
+        $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send Login Magic Link')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
             $accessToken = ZohoHelper::getAccessToken();
-            if($user->user_type == 1){
+            if ($user->user_type == 1) {
                 $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $user->id);
-            }
-            elseif($user->user_type == 2){
+            } elseif ($user->user_type == 2) {
                 $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $user->id);
             }
 
 
-            if(!empty($zohoId)){
-                if(!empty($user)){
+            if (!empty($zohoId)) {
+                if (!empty($user)) {
                     $htmlView = view('emails.login.login_with_magic_link',  [
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
@@ -2118,10 +2273,9 @@ class ZohoEmails
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    if($user->user_type == 1){
+                    if ($user->user_type == 1) {
                         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
-                    }
-                    elseif($user->user_type == 2){
+                    } elseif ($user->user_type == 2) {
                         $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
                     }
 
@@ -2172,7 +2326,8 @@ class ZohoEmails
         }
     }
 
-    public static function switchEmailToQuoteAccount($userId){
+    public static function switchEmailToQuoteAccount($userId)
+    {
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Switch Account From Lead Buyer')->value('setting_value');
 
@@ -2183,67 +2338,65 @@ class ZohoEmails
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
 
-                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_switch_to_quote',  [
-                        'baseUrl' => config('app.react_base_url'),
-                        'name' => $user->name
-                    ])->render();
+                $htmlView = view('emails.lead_buyers.leads.lead_buyer_switch_to_quote',  [
+                    'baseUrl' => config('app.react_base_url'),
+                    'name' => $user->name
+                ])->render();
 
-                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-                    $toEmail = $user->email;
-                    $subject = "You're Now a Quote Customer — Start Requesting Quotes Today!";
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                $toEmail = $user->email;
+                $subject = "You're Now a Quote Customer — Start Requesting Quotes Today!";
 
 
-                    DB::table('zoho_logs')->insert([
-                        'url' => $url,
-                        'function_name' => 'switchEmailToQuoteAccount',
-                        'created_at' => now(),
-                    ]);
+                DB::table('zoho_logs')->insert([
+                    'url' => $url,
+                    'function_name' => 'switchEmailToQuoteAccount',
+                    'created_at' => now(),
+                ]);
 
-                    $response = Http::withToken($accessToken)
-                        ->post($url, [
-                            'data' => [
-                                [
-                                    'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
-                                    ],
-                                    'to' => [
-                                        [
-                                            'email' => $toEmail
-                                        ]
-                                    ],
-                                    'subject' => $subject,
-                                    'content' => $htmlContent,
-                                    'mail_format' => 'html',
-                                    'org_email' => true
-                                ]
+                $response = Http::withToken($accessToken)
+                    ->post($url, [
+                        'data' => [
+                            [
+                                'from' => [
+                                    'email' => $fromEmail,
+                                    'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                ],
+                                'to' => [
+                                    [
+                                        'email' => $toEmail
+                                    ]
+                                ],
+                                'subject' => $subject,
+                                'content' => $htmlContent,
+                                'mail_format' => 'html',
+                                'org_email' => true
                             ]
-                        ]);
-                    $rel = self::getZohoMailResponse($response);
+                        ]
+                    ]);
+                $rel = self::getZohoMailResponse($response);
 
-                    $dataE['user_id'] = $user->id;
-                    $dataE['from_email'] = $fromEmail;
-                    $dataE['to_email'] = $toEmail;
-                    $dataE['message_id'] = $rel['message_id'];
-                    $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'Switch Account From Lead Buyer';
+                $dataE['user_id'] = $user->id;
+                $dataE['from_email'] = $fromEmail;
+                $dataE['to_email'] = $toEmail;
+                $dataE['message_id'] = $rel['message_id'];
+                $dataE['subject'] = $subject;
+                $dataE['setting_name'] = 'Switch Account From Lead Buyer';
 
-                    $dataE['content'] = $htmlContent;
-                    $dataE['zoho_url'] = $url;
+                $dataE['content'] = $htmlContent;
+                $dataE['zoho_url'] = $url;
 
-                    $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);
-                }
+                $dataE['response'] = json_encode($rel);
+                EmailLog::insertGetId($dataE);
             }
-
-
-
+        }
     }
 
-     public static function switchEmailToLeadAccount($userId){
+    public static function switchEmailToLeadAccount($userId)
+    {
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Switch Account From Quote Customer')->value('setting_value');
 
@@ -2253,64 +2406,61 @@ class ZohoEmails
 
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
-                    $htmlView = view('emails.customers.quote_customer_switch_account',  [
-                        'baseUrl' => config('app.react_base_url'),
-                        'name' => $user->name
-                    ])->render();
+                $htmlView = view('emails.customers.quote_customer_switch_account',  [
+                    'baseUrl' => config('app.react_base_url'),
+                    'name' => $user->name
+                ])->render();
 
-                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
 
-                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-                    $toEmail = $user->email;
-                    $subject = 'Your Account Has Been Transitioned to a Lead Buyer Account';
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                $toEmail = $user->email;
+                $subject = 'Your Account Has Been Transitioned to a Lead Buyer Account';
 
 
-                    DB::table('zoho_logs')->insert([
-                        'url' => $url,
-                        'function_name' => 'switchEmailToLeadAccount',
-                        'created_at' => now(),
-                    ]);
+                DB::table('zoho_logs')->insert([
+                    'url' => $url,
+                    'function_name' => 'switchEmailToLeadAccount',
+                    'created_at' => now(),
+                ]);
 
-                    $response = Http::withToken($accessToken)
-                        ->post($url, [
-                            'data' => [
-                                [
-                                    'from' => [
-                                        'email' => $fromEmail,
-                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
-                                    ],
-                                    'to' => [
-                                        [
-                                            'email' => $toEmail
-                                        ]
-                                    ],
-                                    'subject' => $subject,
-                                    'content' => $htmlContent,
-                                    'mail_format' => 'html',
-                                    'org_email' => true
-                                ]
+                $response = Http::withToken($accessToken)
+                    ->post($url, [
+                        'data' => [
+                            [
+                                'from' => [
+                                    'email' => $fromEmail,
+                                    'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                ],
+                                'to' => [
+                                    [
+                                        'email' => $toEmail
+                                    ]
+                                ],
+                                'subject' => $subject,
+                                'content' => $htmlContent,
+                                'mail_format' => 'html',
+                                'org_email' => true
                             ]
-                        ]);
-                    $rel = self::getZohoMailResponse($response);
+                        ]
+                    ]);
+                $rel = self::getZohoMailResponse($response);
 
-                    $dataE['user_id'] = $user->id;
-                    $dataE['from_email'] = $fromEmail;
-                    $dataE['to_email'] = $toEmail;
-                    $dataE['message_id'] = $rel['message_id'];
-                    $dataE['subject'] = $subject;
-                    $dataE['setting_name'] = 'Switch Account From Quote Customer';
+                $dataE['user_id'] = $user->id;
+                $dataE['from_email'] = $fromEmail;
+                $dataE['to_email'] = $toEmail;
+                $dataE['message_id'] = $rel['message_id'];
+                $dataE['subject'] = $subject;
+                $dataE['setting_name'] = 'Switch Account From Quote Customer';
 
-                    $dataE['content'] = $htmlContent;
-                    $dataE['zoho_url'] = $url;
+                $dataE['content'] = $htmlContent;
+                $dataE['zoho_url'] = $url;
 
-                    $dataE['response'] = json_encode($rel);
-                    EmailLog::insertGetId($dataE);
-                }
+                $dataE['response'] = json_encode($rel);
+                EmailLog::insertGetId($dataE);
             }
-
-
-
+        }
     }
 
     public static function unsoldLeadEmailAfter12hrs($data)
@@ -2349,7 +2499,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
-                        'service_name' =>$lead->category->name,
+                        'service_name' => $lead->category->name,
                         'postcode' => $lead->postcode ?? '',
                         'sellerDetails' => $data['sellerDetails'] ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',

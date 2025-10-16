@@ -42,7 +42,7 @@
         <li class="nav-group" aria-expanded="false">
             <a class="nav-link nav-group-toggle" href="#">
             <i class="fa-solid fa-user nav-icon"></i> {{ __('Lead Buyers') }}</a>
-              <ul class="nav-group-items compact" style="height: 100px;">
+              <ul class="nav-group-items compact" style="height: 120px;">
 
                 <li class="nav-item">
                   <a href="{{ route('seller.incomplete') }}" class="nav-link {{ request()->routeIs('seller.incomplete') ? 'active' : '' }}">
@@ -69,7 +69,7 @@
         <li class="nav-group" aria-expanded="false">
             <a class="nav-link nav-group-toggle" href="#">
             <i class="fa-solid fa-users nav-icon"></i> {{ __('Quote Customers') }}</a>
-              <ul class="nav-group-items compact" style="height: 100px;">
+              <ul class="nav-group-items compact" style="height: 120px;">
 
                 <li class="nav-item">
                   <a href="{{ route('buyer.incompletelist') }}" class="nav-link {{ request()->routeIs('buyer.incompletelist') ? 'active' : '' }}">

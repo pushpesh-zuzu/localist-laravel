@@ -127,5 +127,120 @@ class FacebookController extends Controller
 
         return $this->sendResponse($finalRows);
     }
+
+
+
+    public function fetchReviews1(Request $request)
+{
+    $pageId = '830701720126367';
+    $page = FacebookPage::where('page_id', $pageId)->first();
+    if (!$page) {
+        return response()->json(['error' => 'Page not found'], 404);
+    }
+
+    try {
+        $accessToken = decrypt('eyJpdiI6InZnM08zekxSSUJVaXMzbnluTTlyOGc9PSIsInZhbHVlIjoibnFDdjRHN01YMGNzSFAyRnA4NG03TWxUMi94MjlnY2JZY3B5c1Njb09ua1VZVFI3dW5UejgyWlRlUW9GVHVnYk5sMERPVVdVTG96dkFac0hTeDZFd3JyY0U3WERjTGk3VXFaOEhDaFpiUWdEZGladGRWRDI0VHp2b2F0VERoWWhzWDVDS0xCYjN2ckYxN3VnZW1BMnRMNEx2SzJvd2JGeVdvNVduSTc3NEtSWjd5ZUZHQVJROWRtTmdmanh0WGZZaG81OHI0QytodkZDTnFYTlM1bkZTWWc5cGY1Slg3RS9xb3IyanQyKzVTZWs5SHdSNzJPMUZ6RGs4cXprY2R0V2gwTlBCcVJXcllzdlFkYnBMQ25iUEhwMHBzNmllWkxVNkIyaWNMOXhtUjg9IiwibWFjIjoiMjJiOGQ2YjFjODUzNDYwNDVmMzNmMzI3NWFjOTQyNDA4N2FiYzNhNmUyZmRkMWY0MDBkZjk4MDJkMGU5NTVlNyIsInRhZyI6IiJ9');
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Token decrypt failed'], 500);
+    }
+
+    $graphVersion = env('FB_GRAPH_VERSION', 'v21.0');
+    $fields = 'id,review_text,created_time,rating,recommendation_type,reviewer{name,id}';
+    $url = "https://graph.facebook.com/{$graphVersion}/{$pageId}/ratings?fields={$fields}&limit=25&access_token={$accessToken}";
+
+    $all = [];
+    while ($url) {
+        $resp = Http::get($url);
+        if ($resp->failed()) {
+            return response()->json(['error' => 'Graph API error', 'details' => $resp->body()], 400);
+        }
+
+        $body = $resp->json();
+
+        foreach ($body['data'] ?? [] as $r) {
+            $all[] = [
+                'review_id' => $r['id'] ?? null,
+                'reviewer_name' => $r['reviewer']['name'] ?? 'Anonymous',
+                'review_text' => $r['review_text'] ?? '',
+                'rating' => $r['rating'] ?? null,
+                'recommendation_type' => $r['recommendation_type'] ?? '',
+                'review_created_time' => isset($r['created_time']) ? Carbon::parse($r['created_time']) : null
+            ];
+
+            // Optional: Save to database
+            /*
+            FacebookReview::updateOrCreate(
+                ['review_id' => $r['id']],
+                [
+                    'page_id' => $pageId,
+                    'reviewer_name' => $r['reviewer']['name'] ?? 'Anonymous',
+                    'review_text' => $r['review_text'] ?? '',
+                    'rating' => $r['rating'] ?? null,
+                    'review_created_time' => isset($r['created_time']) ? Carbon::parse($r['created_time']) : null
+                ]
+            );
+            */
+        }
+
+        $url = $body['paging']['next'] ?? null;
+    }
+
+    return response()->json(['count' => count($all), 'reviews' => $all]);
+}
+
+
+
+public function fetchReviews(Request $request)
+{
+    $pageId = '830701720126367';
+    $page = FacebookPage::where('page_id', $pageId)->first();
+    if (!$page) {
+        return response()->json(['error' => 'Page not found'], 404);
+    }
+
+    try {
+       $accessToken = decrypt('eyJpdiI6InZnM08zekxSSUJVaXMzbnluTTlyOGc9PSIsInZhbHVlIjoibnFDdjRHN01YMGNzSFAyRnA4NG03TWxUMi94MjlnY2JZY3B5c1Njb09ua1VZVFI3dW5UejgyWlRlUW9GVHVnYk5sMERPVVdVTG96dkFac0hTeDZFd3JyY0U3WERjTGk3VXFaOEhDaFpiUWdEZGladGRWRDI0VHp2b2F0VERoWWhzWDVDS0xCYjN2ckYxN3VnZW1BMnRMNEx2SzJvd2JGeVdvNVduSTc3NEtSWjd5ZUZHQVJROWRtTmdmanh0WGZZaG81OHI0QytodkZDTnFYTlM1bkZTWWc5cGY1Slg3RS9xb3IyanQyKzVTZWs5SHdSNzJPMUZ6RGs4cXprY2R0V2gwTlBCcVJXcllzdlFkYnBMQ25iUEhwMHBzNmllWkxVNkIyaWNMOXhtUjg9IiwibWFjIjoiMjJiOGQ2YjFjODUzNDYwNDVmMzNmMzI3NWFjOTQyNDA4N2FiYzNhNmUyZmRkMWY0MDBkZjk4MDJkMGU5NTVlNyIsInRhZyI6IiJ9');
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Token decrypt failed'], 500);
+    }
+
+    $graphVersion = env('FB_GRAPH_VERSION', 'v21.0');
+    $fields = 'id,review_text,created_time,rating,recommendation_type,reviewer{name,id}';
+    $url = "https://graph.facebook.com/{$graphVersion}/{$pageId}/ratings?fields={$fields}&limit=25&access_token={$accessToken}";
+
+    $all = [];
+    while ($url) {
+        $resp = Http::get($url);
+        if ($resp->failed()) {
+            return response()->json([
+                'error' => 'Graph API error',
+                'details' => $resp->body()
+            ], 400);
+        }
+
+        $body = $resp->json();
+
+        foreach ($body['data'] ?? [] as $r) {
+            $all[] = [
+                'review_id' => $r['id'] ?? null,
+                'reviewer_name' => $r['reviewer']['name'] ?? null,
+                'review_text' => $r['review_text'] ?? '',
+                'rating' => $r['rating'] ?? null,
+                'recommendation_type' => $r['recommendation_type'] ?? '',
+                'review_created_time' => isset($r['created_time']) ? Carbon::parse($r['created_time']) : null,
+                'missing_reviewer' => !isset($r['reviewer']),  // true if reviewer not returned
+                'missing_rating' => !isset($r['rating']),      // true if rating not returned
+            ];
+        }
+
+        $url = $body['paging']['next'] ?? null;
+    }
+
+    return response()->json([
+        'count' => count($all),
+        'reviews' => $all
+    ]);
+}
+
         
 }

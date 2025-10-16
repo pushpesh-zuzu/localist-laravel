@@ -81,7 +81,7 @@
 </x-app-layout>
 
 
-<!-- <script>
+<script>
   $('#dataTable').DataTable({
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
@@ -115,4 +115,4 @@
       },
     ]
   });
-</script> -->
+</script>

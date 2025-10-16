@@ -20,76 +20,74 @@ use App\Http\Controllers\PagesController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\EmailSettingsController;
 use App\Helpers\WhatsAppMessage;
-use App\Http\Controllers\GoogleReviewController;
+// use App\Http\Controllers\GoogleReviewController;
 use Illuminate\Http\Request;
 
-Route::get('phpinfo', function(){
+Route::get('phpinfo', function () {
     phpinfo();
 });
 
-Route::get('/clear-cache', function() {
+Route::get('/clear-cache', function () {
     $exitCode = Artisan::call('config:clear');
     $exitCode = Artisan::call('cache:clear');
     $exitCode = Artisan::call('config:cache');
     $exitCode = Artisan::call('view:clear');
-	$exitCode = Artisan::call('optimize');
+    $exitCode = Artisan::call('optimize');
     return 'DONE'; //Return anything
 });
 
 
-Route::get('/send-whatsapp-test', function () {
-    // recipient's phone number with country code
-    $message = 'Hello! This is a test message from Laravel WhatsApp API 🚀';
+// Route::get('/send-whatsapp-test', function () {
+//     // recipient's phone number with country code
+//     $message = 'Hello! This is a test message from Laravel WhatsApp API 🚀';
 
-    $response = WhatsAppMessage::sendMessage(
-        userId: null,
-        phoneNumber: "917007520258",
-        message: $message,
-        imageUrl: null, // optional
-        // optional
-        subject: 'Testing WhatsApp'
-    );
+//     $response = WhatsAppMessage::sendMessage(
+//         userId: null,
+//         phoneNumber: "919026141516",
+//         message: $message,
+//         imageUrl: null, // optional
+//         // optional
+//         subject: 'Testing WhatsApp'
+//     );
 
-    return response()->json($response);
-});
+//     return response()->json($response);
+// });
 
-Route::get('/send-whatsapp-template-test', function () {
-    $response = WhatsAppMessage::sendTemplate(
-    userId: null,
-    phoneNumber: 919026141516,
-    templateName: "lead_buyer_registration", 
-    languageCode: "en_US",
-    components: [
-        [
-            'type' => 'body',
-            'parameters' => [
-                ['type' => 'text', 'text' => 'Ashish'], 
-            ],
-        ],
-    ]
-);
+// Route::get('/send-whatsapp-template-test', function () {
+//     $response = WhatsAppMessage::sendTemplate(
+//         userId: null,
+//         phoneNumber: "919026141516",
+//         templateName: "lead_buyer_registration",
+//         languageCode: "en_US",
+//         components: [
+//             [
+//                 'type' => 'body',
+//                 'parameters' => [
+//                     ['type' => 'text', 'text' => 'Ashish'],
+//                 ],
+//             ],
+//         ]
+//     );
 
-    
+//     return response()->json($response);
+// });
 
-    return response()->json($response);
-});
-
-Route::get('/install-api', function() {
+Route::get('/install-api', function () {
     $exitCode = Artisan::call('install:api');
 
     return 'DONE'; //Return anything
 });
 
-Route::get('/check-mail', function() {
+Route::get('/check-mail', function () {
     $dataUser['email'] = 'pushpesh@zuzucodes.com';
     $dataUser['name'] = 'Pushpesh';
     $dataUser['service'] = 'Web Development';
     $dataUser['password'] = '12345678';
     $dataUser['otp'] = '1234';
     Mail::send('emails.buyer_registration', $dataUser, function ($message) use ($dataUser) {
-            $message->to($dataUser['email']);
-            $message->subject("local-Welcome to Localist " .$dataUser['name'] ."!");
-        });
+        $message->to($dataUser['email']);
+        $message->subject("local-Welcome to Localist " . $dataUser['name'] . "!");
+    });
 
     return 'DONE'; //Return anything
 });
@@ -136,14 +134,13 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('seller-profile-services/{userid}', [SellerController::class, 'sellerProfileServices'])->name('seller.sellerProfileServices');
     Route::get('suggested-questions/{userid}', [SellerController::class, 'suggestedQuestions'])->name('seller.suggestedQuestions');
     Route::resource('servicequestion', ServiceQuestionsController::class);
-    Route::POST('servicequestion/add-more-option',[ServiceQuestionsController::class, 'addMoreOption']);
+    Route::POST('servicequestion/add-more-option', [ServiceQuestionsController::class, 'addMoreOption']);
     Route::resource('profilequestion', ProfileQuesController::class);
     Route::resource('coupon', CouponController::class);
 
     Route::resource('request-list', RequestListController::class);
     Route::resource('email-settings', EmailSettingsController::class);
-    Route::post('email-settings/change-status', [EmailSettingsController::class,'changeSettingStatus'])->name('email-settings.change-status');
-
+    Route::post('email-settings/change-status', [EmailSettingsController::class, 'changeSettingStatus'])->name('email-settings.change-status');
 });
 
 
@@ -156,9 +153,9 @@ Route::post('/facebook-webhook', function (Request $request) {
 });
 
 
-Route::get('/google/login', [GoogleReviewController::class, 'redirectToGoogle'])->name('google.login');
-    Route::get('/google/callback', [GoogleReviewController::class, 'handleGoogleCallback'])->name('google.callback');
-    Route::post('/google/reviews', [GoogleReviewController::class, 'getReviews']);
+// Route::get('/google/login', [GoogleReviewController::class, 'redirectToGoogle'])->name('google.login');
+//Route::get('/google/callback', [GoogleReviewController::class, 'handleGoogleCallback'])->name('google.callback');
+//Route::get('/google/reviews', [GoogleReviewController::class, 'getReviews']);
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

@@ -1,0 +1,44 @@
+ALTER TABLE `user_card_details` ADD COLUMN `is_primary` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = Primary card, 0 = Non-primary card' AFTER `cvc`;
+
+
+ALTER TABLE `user_card_details` ADD COLUMN `stripe_card_id` VARCHAR(100) NULL COMMENT 'Unique card ID returned by Stripe' AFTER `is_primary`;
+
+
+
+CREATE TABLE `whatsapp_logs` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `user_id` BIGINT UNSIGNED NULL COMMENT 'Optional user ID',
+    `to` VARCHAR(20) NOT NULL COMMENT 'Recipient phone number',
+    `message` TEXT NULL COMMENT 'Text message content',
+    `image_url` VARCHAR(255) NULL COMMENT 'Image URL if any',
+    `payload` JSON NULL COMMENT 'Full payload sent to WhatsApp API',
+    `response` JSON NULL COMMENT 'API response received',
+    `status` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0=pending,1=success,2=failed',
+    `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (`user_id`),
+    INDEX (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE `whatsapp_logs` ADD `subject` VARCHAR(255) NULL AFTER `to`;
+
+
+CREATE TABLE IF NOT EXISTS `facebook_pages` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `seller_id` bigint NOT NULL,
+  `page_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `access_token` text COLLATE utf8mb4_unicode_ci,
+  `token_expires_at` timestamp NULL DEFAULT NULL,
+  `meta` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `page_id` (`page_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+ALTER TABLE `email_settings` ADD `whatsapp_setting_value` VARCHAR(25) NOT NULL DEFAULT '0' AFTER `setting_value`;
+
+localist@2025

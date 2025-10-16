@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Helpers;
+
 use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session, Http};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +15,14 @@ use App\Models\Postcode;
 use Illuminate\Support\Carbon;
 use App\Jobs\IntegrateZohoPurchaseHistory;
 use App\Jobs\RunCallableJob;
+use App\Models\Invoice;
+use App\Models\PlanHistory;
+use App\Models\User;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
+use Stripe\Exception\ApiErrorException;
+use App\Models\UserCardDetail;
+use App\Models\UserDetail;
 
 class CustomHelper
 {
@@ -28,7 +37,8 @@ class CustomHelper
         RunCallableJob::dispatch($callable);
     }
 
-    public static function createSectorsRecursive($data, $index = '1', $space = 40){
+    public static function createSectorsRecursive($data, $index = '1', $space = 40)
+    {
         if (count($data['subsectors']) > 0) {
             $i = 1;
             foreach ($data['subsectors'] as $d) {
@@ -66,29 +76,30 @@ class CustomHelper
     }
 
 
-    public static function logNotifications($userId, $leadId, $notiName, $title, $message, $checkExisting=false, $notiType='browser', $userType='buyer'){
+    public static function logNotifications($userId, $leadId, $notiName, $title, $message, $checkExisting = false, $notiType = 'browser', $userType = 'buyer')
+    {
         $insertLog = true;
-        $isSettingOn=NotificationSetting::where('user_id',$userId)
-            ->where('noti_name',$notiName)
-            ->where('user_type',$userType)
-            ->where('noti_type',$notiType)
+        $isSettingOn = NotificationSetting::where('user_id', $userId)
+            ->where('noti_name', $notiName)
+            ->where('user_type', $userType)
+            ->where('noti_type', $notiType)
             ->value('noti_value');
 
         //check whether setting is turned on or not
-        if(!$isSettingOn){
+        if (!$isSettingOn) {
             $insertLog = false;
         }
 
         // if checkExisting is true then check if the same lead exists or not
-        if($checkExisting){
-            $logExists = NotificationLog::where('user_id',$userId)
-                ->where('lead_id',$leadId)
-                ->where('noti_name',$notiName)
-                ->where('user_type',$userType)
-                ->where('noti_type',$notiType)
+        if ($checkExisting) {
+            $logExists = NotificationLog::where('user_id', $userId)
+                ->where('lead_id', $leadId)
+                ->where('noti_name', $notiName)
+                ->where('user_type', $userType)
+                ->where('noti_type', $notiType)
                 ->value('id');
             //if notification exists then do not log the notification
-            if($logExists){
+            if ($logExists) {
                 $insertLog = false;
             }
         }
@@ -107,7 +118,8 @@ class CustomHelper
         }
     }
 
-    public static function formatTimeDuration(int $minutes): string {
+    public static function formatTimeDuration(int $minutes): string
+    {
         if ($minutes <= 0) {
             return '0 mins';
         }
@@ -174,7 +186,8 @@ class CustomHelper
     }
 
 
-    public static function numberToWords($number){
+    public static function numberToWords($number)
+    {
         $f = new \NumberFormatter('en', \NumberFormatter::SPELLOUT);
         return ucfirst($f->format($number));
     }
@@ -207,7 +220,8 @@ class CustomHelper
     }
 
 
-    public static function getPostcodesWithinRadius($postcode, $radius = 0, $km=false){
+    public static function getPostcodesWithinRadius($postcode, $radius = 0, $km = false)
+    {
         $val = $km ? 6371 : 3959;
 
         // Get latitude and longitude of the given postcode
@@ -219,7 +233,10 @@ class CustomHelper
         $lng = $center->longitude;
         // Haversine formula to get nearby postcodes
         $results = \DB::table('postcodes')
-            ->select('postcode', 'latitude', 'longitude',
+            ->select(
+                'postcode',
+                'latitude',
+                'longitude',
                 DB::raw("(
                     $val * acos(
                         cos(radians(?)) *
@@ -228,7 +245,8 @@ class CustomHelper
                         sin(radians(?)) *
                         sin(radians(latitude))
                     )
-                ) AS distance"))
+                ) AS distance")
+            )
             ->addBinding($lat)
             ->addBinding($lng)
             ->addBinding($lat)
@@ -239,7 +257,8 @@ class CustomHelper
         return $pureArray;
     }
 
-    public static function getCoordinates($postcode){
+    public static function getCoordinates($postcode)
+    {
         $apiKey = CustomHelper::setting_value('google_maps_api');
         $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
             'address' => $postcode,
@@ -254,32 +273,36 @@ class CustomHelper
         return null;
     }
 
-    public static function update_setting_value($key, $value){
-        if(!empty($value)){
-            Setting::where('setting_name',$key)->update([
+    public static function update_setting_value($key, $value)
+    {
+        if (!empty($value)) {
+            Setting::where('setting_name', $key)->update([
                 'setting_value' => $value
             ]);
         }
     }
 
-    public static function setting_value($key, $defaultValue=''){
-        $val = Setting::where('setting_name',$key)->value('setting_value');
+    public static function setting_value($key, $defaultValue = '')
+    {
+        $val = Setting::where('setting_name', $key)->value('setting_value');
         $rel = !empty($val) ? $val : $defaultValue;
         return $rel;
     }
 
-    public static function getSingleNotificationSetting($user_id, $noti_name, $user_type='buyer', $noti_type='email'){
-        $val = NotificationSetting::where('user_id',$user_id)
-            ->where('noti_name',$noti_name)
-            ->where('user_type',$user_type)
-            ->where('noti_type',$noti_type)
+    public static function getSingleNotificationSetting($user_id, $noti_name, $user_type = 'buyer', $noti_type = 'email')
+    {
+        $val = NotificationSetting::where('user_id', $user_id)
+            ->where('noti_name', $noti_name)
+            ->where('user_type', $user_type)
+            ->where('noti_type', $noti_type)
             ->value('noti_value');
 
         $rel = !empty($val) ? $val : 0;
         return $rel;
     }
 
-    public static function createTrasactionLog($userId, $amount, $credits, $detail, $status=1, $type=0, $error_response=''){
+    public static function createTrasactionLogOld($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
+    {
 
         static $zohoRegistered = false;
         $data['user_id'] = $userId;
@@ -315,21 +338,194 @@ class CustomHelper
         return $id;
     }
 
+
+
+    public static function createTrasactionLog($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
+    {
+
+        $debitTransactionId = PurchaseHistory::insertGetId([
+            'user_id'        => $userId,
+            'purchase_date'  => now()->toDateString(),
+            'price'          => $amount,
+            'credits'        => $credits,
+            'details'        => $detail,
+            'payment_type'   => $type,
+            'error_response' => $error_response,
+            'status'         => $status,
+            'created_at'     => now(),
+        ]);
+
+        try {
+
+            $purchaseHistory = PurchaseHistory::where('user_id', $userId)
+                ->where('payment_type', 0)
+                ->where('status', 1)
+                ->latest()
+                ->first();
+
+            if (!$purchaseHistory) {
+                Log::info("No previous purchase found for user {$userId}, skipping auto-pay.");
+                return $debitTransactionId;
+            }
+
+            //  Get plan and user details
+            $planHistory  = PlanHistory::where('user_id', $userId)->latest()->first();
+            $isTopup      = $planHistory->is_topup ?? 0;
+            $user         = User::find($userId);
+            $remaining    = $user->total_credit;
+
+            $autopay_credit_percent = CustomHelper::setting_value('autopay_credit_percent') ?? 8;
+            $threshold    = ($purchaseHistory->credits * $autopay_credit_percent) / 100;
+
+            //  Check auto-pay eligibility
+            if ($remaining > $threshold || $isTopup != 1) {
+                Log::info("Auto-pay skipped for user {$userId}. Remaining: {$remaining}, Threshold: {$threshold}, is_topup: {$isTopup}");
+                return $debitTransactionId;
+            }
+
+            Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
+            $cards = UserCardDetail::where('user_id', $userId)->orderByDesc('is_primary')->get();
+
+            if ($cards->isEmpty()) {
+                PurchaseHistory::where('id', $debitTransactionId)->update([
+                    'status' => 0,
+                    'error_response' => 'No saved cards found for user.',
+                ]);
+                return $debitTransactionId;
+            }
+
+            $paymentSuccess = false;
+            $lastError = '';
+            $skipFirstCard = true; 
+
+            foreach ($cards as $index => $card) {
+
+                // if ($skipFirstCard && $index === 0) {
+                //     Log::info("Skipping first card temporarily for user {$userId}, card: {$card->stripe_card_id}");
+                //     continue;
+                // }
+                try {
+
+                    $planPrice = floatval(str_replace(',', '', $purchaseHistory->price));
+                    $amountInPence = (int) round($planPrice * 100);
+
+                    $paymentIntent = PaymentIntent::create([
+                        'amount'         => $amountInPence,
+                        'currency'       => 'GBP',
+                        'payment_method' => $card->stripe_card_id,
+                        'confirm'        => true,
+                        'off_session'    => true,
+                        'customer'       => $user->stripe_customer_id ?? null,
+                        'description'    => $detail,
+                    ]);
+
+                    if ($paymentIntent->status === 'succeeded') {
+                         Log::info("Payment succeeded for user {$userId} using card {$card->stripe_card_id}");
+
+                        $user->increment('total_credit', intval($purchaseHistory->credits));
+
+                        PlanHistory::create([
+                            'user_id'      => $userId,
+                            'is_topup'     => $isTopup,
+                            'credits'      => $purchaseHistory->credits,
+                            'plan_name'    => $planHistory->plan_name,
+                            'price'        => $planHistory->price,
+                            'vat'          => $planHistory->vat,
+                            'total_amount' => $planHistory->total_amount,
+                            'created_at'   => now(),
+                            'updated_at'   => now(),
+                        ]);
+
+                        $transactionId = PurchaseHistory::insertGetId([
+                            'user_id'        => $userId,
+                            'purchase_date'  => now()->toDateString(),
+                            'price'          => $planHistory->total_amount,
+                            'credits'        => $purchaseHistory->credits,
+                            'details'        => $planHistory->plan_name,
+                            'payment_type'   => 0,
+                            'error_response' => '',
+                            'status'         => 1,
+                            'created_at'     => now(),
+                            'updated_at'   => now(),
+                        ]);
+
+                        // Create invoice
+                        $invoiceNumber = "4152SX7I-" . $transactionId;
+                        $userDetails   = UserDetail::where('user_id', $userId)->first();
+
+                        $dataInv = [
+                            'user_id'        => $userId,
+                            'invoice_number' => $invoiceNumber,
+                            'details'        => $planHistory->plan_name,
+                            'period'         => 'One off charge',
+                            'amount'         => $planHistory->price,
+                            'vat'            => $planHistory->vat,
+                            'total_amount'   => $planHistory->total_amount,
+                            'created_at'     => now(),
+                        ];
+
+                        if ($userDetails?->billing_contact_name) {
+                            $dataInv['name'] = $userDetails->billing_contact_name;
+                            $dataInv['address'] = trim("{$userDetails->billing_address1}, {$userDetails->billing_address2}, {$userDetails->billing_city} - {$userDetails->billing_postcode}");
+                            $dataInv['phone'] = $userDetails->billing_phone;
+                        } else {
+                            $dataInv['name'] = $user->name;
+                            $dataInv['address'] = trim("{$user->apartment}, {$userDetails->address}, {$userDetails->city} - {$user->zipcode}");
+                            $dataInv['phone'] = $user->phone;
+                        }
+
+                        Invoice::insert($dataInv);
+                        $paymentSuccess = true;
+                        break;
+                    }
+                } catch (\Stripe\Exception\ApiErrorException $e) {
+                    Log::error("Stripe Payment failed for user {$userId} using card {$card->stripe_card_id}: " . $e->getMessage());
+                    $lastError = $e->getMessage();
+                } catch (\Throwable $e) {
+                    Log::error("Unexpected error for user {$userId} using card {$card->stripe_card_id}: " . $e->getMessage());
+                    $lastError = $e->getMessage();
+                }
+            }
+
+
+            if (!$paymentSuccess) {
+                PurchaseHistory::insertGetId([
+                    'user_id'        => $userId,
+                    'purchase_date'  => now()->toDateString(),
+                    'price'          => $amount,
+                    'credits'        => $credits,
+                    'details'        => $detail,
+                    'payment_type'   => 0, // CREDIT attempt failed
+                    'status'         => 2, // failed
+                    'error_response' => 'Payment failed on all cards',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+            }
+
+            return $debitTransactionId;
+        } catch (\Throwable $e) {
+            Log::error("Auto payment exception for user {$userId}: " . $e->getMessage());
+            Log::error("Trace: " . $e->getTraceAsString());
+
+            return $debitTransactionId;
+        }
+    }
+
     public static function getImagepath($type = 'dir')
     {
-        $path = dirname(dirname(public_path()))."/public";
-        if($type == "url")
-        {
-            $path = env('APP_URL')."/public";
+        $path = dirname(dirname(public_path())) . "/public";
+        if ($type == "url") {
+            $path = env('APP_URL') . "/public";
         }
         return $path;
     }
 
-    public static function displayImage($image,$path = "uploads", $aType = "")
+    public static function displayImage($image, $path = "uploads", $aType = "")
     {
 
         $imagePath = 'default_images/profile.png';
-        $image_path = 'images/' . $path.'/'.$image;
+        $image_path = 'images/' . $path . '/' . $image;
 
         $localPath = storage_path('app/public/' . $image_path);
 
@@ -344,7 +540,7 @@ class CustomHelper
     }
 
 
-    public static function fileUpload($image, $destinationFolder = '',$chkext = true)
+    public static function fileUpload($image, $destinationFolder = '', $chkext = true)
     {
         $imageArray = array("png", "jpg", "jpeg", "gif", "bmp", "svg");
         $imagename = "profile.png";
@@ -367,7 +563,7 @@ class CustomHelper
         return  $imagename;
     }
 
-    public static function accfileUpload($image, $destinationFolder = '',$chkext = true)
+    public static function accfileUpload($image, $destinationFolder = '', $chkext = true)
     {
         $imageArray = array("png", "jpg", "jpeg", "gif", "bmp", "svg", "pdf");
         $imagename = "profile.png";
@@ -420,7 +616,7 @@ class CustomHelper
             $response = true;
         } catch (\Exception $e) {
 
-            \Log::error('Mail sending failed: ' .$e->getMessage() );
+            \Log::error('Mail sending failed: ' . $e->getMessage());
         }
 
         return $response;
@@ -492,12 +688,12 @@ class CustomHelper
     //     return $response;
     // }
 
-    public static function pp($data='',$die=TRUE){
+    public static function pp($data = '', $die = TRUE)
+    {
         echo '<pre>';
         print_r($data);
         echo '</pre>';
 
-        if($die)die;
+        if ($die) die;
     }
-
 }

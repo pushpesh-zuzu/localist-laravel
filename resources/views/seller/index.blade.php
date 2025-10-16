@@ -29,13 +29,13 @@
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}"><i class="icon  cil-pencil"></i></a>
-                <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();"><i class="icon cil-trash"></i>
+                {{-- <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();"><i class="icon cil-trash"></i>
                 </a>
                 <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('seller.destroy',$aRow->id) }}" method="post" style="display: none;">
                    {{ method_field('DELETE') }}
                    {{ csrf_field() }}
                        
-                </form>
+                </form> --}}
 
             </td>
           </tr>
@@ -49,3 +49,41 @@
     </div>
  
 </x-app-layout>           
+
+<!-- 
+<script>
+$('#dataTable').DataTable({
+   destroy: true,
+    dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
+    buttons: [
+        {
+            extend: 'excelHtml5',
+            text: 'Export Excel',
+            title: 'Lead Buyers',
+            className: "buttons-excel btn btn-success btn-sm",
+            exportOptions: {
+                columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
+                modifier: {
+                    order: 'index',
+                    page: 'all',
+                    search: 'none'
+                }
+            }
+        },
+        {
+            extend: 'csvHtml5',
+            text: 'Export CSV',
+            title: 'Lead Buyers',
+            className: "buttons-csv btn btn-info btn-sm",
+            exportOptions: {
+                columns: ':not(:eq(6))',
+                modifier: {
+                    order: 'index',
+                    page: 'all',
+                    search: 'none'
+                }
+            }
+        },        
+    ]
+});
+</script> -->
