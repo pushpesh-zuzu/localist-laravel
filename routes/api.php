@@ -119,6 +119,7 @@ Route::prefix('customer')->group(function () {
     Route::post('my-request/check-paragraph-quality', [MyRequestController::class, 'checkParagraphQuality']);
     Route::post('my-request/create-new-request', [MyRequestController::class, 'createNewRequest']);
     Route::post('verify-phone-number', [MyRequestController::class, 'verifyPhoneNumber']);
+    Route::post('update-register-phone-number', [MyRequestController::class, 'updateRegisterPhoneNumber']);
     Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
 
         Route::prefix('my-request')->group(function () {
