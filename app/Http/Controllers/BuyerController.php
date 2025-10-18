@@ -10,9 +10,10 @@ use App\Models\LoginHistory;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\AbandonedUser;
+use Carbon\Carbon;
 use DB;
-
-
+use Yajra\Datatables\Datatables;
+use Yajra\DataTables\Html\Builder;
 
 class BuyerController extends Controller
 {
@@ -21,39 +22,92 @@ class BuyerController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->ajax()) {
 
-        $query = User::whereIn('user_type', [2, 3])
-            ->where('form_status', 1)
-            // ->where(function ($q) {
-            //     $q->where('name', 'not like', '%test%')
-            //         ->where('email', 'not like', '%test%');
-            // })
-            ->orderBy('id', 'DESC');
+            $query = User::with(['leadRequests.category'])
+                ->whereIn('user_type', [2, 3])
+                ->where('form_status', 1)
+                ->where(function ($q) {
+                    $q->whereNull('name')
+                        ->orWhere('name', 'not like', '%test%');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('email')
+                        ->orWhere('email', 'not like', '%test%');
+                })
+                ->orderBy('id', 'DESC');
+            if ($request->from_date && $request->to_date) {
+                $query->whereBetween('created_at', [
+                    $request->from_date . ' 00:00:00',
+                    $request->to_date . ' 23:59:59',
+                ]);
+            } elseif ($request->from_date) {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            } elseif ($request->to_date) {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
 
-        if ($request->filled('from_date') && $request->filled('to_date')) {
-            $query->whereBetween('created_at', [
-                $request->from_date . ' 00:00:00',
-                $request->to_date . ' 23:59:59'
-            ]);
-        } elseif ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        } elseif ($request->filled('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('postcode', function ($user) {
+                    return $user->leadRequests->pluck('postcode')->implode('<br>');
+                })
+                ->addColumn('services', function ($user) {
+                    return $user->leadRequests->map(fn($s) => $s->category->name ?? 'N/A')->implode('<br>');
+                })
+                ->addColumn('score', function ($user) {
+                    return $user->leadRequests->pluck('credit_score')->implode('<br>');
+                })
+                ->addColumn('date', function ($user) {
+                    return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
+                })->filterColumn('date', function ($query, $keyword) {
+                    try {
+                        $date = Carbon::parse($keyword)->format('Y-m-d');
+                        $query->whereDate('created_at', $date);
+                    } catch (\Exception $e) {
+                    }
+                })
+                ->addColumn('status', fn($user) => 'Complete') // Always show Complete
+                ->addColumn('action', function ($user) {
+                    return '
+                    <a href="' . route('buyer.buyerBids', $user->id) . '" class="text text-primary" title="Bids">
+                        <i class="fa-solid fa-chess-pawn"></i>
+                    </a>
+                    <a href="' . route('buyer.viewCount', $user->id) . '" class="text text-primary" title="Unique Visitors">
+                        <i class="fa-solid fa-users"></i>
+                    </a>
+                    <a href="' . route('buyer.buyerLogin', $user->id) . '" class="text text-primary" title="Login History">
+                        <i class="fa-solid fa-history"></i>
+                    </a>
+                    <a href="' . route('buyer.show.custom', ['type' => 'complete', 'id' => $user->id]) . '" class="text text-primary" title="View">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                ';
+                })
+                ->filterColumn('postcode', function ($query, $keyword) {
+                    $query->whereHas('leadRequests', fn($q) => $q->where('postcode', 'like', "%{$keyword}%"));
+                })
+                ->filterColumn('services', function ($query, $keyword) {
+                    $query->whereHas('leadRequests.category', fn($q) => $q->where('name', 'like', "%{$keyword}%"));
+                })
+                ->filterColumn('score', function ($query, $keyword) {
+                    $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
+                })
+                ->rawColumns(['services', 'postcode', 'score', 'status', 'action'])
+                ->make(true);
         }
 
-        $aRows = $query->get();
-        //  $aRows = User::whereIn('user_type', [2, 3])->where('form_status',1)->orderBy('id','DESC')->get();
-        return view('buyer.index', compact('aRows'));
+        return view('buyer.index');
     }
 
-    public function completeListOfTestUsers(Request $request)
+    public function testUserCompleteList(Request $request)
     {
         $query = User::whereIn('user_type', [2, 3])
             ->where('form_status', 1)
-            // ->where(function ($q) {
-            //     $q->where('name', 'like', '%test%')
-            //         ->orWhere('email', 'like', '%test%');
-            // })
+            ->where(function ($q) {
+                $q->where('name', 'like', '%test%')
+                    ->orWhere('email', 'like', '%test%');
+            })
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -69,19 +123,18 @@ class BuyerController extends Controller
 
         $testUsers = $query->get();
 
-        return view('buyer.test-list-of-complete', compact('testUsers'));
+        return view('buyer.testuser-complete-list', compact('testUsers'));
     }
 
-
-    public function incompletelist(Request $request)
+    public function testUserInCompleteList(Request $request)
     {
 
         $query = AbandonedUser::whereIn('user_type', [2, 3])
             ->where('form_status', 0)
-            // ->where(function ($q) {
-            //     $q->where('name', 'not like', '%test%')
-            //         ->where('email', 'not like', '%test%');
-            // })
+            ->where(function ($q) {
+                $q->where('name', 'like', '%test%')
+                    ->orWhere('email', 'like', '%test%');
+            })
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -95,12 +148,106 @@ class BuyerController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        $aRows = $query->get();
+        $testUsers = $query->get();
         // $aRows = AbandonedUser::whereIn('user_type', [2, 3])->where('form_status',0)->orderBy('id','DESC')->get();
-        return view('buyer.incomplete', compact('aRows'));
+        return view('buyer.testuser-incomplete-list', compact('testUsers'));
     }
 
-    /**
+
+
+    public function incompletelist(Request $request)
+    {
+        
+
+       if ($request->ajax()) {
+
+            $query = AbandonedUser::with(['leadRequests.category'])
+                ->whereIn('user_type', [2, 3])
+                ->where('form_status', 0)
+                ->where(function ($q) {
+                    $q->whereNull('name')
+                        ->orWhere('name', 'not like', '%test%');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('email')
+                        ->orWhere('email', 'not like', '%test%');
+                })
+                ->orderBy('id', 'DESC');
+            if ($request->from_date && $request->to_date) {
+                $query->whereBetween('created_at', [
+                    $request->from_date . ' 00:00:00',
+                    $request->to_date . ' 23:59:59',
+                ]);
+            } elseif ($request->from_date) {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            } elseif ($request->to_date) {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('postcode', function ($user) {
+                    if ($user->leadRequests->isNotEmpty()) {
+                        return $user->leadRequests->pluck('postcode')->implode('<br>');
+                    } else {
+                        return $user->zipcode ?? '';
+                    }
+                })
+                ->addColumn('services', function ($user) {
+                    return $user->leadRequests->map(fn($s) => $s->category->name ?? 'N/A')->implode('<br>');
+                })
+                ->addColumn('score', function ($user) {
+                    return $user->leadRequests->pluck('credit_score')->implode('<br>');
+                })
+                ->addColumn('date', function ($user) {
+                    return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
+                })->filterColumn('date', function ($query, $keyword) {
+                    try {
+                        $date = Carbon::parse($keyword)->format('Y-m-d');
+                        $query->whereDate('created_at', $date);
+                    } catch (\Exception $e) {
+                    }
+                })
+                ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
+                ->addColumn('action', function ($user) {
+                    return '
+                    <a href="' . route('buyer.buyerBids', $user->id) . '" class="text text-primary" title="Bids">
+                        <i class="fa-solid fa-chess-pawn"></i>
+                    </a>
+                    <a href="' . route('buyer.viewCount', $user->id) . '" class="text text-primary" title="Unique Visitors">
+                        <i class="fa-solid fa-users"></i>
+                    </a>
+                    <a href="' . route('buyer.buyerLogin', $user->id) . '" class="text text-primary" title="Login History">
+                        <i class="fa-solid fa-history"></i>
+                    </a>
+                    <a href="' . route('buyer.show.custom', ['type' => 'complete', 'id' => $user->id]) . '" class="text text-primary" title="View">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                ';
+                })
+                ->filterColumn('postcode', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->whereHas('leadRequests', function ($leadQuery) use ($keyword) {
+                            $leadQuery->where('postcode', 'like', "%{$keyword}%");
+                        })
+                            ->orWhere('zipcode', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('services', function ($query, $keyword) {
+                    $query->whereHas('leadRequests.category', fn($q) => $q->where('name', 'like', "%{$keyword}%"));
+                })
+                ->filterColumn('score', function ($query, $keyword) {
+                    $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
+                })
+                ->rawColumns(['services', 'postcode', 'score', 'status', 'action'])
+                ->make(true);
+        }
+
+        return view('buyer.incomplete');
+    }
+  
+
+   /**
      * Show the form for creating a new resource.
      */
     public function create()

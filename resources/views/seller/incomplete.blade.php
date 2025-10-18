@@ -7,28 +7,28 @@
       </div>
       <div class="card-body">
 
-      <div class="container my-4">
-        <div class="d-flex justify-content-center">
-          <form method="GET" action="{{ route('seller.incomplete') }}" class="w-100 w-md-75">
-            <div class="row g-3 align-items-end justify-content-center">
-              <div class="col-12 col-md-3">
-                <label for="from_date" class="form-label">From Date</label>
-                <input type="date" id="from_date" name="from_date" value="{{ request('from_date') }}" class="form-control">
-              </div>
-              <div class="col-12 col-md-3">
-                <label for="to_date" class="form-label">To Date</label>
-                <input type="date" id="to_date" name="to_date" value="{{ request('to_date') }}" class="form-control">
-              </div>
-              <div class="col-12 col-md-3 text-center text-md-start">
-                <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0">Filter</button>
-                <a href="{{ route('seller.incomplete') }}" class="btn btn-secondary">Reset</a>
-              </div>
-            </div>
-          </form>
-        </div>
+      <div class="container mb-5">
+        <form method="GET" action="{{ route('seller.incomplete') }}" class="row g-3 justify-content-center align-items-end mb-4">
+          <div class="col-12 col-md-3">
+            <label for="from_date" class="form-label">From Date</label>
+            <input type="date" id="from_date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label for="to_date" class="form-label">To Date</label>
+            <input type="date" id="to_date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
+          </div>
+
+          <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
+            <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0">Filter</button>
+            <a href="{{ route('seller.incomplete') }}" class="btn btn-secondary">Reset</a>
+          </div>
+        </form>
       </div>
-        @if(count($aRows) > 0)
-        <table class="table table-striped" id="dataTable">
+
+      
+       <div class="table-responsive">
+        <table class="table table-striped table-bordered" id="dataTable">
           <thead>
           <tr>
             <th scope="col" width="20px;">#</th>
@@ -68,14 +68,12 @@
           @endforeach
           </tbody>
         </table>
-        @else 
-        No records found
-        @endif
+       </div>
       </div>
     </div>
  
 </x-app-layout>           
-<!-- 
+
 <script>
 $('#dataTable').DataTable({
    destroy: true,
@@ -84,7 +82,7 @@ $('#dataTable').DataTable({
         {
             extend: 'excelHtml5',
             text: 'Export Excel',
-            title: 'Lead Buyers Incomplete List',
+            title: 'Lead Buyers - Incomplete List',
             className: "buttons-excel btn btn-success btn-sm",
             exportOptions: {
                 columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
@@ -98,7 +96,7 @@ $('#dataTable').DataTable({
         {
             extend: 'csvHtml5',
             text: 'Export CSV',
-            title: 'Lead Buyers Incomplete List',
+            title: 'Lead Buyers - Incomplete List',
             className: "buttons-csv btn btn-info btn-sm",
             exportOptions: {
                 columns: ':not(:eq(6))',
@@ -111,4 +109,4 @@ $('#dataTable').DataTable({
         },        
     ]
 });
-</script> -->
+</script> 

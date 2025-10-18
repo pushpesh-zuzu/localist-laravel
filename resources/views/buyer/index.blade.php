@@ -1,5 +1,5 @@
 <x-app-layout>
-  <x-slot name="header">{{ __('Quote Customers (Complete List)') }} </x-slot>
+  <x-slot name="header">{{ __('Quote Customers (Complete List)') }}</x-slot>
 
   <div class="card mb-4">
     <div class="card-header">
@@ -7,112 +7,239 @@
     </div>
 
     <div class="card-body">
-      <div class="container my-4">
-        <div class="d-flex justify-content-center">
-          <form method="GET" action="{{ route('buyer.index') }}" class="w-100 w-md-75">
-            <div class="row g-3 align-items-end justify-content-center">
-              <div class="col-12 col-md-3">
-                <label for="from_date" class="form-label">From Date</label>
-                <input type="date" id="from_date" name="from_date" value="{{ request('from_date') }}" class="form-control">
-              </div>
-              <div class="col-12 col-md-3">
-                <label for="to_date" class="form-label">To Date</label>
-                <input type="date" id="to_date" name="to_date" value="{{ request('to_date') }}" class="form-control">
-              </div>
-              <div class="col-12 col-md-3 text-center text-md-start">
-                <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0">Filter</button>
-                <a href="{{ route('buyer.index') }}" class="btn btn-secondary">Reset</a>
-              </div>
-            </div>
-          </form>
-        </div>
+      {{-- Filter Section --}}
+      <div class="container mb-5">
+        <form id="filterForm" class="row g-3 justify-content-center align-items-end">
+          <div class="col-12 col-md-3">
+            <label for="from_date" class="form-label">From Date</label>
+            <input type="date" id="from_date" name="from_date" class="form-control" placeholder="dd-mm-yyyy">
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label for="to_date" class="form-label">To Date</label>
+            <input type="date" id="to_date" name="to_date" class="form-control" placeholder="dd-mm-yyyy">
+          </div>
+
+          <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
+            <button type="button" id="filterBtn" class="btn btn-primary ">Filter</button>
+            <button type="button" id="resetBtn" class="btn btn-secondary">Reset</button>
+          </div>
+        </form>
       </div>
-      @if(count($aRows) > 0)
-      <table class="table table-striped" id="dataTable">
-        <thead>
-          <tr>
-            <th scope="col" width="20px;">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <!-- <th scope="col">User Role</th> -->
-            <th scope="col">Status</th>
-            <th scope="col">Postcode</th>
-            <th scope="col">Phone</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($aRows as $aKey => $aRow)
-          <tr>
-            <th scope="row">{{ $aKey+1 }}</th>
-            <td>{{ $aRow->name }}</td>
-            <td>{{ $aRow->email }}</td>
-            <!-- <td>{{'Buyer'}}</td> -->
-            <td>Complete</td>
-            <td>{{ $aRow->zipcode }}</td>
-            <td>{{ $aRow->phone }}</td>
 
-            <!-- <td>{{ $aRow->user_type == 2 ? 'Buyer' : 'Seller, Buyer' }}</td> -->
 
-            <td>
-              <a href="{{ route('buyer.buyerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
-              <a href="{{ route('buyer.viewCount',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-users" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Unique Visitors"></i></a>
-              <a href="{{ route('buyer.buyerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
-              <a href="{{ route('buyer.show.custom', ['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-              {{-- <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>
-                </a>
-                <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('buyer.destroy',$aRow->id) }}" method="post" style="display: none;">
-              {{ method_field('DELETE') }}
-              {{ csrf_field() }}
-
-              </form> --}}
-
-            </td>
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
-      @else
-      No records found
-      @endif
+      {{-- Table Section --}}
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered" id="dataTable">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Postcode</th>
+              <th>Services</th>
+              <th>Score</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{-- Table data will be filled via AJAX --}}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
 </x-app-layout>
+<script>
+  function loadDataTable() {
+    let from_date = $('#from_date').val();
+    let to_date = $('#to_date').val();
 
+    if ($.fn.dataTable.isDataTable('#dataTable')) {
+      table.clear().destroy();
+    }
 
-<!-- <script>
-  $('#dataTable').DataTable({
-    destroy: true,
-    dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
-        extend: 'excelHtml5',
-        text: 'Export Excel',
-        title: 'Quote Customers List',
-        className: "buttons-excel btn btn-success btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'none'
-          }
+    table = $("#dataTable").DataTable({
+      destroy: true,
+      responsive: true,
+      processing: true,
+      serverSide: true,
+      autoWidth: false,
+      ajax: {
+        url: '{{ route("buyer.index") }}',
+        data: function(d) {
+          d.from_date = from_date;
+          d.to_date = to_date;
         }
       },
-      {
-        extend: 'csvHtml5',
-        text: 'Export CSV',
-        title: 'Quote Customers List',
-        className: "buttons-csv btn btn-info btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(6))',
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'none'
+      columns: [{
+          data: 'DT_RowIndex',
+          name: 'DT_RowIndex',
+          orderable: false,
+          searchable: false
+        },
+        {
+          data: 'name',
+          name: 'name'
+        },
+        {
+          data: 'email',
+          name: 'email'
+        },
+        {
+          data: 'phone',
+          name: 'phone'
+        },
+        {
+          data: 'status',
+          name: 'status'
+        },
+        {
+          data: 'postcode',
+          name: 'postcode',
+          orderable: false,
+          searchable: true
+        },
+        {
+          data: 'services',
+          name: 'services',
+          title: 'Services',
+          orderable: false,
+          searchable: true
+        },
+        {
+          data: 'score',
+          name: 'score',
+          orderable: false,
+          searchable: true
+        },
+        {
+          data: 'date',
+          name: 'date',
+          orderable: false,
+          searchable: true
+        },
+
+        {
+          data: 'action',
+          name: 'action',
+          orderable: false,
+          searchable: false
+        },
+      ],
+      columnDefs: [{
+          targets: 6,
+          width: "250px"
+        } // column index 6 = services
+      ],
+      dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
+      buttons: [{
+          extend: 'excelHtml5',
+          text: 'Export Excel',
+          title: 'Quote Customers - Complete List',
+          className: "buttons-excel btn btn-success btn-sm",
+          exportOptions: {
+            columns: ':not(:eq(9))', // Exclude "Action" column (7th column)
+            modifier: {
+              order: 'index',
+              page: 'all',
+              search: 'applied'
+            }
+
+          },
+          action: function(e, dt, button, config) {
+            var self = this;
+            var oldStart = dt.settings()[0]._iDisplayStart;
+
+            // Pre-fetch all data
+            dt.one('preXhr', function(e, s, data) {
+              data.start = 0;
+              data.length = -1; // tell server to return ALL rows
+            });
+
+            dt.one('xhr', function(e, s, json) {
+              var oldData = dt.rows().data();
+              dt.clear();
+              dt.rows.add(json.data).draw();
+
+              // Call default excelHtml5 action
+              $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt, button, config);
+
+              // Restore old page
+              dt.clear();
+              dt.rows.add(oldData).draw();
+              dt.settings()[0]._iDisplayStart = oldStart;
+              dt.draw(false);
+            });
+
+            dt.ajax.reload();
           }
-        }
-      },
-    ]
+        },
+        {
+          extend: 'csvHtml5',
+          text: 'Export CSV',
+          title: 'Quote Customers - Complete List',
+          className: "buttons-csv btn btn-info btn-sm",
+          exportOptions: {
+            columns: ':not(:eq(9))',
+            modifier: {
+              order: 'index',
+              page: 'all',
+              search: 'applied'
+            },
+            format: {
+              body: function(data, row, column, node) {
+                if (typeof data === 'string') {
+                  return data.replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+(>|$)/g, "");
+                }
+                return data;
+              }
+            }
+          },
+          action: function(e, dt, button, config) {
+            var self = this;
+            var oldStart = dt.settings()[0]._iDisplayStart;
+
+            dt.one('preXhr', function(e, s, data) {
+              data.start = 0;
+              data.length = -1;
+            });
+
+            dt.one('xhr', function(e, s, json) {
+              var oldData = dt.rows().data();
+              dt.clear();
+              dt.rows.add(json.data).draw();
+
+              $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config);
+
+              dt.clear();
+              dt.rows.add(oldData).draw();
+              dt.settings()[0]._iDisplayStart = oldStart;
+              dt.draw(false);
+            });
+
+            dt.ajax.reload();
+          }
+        },
+      ]
+    });
+  }
+
+  $(document).ready(function() {
+    loadDataTable();
+
+    $('#filterBtn').on('click', function() {
+      loadDataTable();
+    });
+
+    $('#resetBtn').on('click', function() {
+      $('#from_date').val('');
+      $('#to_date').val('');
+      loadDataTable();
+    });
   });
-</script> -->
+</script>

@@ -69,7 +69,7 @@
         <li class="nav-group" aria-expanded="false">
             <a class="nav-link nav-group-toggle" href="#">
             <i class="fa-solid fa-users nav-icon"></i> {{ __('Quote Customers') }}</a>
-              <ul class="nav-group-items compact" style="height: 120px;">
+              <ul class="nav-group-items compact" style="height: 210px;">
 
                 <li class="nav-item">
                   <a href="{{ route('buyer.incompletelist') }}" class="nav-link {{ request()->routeIs('buyer.incompletelist') ? 'active' : '' }}">
@@ -88,6 +88,19 @@
                   <a href="{{ route('buyer.contact_form') }}" class="nav-link {{ request()->routeIs('buyer.contact_form') ? 'active' : '' }}">
                     <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
                       {{ __('Contact Form') }}
+                  </a>
+                </li>
+
+                 <li class="nav-item">
+                  <a href="{{ route('buyer.testuserincompletelist') }}" class="nav-link {{ request()->routeIs('buyer.testuserincompletelist') ? 'active' : '' }}">
+                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      {{ __('Test Incomplete') }}
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{{ route('buyer.testusercompletelist') }}" class="nav-link {{ request()->routeIs('buyer.testusercompletelist') ? 'active' : '' }}">
+                    <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+                      {{ __('Test Complete') }}
                   </a>
                 </li>
               </ul>

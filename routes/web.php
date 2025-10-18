@@ -115,6 +115,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('buyer/{type}/{id}', [BuyerController::class, 'show'])->name('buyer.show.custom');
     Route::get('buyer-lead-details/{leadid}', [BuyerController::class, 'leadDetails'])->name('buyer.leadDetails');
     Route::get('buyer-incomplete-list', [BuyerController::class, 'incompletelist'])->name('buyer.incompletelist');
+    Route::get('buyer-test-complete-list', [BuyerController::class, 'testUserCompleteList'])->name('buyer.testusercompletelist');
+    Route::get('buyer-test-incomplete-list', [BuyerController::class, 'testUserInCompleteList'])->name('buyer.testuserincompletelist');
     Route::get('buyer-bids/{userid}', [BuyerController::class, 'buyerBids'])->name('buyer.buyerBids');
     Route::get('buyer-login/{userid}', [BuyerController::class, 'buyerLogin'])->name('buyer.buyerLogin');
     Route::get('buyer-viewcount/{userid}', [BuyerController::class, 'viewCount'])->name('buyer.viewCount');

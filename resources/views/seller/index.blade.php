@@ -6,8 +6,26 @@
           <strong>{{ __('Lead Buyers') }}</strong>
       </div>
       <div class="card-body">
-        @if(count($aRows) > 0)
-        <table class="table table-striped" id="dataTable">
+        <div class="container mb-5">
+        <form method="GET" action="{{ route('seller.complete') }}" class="row g-3 justify-content-center align-items-end mb-4">
+          <div class="col-12 col-md-3">
+            <label for="from_date" class="form-label">From Date</label>
+            <input type="date" id="from_date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label for="to_date" class="form-label">To Date</label>
+            <input type="date" id="to_date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
+          </div>
+
+          <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
+            <button type="submit" class="btn btn-primary me-2 mb-2 mb-md-0">Filter</button>
+            <a href="{{ route('seller.complete') }}" class="btn btn-secondary">Reset</a>
+          </div>
+        </form>
+      </div>
+       <div class="table-responsive">
+        <table class="table table-striped table-bordered" id="dataTable">
           <thead>
           <tr>
             <th scope="col" width="20px;">#</th>
@@ -42,15 +60,13 @@
           @endforeach
           </tbody>
         </table>
-        @else 
-        No records found
-        @endif
+       </div>
       </div>
     </div>
  
 </x-app-layout>           
 
-<!-- 
+
 <script>
 $('#dataTable').DataTable({
    destroy: true,
@@ -62,7 +78,7 @@ $('#dataTable').DataTable({
             title: 'Lead Buyers',
             className: "buttons-excel btn btn-success btn-sm",
             exportOptions: {
-                columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
+                columns: ':not(:eq(4))', // Exclude "Action" column (7th column)
                 modifier: {
                     order: 'index',
                     page: 'all',
@@ -76,7 +92,7 @@ $('#dataTable').DataTable({
             title: 'Lead Buyers',
             className: "buttons-csv btn btn-info btn-sm",
             exportOptions: {
-                columns: ':not(:eq(6))',
+                columns: ':not(:eq(4))',
                 modifier: {
                     order: 'index',
                     page: 'all',
@@ -85,5 +101,9 @@ $('#dataTable').DataTable({
             }
         },        
     ]
+     ,
+    "language": {
+      "emptyTable": "No records found"
+    }
 });
-</script> -->
+</script> 
