@@ -19,6 +19,7 @@ use App\Models\Plan;
 use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\DB;
 use App\Models\AbandonedUser;
+use App\Models\PlanHistory;
 
 class SellerController extends Controller
 {
@@ -208,7 +209,7 @@ class SellerController extends Controller
     public function creditPlans($userid)
     {
         $user = User::where('id', $userid)->pluck('name')->first();
-        $aRows = PurchaseHistory::where('user_id', $userid)->with(['plans', 'users'])->get();
+        $aRows = PlanHistory::where('user_id', $userid)->get();
         return view('seller.credit_plans', get_defined_vars());
     }
 
