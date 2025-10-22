@@ -36,6 +36,7 @@
             <th scope="col">Name</th>
             <th scope="col">Email</th>
             <th scope="col">Status</th>
+             <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -46,6 +47,12 @@
             <td>{{ $aRow->email }}</td>
             <td>Test</td>
 
+             <td>
+                <a href="{{ route('buyer.buyerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
+                <a href="{{ route('buyer.viewCount',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-users" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Unique Visitors"></i></a>
+                <a href="{{ route('buyer.buyerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
+                <a href="{{ route('buyer.show.custom', ['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+</td>
           </tr>
           @endforeach
         </tbody>
@@ -67,7 +74,7 @@
         title: 'Quote Customers - Test Complete List',
         className: "buttons-excel btn btn-success btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
+          columns: ':not(:eq(4))', // Exclude "Action" column (7th column)
           modifier: {
             order: 'index',
             page: 'all',
@@ -81,7 +88,7 @@
         title: 'Quote Customers - Test Complete List',
         className: "buttons-csv btn btn-info btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))',
+          columns: ':not(:eq(4))',
           modifier: {
             order: 'index',
             page: 'all',

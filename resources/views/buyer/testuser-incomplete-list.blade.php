@@ -34,6 +34,7 @@
             <th scope="col">Name</th>
             <th scope="col">Email</th>
             <th scope="col">Status</th>
+            <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -42,8 +43,11 @@
             <th scope="row">{{ $aKey+1 }}</th>
             <td>{{ $aRow->name }}</td>
             <td>{{ $aRow->email }}</td>
-            <td>Test</td>           
-          </tr>
+            <td>Test</td> 
+            <td>
+             <a href="{{ route('buyer.show.custom', ['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+          </td> 
+            </tr>
           @endforeach
         </tbody>
       </table>
@@ -63,7 +67,7 @@
         title: 'Quote Customers - Test Incomplete List',
         className: "buttons-excel btn btn-success btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
+          columns: ':not(:eq(4))', // Exclude "Action" column (7th column)
           modifier: {
             order: 'index',
             page: 'all',
@@ -77,7 +81,7 @@
         title: 'Quote Customers - Test Incomplete List',
         className: "buttons-csv btn btn-info btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))',
+          columns: ':not(:eq(4))',
           modifier: {
             order: 'index',
             page: 'all',
