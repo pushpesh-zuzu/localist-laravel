@@ -89,7 +89,7 @@ $('#dataTable').DataTable({
                 modifier: {
                     order: 'index',
                     page: 'all',
-                    search: 'none'
+                    search: 'applied'
                 }
             }
         },
@@ -103,7 +103,7 @@ $('#dataTable').DataTable({
                 modifier: {
                     order: 'index',
                     page: 'all',
-                    search: 'none'
+                    search: 'applied'
                 }
             }
         },        

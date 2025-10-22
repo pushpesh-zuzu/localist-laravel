@@ -11,12 +11,12 @@
         <form method="GET" action="{{ route('buyer.testuserincompletelist') }}" class="row g-3 justify-content-center align-items-end">
           <div class="col-12 col-md-3">
             <label for="from_date" class="form-label">From Date</label>
-            <input type="date" id="from_date" name="from_date" class="form-control" placeholder="dd-mm-yyyy">
+            <input type="date" id="from_date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
           </div>
 
           <div class="col-12 col-md-3">
             <label for="to_date" class="form-label">To Date</label>
-            <input type="date" id="to_date" name="to_date" class="form-control" placeholder="dd-mm-yyyy">
+            <input type="date" id="to_date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
           </div>
 
           <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
@@ -67,7 +67,7 @@
           modifier: {
             order: 'index',
             page: 'all',
-            search: 'none'
+            search: 'applied'
           }
         }
       },
@@ -81,7 +81,7 @@
           modifier: {
             order: 'index',
             page: 'all',
-            search: 'none'
+            search: 'applied'
           }
         }
       },

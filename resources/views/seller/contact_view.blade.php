@@ -8,10 +8,10 @@
           </div>
           <div class="card-body">
             <div class="row">
-              <div class="col-md-4"><b>Name: </b> {{ $aRows->full_name }}</div>
+              <div class="col-md-4"><b>Name: </b> {{ $aRows->full_name ?? '' }}</div>
 
-              <div class="col-md-4"><b>Mobile: </b> {{ $aRows->phone }}</div>
-              <div class="col-md-4"><b>Company: </b> {{ $aRows->company }}</div>
+              <div class="col-md-4"><b>Mobile: </b> {{ $aRows->phone ?? '' }}</div>
+              <div class="col-md-4"><b>Company: </b> {{ $aRows->company ?? '' }}</div>
 
             </div>
 
@@ -24,7 +24,7 @@
           <div class="card-body">
 
             <div class="row">
-                <div class="col-md-12">{{ $aRows->message }}</div>
+                <div class="col-md-12">{{ $aRows->message ?? '' }}</div>
             </div>
           </div>
         </div>

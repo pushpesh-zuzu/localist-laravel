@@ -56,13 +56,13 @@
               <a href="{{ route('seller.suggestedQuestions',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Suggested Questions"><i class="bi bi-question-circle nav-icon"></i></a>
               <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Services"><i class="bi bi-person-lines-fill"></i></a>
               <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-              <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i>
+              <!-- <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i>
               </a>
               <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('seller.destroy',$aRow->id) }}" method="post" style="display: none;">
                 {{ method_field('DELETE') }}
                 {{ csrf_field() }}
 
-              </form>
+              </form> -->
 
             </td>
           </tr>
@@ -88,7 +88,7 @@
           modifier: {
             order: 'index',
             page: 'all',
-            search: 'none'
+            search: 'applied'
           }
         }
       },
@@ -102,7 +102,7 @@
           modifier: {
             order: 'index',
             page: 'all',
-            search: 'none'
+            search: 'applied'
           }
         }
       },

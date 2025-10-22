@@ -77,7 +77,7 @@
           modifier: {
             order: 'index',
             page: 'all',
-            search: 'none'
+            search: 'applied'
           }
         }
       },
@@ -91,7 +91,7 @@
           modifier: {
             order: 'index',
             page: 'all',
-            search: 'none'
+            search: 'applied'
           }
         }
       },

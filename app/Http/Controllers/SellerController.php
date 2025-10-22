@@ -169,7 +169,7 @@ class SellerController extends Controller
     {
       //  $aRows = User::whereIn('user_type', [1, 3])->where('form_status', 0)->orderBy('id', 'DESC')->get();
 
-        $query = User::whereIn('user_type', [1, 3])
+        $query = AbandonedUser::whereIn('user_type', [1, 3])
             ->where('form_status', 0)
             ->orderBy('id', 'DESC');
 

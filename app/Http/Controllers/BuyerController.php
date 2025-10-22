@@ -210,17 +210,8 @@ class BuyerController extends Controller
                 })
                 ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
                 ->addColumn('action', function ($user) {
-                    return '
-                    <a href="' . route('buyer.buyerBids', $user->id) . '" class="text text-primary" title="Bids">
-                        <i class="fa-solid fa-chess-pawn"></i>
-                    </a>
-                    <a href="' . route('buyer.viewCount', $user->id) . '" class="text text-primary" title="Unique Visitors">
-                        <i class="fa-solid fa-users"></i>
-                    </a>
-                    <a href="' . route('buyer.buyerLogin', $user->id) . '" class="text text-primary" title="Login History">
-                        <i class="fa-solid fa-history"></i>
-                    </a>
-                    <a href="' . route('buyer.show.custom', ['type' => 'complete', 'id' => $user->id]) . '" class="text text-primary" title="View">
+                    return '                   
+                    <a href="' . route('buyer.show.custom', ['type' => 'abandoned', 'id' => $user->id]) . '" class="text text-primary" title="View">
                         <i class="bi bi-eye"></i>
                     </a>
                 ';

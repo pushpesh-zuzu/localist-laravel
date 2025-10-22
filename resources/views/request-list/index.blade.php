@@ -117,36 +117,36 @@
           },
 
         ],
-        // dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-        // buttons: [{
-        //     extend: 'excelHtml5',
-        //     text: 'Export Excel',
-        //     title: 'Request List',
-        //     className: "buttons-excel btn btn-success btn-sm",
-        //     exportOptions: {
-        //       columns: ':not(:eq(14))', // Exclude "Action" column (7th column)
-        //       modifier: {
-        //         order: 'index',
-        //         page: 'all',
-        //         search: 'none'
-        //       }
-        //     }
-        //   },
-        //   {
-        //     extend: 'csvHtml5',
-        //     text: 'Export CSV',
-        //     title: 'Request List',
-        //     className: "buttons-csv btn btn-info btn-sm",
-        //     exportOptions: {
-        //       columns: ':not(:eq(14))',
-        //       modifier: {
-        //         order: 'index',
-        //         page: 'all',
-        //         search: 'none'
-        //       }
-        //     }
-        //   },
-        // ],
+        dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
+        buttons: [{
+            extend: 'excelHtml5',
+            text: 'Export Excel',
+            title: 'Request List',
+            className: "buttons-excel btn btn-success btn-sm",
+            exportOptions: {
+              columns: ':not(:eq(14))', // Exclude "Action" column (7th column)
+              modifier: {
+                order: 'index',
+                page: 'all',
+                search: 'applied'
+              }
+            }
+          },
+          {
+            extend: 'csvHtml5',
+            text: 'Export CSV',
+            title: 'Request List',
+            className: "buttons-csv btn btn-info btn-sm",
+            exportOptions: {
+              columns: ':not(:eq(14))',
+              modifier: {
+                order: 'index',
+                page: 'all',
+                search: 'applied'
+              }
+            }
+          },
+        ],
         order: [
           [2, 'desc']
         ] // Optional: default order
