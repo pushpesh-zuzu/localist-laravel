@@ -9,6 +9,10 @@ use Google\Client as GoogleClient;
 use Google\Service\Oauth2;
 use Google\Service\MyBusinessAccountManagement;
 use Google\Service\MyBusinessBusinessInformation;
+use Illuminate\Support\Facades\{
+    Auth, Hash, DB , Log as FacadesLog, Mail, Validator, Http
+};
+use Carbon\Carbon;
 
 class GoogleController extends Controller
 {
@@ -170,6 +174,154 @@ class GoogleController extends Controller
             return ['error' => $e->getMessage()];
         }
     }
+
+    public function getGoogleReviews(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'business_name' => 'required|string',
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        $businessName = $request->business_name;
+        $userId = $request->user_id;
+        $refresh = $request->boolean('refresh', false);
+        $apiKey = CustomHelper::setting_value('serpapi_key', 'your_default_serpapi_key');
+
+        // Step 1: Fetch existing reviews from DB
+        $existingReviews = DB::table('google_reviews')
+            ->where('user_id', $userId)
+            ->where('business_name', $businessName)
+            ->orderByDesc('review_date')
+            ->get();
+
+        // CASE 1: Return from DB if available and no refresh
+        if ($existingReviews->isNotEmpty() && !$refresh) {
+            $reviews = $existingReviews->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'review_id' => $r->review_id,
+                    'user_id' => $r->user_id,
+                    'business_name' => $r->business_name,
+                    'reviewer_name' => $r->reviewer_name,
+                    'profile_image' => $r->profile_image,
+                    'rating' => (float) $r->rating,
+                    'review_text' => $r->review_text,
+                    'review_date' => $r->review_date,
+                ];
+            });
+
+            return $this->sendResponse('Google Reviews', [
+                'source' => 'database',
+                'total' => $reviews->count(),
+                'reviews' => $reviews,
+            ]);
+        }
+
+        // Step 2: Search place on Google Maps via SerpApi
+        $placeSearch = Http::get('https://serpapi.com/search.json', [
+            'engine' => 'google_maps',
+            'q' => $businessName,
+            'api_key' => $apiKey,
+        ]);
+
+        $placeId = $placeSearch['place_results']['place_id'] ?? null;
+        if (!$placeId) {
+            return $this->sendError('Place ID not found for this business.');
+        }
+
+        // Step 3: Fetch all reviews with pagination
+        $allReviews = collect();
+        $nextPageToken = null;
+
+        do {
+            $params = [
+                'engine' => 'google_maps_reviews',
+                'api_key' => $apiKey,
+                'place_id' => $placeId,
+            ];
+
+            if ($nextPageToken) {
+                $params['next_page_token'] = $nextPageToken;
+            }
+
+            $response = Http::get('https://serpapi.com/search.json', $params);
+            if ($response->failed()) break;
+
+            $data = $response->json();
+
+            $reviews = collect($data['reviews'] ?? [])->map(function ($review) use ($userId, $businessName) {
+                $reviewId = $review['review_id'] ?? md5($userId . $businessName . ($review['user']['name'] ?? 'Anonymous') . ($review['snippet'] ?? '') . ($review['iso_date'] ?? now()));
+                return [
+                    'user_id' => $userId,
+                    'business_name' => $businessName,
+                    'review_id' => $reviewId,
+                    'reviewer_name' => $review['user']['name'] ?? 'Anonymous',
+                    'profile_image' => $review['user']['thumbnail'] ?? null,
+                    'rating' => isset($review['rating']) ? (float) preg_replace('/[^0-9.]/', '', $review['rating']) : null,
+                    'review_text' => $review['snippet'] ?? '',
+                    'review_date' => isset($review['iso_date']) ? Carbon::parse($review['iso_date']) : now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->filter(fn($r) => $r['review_id']);
+
+            $allReviews = $allReviews->merge($reviews);
+
+            $nextPageToken = $data['serpapi_pagination']['next_page_token'] ?? null;
+            if ($nextPageToken) sleep(2);
+        } while ($nextPageToken);
+
+        // Step 4: Delete existing reviews if refresh = true
+        if ($refresh) {
+            DB::table('google_reviews')
+                ->where('user_id', $userId)
+                ->where('business_name', $businessName)
+                ->delete();
+        }
+
+        // Step 5: Upsert fetched reviews (no duplicates)
+        if ($allReviews->isNotEmpty()) {
+            DB::table('google_reviews')->upsert(
+                $allReviews->toArray(),
+                ['review_id', 'user_id', 'business_name'],
+                ['reviewer_name', 'profile_image', 'rating', 'review_text', 'review_date', 'updated_at']
+            );
+        }
+
+        // Step 6: Fetch final reviews from DB (consistent structure)
+        $finalReviews = DB::table('google_reviews')
+            ->where('user_id', $userId)
+            ->where('business_name', $businessName)
+            ->orderByDesc('review_date')
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'review_id' => $r->review_id,
+                    'user_id' => $r->user_id,
+                    'business_name' => $r->business_name,
+                    'reviewer_name' => $r->reviewer_name,
+                    'profile_image' => $r->profile_image,
+                    'rating' => (float) $r->rating,
+                    'review_text' => $r->review_text,
+                    'review_date' => $r->review_date,
+                ];
+            });
+
+        $source = $existingReviews->isEmpty() ? 'serpapi_initial' : 'serpapi_refreshed';
+
+        return $this->sendResponse('Google Reviews', [
+            'source' => $source,
+            'total' => $finalReviews->count(),
+            'reviews' => $finalReviews,
+        ]);
+    }
+
+
 
 }
 

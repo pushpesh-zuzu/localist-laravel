@@ -19,7 +19,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PagesController;
 use App\Http\Controllers\ContactUsController;
-use App\Http\Controllers\Api\Google\GoogleAuthController;
+use App\Http\Controllers\Api\Google\GoogleController;
 use App\Http\Controllers\Api\OctoparseController;
 
 // use App\Http\Controllers\Api\ZohoController;
@@ -109,9 +109,11 @@ Route::prefix('payment')->group(function () {
 
 
 Route::prefix('google')->group(function () {
-    Route::post('get-auth-token', [GoogleAuthController::class, 'getAuthToken']);
+    Route::post('get-auth-token', [GoogleController::class, 'getAuthToken']);
 
-    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {});
+    Route::middleware('auth:sanctum', 'authMiddleware')->group(function () {
+        Route::post('get-google-reviews', [GoogleController::class, 'getGoogleReviews']);
+    });
 });
 
 Route::prefix('octoparse')->group(function () {
