@@ -53,12 +53,12 @@
                 <a href="{{ route('buyer.buyerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
                 <a href="{{ route('buyer.show.custom', ['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
 
-                <a href="javascript:void(0)"
+                {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
                   class="text text-danger"
                   title="Delete">
                   <i class="fa-solid fa-trash"></i>
-                </a>
+                </a> --}}
 
               </td>
             </tr>

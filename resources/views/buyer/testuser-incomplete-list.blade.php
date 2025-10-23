@@ -47,12 +47,12 @@
               <td>
                 <a href="{{ route('buyer.show.custom', ['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
 
-                <a href="javascript:void(0)"
+                {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'abandoned', '')"
                   class="text text-danger"
                   title="Delete">
                   <i class="fa-solid fa-trash"></i>
-                </a>
+                </a> --}}
               </td>
             </tr>
             @endforeach

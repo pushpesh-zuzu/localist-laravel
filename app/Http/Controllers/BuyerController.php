@@ -83,10 +83,11 @@ class BuyerController extends Controller
                     <a href="' . route('buyer.show.custom', ['type' => 'complete', 'id' => $user->id]) . '" class="text text-primary" title="View">
                         <i class="fa-solid fa-eye"></i>
                     </a>
-                    <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
-                    <i class="fa-solid fa-trash"></i>
-                   </a>
+                    
                 ';
+                // <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
+                //     <i class="fa-solid fa-trash"></i>
+                //    </a>
                 })
                 ->filterColumn('postcode', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('postcode', 'like', "%{$keyword}%"));
@@ -219,10 +220,11 @@ class BuyerController extends Controller
                         <i class="bi bi-eye"></i>
                     </a>
 
-                     <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" class="text text-danger" title="Delete">
-                    <i class="fa-solid fa-trash"></i>
-                   </a>
+                     
                 ';
+                // <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" class="text text-danger" title="Delete">
+                //     <i class="fa-solid fa-trash"></i>
+                //    </a>
                 })
                 ->filterColumn('postcode', function ($query, $keyword) {
                     $query->where(function ($q) use ($keyword) {
