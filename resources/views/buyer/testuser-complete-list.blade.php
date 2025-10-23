@@ -12,12 +12,12 @@
         <form method="GET" action="{{ route('buyer.testusercompletelist') }}" class="row g-3 justify-content-center align-items-end">
           <div class="col-12 col-md-3">
             <label for="from_date" class="form-label">From Date</label>
-            <input type="date" id="from_date" name="from_date" class="form-control"  value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
+            <input type="date" id="from_date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
           </div>
 
           <div class="col-12 col-md-3">
             <label for="to_date" class="form-label">To Date</label>
-            <input type="date" id="to_date" name="to_date" class="form-control"  value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
+            <input type="date" id="to_date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
           </div>
 
           <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
@@ -27,37 +27,45 @@
         </form>
       </div>
 
-     
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered" id="dataTable">
-        <thead>
-          <tr>
-            <th scope="col" width="20px;">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Status</th>
-             <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($testUsers as $aKey => $aRow)
-          <tr>
-            <th scope="row">{{ $aKey+1 }}</th>
-            <td>{{ $aRow->name }}</td>
-            <td>{{ $aRow->email }}</td>
-            <td>Test</td>
 
-             <td>
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered" id="dataTable">
+          <thead>
+            <tr>
+              <th scope="col" width="20px;">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($testUsers as $aKey => $aRow)
+             <tr id="userid{{ $aRow->id }}">
+              <th scope="row">{{ $aKey+1 }}</th>
+              <td>{{ $aRow->name }}</td>
+              <td>{{ $aRow->email }}</td>
+              <td>Test</td>
+
+              <td>
                 <a href="{{ route('buyer.buyerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
                 <a href="{{ route('buyer.viewCount',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-users" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Unique Visitors"></i></a>
                 <a href="{{ route('buyer.buyerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
                 <a href="{{ route('buyer.show.custom', ['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-</td>
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
-     </div>
+
+                <a href="javascript:void(0)"
+                  onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
+                  class="text text-danger"
+                  title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
+
+              </td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -102,3 +110,5 @@
     }
   });
 </script>
+
+<script src="{{ asset('coreui/js/common.js') }}"></script>

@@ -56,6 +56,18 @@
                 <a href="{{ route('buyer.show_contact_form', $aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" title="View">
                   <i class="bi bi-eye"></i>
                 </a>
+
+
+                <a href="javascript:void(0);" class="text text-danger"
+                  onclick="if(confirm('Are you sure you want to delete this record?')){ document.getElementById('delete-form-{{ $aRow->id }}').submit(); }"
+                  data-coreui-toggle="tooltip" data-coreui-placement="top" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </a>
+
+                <form id="delete-form-{{ $aRow->id }}" method="POST" action="{{ route('contact.delete', $aRow->id) }}" style="display:none;">
+                  @csrf
+                  @method('DELETE')
+                </form>
               </td>
             </tr>
             @endforeach

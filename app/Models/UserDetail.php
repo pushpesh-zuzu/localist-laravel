@@ -5,9 +5,10 @@ namespace App\Models;
 use App\Helpers\Zoho\ZohoSocialMedia;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class UserDetail extends Model
 {
+     use SoftDeletes;
     protected $fillable = [
                             'is_autobid',
                             'autobid_pause',

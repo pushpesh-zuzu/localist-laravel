@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Helpers\Zoho\ZohoServiceLocations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\SoftDeletes;
 class UserServiceLocation extends Model
 {
+     use SoftDeletes;
     protected $fillable = ['user_id', 'service_id','user_service_id','miles','postcode','nation_wide','city','travel_time','travel_by','type','is_default','status','coordinates'];
 
 

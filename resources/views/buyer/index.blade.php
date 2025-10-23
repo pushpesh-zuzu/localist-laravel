@@ -242,4 +242,8 @@
       loadDataTable();
     });
   });
+
+    
 </script>
+
+<script src="{{ asset('coreui/js/common.js') }}"></script>

@@ -10,6 +10,7 @@ use App\Models\LoginHistory;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\AbandonedUser;
+use App\Models\ContactUs;
 use Carbon\Carbon;
 use DB;
 use Yajra\Datatables\Datatables;
@@ -80,8 +81,11 @@ class BuyerController extends Controller
                         <i class="fa-solid fa-history"></i>
                     </a>
                     <a href="' . route('buyer.show.custom', ['type' => 'complete', 'id' => $user->id]) . '" class="text text-primary" title="View">
-                        <i class="bi bi-eye"></i>
+                        <i class="fa-solid fa-eye"></i>
                     </a>
+                    <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                   </a>
                 ';
                 })
                 ->filterColumn('postcode', function ($query, $keyword) {
@@ -157,9 +161,9 @@ class BuyerController extends Controller
 
     public function incompletelist(Request $request)
     {
-        
 
-       if ($request->ajax()) {
+
+        if ($request->ajax()) {
 
             $query = AbandonedUser::with(['leadRequests.category'])
                 ->whereIn('user_type', [2, 3])
@@ -214,6 +218,10 @@ class BuyerController extends Controller
                     <a href="' . route('buyer.show.custom', ['type' => 'abandoned', 'id' => $user->id]) . '" class="text text-primary" title="View">
                         <i class="bi bi-eye"></i>
                     </a>
+
+                     <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" class="text text-danger" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                   </a>
                 ';
                 })
                 ->filterColumn('postcode', function ($query, $keyword) {
@@ -236,9 +244,9 @@ class BuyerController extends Controller
 
         return view('buyer.incomplete');
     }
-  
 
-   /**
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -270,10 +278,7 @@ class BuyerController extends Controller
 
     public function contactForm(Request $request)
     {
-        // $aRows = DB::table('contact_us')->where('user_type', 2)->orderBy('id','DESC')->get();
-
-
-        $query = DB::table('contact_us')->where('user_type', 2)
+        $query =ContactUs::where('user_type', 2)
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -288,8 +293,6 @@ class BuyerController extends Controller
         }
 
         $aRows = $query->get();
-
-
 
         return view('buyer.contact_form_list', compact('aRows'));
     }
@@ -323,40 +326,62 @@ class BuyerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
+
+
+
     public function destroy(Request $request, string $id)
     {
-        // dd($user);
+
         if ($request->type == 'abandoned') {
-            \DB::table('abandoned_users')->where('id', $id)->delete();
-            return redirect()->route('buyer.incompletelist')
-                ->with('success', 'Abandoned Buyer deleted successfully.');
+            \App\Models\AbandonedUser::find($id)?->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Record deleted successfully.'
+            ]);
         }
 
-        \DB::table('users')->where('id', $id)->delete();
-        \DB::table('user_accreditations')->where('user_id', $id)->delete();
-        \DB::table('user_card_details')->where('user_id', $id)->delete();
-        \DB::table('user_details')->where('user_id', $id)->delete();
-        \DB::table('user_response_times')->where('seller_id', $id)->delete();
-        \DB::table('user_services')->where('user_id', $id)->delete();
-        \DB::table('user_service_locations')->where('user_id', $id)->delete();
-        \DB::table('activity_logs')->where('from_user_id', $id)->orWhere('to_user_id', $id)->delete();
-        \DB::table('invoices')->where('user_id', $id)->delete();
-        \DB::table('lead_prefrences')->where('user_id', $id)->delete();
-        \DB::table('lead_requests')->where('customer_id', $id)->delete();
-        \DB::table('login_histories')->where('user_id', $id)->delete();
-        \DB::table('plan_histories')->where('user_id', $id)->delete();
-        \DB::table('profile_q_a_s')->where('user_id', $id)->delete();
-        \DB::table('purchase_histories')->where('user_id', $id)->delete();
-        \DB::table('recommended_leads')->where('seller_id', $id)->orWhere('buyer_id', $id)->delete();
-        \DB::table('reviews')->where('user_id', $id)->delete();
-        \DB::table('save_for_laters')->where('seller_id', $id)->orWhere('user_id', $id)->delete();
-        \DB::table('seller_notes')->where('seller_id', $id)->orWhere('buyer_id', $id)->delete();
-        \DB::table('suggested_questions')->where('user_id', $id)->delete();
-        \DB::table('unique_visitors')->where('seller_id', $id)->orWhere('buyer_id', $id)->delete();
-        \DB::table('autobid_status_logs')->where('user_id', $id)->delete();
-        \DB::table('email_logs')->where('user_id', $id)->delete();
-        return redirect()->route('buyer.index')
-            ->with('success', 'Buyer deleted successfully.');
+        // Main user
+        \App\Models\User::find($id)?->delete();
+
+        \App\Models\UserAccreditation::where('user_id', $id)->delete();
+        \App\Models\UserCardDetail::where('user_id', $id)->delete();
+        \App\Models\UserDetail::where('user_id', $id)->delete();
+        \App\Models\UserResponseTime::where('seller_id', $id)->delete();
+        \App\Models\UserService::where('user_id', $id)->delete();
+        \App\Models\UserServiceLocation::where('user_id', $id)->delete();
+        \App\Models\ActivityLog::where('from_user_id', $id)->orWhere('to_user_id', $id)->delete();
+        \App\Models\Invoice::where('user_id', $id)->delete();
+        \App\Models\LeadPrefrence::where('user_id', $id)->delete();
+        \App\Models\LeadRequest::where('customer_id', $id)->delete();
+        \App\Models\LoginHistory::where('user_id', $id)->delete();
+        \App\Models\PlanHistory::where('user_id', $id)->delete();
+        \App\Models\ProfileQA::where('user_id', $id)->delete();
+        \App\Models\PurchaseHistory::where('user_id', $id)->delete();
+        \App\Models\RecommendedLead::where('seller_id', $id)->orWhere('buyer_id', $id)->delete();
+        \App\Models\Review::where('user_id', $id)->delete();
+        \App\Models\SaveForLater::where('seller_id', $id)->orWhere('user_id', $id)->delete();
+        \App\Models\SellerNote::where('seller_id', $id)->orWhere('buyer_id', $id)->delete();
+        \App\Models\SuggestedQuestion::where('user_id', $id)->delete();
+        \App\Models\UniqueVisitor::where('seller_id', $id)->orWhere('buyer_id', $id)->delete();
+        \App\Models\AutobidStatusLog::where('user_id', $id)->delete();
+        \App\Models\EmailLog::where('user_id', $id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Record deleted successfully.'
+        ]);
+    }
+
+
+    public function deleteContact($id)
+    {
+        $contact = ContactUs::find($id);
+        if ($contact) {
+            $contact->delete(); // soft delete
+            return redirect()->back()->with('success', 'Contact deleted successfully.');
+        }
+        return redirect()->back()->with('error', 'Contact not found.');
     }
 
     public function leadDetails($leadid)

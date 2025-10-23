@@ -38,22 +38,21 @@
           </thead>
           <tbody>
           @foreach($aRows as $aKey => $aRow)
-          <tr>
+          <tr id="userid{{ $aRow->id }}">
             <th scope="row">{{ $aKey+1 }}</th>
             <td>{{ $aRow->name }}</td>
             <td>{{ $aRow->email }}</td>
             <td>{{'Seller' }}</td>
-            <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}"><i class="icon  cil-pencil"></i></a>
-                {{-- <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();"><i class="icon cil-trash"></i>
+               
+                <a href="javascript:void(0)"
+                  onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
+                  class="text text-danger"
+                  title="Delete">
+                  <i class="fa-solid fa-trash"></i>
                 </a>
-                <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('seller.destroy',$aRow->id) }}" method="post" style="display: none;">
-                   {{ method_field('DELETE') }}
-                   {{ csrf_field() }}
-                       
-                </form> --}}
 
             </td>
           </tr>
@@ -107,3 +106,5 @@ $('#dataTable').DataTable({
     }
 });
 </script> 
+
+<script src="{{ asset('coreui/js/common.js') }}"></script>

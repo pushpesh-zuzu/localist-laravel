@@ -41,4 +41,32 @@ CREATE TABLE IF NOT EXISTS `facebook_pages` (
 
 ALTER TABLE `email_settings` ADD `whatsapp_setting_value` VARCHAR(25) NOT NULL DEFAULT '0' AFTER `setting_value`;
 
-localist@2025
+
+
+
+
+
+
+/// 22-oct-2025
+
+
+ALTER TABLE `user_accreditations` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `user_card_details` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `user_details` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `user_response_times` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `user_services` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `user_service_locations` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `activity_logs` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `lead_prefrences` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `login_histories` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `login_at`;
+ALTER TABLE `plan_histories` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `profile_q_a_s` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `purchase_histories` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `recommended_leads` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `save_for_laters` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `seller_notes` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `suggested_questions` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `unique_visitors` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `autobid_status_logs` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `email_logs` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+ALTER TABLE `contact_us` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;

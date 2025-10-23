@@ -122,7 +122,11 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('buyer-viewcount/{userid}', [BuyerController::class, 'viewCount'])->name('buyer.viewCount');
     Route::get('buyer-contact-form', [BuyerController::class, 'contactForm'])->name('buyer.contact_form');
     Route::get('buyer-show-contact-form/{id}', [BuyerController::class, 'viewContactForm'])->name('buyer.show_contact_form');
+    Route::delete('/delete-user/{id}', [BuyerController::class, 'destroy'])->name('user.destroy');
+    Route::delete('/contact/{id}', [BuyerController::class, 'deleteContact'])->name('contact.delete');
+    
     Route::resource('seller', SellerController::class);
+    Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
     Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show.custom');
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-contact-form', [SellerController::class, 'contactForm'])->name('seller.contact_form');

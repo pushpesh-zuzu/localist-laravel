@@ -7,7 +7,7 @@
     </div>
 
     <div class="card-body">
-<div class="container mb-5">
+      <div class="container mb-5">
         <form method="GET" action="{{ route('buyer.testuserincompletelist') }}" class="row g-3 justify-content-center align-items-end">
           <div class="col-12 col-md-3">
             <label for="from_date" class="form-label">From Date</label>
@@ -25,34 +25,41 @@
           </div>
         </form>
       </div>
-      
-    <div class="table-responsive">
+
+      <div class="table-responsive">
         <table class="table table-striped table-bordered" id="dataTable">
-        <thead>
-          <tr>
-            <th scope="col" width="20px;">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Status</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($testUsers as $aKey => $aRow)
-          <tr>
-            <th scope="row">{{ $aKey+1 }}</th>
-            <td>{{ $aRow->name }}</td>
-            <td>{{ $aRow->email }}</td>
-            <td>Test</td> 
-            <td>
-             <a href="{{ route('buyer.show.custom', ['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-          </td> 
+          <thead>
+            <tr>
+              <th scope="col" width="20px;">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
             </tr>
-          @endforeach
-        </tbody>
-      </table>
-     </div>
-  </div>
+          </thead>
+          <tbody>
+            @foreach($testUsers as $aKey => $aRow)
+            <tr id="userid{{ $aRow->id }}">
+              <th scope="row">{{ $aKey+1 }}</th>
+              <td>{{ $aRow->name }}</td>
+              <td>{{ $aRow->email }}</td>
+              <td>Test</td>
+              <td>
+                <a href="{{ route('buyer.show.custom', ['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+
+                <a href="javascript:void(0)"
+                  onclick="deleteUser('{{ $aRow->id }}', 'abandoned', '')"
+                  class="text text-danger"
+                  title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
+              </td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
 
 </x-app-layout>
 
@@ -95,3 +102,5 @@
     }
   });
 </script>
+
+<script src="{{ asset('coreui/js/common.js') }}"></script>

@@ -19,6 +19,7 @@ use App\Models\Plan;
 use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\DB;
 use App\Models\AbandonedUser;
+use App\Models\ContactUs;
 use App\Models\PlanHistory;
 
 class SellerController extends Controller
@@ -52,9 +53,7 @@ class SellerController extends Controller
 
     public function contactForm(Request $request)
     {
-        // $aRows = DB::table('contact_us')->where('user_type', 1)->orderBy('id', 'DESC')->get();
-
-         $query = DB::table('contact_us')->where('user_type', 1)          
+        $query = ContactUs::where('user_type', 1)
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -168,7 +167,7 @@ class SellerController extends Controller
 
     public function incompletelist(Request $request)
     {
-      //  $aRows = User::whereIn('user_type', [1, 3])->where('form_status', 0)->orderBy('id', 'DESC')->get();
+        //  $aRows = User::whereIn('user_type', [1, 3])->where('form_status', 0)->orderBy('id', 'DESC')->get();
 
         $query = AbandonedUser::whereIn('user_type', [1, 3])
             ->where('form_status', 0)
@@ -336,4 +335,21 @@ class SellerController extends Controller
     //     }
     //     return view('seller.autobid_leads', compact('aRows'));
     // }
+
+
+    public function getCredit($userId)
+    {
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'total_credit' => $user->total_credit
+            ]
+        ]);
+    }
 }

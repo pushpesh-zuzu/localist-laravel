@@ -11,12 +11,12 @@
         <form method="GET" action="{{ route('seller.contact_form') }}" class="row g-3 justify-content-center align-items-end">
           <div class="col-12 col-md-3">
             <label for="from_date" class="form-label">From Date</label>
-            <input type="date" id="from_date" name="from_date" class="form-control"  value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
+            <input type="date" id="from_date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="dd-mm-yyyy">
           </div>
 
           <div class="col-12 col-md-3">
             <label for="to_date" class="form-label">To Date</label>
-            <input type="date" id="to_date" name="to_date" class="form-control"  value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
+            <input type="date" id="to_date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="dd-mm-yyyy">
           </div>
 
           <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
@@ -26,38 +26,47 @@
         </form>
       </div>
 
-    <div class="table-responsive">
+      <div class="table-responsive">
         <table class="table table-striped table-bordered" id="dataTable">
-        <thead>
-          <tr>
-            <th scope="col" width="20px;">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Phone</th>
-            <th scope="col">Type</th>
-            <th scope="col">Message</th>
-            <th scope="col">Status</th>
-            <th scope="col">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($aRows as $aKey => $aRow)
-          <tr>
-            <th scope="row">{{ $aKey+1 }}</th>
-            <td>{{ $aRow->full_name }}</td>
-            <td>{{ $aRow->phone }}</td>
-            <td class="text text-center">{{ $aRow->user_type == 1 ? 'Customer' : ($aRow->user_type == 2 ? 'Professional' : 'Unknown') }}</td>
-            <td class="text text-center">{{ $aRow->message }}</td>
-            <td style="color: {{ $aRow->status == 1 ? 'green' : 'red' }}">
-              {{ $aRow->status == 1 ? 'Viewed' : 'Not Viewed' }}
-            </td>
-            <td>
-              <a href="{{ route('seller.show_contact_form',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-            </td>
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
-    </div>
+          <thead>
+            <tr>
+              <th scope="col" width="20px;">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Phone</th>
+              <th scope="col">Type</th>
+              <th scope="col">Message</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($aRows as $aKey => $aRow)
+            <tr>
+              <th scope="row">{{ $aKey+1 }}</th>
+              <td>{{ $aRow->full_name }}</td>
+              <td>{{ $aRow->phone }}</td>
+              <td class="text text-center">{{ $aRow->user_type == 1 ? 'Customer' : ($aRow->user_type == 2 ? 'Professional' : 'Unknown') }}</td>
+              <td class="text text-center">{{ $aRow->message }}</td>
+              <td style="color: {{ $aRow->status == 1 ? 'green' : 'red' }}">
+                {{ $aRow->status == 1 ? 'Viewed' : 'Not Viewed' }}
+              </td>
+              <td>
+                <a href="{{ route('seller.show_contact_form',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+                <form method="POST" action="{{ route('contact.delete', $aRow->id) }}" style="display:inline-block;"
+                  onsubmit="return confirm('Are you sure you want to delete this record?');">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="text text-danger" data-coreui-toggle="tooltip" data-coreui-placement="top" title="Delete">
+                    <i class="bi bi-trash text-danger"></i>
+                  </button>
+                </form>
+
+              </td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -95,8 +104,7 @@
           }
         }
       },
-    ]
-    ,
+    ],
     "language": {
       "emptyTable": "No records found"
     }

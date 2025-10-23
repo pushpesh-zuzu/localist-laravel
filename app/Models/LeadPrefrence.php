@@ -5,9 +5,10 @@ namespace App\Models;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class LeadPrefrence extends Model
 {
+     use SoftDeletes;
     protected $fillable = ['user_id','service_id','question_id','answers'];
 
     public function serquestions()
