@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\{
     Auth, Hash, DB , Log as FacadesLog, Mail, Validator, Http
 };
 use Carbon\Carbon;
+use App\Models\Review;
 
 class GoogleController extends Controller
 {
@@ -192,13 +193,13 @@ class GoogleController extends Controller
         $apiKey = CustomHelper::setting_value('serpapi_key', 'your_default_serpapi_key');
 
         // Step 1: Fetch existing reviews from DB
-        $existingReviews = DB::table('google_reviews')
-            ->where('user_id', $userId)
+        $existingReviews = Review::where('user_id', $userId)
             ->where('business_name', $businessName)
+            ->where('source', 'google')
             ->orderByDesc('review_date')
             ->get();
 
-        // CASE 1: Return from DB if available and no refresh
+        // CASE 1: Return from DB if available and no refresh requested
         if ($existingReviews->isNotEmpty() && !$refresh) {
             $reviews = $existingReviews->map(function ($r) {
                 return [
@@ -206,11 +207,11 @@ class GoogleController extends Controller
                     'review_id' => $r->review_id,
                     'user_id' => $r->user_id,
                     'business_name' => $r->business_name,
-                    'reviewer_name' => $r->reviewer_name,
-                    'profile_image' => $r->profile_image,
-                    'rating' => (float) $r->rating,
-                    'review_text' => $r->review_text,
+                    'name' => $r->name,
+                    'ratings' => (float) $r->ratings,
+                    'review' => $r->review,
                     'review_date' => $r->review_date,
+                    'source' => $r->source,
                 ];
             });
 
@@ -228,7 +229,26 @@ class GoogleController extends Controller
             'api_key' => $apiKey,
         ]);
 
-        $placeId = $placeSearch['place_results']['place_id'] ?? null;
+        // Handle network or quota errors safely
+        if ($placeSearch->failed()) {
+            $body = $placeSearch->body();
+            $json = json_decode($body, true);
+
+            if (isset($json['error'])) {
+                return $this->sendError('SerpApi error: ' . $json['error']);
+            }
+
+            $status = $placeSearch->status();
+            return $this->sendError('Failed to connect to SerpApi (HTTP ' . $status . '). Please try again later.');
+        }
+
+        $data = $placeSearch->json();
+
+        if (isset($data['error'])) {
+            return $this->sendError('SerpApi error: ' . $data['error']);
+        }
+
+        $placeId = $data['place_results']['place_id'] ?? null;
         if (!$placeId) {
             return $this->sendError('Place ID not found for this business.');
         }
@@ -249,21 +269,61 @@ class GoogleController extends Controller
             }
 
             $response = Http::get('https://serpapi.com/search.json', $params);
-            if ($response->failed()) break;
+
+            // Handle HTTP or quota failures
+            if ($response->failed()) {
+                $body = $response->body();
+                $json = json_decode($body, true);
+                $status = $response->status();
+
+                if (isset($json['error']) && str_contains($json['error'], 'out of searches')) {
+                    // Save partial data
+                    if ($allReviews->isNotEmpty()) {
+                        Review::upsert(
+                            $allReviews->toArray(),
+                            ['review_id', 'user_id', 'business_name'],
+                            ['name', 'ratings', 'review', 'review_date', 'source', 'updated_at']
+                        );
+                    }
+
+                    return $this->sendError('SerpApi quota exceeded during review fetch. Partial data saved.');
+                }
+
+                return $this->sendError('Failed to connect to SerpApi (HTTP ' . $status . '). Please try again later.');
+            }
 
             $data = $response->json();
 
+            if (isset($data['error'])) {
+                if (str_contains($data['error'], 'out of searches')) {
+                    // Save partial data
+                    if ($allReviews->isNotEmpty()) {
+                        Review::upsert(
+                            $allReviews->toArray(),
+                            ['review_id', 'user_id', 'business_name'],
+                            ['name', 'ratings', 'review', 'review_date', 'source', 'updated_at']
+                        );
+                    }
+
+                    return $this->sendError('SerpApi quota exceeded during review fetch. Partial data saved.');
+                }
+
+                return $this->sendError('SerpApi error: ' . $data['error']);
+            }
+
             $reviews = collect($data['reviews'] ?? [])->map(function ($review) use ($userId, $businessName) {
-                $reviewId = $review['review_id'] ?? md5($userId . $businessName . ($review['user']['name'] ?? 'Anonymous') . ($review['snippet'] ?? '') . ($review['iso_date'] ?? now()));
+                $reviewId = $review['review_id']
+                    ?? md5($userId . $businessName . ($review['user']['name'] ?? 'Anonymous') . ($review['snippet'] ?? '') . ($review['iso_date'] ?? now()));
+
                 return [
                     'user_id' => $userId,
                     'business_name' => $businessName,
                     'review_id' => $reviewId,
-                    'reviewer_name' => $review['user']['name'] ?? 'Anonymous',
-                    'profile_image' => $review['user']['thumbnail'] ?? null,
-                    'rating' => isset($review['rating']) ? (float) preg_replace('/[^0-9.]/', '', $review['rating']) : null,
-                    'review_text' => $review['snippet'] ?? '',
+                    'name' => $review['user']['name'] ?? 'Anonymous',
+                    'ratings' => isset($review['rating']) ? (float) preg_replace('/[^0-9.]/', '', $review['rating']) : null,
+                    'review' => $review['snippet'] ?? '',
                     'review_date' => isset($review['iso_date']) ? Carbon::parse($review['iso_date']) : now(),
+                    'source' => 'google',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -277,25 +337,25 @@ class GoogleController extends Controller
 
         // Step 4: Delete existing reviews if refresh = true
         if ($refresh) {
-            DB::table('google_reviews')
-                ->where('user_id', $userId)
+            Review::where('user_id', $userId)
                 ->where('business_name', $businessName)
-                ->delete();
+                ->where('source', 'google')
+                ->forceDelete();
         }
 
-        // Step 5: Upsert fetched reviews (no duplicates)
+        // Step 5: Upsert fetched reviews (avoid duplicates)
         if ($allReviews->isNotEmpty()) {
-            DB::table('google_reviews')->upsert(
+            Review::upsert(
                 $allReviews->toArray(),
                 ['review_id', 'user_id', 'business_name'],
-                ['reviewer_name', 'profile_image', 'rating', 'review_text', 'review_date', 'updated_at']
+                ['name', 'ratings', 'review', 'review_date', 'source', 'updated_at']
             );
         }
 
-        // Step 6: Fetch final reviews from DB (consistent structure)
-        $finalReviews = DB::table('google_reviews')
-            ->where('user_id', $userId)
+        // Step 6: Fetch final reviews from DB
+        $finalReviews = Review::where('user_id', $userId)
             ->where('business_name', $businessName)
+            ->where('source', 'google')
             ->orderByDesc('review_date')
             ->get()
             ->map(function ($r) {
@@ -304,11 +364,11 @@ class GoogleController extends Controller
                     'review_id' => $r->review_id,
                     'user_id' => $r->user_id,
                     'business_name' => $r->business_name,
-                    'reviewer_name' => $r->reviewer_name,
-                    'profile_image' => $r->profile_image,
-                    'rating' => (float) $r->rating,
-                    'review_text' => $r->review_text,
+                    'name' => $r->name,
+                    'ratings' => (float) $r->ratings,
+                    'review' => $r->review,
                     'review_date' => $r->review_date,
+                    'source' => $r->source,
                 ];
             });
 
@@ -320,6 +380,8 @@ class GoogleController extends Controller
             'reviews' => $finalReviews,
         ]);
     }
+
+
 
 
 
