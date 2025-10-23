@@ -163,6 +163,8 @@ class UserController extends Controller
         $buyerId = $request->buyer_id;
         $leadId = $request->lead_id;
 
+        $ratings = CustomHelper::getAverageRating($sellerId);
+
         $user = User::where('id',$sellerId)->first();
 
         //percentage completed
@@ -186,7 +188,7 @@ class UserController extends Controller
         $user['response_time'] = CustomHelper::formatTimeDuration($responseTime);
         $user['user_details'] = UserDetail::where('user_id',$sellerId)->first();
         $user['reviews'] = Review::where('user_id',$sellerId)->get();
-        $user['reviews_count'] = count($user['reviews']);
+        $user['reviews_count'] = $ratings['total_reviews'] ?? 0;
         $user['accreditations'] = UserAccreditation::where('user_id',$sellerId)->get();
         $user['photos'] = UserDetail::where('user_id',$sellerId)->first();
         $user['services'] = UserService::where('user_id',$sellerId)->with(['userServices'])->get();

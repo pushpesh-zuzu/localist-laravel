@@ -126,6 +126,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/contact/{id}', [BuyerController::class, 'deleteContact'])->name('contact.delete');
     
     Route::resource('seller', SellerController::class);
+    Route::post('seller/custom-reviews/save', [SellerController::class, 'sellerSaveCustomReview'])->name('seller.save.custom.review');
     Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
     Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show.custom');
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');

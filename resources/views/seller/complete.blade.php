@@ -49,24 +49,33 @@
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <td>
 
-               <!-- <a href="javascript:void(0)"
+               {{-- <a href="javascript:void(0)"
                   class="text text-success view-credit"
                   data-user-id="{{ $aRow->id }}"
                   title="Add Credit">
                   <i class="bi bi-plus-circle"></i>
-                </a> -->
+                </a> --}}
                 <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
                 <a href="{{ route('seller.sellerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
                 <a href="{{ route('seller.creditPlans',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Credit Plans"><i class="bi bi-list-task nav-icon"></i></a>
                 <a href="{{ route('seller.suggestedQuestions',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Suggested Questions"><i class="bi bi-question-circle nav-icon"></i></a>
                 <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Services"><i class="bi bi-person-lines-fill"></i></a>
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+                
+                <a href="javascript:void(0)"
+                  onclick="openCustomReviewModal('{{ $aRow->id }}')"
+                  class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Custom Reviews"
+                  title="Custom Reviews">
+                  <i class="fa-solid fa-star"></i>
+                </a>    
+                
                 {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
                   class="text text-danger"
                   title="Delete">
                   <i class="fa-solid fa-trash"></i>
                 </a>     --}}
+
               </td>
             </tr>
             @endforeach
@@ -103,12 +112,67 @@
   </div>
 
 
+  <!-- Custom Reviews Modal -->
+<div class="modal fade" id="customReviewModal" tabindex="-1" aria-labelledby="customReviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="customReviewModalLabel">Custom Reviews</h5>
+        <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+      </div>
 
-</x-app-layout>
+      <div class="modal-body">
+        <form id="customReviewForm">
+          <input type="hidden" name="user_id" id="row_id">
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Review Platform</th>
+                  <th>Number of Reviews</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Facebook</td>
+                  <td><input type="text" name="facebook_reviews" class="form-control" placeholder="Enter number"></td>
+                  <td><input type="number" name="facebook_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
+                </tr>
+                <tr>
+                  <td>Google</td>
+                  <td><input type="text" name="google_reviews" class="form-control" placeholder="Enter number"></td>
+                  <td><input type="number" name="google_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
+                </tr>
+                <tr>
+                  <td>Trust Pilot</td>
+                  <td><input type="text" name="trustpilot_reviews" class="form-control" placeholder="Enter number"></td>
+                  <td><input type="number" name="trustpilot_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveCustomReview()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
 
 
 <!-- Credit Modal -->
 
+ @push('scripts')
 
 <script>
   $('#dataTable').DataTable({
@@ -177,3 +241,52 @@
   });
 </script>
 <script src="{{ asset('coreui/js/common.js') }}"></script>
+<script>
+  // Function to open modal and set row id
+  function openCustomReviewModal(rowId) {
+    document.getElementById('row_id').value = rowId;
+    const modal = new coreui.Modal(document.getElementById('customReviewModal'));
+    modal.show();
+  }
+
+  // Example save function (you can adjust to use AJAX)
+  function saveCustomReview() {
+    const form = document.getElementById('customReviewForm');
+    const formData = new FormData(form);
+
+    // Example: log data
+    console.log(Object.fromEntries(formData.entries()));
+
+    // Example AJAX request (Laravel route)
+    $.ajax({
+      url: "{{ route('seller.save.custom.review') }}",
+      type: 'POST',
+      data: formData,
+      dataType: 'JSON',
+      processData: false,  // Important for FormData
+      contentType: false,  // Important for FormData
+      headers: {
+          'X-CSRF-TOKEN': "{{ csrf_token() }}"
+      },
+      success: function(response) {
+        if (response.success === true) {
+            alert('Saved successfully!'); // You can customize this
+            const modalEl = document.getElementById('customReviewModal');
+            const modal = coreui.Modal.getInstance(modalEl);
+            modal.hide();
+        } else {
+            // Handle validation errors from server
+            console.log('Validation errors:', response.html);
+            alert('Validation failed. Check console for details.');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.log('AJAX Error:', xhr.responseText); 
+      }
+    });
+  }
+</script>
+@endpush
+
+
+</x-app-layout>

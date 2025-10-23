@@ -41,8 +41,12 @@ class ReviewController extends Controller{
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
+        
 
         $sellerId = User::where('uuid',$request->profile_uuid)->value('id');
+        
+        $ratings = CustomHelper::getAverageRating($sellerId);
+
         $user = User::where('id',$sellerId)->first();
         //percentage completed
         $user['percentage_completed'] = $user->getProfileCompletionPercentage();
@@ -63,7 +67,7 @@ class ReviewController extends Controller{
         $user['response_time'] = CustomHelper::formatTimeDuration($responseTime);
         $user['user_details'] = UserDetail::where('user_id',$sellerId)->first();
         $user['reviews'] = Review::where('user_id',$sellerId)->get();
-        $user['reviews_count'] = count($user['reviews']);
+        $user['reviews_count'] = $ratings['total_reviews'] ?? 0;
         $user['accreditations'] = UserAccreditation::where('user_id',$sellerId)->get();
         $user['services'] = UserService::where('user_id',$sellerId)->with(['userServices'])->get();
         $user['qa'] = \DB::table('profile_q_a_s')->where('user_id',$sellerId)->get();
@@ -98,6 +102,7 @@ class ReviewController extends Controller{
         $data['email'] = $request->email;
         $data['review'] = !empty($request->review) ? $request->review : '';
         $data['ratings'] = $request->ratings;
+        $data['source'] = 'localists';
         $data['created_at'] = date('y-m-d H:i:s');
         $data['updated_at'] = date('y-m-d H:i:s');
         $aid = Review::insertGetId($data);
@@ -105,11 +110,13 @@ class ReviewController extends Controller{
 
 
         if($aid){
-            $avg_rating = Review::avg('ratings');
-            $data2['avg_rating'] = number_format($avg_rating, 1);;
-            $data2['updated_at'] = date('y-m-d H:i:s');
-            User::where('id',$user_id)->update($data2);
-            $seller = User::where('id', $user_id)->first();
+            // $avg_rating = Review::where('user_id', $user_id)->where('source', 'localists')->avg('ratings');
+            // $data2['avg_rating'] = number_format($avg_rating, 1);
+            // $data2['updated_at'] = date('y-m-d H:i:s');
+            // User::where('id',$user_id)->update($data2);
+            // $seller = User::where('id', $user_id)->first();
+
+            CustomHelper::getUserAverageRating($user_id);
 
             //Add Notification Log for new review
             CustomHelper::logNotifications($user_id,0,'buyer_browser_new_review', 'New Review', $request->review);

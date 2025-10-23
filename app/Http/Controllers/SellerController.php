@@ -21,6 +21,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\AbandonedUser;
 use App\Models\ContactUs;
 use App\Models\PlanHistory;
+use App\Models\Review;
+use App\Models\CustomReview;
+
 
 class SellerController extends Controller
 {
@@ -351,5 +354,70 @@ class SellerController extends Controller
                 'total_credit' => $user->total_credit
             ]
         ]);
+    }
+
+
+    public function sellerSaveCustomReview(Request $request)
+    {
+        $user_id = $request->user_id;
+        $localists_reviews = Review::where('user_id', $user_id)->where('source', 'localists')->count();
+        $facebook_reviews = $request->facebook_reviews;
+        $google_reviews = $request->google_reviews;
+        $trustpilot_reviews = $request->trustpilot_reviews;
+
+        $localists_score = Review::where('user_id', $user_id)->where('source', 'localists')->avg('ratings');
+        $facebook_score = $request->facebook_score;
+        $google_score = $request->google_score;
+        $trustpilot_score = $request->trustpilot_score;       
+        
+        $average_rating = 0;
+        $avgCount = 0;
+
+        $data['user_id'] = $user_id;
+        $data['created_at'] = date('y-m-d H:i:s');
+
+        if(!empty($facebook_reviews) && !empty($facebook_score)){
+            CustomReview::where('user_id', $user_id)->where('review_platform', 'facebook')->delete();
+            $data['review_platform'] = 'facebook';
+            $data['review_count'] = $facebook_reviews;
+            $data['ratings'] = $facebook_score;
+            CustomReview::insert($data);
+            $average_rating += $facebook_score;
+            $avgCount++;
+        }
+
+        if(!empty($google_reviews) && !empty($google_score)){
+            CustomReview::where('user_id', $user_id)->where('review_platform', 'google')->delete();
+            $data['review_platform'] = 'google';
+            $data['review_count'] = $google_reviews;
+            $data['ratings'] = $google_score;
+            CustomReview::insert($data);
+            $average_rating += $google_score;
+            $avgCount++;
+        }
+
+        if(!empty($trustpilot_reviews) && !empty($trustpilot_score)){
+            CustomReview::where('user_id', $user_id)->where('review_platform', 'trustpilot')->delete();
+            $data['review_platform'] = 'trustpilot';
+            $data['review_count'] = $trustpilot_reviews;
+            $data['ratings'] = $trustpilot_score;
+            CustomReview::insert($data);
+            $average_rating += $trustpilot_score;
+            $avgCount++;
+        }
+
+        if(!empty($localists_reviews) && !empty($localists_score)){
+            $average_rating += $localists_score;
+            $avgCount++;
+        }
+
+        if ($avgCount > 0  && $average_rating > 0) {
+            $final_avg_rating = $average_rating / $avgCount;
+            $data2['avg_rating'] = number_format($final_avg_rating, 1);
+            $data2['updated_at'] = date('y-m-d H:i:s');
+            User::where('id',$user_id)->update($data2);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Custom review saved successfully']);
     }
 }

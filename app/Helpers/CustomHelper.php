@@ -23,9 +23,69 @@ use Stripe\PaymentIntent;
 use Stripe\Exception\ApiErrorException;
 use App\Models\UserCardDetail;
 use App\Models\UserDetail;
+use App\Models\Review;
+use App\Models\CustomReview;
+
 
 class CustomHelper
 {
+
+    public static function getAverageRating($user_id)
+    {
+        $localists_reviews = Review::where('user_id', $user_id)->where('source', 'localists')->count();
+        $facebook_reviews = CustomReview::where('user_id', $user_id)->where('review_platform', 'facebook')->value('review_count');
+        $google_reviews = CustomReview::where('user_id', $user_id)->where('review_platform', 'google')->value('review_count');
+        $trustpilot_reviews = CustomReview::where('user_id', $user_id)->where('review_platform', 'trustpilot')->value('review_count');
+
+
+        $localists_score = Review::where('user_id', $user_id)->where('source', 'localists')->avg('ratings');
+        $facebook_score = CustomReview::where('user_id', $user_id)->where('review_platform', 'facebook')->value('ratings');
+        $google_score = CustomReview::where('user_id', $user_id)->where('review_platform', 'google')->value('ratings');
+        $trustpilot_score = CustomReview::where('user_id', $user_id)->where('review_platform', 'trustpilot')->value('ratings');
+
+        $average_rating = 0;
+        $avgCount = 0;
+        $total_reviews = 0;
+        $final_avg_rating = 0;
+
+        if(!empty($facebook_reviews) && !empty($facebook_score)){
+            $average_rating += $facebook_score;
+            $avgCount++;
+            $total_reviews += $facebook_reviews;
+        }
+
+        if(!empty($google_reviews) && !empty($google_score)){
+            $average_rating += $google_score;
+            $avgCount++;
+            $total_reviews += $google_reviews;
+        }
+
+        if(!empty($trustpilot_reviews) && !empty($trustpilot_score)){
+            $average_rating += $trustpilot_score;
+            $avgCount++;
+            $total_reviews += $trustpilot_reviews;
+        }
+
+        if(!empty($localists_reviews) && !empty($localists_score)){
+            $average_rating += $localists_score;
+            $avgCount++;
+            $total_reviews += $localists_reviews;
+        }
+
+        if ($avgCount > 0  && $average_rating > 0) {
+            $final_avg_rating = $average_rating / $avgCount;
+            $data2['avg_rating'] = number_format($final_avg_rating, 1);
+            $data2['updated_at'] = date('y-m-d H:i:s');
+            User::where('id',$user_id)->update($data2);
+        }
+
+        return [
+            'average_rating' => number_format($final_avg_rating, 2),
+            'total_reviews' => $total_reviews
+        ];
+    }
+
+
     /**
      * Run any callable in the background.
      *

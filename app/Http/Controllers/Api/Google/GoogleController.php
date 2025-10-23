@@ -279,6 +279,10 @@ class GoogleController extends Controller
                 if (isset($json['error']) && str_contains($json['error'], 'out of searches')) {
                     // Save partial data
                     if ($allReviews->isNotEmpty()) {
+                        Review::where('user_id', $userId)
+                            ->where('business_name', $businessName)
+                            ->where('source', 'google')
+                            ->forceDelete();
                         Review::upsert(
                             $allReviews->toArray(),
                             ['review_id', 'user_id', 'business_name'],
@@ -298,6 +302,11 @@ class GoogleController extends Controller
                 if (str_contains($data['error'], 'out of searches')) {
                     // Save partial data
                     if ($allReviews->isNotEmpty()) {
+                        Review::where('user_id', $userId)
+                            ->where('business_name', $businessName)
+                            ->where('source', 'google')
+                            ->forceDelete();
+
                         Review::upsert(
                             $allReviews->toArray(),
                             ['review_id', 'user_id', 'business_name'],
@@ -335,16 +344,13 @@ class GoogleController extends Controller
             if ($nextPageToken) sleep(2);
         } while ($nextPageToken);
 
-        // Step 4: Delete existing reviews if refresh = true
-        if ($refresh) {
+        // Step 5: Upsert fetched reviews (avoid duplicates)
+        if ($allReviews->isNotEmpty()) {
             Review::where('user_id', $userId)
                 ->where('business_name', $businessName)
                 ->where('source', 'google')
                 ->forceDelete();
-        }
 
-        // Step 5: Upsert fetched reviews (avoid duplicates)
-        if ($allReviews->isNotEmpty()) {
             Review::upsert(
                 $allReviews->toArray(),
                 ['review_id', 'user_id', 'business_name'],
