@@ -116,7 +116,7 @@ class ReviewController extends Controller{
             // User::where('id',$user_id)->update($data2);
             // $seller = User::where('id', $user_id)->first();
 
-            CustomHelper::getUserAverageRating($user_id);
+            CustomHelper::getAverageRating($user_id);
 
             //Add Notification Log for new review
             CustomHelper::logNotifications($user_id,0,'buyer_browser_new_review', 'New Review', $request->review);
