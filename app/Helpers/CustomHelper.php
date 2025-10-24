@@ -505,7 +505,7 @@ class CustomHelper
     public static function createTrasactionLogNew($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
     {
 
-        $debitTransactionId = PurchaseHistory::insertGetId([
+         $debitTransactionId = PurchaseHistory::insertGetId([
             'user_id'        => $userId,
             'purchase_date'  => now()->toDateString(),
             'price'          => $amount,
@@ -519,25 +519,22 @@ class CustomHelper
 
         try {
 
-            $purchaseHistory = PurchaseHistory::where('user_id', $userId)
-                ->where('payment_type', 0)
-                ->where('status', 1)
-                ->latest()
-                ->first();
 
-            if (!$purchaseHistory) {
+            $planHistory  = PlanHistory::where('user_id', $userId)->latest()->first();
+
+            if (!$planHistory) {
                 Log::info("No previous purchase found for user {$userId}, skipping auto-pay.");
                 return $debitTransactionId;
             }
 
             //  Get plan and user details
-            $planHistory  = PlanHistory::where('user_id', $userId)->latest()->first();
+
             $isTopup      = $planHistory->is_topup ?? 0;
             $user         = User::find($userId);
             $remaining    = $user->total_credit;
 
             $autopay_credit_percent = CustomHelper::setting_value('autopay_credit_percent') ?? 8;
-            $threshold    = ($purchaseHistory->credits * $autopay_credit_percent) / 100;
+            $threshold    = ($planHistory->credits * $autopay_credit_percent) / 100;
 
             //  Check auto-pay eligibility
             if ($remaining > $threshold || $isTopup != 1) {
@@ -558,7 +555,7 @@ class CustomHelper
 
             $paymentSuccess = false;
             $lastError = '';
-            $skipFirstCard = true; 
+            $skipFirstCard = true;
 
             foreach ($cards as $index => $card) {
 
@@ -568,7 +565,7 @@ class CustomHelper
                 // }
                 try {
 
-                    $planPrice = floatval(str_replace(',', '', $purchaseHistory->price));
+                    $planPrice = floatval(str_replace(',', '', $planHistory->price));
                     $amountInPence = (int) round($planPrice * 100);
 
                     $paymentIntent = PaymentIntent::create([
@@ -582,14 +579,14 @@ class CustomHelper
                     ]);
 
                     if ($paymentIntent->status === 'succeeded') {
-                         Log::info("Payment succeeded for user {$userId} using card {$card->stripe_card_id}");
+                        Log::info("Payment succeeded for user {$userId} using card {$card->stripe_card_id}");
 
-                        $user->increment('total_credit', intval($purchaseHistory->credits));
+                        $user->increment('total_credit', intval($planHistory->credits));
 
                         PlanHistory::create([
                             'user_id'      => $userId,
                             'is_topup'     => $isTopup,
-                            'credits'      => $purchaseHistory->credits,
+                            'credits'      => $planHistory->credits,
                             'plan_name'    => $planHistory->plan_name,
                             'price'        => $planHistory->price,
                             'vat'          => $planHistory->vat,
@@ -602,7 +599,7 @@ class CustomHelper
                             'user_id'        => $userId,
                             'purchase_date'  => now()->toDateString(),
                             'price'          => $planHistory->total_amount,
-                            'credits'        => $purchaseHistory->credits,
+                            'credits'        => $planHistory->credits,
                             'details'        => $planHistory->plan_name,
                             'payment_type'   => 0,
                             'error_response' => '',

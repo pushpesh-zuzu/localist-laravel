@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class PurchaseHistory extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['user_id','plan_id','purchase_date','price','credits','response','status'];
+    protected $fillable = ['user_id','plan_id','purchase_date','price','credits','response','status','details','payment_type'];
     
     public function plans()
     {

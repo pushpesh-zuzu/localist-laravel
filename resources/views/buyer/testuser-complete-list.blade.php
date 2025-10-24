@@ -35,6 +35,8 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
+               <!-- <th scope="col">Entry URL</th>
+              <th scope="col">User IP</th> -->
               <th scope="col">Status</th>
               <th scope="col">Action</th>
             </tr>
@@ -45,6 +47,10 @@
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
+               <!-- <td style="word-break: break-all; max-width: 200px;">
+                {{ $aRow->entry_url ?? '' }}
+              </td>
+              <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
               <td>Test</td>
 
               <td>

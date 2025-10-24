@@ -68,6 +68,11 @@ class BuyerController extends Controller
                     } catch (\Exception $e) {
                     }
                 })
+                //  ->addColumn('entry_url', function ($user) {
+                //     $url = $user->entry_url ?? '';
+                //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
+                // })
+                // ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
                 ->addColumn('status', fn($user) => 'Complete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     return '
@@ -98,7 +103,7 @@ class BuyerController extends Controller
                 ->filterColumn('score', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
                 })
-                ->rawColumns(['services', 'postcode', 'score', 'status', 'action'])
+                ->rawColumns(['services', 'postcode', 'score','entry_url','user_ip_address', 'status', 'action'])
                 ->make(true);
         }
 
@@ -213,6 +218,11 @@ class BuyerController extends Controller
                     } catch (\Exception $e) {
                     }
                 })
+                //  ->addColumn('entry_url', function ($user) {
+                //     $url = $user->entry_url ?? '';
+                //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
+                // })
+              //  ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
                 ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     return '                   
@@ -240,7 +250,7 @@ class BuyerController extends Controller
                 ->filterColumn('score', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
                 })
-                ->rawColumns(['services', 'postcode', 'score', 'status', 'action'])
+                ->rawColumns(['services', 'postcode', 'score','entry_url','user_ip_address', 'status', 'action'])
                 ->make(true);
         }
 

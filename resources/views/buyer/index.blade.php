@@ -41,6 +41,8 @@
               <th>Postcode</th>
               <th>Services</th>
               <th>Score</th>
+              <!-- <th>Entry URL</th>
+            <th>User IP</th> -->
               <th>Date</th>
               <th>Action</th>
             </tr>
@@ -117,6 +119,18 @@
           orderable: false,
           searchable: true
         },
+        // {
+        //   data: 'entry_url',
+        //   name: 'entry_url',
+        //   orderable: false,
+        //   searchable: true
+        // },
+        // {
+        //   data: 'user_ip_address',
+        //   name: 'user_ip_address',
+        //   orderable: false,
+        //   searchable: true
+        // },
         {
           data: 'date',
           name: 'date',
@@ -131,10 +145,13 @@
           searchable: false
         },
       ],
-      columnDefs: [{
+     columnDefs: [{
           targets: 6,
           width: "250px"
-        } // column index 6 = services
+        }, {
+          targets: 8,
+          width: "200px"
+        }, // column index 6 = services
       ],
       dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
       buttons: [{

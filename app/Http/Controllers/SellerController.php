@@ -420,4 +420,35 @@ class SellerController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Custom review saved successfully']);
     }
+
+    public function addCredit(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'add_credit' => 'required|numeric|min:1',
+        ]);
+
+        $user = User::find($request->user_id);
+        $user->total_credit += $request->add_credit;
+        $user->save();
+
+        $detail = "Manual " . $request->add_credit . " credit added";
+        $data['user_id'] = $request->user_id;
+        $data['purchase_date'] = date('Y-m-d');
+        $data['price'] = 0;
+        $data['credits'] = $request->add_credit;
+        $data['details'] = $detail;
+        $data['payment_type'] = 0;
+        $data['error_response'] = null;
+        $data['status'] = 1;
+        $data['created_at'] = date('Y-m-d H:i:s');
+
+        PurchaseHistory::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Credit updated successfully!',
+            'new_credit' => $user->total_credit
+        ]);
+    }
 }

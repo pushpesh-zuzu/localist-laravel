@@ -38,6 +38,8 @@
               <th>Postcode</th>
               <th>Services</th>
               <th>Score</th>
+               <!-- <th>Entry URL</th>
+              <th>User IP</th> -->
               <th>Date</th>
               <th>Action</th>
             </tr>
@@ -113,6 +115,18 @@
           orderable: false,
           searchable: true
         },
+        // {
+        //   data: 'entry_url',
+        //   name: 'entry_url',
+        //   orderable: false,
+        //   searchable: true
+        // },
+        // {
+        //   data: 'user_ip_address',
+        //   name: 'user_ip_address',
+        //   orderable: false,
+        //   searchable: true
+        // },
         {
           data: 'date',
           name: 'date',

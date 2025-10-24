@@ -33,6 +33,8 @@
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Total Credit</th>
+               <!-- <th scope="col">Entry URL</th>
+              <th scope="col">User IP</th> -->
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
@@ -45,16 +47,20 @@
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
               <td class="text text-center">{{ $aRow->total_credit }}</td>
+               <!-- <td style="word-break: break-all; max-width: 200px;">
+                {{ $aRow->entry_url ?? '' }}
+              </td>
+              <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <td>
 
-               {{-- <a href="javascript:void(0)"
+                <a href="javascript:void(0)"
                   class="text text-success view-credit"
                   data-user-id="{{ $aRow->id }}"
                   title="Add Credit">
                   <i class="bi bi-plus-circle"></i>
-                </a> --}}
+                </a> 
                 <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
                 <a href="{{ route('seller.sellerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
                 <a href="{{ route('seller.creditPlans',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Credit Plans"><i class="bi bi-list-task nav-icon"></i></a>
@@ -89,14 +95,18 @@
     <div class="modal-dialog">
       <form id="creditForm">
         @csrf
-        <input type="hidden" id="user_id" name="user_id" value="1"> <!-- example user ID -->
+        <input type="hidden" id="user_id" name="user_id">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="creditModalLabel">Update User Credit</h5>
+            <h5 class="modal-title" id="creditModalLabel">Update Lead Buyer Credit</h5>
             <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Current Credit: <span id="current_credit">100</span></p> <!-- example value -->
+            <div id="creditMessage"></div>
+            <div>
+              <label class="form-label mb-3"><strong>Current Credit:<strong></label>
+              <span id="current_credit" class="badge bg-primary fs-6 ms-1">0</span>
+            </div>
             <div class="mb-3">
               <label for="add_credit" class="form-label">Add Credit</label>
               <input type="number" class="form-control" id="add_credit" name="add_credit" required min="1">
@@ -212,9 +222,12 @@
     }
   });
 
-  $(document).on("click", ".view-credit", function() {
+   $(document).on("click", ".view-credit", function() {
     let userId = $(this).data("user-id");
     let baseUrl = $("#_url").val();
+    $("#user_id").val('');
+    $("#current_credit").text('');
+    $('#creditMessage').html('');
     $.ajax({
       url: baseUrl + "/seller/get-credit/" + userId, // Route to get user credit
       type: "GET",
@@ -236,6 +249,64 @@
       },
       complete: function() {
         $("#loader").fadeOut();
+      }
+    });
+  });
+
+  $('#creditForm').submit(function(e) {
+    e.preventDefault();
+
+    let userId = $('#user_id').val();
+    let addCredit = $('#add_credit').val();
+
+
+    $('#creditMessage').html('');
+    $('#add_credit').removeClass('is-invalid');
+    $('#addCreditError').remove();
+
+
+    if (!userId) {
+      $('#creditMessage').html(
+        `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
+      );
+      return;
+    }
+
+    $.ajax({
+      url: "{{ route('seller.addCredit') }}",
+      type: "POST",
+      data: {
+        _token: $('input[name=_token]').val(),
+        user_id: userId,
+        add_credit: addCredit
+      },
+      success: function(response) {
+        if (response.success) {
+          $('#creditMessage').html(
+            `<div class="alert alert-success">${response.message || 'Credit updated successfully!'}</div>`
+          );
+          $('#current_credit').text(response.new_credit);
+          $('#add_credit').val('');
+        } else {
+          $('#creditMessage').html(
+            `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
+          );
+        }
+      },
+      error: function(xhr) {
+        if (xhr.status === 422) {
+          let errors = xhr.responseJSON.errors;
+          if (errors.add_credit) {
+            $('#add_credit').addClass('is-invalid');
+            $('#add_credit').after(
+              `<div id="addCreditError" class="invalid-feedback">${errors.add_credit[0]}</div>`
+            );
+          }
+        } else {
+          $('#creditMessage').html(
+            `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
+          );
+        }
       }
     });
   });
