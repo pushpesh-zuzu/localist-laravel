@@ -569,15 +569,20 @@ class SettingController extends Controller
         }
     }
 
-    public function getSellerCard(Request $request)
-    {
-        $user_id = $request->user_id;
-        $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();
-        if (!empty($data)) {
-            $data[0]['card_number'] = decrypt($data[0]['card_number']);
-            $data[0]['cvc'] = decrypt($data[0]['cvc']);
-            return $this->sendResponse("Card Details", $data);
+   public function getSellerCard(Request $request)
+{
+    $user_id = $request->user_id;
+    $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();
+
+    if (!empty($data)) {
+        foreach ($data as &$card) {
+            $card['card_number'] = decrypt($card['card_number']);
+            $card['cvc'] = decrypt($card['cvc']);
         }
-        return $this->sendResponse("No Card found!", $data);
+        return $this->sendResponse("Card Details", $data);
     }
+
+    return $this->sendResponse("No Card found!", []);
+}
+
 }
