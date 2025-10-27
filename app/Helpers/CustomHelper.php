@@ -591,6 +591,7 @@ class CustomHelper
                             'price'        => $planHistory->price,
                             'vat'          => $planHistory->vat,
                             'total_amount' => $planHistory->total_amount,
+                            'purchase_type' => 'auto_topup',                            
                             'created_at'   => now(),
                             'updated_at'   => now(),
                         ]);
