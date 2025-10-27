@@ -37,7 +37,7 @@
               <th>Status</th>
               <th>Postcode</th>
               <th>Services</th>
-              <th>Score</th>
+              {{-- <th>Score</th> --}}
                <!-- <th>Entry URL</th>
               <th>User IP</th> -->
               <th>Date</th>
@@ -109,12 +109,12 @@
           searchable: true,
 
         },
-        {
-          data: 'score',
-          name: 'score',
-          orderable: false,
-          searchable: true
-        },
+        //{
+        //  data: 'score',
+        //  name: 'score',
+        //  orderable: false,
+        //  searchable: true
+        //},
         // {
         //   data: 'entry_url',
         //   name: 'entry_url',

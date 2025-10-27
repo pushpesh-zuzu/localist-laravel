@@ -203,14 +203,11 @@ class BuyerController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('postcode', function ($user) {
-                    if ($user->leadRequests->isNotEmpty()) {
-                        return $user->leadRequests->pluck('postcode')->implode('<br>');
-                    } else {
-                        return $user->zipcode ?? '';
-                    }
+                    return $user->zipcode ?? '';
                 })
                 ->addColumn('services', function ($user) {
-                    return $user->leadRequests->map(fn($s) => $s->category->name ?? 'N/A')->implode('<br>');
+                    $service = Category::where('id', $user->service_id)->pluck('name')->first();
+                    return $service ?? '';  
                 })
                 ->addColumn('score', function ($user) {
                     return $user->leadRequests->pluck('credit_score')->implode('<br>');
