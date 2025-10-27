@@ -70,3 +70,9 @@ ALTER TABLE `unique_visitors` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `upda
 ALTER TABLE `autobid_status_logs` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
 ALTER TABLE `email_logs` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
 ALTER TABLE `contact_us` ADD COLUMN `deleted_at` TIMESTAMP NULL AFTER `updated_at`;
+
+
+
+
+ALTER TABLE `plan_histories`
+ADD COLUMN `purchase_type` VARCHAR(50) NOT NULL DEFAULT 'manual' AFTER `total_amount`;

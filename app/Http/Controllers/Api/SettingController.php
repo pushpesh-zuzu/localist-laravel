@@ -485,6 +485,7 @@ class SettingController extends Controller
         }
     }
 
+
     public function removeCard(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -500,27 +501,50 @@ class SettingController extends Controller
 
         try {
             $user = User::findOrFail($request->user_id);
+
             $card = UserCardDetail::where('user_id', $user->id)
                 ->where('id', $request->card_id)
                 ->firstOrFail();
 
             Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
 
+           
             if ($card->stripe_card_id && $user->stripe_customer_id) {
                 $paymentMethod = PaymentMethod::retrieve($card->stripe_card_id);
                 $paymentMethod->detach();
             }
 
+            $wasPrimary = $card->is_primary == 1;
             $card->delete();
 
-            DB::commit();
+            if ($wasPrimary) {
+              
+                $user->stripe_payment_method_id = null;
+                $user->save();
 
+               
+                $nextCard = UserCardDetail::where('user_id', $user->id)
+                    ->orderBy('id', 'desc') 
+                    ->first();
+
+                if ($nextCard) {
+                    $nextCard->is_primary = 1;
+                    $nextCard->save();
+                 
+                    $user->stripe_payment_method_id = $nextCard->stripe_card_id;
+                    $user->save();
+                }
+            }
+
+            DB::commit();
             return $this->sendResponse("Card removed successfully.", []);
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError("Failed to remove card. ERROR: " . $e->getMessage());
         }
     }
+
+
 
 
     public function makePrimaryCard(Request $request)
