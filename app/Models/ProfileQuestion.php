@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProfileQuestion extends Model
 {
-    use SoftDeletes; // Enable soft deletes
+  //  use SoftDeletes; // Enable soft deletes
     protected $fillable = ['questions'];
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class UserDetail extends Model
 {
-     use SoftDeletes;
+   //  use SoftDeletes;
     protected $fillable = [
                             'is_autobid',
                             'autobid_pause',

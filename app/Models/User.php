@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
-    use SoftDeletes; // Enable soft deletes
+   // use SoftDeletes; // Enable soft deletes
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 

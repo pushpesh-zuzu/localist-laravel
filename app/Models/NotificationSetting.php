@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class NotificationSetting extends Model
 {
-    use SoftDeletes; // Enable soft deletes
+   // use SoftDeletes; // Enable soft deletes
     use HasSlug;
 
     protected $fillable = ['user_id', 'noti_name','noti_value','user_type','noti_type'];
