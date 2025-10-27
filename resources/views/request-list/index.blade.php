@@ -42,7 +42,7 @@
         dom: 'Bfrtip',
         responsive: true,
         processing: true,
-        serverSide: true,
+        serverSide: false,
         autoWidth: false,
         buttons: [
           // 'csv',

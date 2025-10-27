@@ -54,6 +54,16 @@
               <td>Street Address</td>
               <td>{{ $aRows->address }}</td>
             </tr>
+
+            <!-- <tr>
+                <td>Entry URL</td>
+                <td>{{ $aRows->entry_url ?? 'N/A' }}</td>
+              </tr>
+
+              <tr>
+                <td>User IP Address</td>
+                <td>{{ $aRows->user_ip_address ?? 'N/A' }}</td>
+              </tr> -->
             
             </tbody>
           </table>

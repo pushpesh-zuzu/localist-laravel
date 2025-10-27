@@ -16,7 +16,12 @@ use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Log, Mail, Validator
+    Auth,
+    Hash,
+    DB,
+    Log,
+    Mail,
+    Validator
 };
 use Illuminate\Support\Facades\Storage;
 use Stripe\Stripe;
@@ -32,20 +37,20 @@ class SettingController extends Controller
         $user_id = $request->user_id;
         $aValues = $request->all();
 
-        $users = User::where('id',$user_id)->first();
-        $userdetails = UserDetail::where('user_id',$user_id)->first();
+        $users = User::where('id', $user_id)->first();
+        $userdetails = UserDetail::where('user_id', $user_id)->first();
 
-        if($aValues['type'] == 'about'){
+        if ($aValues['type'] == 'about') {
             if ($request->hasFile('company_logo')) {
-                $imagePath =  CustomHelper::fileUpload($aValues['company_logo'],'users');
+                $imagePath =  CustomHelper::fileUpload($aValues['company_logo'], 'users');
                 $company_logo = $imagePath;
-            }else{
+            } else {
                 $company_logo = "";
             }
             if ($request->hasFile('profile_image')) {
-                $profileimagePath =  CustomHelper::fileUpload($aValues['profile_image'],'users');
+                $profileimagePath =  CustomHelper::fileUpload($aValues['profile_image'], 'users');
                 $profile_image = $profileimagePath;
-            }else{
+            } else {
                 $profile_image = "";
             }
 
@@ -59,7 +64,7 @@ class SettingController extends Controller
                 'company_phone'         => $aValues['company_phone'] ?? null,
                 'company_website'       => $aValues['company_website'] ?? null,
                 'company_location'      => $aValues['company_location'] ?? null,
-                'company_locaion_reason'=> $aValues['company_locaion_reason'] ?? null,
+                'company_locaion_reason' => $aValues['company_locaion_reason'] ?? null,
                 'company_size'          => $aValues['company_size'] ?? null,
                 'company_total_years'   => $aValues['company_total_years'] ?? null,
                 'about_company'         => $aValues['about_company'] ?? null,
@@ -74,7 +79,7 @@ class SettingController extends Controller
             $users->update($filteredUserData);
         }
 
-        if($aValues['type'] == 'photos'){
+        if ($aValues['type'] == 'photos') {
             $existingPhotos = $request->input('existing_photos'); // "old1.png,old2.png"
 
             if (is_string($existingPhotos)) {
@@ -102,12 +107,12 @@ class SettingController extends Controller
 
             $allPhotos = array_merge($existingPhotosArray, $newPhotos);
 
-            if(isset($userdetails) && $userdetails != ''){
+            if (isset($userdetails) && $userdetails != '') {
                 $userdetails->update([
                     'company_photos' => implode(',', $allPhotos),
                     'company_youtube_link' => $aValues['company_youtube_link'] ?? null,
                 ]);
-            }else{
+            } else {
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
                     'company_photos' => implode(',', $allPhotos),
@@ -120,11 +125,11 @@ class SettingController extends Controller
 
 
 
-        if($aValues['type'] == 'social_media'){
+        if ($aValues['type'] == 'social_media') {
             // echo "<pre>";
             // print_r($aValues);
             // exit;
-            if(isset($userdetails) && $userdetails != ''){
+            if (isset($userdetails) && $userdetails != '') {
                 $userdetails->update([
                     'fb_link' => $aValues['fb_link'],
                     'twitter_link' => $aValues['twitter_link'],
@@ -134,7 +139,7 @@ class SettingController extends Controller
                     'extra_links' => str_replace("\n", ",", $aValues['extra_links'])
 
                 ]);
-            }else{
+            } else {
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
                     'fb_link' => $aValues['fb_link'],
@@ -146,9 +151,8 @@ class SettingController extends Controller
                     'is_autobid' => 1
                 ]);
             }
-
         }
-        
+
 
         if ($aValues['type'] == 'accreditations') {
             $ids      = $request->input('accre_id', []);        // indexed ids
@@ -190,22 +194,22 @@ class SettingController extends Controller
         }
 
 
-         if ($aValues['type'] == 'delete_accreditation') {
+        if ($aValues['type'] == 'delete_accreditation') {
             $id = $request->input('accre_id');
             if ($id) {
                 UserAccreditation::where('id', $id)->delete();
             }
-
         }
 
-        CustomHelper::runInBackground(function() use ($user_id) {
+        CustomHelper::runInBackground(function () use ($user_id) {
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
         });
-        
+
         return $this->sendResponse(__('Profile updated successfully'));
     }
 
-    public function sellerProfileQues(){
+    public function sellerProfileQues()
+    {
         $questions = ProfileQuestion::where('status', 1)->orderBy('id', 'DESC')->get();
         return $this->sendResponse(__('Profile Questions Data'), $questions);
     }
@@ -257,11 +261,12 @@ class SettingController extends Controller
         return $this->sendResponse(__('Data Submitted successfully'), $data);
     }
 
-    public function sellerBillingDetails(Request $request){
+    public function sellerBillingDetails(Request $request)
+    {
         $user_id = $request->user_id;
         $aValues = $request->all();
-        $userdetails = UserDetail::where('user_id',$user_id)->first();
-        if(isset($userdetails) && $userdetails != ''){
+        $userdetails = UserDetail::where('user_id', $user_id)->first();
+        if (isset($userdetails) && $userdetails != '') {
             $userdetails->update([
                 'billing_contact_name' => $aValues['billing_contact_name'],
                 'billing_address1' => $aValues['billing_address1'],
@@ -271,7 +276,7 @@ class SettingController extends Controller
                 'billing_phone' => $aValues['billing_phone'],
                 'billing_vat_register' => $aValues['billing_vat_register'],
             ]);
-        }else{
+        } else {
             $userdetails = UserDetail::create([
                 'user_id'  => $user_id,
                 'billing_contact_name' => $aValues['billing_contact_name'],
@@ -284,40 +289,41 @@ class SettingController extends Controller
             ]);
         }
 
-        CustomHelper::runInBackground(function() use ($user_id) {
+        CustomHelper::runInBackground(function () use ($user_id) {
             app(ZohoLeadBuyers::class)->integrateZohoDetails($user_id);
         });
         return $this->sendResponse('Billing details submitted successfully!', $userdetails);
     }
 
-    public function sellerCardDetails(Request $request){
+    public function sellerCardDetailsold(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'card_number' => 'required',
             'expiry_date' => 'required',
             'cvc' => 'required',
             'stripe_payment_method_id' => 'required',
-          ], [
+        ], [
             'card_number.required' => 'Card Number is required.',
             'expiry_date.required' => 'Card Valid till date is required.',
             'stripe_payment_method_id.required' => 'Stripe Payment method Id is required.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
         $user_id = $request->user_id;
         $aValues = $request->all();
-        $userdetails = UserCardDetail::where('user_id',$user_id)->first();
+        $userdetails = UserCardDetail::where('user_id', $user_id)->first();
         $type = "";
-        if(isset($userdetails) && $userdetails != ''){
+        if (isset($userdetails) && $userdetails != '') {
             $userdetails->update([
                 'card_number' => encrypt($aValues['card_number']),
                 'expiry_date' => $aValues['expiry_date'],
                 'cvc' => encrypt($aValues['cvc'])
             ]);
             $type = 'updated';
-        }else{
+        } else {
             $userdetails = UserCardDetail::create([
                 'user_id'  => $user_id,
                 'card_number' => encrypt($aValues['card_number']),
@@ -330,14 +336,14 @@ class SettingController extends Controller
         //update stripe card id to user
         $dataN['stripe_payment_method_id'] = $request->stripe_payment_method_id;
         $dataN['updated_at'] = date('y-m-d H:i:s');
-        User::where('id',$user_id)->update($dataN);
+        User::where('id', $user_id)->update($dataN);
 
         //check if customer exits in database or not
-        $user = User::where('id',$user_id)->first();
+        $user = User::where('id', $user_id)->first();
         $stipeCustomerId = $user->stripe_customer_id;
 
         Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
-        if(empty($stipeCustomerId)){ //customer not exits in database
+        if (empty($stipeCustomerId)) { //customer not exits in database
             // print_r("customer not exits in database");
             //create new customer and attach card to it 
             $customer = Customer::create([
@@ -347,38 +353,37 @@ class SettingController extends Controller
 
             ]);
             // print_r($customer); exit;
-            if(!empty($customer)){
+            if (!empty($customer)) {
                 $stipeCustomerId = $customer['id'];
 
                 $dataU['stripe_customer_id'] = $stipeCustomerId;
                 $dataU['updated_at'] = date('Y-m-d H:i:s');
-                User::where('id',$user_id)->update($dataU);
+                User::where('id', $user_id)->update($dataU);
             }
-        }else{
+        } else {
             // check if customer exits in stripe or not
             try {
                 $customer = Customer::retrieve($stipeCustomerId);
                 if ($customer && isset($customer->id)) { // customer exists, attach new card to it
                     $card = PaymentMethod::retrieve($request->stripe_payment_method_id);
                     $card->attach(['customer' => $stipeCustomerId]);
-
-                }else{ //customer does not exits, create new customer and attach card to it
+                } else { //customer does not exits, create new customer and attach card to it
                     $customer2 = Customer::create([
                         'name' => $user->name,
                         'email' => $user->email,
                         'payment_method' => $request->stripe_payment_method_id,
 
                     ]);
-                    if(!empty($customer2)){
+                    if (!empty($customer2)) {
                         $stipeCustomerId = $customer2['id'];
 
                         $dataU2['stripe_customer_id'] = $stipeCustomerId;
                         $dataU2['updated_at'] = date('Y-m-d H:i:s');
-                        User::where('id',$user_id)->update($dataU2);
+                        User::where('id', $user_id)->update($dataU2);
                     }
                 }
             } catch (\Exception $e) {
-                return $this->sendError("Please add card again, ERROR: " .$e->getMessage());
+                return $this->sendError("Please add card again, ERROR: " . $e->getMessage());
             }
         }
 
@@ -387,99 +392,98 @@ class SettingController extends Controller
 
 
 
-    // public function sellerCardDetails(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'user_id' => 'required|exists:users,id',
-    //         'card_number' => 'required',
-    //         'expiry_date' => 'required',
-    //         'cvc' => 'required',
-    //         'stripe_payment_method_id' => 'required',
-    //     ], [
-    //         'user_id.required' => 'User ID is required.',
-    //         'card_number.required' => 'Card Number is required.',
-    //         'expiry_date.required' => 'Card expiry date is required.',
-    //         'stripe_payment_method_id.required' => 'Stripe payment method ID is required.',
-    //     ]);
+    public function sellerCardDetails(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'card_number' => 'required',
+            'expiry_date' => 'required',
+            'cvc' => 'required',
+            'stripe_payment_method_id' => 'required',
+        ], [
+            'user_id.required' => 'User ID is required.',
+            'card_number.required' => 'Card Number is required.',
+            'expiry_date.required' => 'Card expiry date is required.',
+            'stripe_payment_method_id.required' => 'Stripe payment method ID is required.',
+        ]);
 
-    //     if ($validator->fails()) {
-    //         return $this->sendError($validator->errors());
-    //     }
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
 
-    //     DB::beginTransaction();
+        DB::beginTransaction();
 
-    //     try {
+        try {
 
-    //         $user = User::findOrFail($request->user_id);
-    //         $existingCards = UserCardDetail::where('user_id', $user->id)->get();
-    //         foreach ($existingCards as $existingCard) {
-    //             try {
-    //                 if (decrypt($existingCard->card_number) === $request->card_number) {
-    //                     DB::rollBack();
-    //                     return $this->sendError("This card is already added for the user.");
-    //                 }
-    //             } catch (\Exception $e) {
-    //                 continue;
-    //             }
-    //         }
+            $user = User::findOrFail($request->user_id);
+            $existingCards = UserCardDetail::where('user_id', $user->id)->get();
+            foreach ($existingCards as $existingCard) {
+                try {
+                    if (decrypt($existingCard->card_number) === $request->card_number) {
+                        DB::rollBack();
+                        return $this->sendError("This card is already added for the user.");
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
 
-    //         $encryptedCardNumber = encrypt($request->card_number);
-    //         $encryptedCvc = encrypt($request->cvc);
+            $encryptedCardNumber = encrypt($request->card_number);
+            $encryptedCvc = encrypt($request->cvc);
 
-    //         Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
-    //         $stripeCustomerId = $user->stripe_customer_id;
+            Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
+            $stripeCustomerId = $user->stripe_customer_id;
 
-    //         if (empty($stripeCustomerId)) {
-    //             $customer = Customer::create([
-    //                 'name' => $user->name,
-    //                 'email' => $user->email,
-    //                 'payment_method' => $request->stripe_payment_method_id,
-    //             ]);
+            if (empty($stripeCustomerId)) {
+                $customer = Customer::create([
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'payment_method' => $request->stripe_payment_method_id,
+                ]);
 
-    //             $stripeCustomerId = $customer->id;
-    //             $user->update([
-    //                 'stripe_customer_id' => $stripeCustomerId,
-    //                 'updated_at' => now(),
-    //             ]);
-    //         } else {
+                $stripeCustomerId = $customer->id;
+                $user->update([
+                    'stripe_customer_id' => $stripeCustomerId,
+                    'updated_at' => now(),
+                ]);
+            } else {
 
-    //             $paymentMethod = PaymentMethod::retrieve($request->stripe_payment_method_id);
-    //             $paymentMethod->attach(['customer' => $stripeCustomerId]);
-    //         }
+                $paymentMethod = PaymentMethod::retrieve($request->stripe_payment_method_id);
+                $paymentMethod->attach(['customer' => $stripeCustomerId]);
+            }
 
-    //         $stripeCardId = $request->stripe_payment_method_id;
-    //         $isPrimary = !UserCardDetail::where('user_id', $user->id)->exists();
+            $stripeCardId = $request->stripe_payment_method_id;
+            $hasPrimary = UserCardDetail::where('user_id', $user->id)->where('is_primary', 1)->exists();
 
-    //         $userCard = UserCardDetail::create([
-    //             'user_id' => $user->id,
-    //             'card_number' => $encryptedCardNumber,
-    //             'expiry_date' => $request->expiry_date,
-    //             'cvc' => $encryptedCvc,
-    //             'stripe_card_id' => $stripeCardId,
-    //             'is_primary' => $isPrimary ? 1 : 0,
-    //         ]);
+            $userCard = UserCardDetail::create([
+                'user_id' => $user->id,
+                'card_number' => $encryptedCardNumber,
+                'expiry_date' => $request->expiry_date,
+                'cvc' => $encryptedCvc,
+                'stripe_card_id' => $stripeCardId,
+                'is_primary' => $hasPrimary ? 0 : 1,
+            ]);
 
-    //         if ($isPrimary) {
-    //             $user->update([
-    //                 'stripe_payment_method_id' => $stripeCardId,
-    //                 'updated_at' => now(),
-    //             ]);
-    //         }
+            if ($hasPrimary) {
+                $user->update([
+                    'stripe_payment_method_id' => $stripeCardId,
+                    'updated_at' => now(),
+                ]);
+            }
 
-    //         DB::commit();
+            DB::commit();
 
-    //         return $this->sendResponse("Card added successfully!", [
-    //             'card_id' => $userCard->id,
-    //             'last4' => substr($request->card_number, -4),
-    //             'is_primary' => $userCard->is_primary,
-    //             'stripe_card_id' => $stripeCardId,
-    //         ]);
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return $this->sendError("Failed to add card. ERROR: " . $e->getMessage());
-    //     }
-    // }
+            return $this->sendResponse("Card added successfully!", [
+                'card_id' => $userCard->id,
+                'last4' => substr($request->card_number, -4),
+                'is_primary' => $userCard->is_primary,
+                'stripe_card_id' => $stripeCardId,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError("Failed to add card. ERROR: " . $e->getMessage());
+        }
+    }
 
     public function removeCard(Request $request)
     {
@@ -565,14 +569,15 @@ class SettingController extends Controller
         }
     }
 
-    public function getSellerCard(Request $request){
+    public function getSellerCard(Request $request)
+    {
         $user_id = $request->user_id;
-        $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();
-        if(!empty($data)){
+        $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();
+        if (!empty($data)) {
             $data[0]['card_number'] = decrypt($data[0]['card_number']);
             $data[0]['cvc'] = decrypt($data[0]['cvc']);
             return $this->sendResponse("Card Details", $data);
         }
-        return $this->sendResponse("No Card found!",$data);
+        return $this->sendResponse("No Card found!", $data);
     }
 }

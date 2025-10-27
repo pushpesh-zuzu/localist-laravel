@@ -103,6 +103,12 @@ class BuyerController extends Controller
                 ->filterColumn('score', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
                 })
+                // ->filterColumn('entry_url', function ($query, $keyword) {
+                //     $query->where('entry_url', 'like', "%{$keyword}%");
+                // })
+                // ->filterColumn('user_ip_address', function ($query, $keyword) {
+                //     $query->where('user_ip_address', 'like', "%{$keyword}%");
+                // })
                 ->rawColumns(['services', 'postcode', 'score','entry_url','user_ip_address', 'status', 'action'])
                 ->make(true);
         }
@@ -250,6 +256,12 @@ class BuyerController extends Controller
                 ->filterColumn('score', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
                 })
+                //  ->filterColumn('entry_url', function ($query, $keyword) {
+                //     $query->where('entry_url', 'like', "%{$keyword}%");
+                // })
+                // ->filterColumn('user_ip_address', function ($query, $keyword) {
+                //     $query->where('user_ip_address', 'like', "%{$keyword}%");
+                // })
                 ->rawColumns(['services', 'postcode', 'score','entry_url','user_ip_address', 'status', 'action'])
                 ->make(true);
         }
