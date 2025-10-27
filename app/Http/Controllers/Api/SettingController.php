@@ -295,7 +295,7 @@ class SettingController extends Controller
         return $this->sendResponse('Billing details submitted successfully!', $userdetails);
     }
 
-    public function sellerCardDetailsold(Request $request)
+    public function sellerCardDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'card_number' => 'required',
@@ -392,7 +392,7 @@ class SettingController extends Controller
 
 
 
-    public function sellerCardDetails(Request $request)
+    public function sellerCardDetailsnew(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
@@ -507,7 +507,6 @@ class SettingController extends Controller
                 ->firstOrFail();
 
             Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
-
            
             if ($card->stripe_card_id && $user->stripe_customer_id) {
                 $paymentMethod = PaymentMethod::retrieve($card->stripe_card_id);
@@ -593,7 +592,18 @@ class SettingController extends Controller
         }
     }
 
-    public function getSellerCard(Request $request)
+    public function getSellerCard(Request $request){
+        $user_id = $request->user_id;
+        $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();
+        if(!empty($data)){
+            $data[0]['card_number'] = decrypt($data[0]['card_number']);
+            $data[0]['cvc'] = decrypt($data[0]['cvc']);
+            return $this->sendResponse("Card Details", $data);
+        }
+        return $this->sendResponse("No Card found!",$data);
+    }
+
+    public function getSellerCardnew(Request $request)
     {
         $user_id = $request->user_id;
         $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();

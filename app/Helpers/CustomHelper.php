@@ -463,7 +463,7 @@ class CustomHelper
         return $rel;
     }
 
-    public static function createTrasactionLogold($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
+    public static function createTrasactionLog($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
     {
 
         static $zohoRegistered = false;
@@ -502,7 +502,7 @@ class CustomHelper
 
 
 
-    public static function createTrasactionLog($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
+    public static function createTrasactionLognew($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
     {
 
          $debitTransactionId = PurchaseHistory::insertGetId([
