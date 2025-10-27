@@ -464,7 +464,7 @@ class SettingController extends Controller
                 'is_primary' => $hasPrimary ? 0 : 1,
             ]);
 
-           if ($userCard->is_primary == 1) {
+            if ($userCard->is_primary == 1) {
                 $user->update([
                     'stripe_payment_method_id' => $stripeCardId,
                     'updated_at' => now(),
@@ -569,20 +569,19 @@ class SettingController extends Controller
         }
     }
 
-   public function getSellerCard(Request $request)
-{
-    $user_id = $request->user_id;
-    $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();
+    public function getSellerCard(Request $request)
+    {
+        $user_id = $request->user_id;
+        $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();
 
-    if (!empty($data)) {
-        foreach ($data as &$card) {
-            $card['card_number'] = decrypt($card['card_number']);
-            $card['cvc'] = decrypt($card['cvc']);
+        if (!empty($data)) {
+            foreach ($data as &$card) {
+                $card['card_number'] = decrypt($card['card_number']);
+                $card['cvc'] = decrypt($card['cvc']);
+            }
+            return $this->sendResponse("Card Details", $data);
         }
-        return $this->sendResponse("Card Details", $data);
+
+        return $this->sendResponse("No Card found!", []);
     }
-
-    return $this->sendResponse("No Card found!", []);
-}
-
 }
