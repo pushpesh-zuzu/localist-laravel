@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class ActivityLog extends Model
 {
-     use SoftDeletes;
+    // use SoftDeletes;
     protected $fillable = ['lead_id','from_user_id','to_user_id','activity_name','contact_type','duration','duration_minutes'];
 
     public function serializeDate(\DateTimeInterface $date)

@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SellerNote extends Model
 {
-    use SoftDeletes;
+  //  use SoftDeletes;
     protected $fillable = ['lead_id','seller_id','buyer_id','notes'];
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class LeadPrefrence extends Model
 {
-     use SoftDeletes;
+    // use SoftDeletes;
     protected $fillable = ['user_id','service_id','question_id','answers'];
 
     public function serquestions()

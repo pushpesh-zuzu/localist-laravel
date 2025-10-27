@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RecommendedLead extends Model
 {
-    use SoftDeletes;
+   // use SoftDeletes;
     protected $fillable = ['service_id', 'seller_id','buyer_id','lead_id','bid','distance','purchase_type'];
 
     public function sellers()

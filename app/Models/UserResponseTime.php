@@ -7,7 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class UserResponseTime extends Model
 {
-     use SoftDeletes;
+    // use SoftDeletes;
     protected $fillable = ['seller_id','minimum_duration','average'];
 
     public function serializeDate(\DateTimeInterface $date)

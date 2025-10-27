@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class UserService extends Model
 {
-    use SoftDeletes; // Enable soft deletes
+   // use SoftDeletes; // Enable soft deletes
     use HasSlug;
 
     protected $fillable = ['user_id', 'service_id','price','auto_bid','is_default','status'];

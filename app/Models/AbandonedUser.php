@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 
 class AbandonedUser extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens ,SoftDeletes;
+    use HasFactory, Notifiable, HasApiTokens;
 
     protected $table = 'abandoned_users';
     /**

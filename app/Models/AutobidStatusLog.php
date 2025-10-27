@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AutobidStatusLog extends Model
 {
-    use SoftDeletes;
+   // use SoftDeletes;
     protected $table = "autobid_status_logs";
     protected $fillable = ['user_id','action'];
 
