@@ -482,8 +482,7 @@ class CustomHelper
 
         // if (!$zohoRegistered && $status === 1) {
         //     $zohoRegistered = true;
-
-        //     register_shutdown_function(function () use ($userId, $id) {
+        //     CustomHelper::runInBackground(function() use ($userId, $id) {
         //         try {
         //             $zoho = new ZohoFinance();
         //             $zoho->integratePurchaseHistory($userId, $id);
@@ -491,18 +490,14 @@ class CustomHelper
         //             Log::error('Zoho shutdown integration failed: ' . $e->getMessage());
         //         }
         //     });
-
-
         // }
-
-
 
         return $id;
     }
 
 
 
-    public static function createTrasactionLognew($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
+    public static function createTrasactionLogNew($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
     {
 
          $debitTransactionId = PurchaseHistory::insertGetId([
@@ -591,7 +586,7 @@ class CustomHelper
                             'price'        => $planHistory->price,
                             'vat'          => $planHistory->vat,
                             'total_amount' => $planHistory->total_amount,
-                            'purchase_type' => 'auto_topup',                            
+                            'purchase_type' => 'auto_topup',
                             'created_at'   => now(),
                             'updated_at'   => now(),
                         ]);

@@ -325,6 +325,7 @@ class MyRequestController extends Controller
             $nuData['user_type'] = 2;
             $nuData['active_status'] = 2;
             $nuData['form_status'] = 1;
+            $nuData['phone_verified'] = 1;
             $nuData['created_at'] = date('y-m-d H:i:s');
             $nuData['updated_at'] = date('y-m-d H:i:s');
             $euId = User::insertGetId($nuData);
@@ -508,7 +509,7 @@ class MyRequestController extends Controller
         $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
         $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
 
-        $patternUrgent = "/\b(as soon as possible)\b/i";
+        $patternUrgent = "/\b(as soon as possible|urgent)\b/i";
         $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
         //end evaluate Lead Badges
 
@@ -855,7 +856,7 @@ class MyRequestController extends Controller
 
         $data['details'] = $request->details;
         $data['professional_letin'] = !empty($request->professional_letin)? $request->professional_letin : '0';
-        $data['has_additional_details'] = '1';
+        $data['has_additional_details'] = !empty($request->details) ? '1' : '0';
         $sId = LeadRequest::where('id',$leadRequestId)->update($data);
 
         if($sId){
