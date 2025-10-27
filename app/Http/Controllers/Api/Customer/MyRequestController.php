@@ -501,7 +501,8 @@ class MyRequestController extends Controller
         $data['updated_at'] = date('y-m-d H:i:s');
 
         //evaluate Lead Badges
-        $data['is_phone_verified'] = User::where('id',$euId)->value('phone_verified') == 1 ? 1 : 0;
+        $userPhoneVerified = User::where('id',$euId)->value('phone_verified');
+        $data['is_phone_verified'] = $userPhoneVerified ? 1 : 0;
 
         $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
         $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
