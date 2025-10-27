@@ -464,7 +464,7 @@ class SettingController extends Controller
                 'is_primary' => $hasPrimary ? 0 : 1,
             ]);
 
-            if ($hasPrimary) {
+           if ($userCard->is_primary == 1) {
                 $user->update([
                     'stripe_payment_method_id' => $stripeCardId,
                     'updated_at' => now(),
