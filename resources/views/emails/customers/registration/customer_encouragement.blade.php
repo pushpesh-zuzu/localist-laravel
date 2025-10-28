@@ -118,7 +118,7 @@
                     <li>✅ Quickly get responses to your service requests</li>
                     <li>✅ Choose the best provider based on your needs</li>
                 </ul>
-                <a href="{{$baseUrl}}/register" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Complete Registration</a>
+                <a href="{{$baseUrl}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Complete Registration</a>
             </div>
 
             <div class="card">
@@ -131,7 +131,7 @@
             </div>
 
             <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
+                Manage your email preferences <a href="{{$baseUrl}}/user/notification">here</a>.<br>
                 {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
             </div>
 
