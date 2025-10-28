@@ -68,7 +68,7 @@
                 <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Services"><i class="bi bi-person-lines-fill"></i></a>
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Details"> <i class="bi bi-eye"></i></a>
 
-                <a href="{{ url(config('app.react_base_url') .'view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRow->name))) .'/' .$aRow->id) }}" target="_blank" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Public Profile"> <i class="bi bi-person-badge"></i></a>
+                <a href="{{ url(config('app.react_base_url') .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRow->name))) .'/' .$aRow->id) }}" target="_blank" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Public Profile"> <i class="bi bi-person-badge"></i></a>
 
                 <a href="javascript:void(0)"
                   onclick="openCustomReviewModal('{{ $aRow->id }}')"
