@@ -58,7 +58,7 @@
               <td>Public Profile</td>
               <td>
                 @if($aRows->form_status == 1)
-                  <a href="{{ url(config('app.react_base_url') .'view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name))) .'/' .$aRows->id) }}" target="_blank">{{ url(config('app.react_base_url') .'view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name))) .'/' .$aRows->id) }}</a>
+                  <a href="{{ url(config('app.react_base_url') .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name))) .'/' .$aRows->id) }}" target="_blank">{{ url(config('app.react_base_url') .'view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name))) .'/' .$aRows->id) }}</a>
                 @endif
               </td>
             </tr>
