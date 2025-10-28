@@ -11,13 +11,19 @@ use App\Models\Plan;
 use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZohoFinance;
 use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoEmails;
 use App\Models\UserDetail;
 use App\Models\Invoice;
 use App\Models\PlanHistory;
 use \Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator, Response
+    Auth,
+    Hash,
+    DB,
+    Mail,
+    Validator,
+    Response
 };
 
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -27,7 +33,8 @@ use Stripe\PaymentIntent;
 
 class PaymentController extends Controller
 {
-    public function buyCredits(Request $request){
+    public function buyCredits(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'top_up' => 'required|numeric',
             'credits' => 'required|numeric',
@@ -35,24 +42,24 @@ class PaymentController extends Controller
             'vat' => 'required|numeric',
             'total_amount' => 'required|numeric',
             'details' => 'required',
-            ], [
+        ], [
             'postcode.required' => 'Location Postcode is required.',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
         $user_id = $request->user_id;
-        $user = User::where('id',$user_id)->first();
+        $user = User::where('id', $user_id)->first();
 
         $paymentMethodId = $user->stripe_payment_method_id;
-        if(empty($paymentMethodId)){
+        if (empty($paymentMethodId)) {
             return $this->sendError("No saved card found!");
         }
-        $total_amount = number_format($request->total_amount/100, 2);
+        $total_amount = number_format($request->total_amount / 100, 2);
         $credits = $request->credits;
-        $details = $request->details .' ' .$credits." credits purchased";
+        $details = $request->details . ' ' . $credits . " credits purchased";
 
         $stipeCustomerId = $user->stripe_customer_id;
         $invoicePrefix = "4152SX7I";
@@ -71,14 +78,14 @@ class PaymentController extends Controller
 
             if ($paymentIntent->status === 'succeeded') {
                 //add up new credit in total credits
-                $prevCredits = intval(User::where('id',$user_id)->value('total_credit'));
+                $prevCredits = intval(User::where('id', $user_id)->value('total_credit'));
 
                 // $dataCr['total_credit'] = $prevCredits + intval($credits);
                 // $dataCr['updated_at'] = date('Y-m-d H:i:s');
                 // User::where('id',$user_id)->update($dataCr);
 
                 $user = User::find($user_id);
-                $user->total_credit =$prevCredits + intval($credits);
+                $user->total_credit = $prevCredits + intval($credits);
                 $user->updated_at = date('Y-m-d H:i:s');
                 $user->save();
 
@@ -101,79 +108,82 @@ class PaymentController extends Controller
 
                 //Create invoice
                 $dataInv['user_id'] = $user_id;
-                $dataInv['invoice_number'] = $invoicePrefix ."-" .$tId;
+                $dataInv['invoice_number'] = $invoicePrefix . "-" . $tId;
                 $dataInv['details'] = $request->details;
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($request->amount, 2);
                 $dataInv['vat'] = number_format($request->vat, 2);
                 $dataInv['total_amount'] = $total_amount;
 
-                $userDetails = UserDetail::where('user_id',$user_id)->first();
-                if(!empty($userDetails->billing_contact_name)){
-                    $dataInv['name'] =$userDetails->billing_contact_name;
-                    $dataInv['address'] = $userDetails->billing_address1 .', ' .$userDetails->billing_address2 .', ' .$userDetails->billing_city .' - ';
+                $userDetails = UserDetail::where('user_id', $user_id)->first();
+                if (!empty($userDetails->billing_contact_name)) {
+                    $dataInv['name'] = $userDetails->billing_contact_name;
+                    $dataInv['address'] = $userDetails->billing_address1 . ', ' . $userDetails->billing_address2 . ', ' . $userDetails->billing_city . ' - ';
                     $dataInv['address'] .= $userDetails->billing_postcode;
                     $dataInv['phone'] = $userDetails->billing_phone;
-                }else{
-                    $dataInv['name'] =$user->name;
-                    $dataInv['address'] = $user->apartment .', ' .$userDetails->address .', ' .$userDetails->city .' - ';
+                } else {
+                    $dataInv['name'] = $user->name;
+                    $dataInv['address'] = $user->apartment . ', ' . $userDetails->address . ', ' . $userDetails->city . ' - ';
                     $dataInv['address'] .= $user->zipcode;
                     $dataInv['phone'] = $user->phone;
                 }
                 $dataInv['created_at'] = date('Y-m-d H:i:s');
-                Invoice::insertGetId($dataInv);
+                $invId = Invoice::insertGetId($dataInv);
 
-                if($tId){
+                if ($tId) {
 
-                    CustomHelper::runInBackground(function() use ($user_id, $tId){
+                    CustomHelper::runInBackground(function () use ($user_id, $tId) {
                         app(ZohoFinance::class)->integratePurchaseHistory($user_id, $tId);
                     });
                 }
 
+                // if ($invId) {
+                //     CustomHelper::runInBackground(function () use ($user_id, $invId) {
+                //         ZohoEmails::sendPlanInvoiceEmail($user_id, $invId);
+                //     });
+                // }
+
                 return $this->sendResponse('Payment successful!');
-            }else{
+            } else {
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');
             }
-
         } catch (\Stripe\Exception\CardException $e) {
             $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
             return $this->sendError($e->getMessage());
-        }catch (InvalidRequestException $e) {
+        } catch (InvalidRequestException $e) {
             $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
-            return $this->sendError("Invalid request: " .$e->getMessage());
-
+            return $this->sendError("Invalid request: " . $e->getMessage());
         } catch (\Exception $e) {
             $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, $e->getMessage());
-            return $this->sendError("Something went wrong: " .$e->getMessage());
+            return $this->sendError("Something went wrong: " . $e->getMessage());
         }
-
-
-
-
     }
 
-    public function getTransactionLogs(Request $request){
+    public function getTransactionLogs(Request $request)
+    {
         $user_id = $request->user_id;
-        $logs = PurchaseHistory::where('user_id',$user_id)->where('status',1)->get();
+        $logs = PurchaseHistory::where('user_id', $user_id)->where('status', 1)->get();
         return $this->sendResponse('Transaction logs', $logs);
     }
 
-    public function getInvoices(Request $request){
+    public function getInvoices(Request $request)
+    {
         $user_id = $request->user_id;
 
         $invoices = Invoice::where('user_id', $user_id)->get();
         return $this->sendResponse('Invoices', $invoices);
     }
 
-    public function downloadInvoice(Request $request){
+    public function downloadInvoice(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'invoice_id' => 'required|numeric|exists:invoices,id',
-            ], [
+        ], [
             'postcode.required' => 'Location Postcode is required.',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
         $user_id = $request->user_id;
@@ -182,11 +192,10 @@ class PaymentController extends Controller
         $invoices['paid'] = 1;
         // return $invoices;
         $pdf = Pdf::loadView('invoices.invoice_template', $invoices);
-        $file_name = $invoices['invoice_number'] .'.pdf';
+        $file_name = $invoices['invoice_number'] . '.pdf';
         return Response::make($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="invoice.pdf"',
         ]);
     }
-
 }

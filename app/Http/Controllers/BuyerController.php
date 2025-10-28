@@ -25,7 +25,7 @@ class BuyerController extends Controller
     {
         if ($request->ajax()) {
 
-            $query = User::with(['leadRequests.category'])
+            $query = User::with(['leadRequests.category', 'lastLogin'])
                 ->whereIn('user_type', [2, 3])
                 ->where('form_status', 1)
                 ->where(function ($q) {
@@ -73,6 +73,30 @@ class BuyerController extends Controller
                 //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
                 // })
                 // ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
+                ->addColumn('last_login', function ($user) {
+                    return $user->lastLogin?->login_at
+                        ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i A')
+                        : '';
+                })
+                ->filterColumn('last_login', function ($query, $keyword) {
+                    try {
+                        $parsed = \Carbon\Carbon::createFromFormat('m/d/Y h:i A', $keyword);
+                        $query->whereHas('lastLogin', function ($q) use ($parsed) {
+                            $q->whereDate('login_at', $parsed->toDateString());
+                        });
+                    } catch (\Exception $e) {
+                        try {
+                            $parsed = \Carbon\Carbon::createFromFormat('m/d/Y', $keyword);
+                            $query->whereHas('lastLogin', function ($q) use ($parsed) {
+                                $q->whereDate('login_at', $parsed->toDateString());
+                            });
+                        } catch (\Exception $ex) {
+                            $query->whereHas('lastLogin', function ($q) use ($keyword) {
+                                $q->where('login_at', 'like', "%{$keyword}%");
+                            });
+                        }
+                    }
+                })
                 ->addColumn('status', fn($user) => 'Complete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     return '
@@ -90,9 +114,9 @@ class BuyerController extends Controller
                     </a>
                     
                 ';
-                // <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
-                //     <i class="fa-solid fa-trash"></i>
-                //    </a>
+                    // <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
+                    //     <i class="fa-solid fa-trash"></i>
+                    //    </a>
                 })
                 ->filterColumn('postcode', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('postcode', 'like', "%{$keyword}%"));
@@ -109,7 +133,7 @@ class BuyerController extends Controller
                 // ->filterColumn('user_ip_address', function ($query, $keyword) {
                 //     $query->where('user_ip_address', 'like', "%{$keyword}%");
                 // })
-                ->rawColumns(['services', 'postcode', 'score','entry_url','user_ip_address', 'status', 'action'])
+                ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'last_login', 'action'])
                 ->make(true);
         }
 
@@ -118,7 +142,7 @@ class BuyerController extends Controller
 
     public function testUserCompleteList(Request $request)
     {
-        $query = User::whereIn('user_type', [2, 3])
+        $query = User::with('lastLogin')->whereIn('user_type', [2, 3])
             ->where('form_status', 1)
             ->where(function ($q) {
                 $q->where('name', 'like', '%test%')
@@ -225,7 +249,7 @@ class BuyerController extends Controller
                 //     $url = $user->entry_url ?? '';
                 //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
                 // })
-              //  ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
+                //  ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
                 ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     return '                   
@@ -235,9 +259,9 @@ class BuyerController extends Controller
 
                      
                 ';
-                // <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" class="text text-danger" title="Delete">
-                //     <i class="fa-solid fa-trash"></i>
-                //    </a>
+                    // <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" class="text text-danger" title="Delete">
+                    //     <i class="fa-solid fa-trash"></i>
+                    //    </a>
                 })
                 ->filterColumn('postcode', function ($query, $keyword) {
                     $query->where(function ($q) use ($keyword) {
@@ -259,7 +283,7 @@ class BuyerController extends Controller
                 // ->filterColumn('user_ip_address', function ($query, $keyword) {
                 //     $query->where('user_ip_address', 'like', "%{$keyword}%");
                 // })
-                ->rawColumns(['services', 'postcode', 'score','entry_url','user_ip_address', 'status', 'action'])
+                ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'action'])
                 ->make(true);
         }
 
@@ -299,7 +323,7 @@ class BuyerController extends Controller
 
     public function contactForm(Request $request)
     {
-        $query =ContactUs::where('user_type', 2)
+        $query = ContactUs::where('user_type', 2)
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {

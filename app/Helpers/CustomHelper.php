@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\{DB, Log, URL, Auth, File, Mail, Session, Http};
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
+use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoFinance;
 use App\Models\PurchaseHistory;
 use App\Models\NotificationSetting;
@@ -48,25 +49,25 @@ class CustomHelper
         $total_reviews = 0;
         $final_avg_rating = 0;
 
-        if(!empty($facebook_reviews) && !empty($facebook_score)){
+        if (!empty($facebook_reviews) && !empty($facebook_score)) {
             $average_rating += $facebook_score;
             $avgCount++;
             $total_reviews += $facebook_reviews;
         }
 
-        if(!empty($google_reviews) && !empty($google_score)){
+        if (!empty($google_reviews) && !empty($google_score)) {
             $average_rating += $google_score;
             $avgCount++;
             $total_reviews += $google_reviews;
         }
 
-        if(!empty($trustpilot_reviews) && !empty($trustpilot_score)){
+        if (!empty($trustpilot_reviews) && !empty($trustpilot_score)) {
             $average_rating += $trustpilot_score;
             $avgCount++;
             $total_reviews += $trustpilot_reviews;
         }
 
-        if(!empty($localists_reviews) && !empty($localists_score)){
+        if (!empty($localists_reviews) && !empty($localists_score)) {
             $average_rating += $localists_score;
             $avgCount++;
             $total_reviews += $localists_reviews;
@@ -76,7 +77,7 @@ class CustomHelper
             $final_avg_rating = $average_rating / $avgCount;
             $data2['avg_rating'] = number_format($final_avg_rating, 1);
             $data2['updated_at'] = date('y-m-d H:i:s');
-            User::where('id',$user_id)->update($data2);
+            User::where('id', $user_id)->update($data2);
         }
 
         return [
@@ -420,7 +421,8 @@ class CustomHelper
 
 
 
-    public static function getCoordinates($postcode){
+    public static function getCoordinates($postcode)
+    {
         $apiKey = CustomHelper::setting_value('google_maps_api');
         $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
             'address' => $postcode,
@@ -500,7 +502,7 @@ class CustomHelper
     public static function createTrasactionLogNew($userId, $amount, $credits, $detail, $status = 1, $type = 0, $error_response = '')
     {
 
-         $debitTransactionId = PurchaseHistory::insertGetId([
+        $debitTransactionId = PurchaseHistory::insertGetId([
             'user_id'        => $userId,
             'purchase_date'  => now()->toDateString(),
             'price'          => $amount,
@@ -629,7 +631,13 @@ class CustomHelper
                             $dataInv['phone'] = $user->phone;
                         }
 
-                        Invoice::insert($dataInv);
+                        $invId = Invoice::insertGetId($dataInv);
+
+                        if ($invId) {
+                            CustomHelper::runInBackground(function () use ($userId, $invId) {
+                                ZohoEmails::sendPlanInvoiceEmail($userId, $invId);
+                            });
+                        }
                         $paymentSuccess = true;
                         break;
                     }

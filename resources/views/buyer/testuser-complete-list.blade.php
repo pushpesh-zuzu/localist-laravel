@@ -35,22 +35,29 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
-               <!-- <th scope="col">Entry URL</th>
+              <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
+              <th scope="col">Last Login</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>
             @foreach($testUsers as $aKey => $aRow)
-             <tr id="userid{{ $aRow->id }}">
+            <tr id="userid{{ $aRow->id }}">
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
-               <!-- <td style="word-break: break-all; max-width: 200px;">
+              <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+
+              <td>
+                {{ $aRow->lastLogin?->login_at
+            ? \Carbon\Carbon::parse($aRow->lastLogin->login_at)->format('m/d/Y h:i A')
+            : '' }}
+              </td>
               <td>Test</td>
 
               <td>
@@ -61,9 +68,9 @@
 
                 {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
-                  class="text text-danger"
-                  title="Delete">
-                  <i class="fa-solid fa-trash"></i>
+                class="text text-danger"
+                title="Delete">
+                <i class="fa-solid fa-trash"></i>
                 </a> --}}
 
               </td>
@@ -88,7 +95,7 @@
         title: 'Quote Customers - Test Complete List',
         className: "buttons-excel btn btn-success btn-sm",
         exportOptions: {
-          columns: ':not(:eq(4))', // Exclude "Action" column (7th column)
+          columns: ':not(:eq(5))', // Exclude "Action" column (7th column)
           modifier: {
             order: 'index',
             page: 'all',
@@ -102,7 +109,7 @@
         title: 'Quote Customers - Test Complete List',
         className: "buttons-csv btn btn-info btn-sm",
         exportOptions: {
-          columns: ':not(:eq(4))',
+          columns: ':not(:eq(5))',
           modifier: {
             order: 'index',
             page: 'all',

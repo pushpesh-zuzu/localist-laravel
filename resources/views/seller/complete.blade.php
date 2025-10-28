@@ -35,6 +35,7 @@
               <th scope="col">Total Credit</th>
                <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
+              <th scope="col">Last Login</th>
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
@@ -51,6 +52,7 @@
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+              <td>{{ $aRow->lastLogin?->login_at ? \Carbon\Carbon::parse($aRow->lastLogin->login_at)->format('m/d/Y h:i a') : '' }} </td>
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <td>
@@ -196,7 +198,7 @@
         title: 'Lead Buyers - Complete List',
         className: "buttons-excel btn btn-success btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
+          columns: ':not(:eq(7))', // Exclude "Action" column (7th column)
           modifier: {
             order: 'index',
             page: 'all',
@@ -210,7 +212,7 @@
         title: 'Lead Buyers - Complete List',
         className: "buttons-csv btn btn-info btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))',
+          columns: ':not(:eq(7))',
           modifier: {
             order: 'index',
             page: 'all',

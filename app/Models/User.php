@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
-   // use SoftDeletes; // Enable soft deletes
+    // use SoftDeletes; // Enable soft deletes
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
@@ -222,5 +222,10 @@ class User extends Authenticatable
     public function emailLogs()
     {
         return $this->hasMany(EmailLog::class, 'user_id', 'id');
+    }
+
+    public function lastLogin()
+    {
+        return $this->hasOne(LoginHistory::class, 'user_id')->latest('login_at');
     }
 }

@@ -10,6 +10,7 @@ use App\Models\AbandonedUser;
 use App\Models\User;
 use App\Models\EmailLog;
 use App\Models\EmailSetting;
+use App\Models\Invoice;
 use App\Models\LeadRequest;
 use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\DB;
@@ -2598,5 +2599,83 @@ class ZohoEmails
         }
 
         return $zohoMailResult;
+    }
+
+
+
+
+    public static function sendPlanInvoiceEmail($userId, $invId)
+    {
+        $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Plan Invoice Email')->value('setting_value');
+        if ($sendWelcomeEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::with(['services.category', 'services.locations'])->where('id', $userId)->first();
+                if (!empty($user)) {
+                    $invoices = Invoice::where('id', $invId)->first();                    
+                    $htmlView = view('emails.lead_buyers.lead_buyer_plan_invoice',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'invoice_number' => $invoices->invoice_number,
+                        'details'       => $invoices->details,
+                        'amount'        => $invoices->amount,
+                        'vat'           => $invoices->vat,
+                        'total_amount'  => $invoices->total_amount,
+                        'period'  => $invoices->period,
+                        'created_at'    => $invoices->created_at,                         
+                        'jobs' => rand(1, 50),
+                    ])->render();
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = 'Your Invoice from Localists';
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendPlanInvoiceEmail',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Send Plan Invoice Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+        }
     }
 }

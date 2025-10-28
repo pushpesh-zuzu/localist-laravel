@@ -44,6 +44,7 @@
               <!-- <th>Entry URL</th>
             <th>User IP</th> -->
               <th>Date</th>
+              <th>Last Login</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -137,6 +138,8 @@
           orderable: false,
           searchable: true
         },
+        { data: 'last_login', name: 'last_login', orderable: false,
+          searchable: true },
 
         {
           data: 'action',
@@ -160,7 +163,7 @@
           title: 'Quote Customers - Complete List',
           className: "buttons-excel btn btn-success btn-sm",
           exportOptions: {
-            columns: ':not(:eq(9))', // Exclude "Action" column (7th column)
+            columns: ':not(:eq(10))', // Exclude "Action" column (7th column)
             modifier: {
               order: 'index',
               page: 'all',
@@ -202,7 +205,7 @@
           title: 'Quote Customers - Complete List',
           className: "buttons-csv btn btn-info btn-sm",
           exportOptions: {
-            columns: ':not(:eq(9))',
+            columns: ':not(:eq(10))',
             modifier: {
               order: 'index',
               page: 'all',
