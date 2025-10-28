@@ -110,12 +110,14 @@ class SettingController extends Controller
             if (isset($userdetails) && $userdetails != '') {
                 $userdetails->update([
                     'company_photos' => implode(',', $allPhotos),
+                    'has_youtube_link' => !empty($aValues['has_youtube_link']) ? 1 : 0,
                     'company_youtube_link' => $aValues['company_youtube_link'] ?? null,
                 ]);
             } else {
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
                     'company_photos' => implode(',', $allPhotos),
+                    'has_youtube_link' => !empty($aValues['has_youtube_link']) ? 1 : 0,
                     'company_youtube_link' => $aValues['company_youtube_link'] ?? null,
                     'is_autobid' => 1
                 ]);
@@ -131,22 +133,34 @@ class SettingController extends Controller
             // exit;
             if (isset($userdetails) && $userdetails != '') {
                 $userdetails->update([
+                    'has_fb_link' => !empty($aValues['has_fb_link']) ? 1 : 0,
                     'fb_link' => $aValues['fb_link'],
+                    'has_twitter_link' => !empty($aValues['has_twitter_link']) ? 1 : 0,
                     'twitter_link' => $aValues['twitter_link'],
+                    'has_tiktok_link' => !empty($aValues['has_tiktok_link']) ? 1 : 0,
                     'tiktok_link' => $aValues['tiktok_link'],
+                    'has_insta_link' => !empty($aValues['has_insta_link']) ? 1 : 0,
                     'insta_link' => $aValues['insta_link'],
+                    'has_linkedin_link' => !empty($aValues['has_linkedin_link']) ? 1 : 0,
                     'linkedin_link' => $aValues['linkedin_link'],
+                    'has_extra_links' => !empty($aValues['has_extra_links']) ? 1 : 0,
                     'extra_links' => str_replace("\n", ",", $aValues['extra_links'])
 
                 ]);
             } else {
                 $userdetails = UserDetail::create([
                     'user_id'  => $user_id,
+                    'has_fb_link' => !empty($aValues['has_fb_link']) ? 1 : 0,
                     'fb_link' => $aValues['fb_link'],
+                    'has_twitter_link' => !empty($aValues['has_twitter_link']) ? 1 : 0,
                     'twitter_link' => $aValues['twitter_link'],
+                    'has_tiktok_link' => !empty($aValues['has_tiktok_link']) ? 1 : 0,
                     'tiktok_link' => $aValues['tiktok_link'],
+                    'has_insta_link' => !empty($aValues['has_insta_link']) ? 1 : 0,
                     'insta_link' => $aValues['insta_link'],
+                    'has_linkedin_link' => !empty($aValues['has_linkedin_link']) ? 1 : 0,
                     'linkedin_link' => $aValues['linkedin_link'],
+                    'has_extra_links' => !empty($aValues['has_extra_links']) ? 1 : 0,
                     'extra_links' => str_replace("\n", ",", $aValues['extra_links']),
                     'is_autobid' => 1
                 ]);
@@ -159,7 +173,13 @@ class SettingController extends Controller
             $names    = $request->input('accre_name', []);      // indexed names
             $files    = $request->file('accre_file', []);       // indexed files
             $existing = $request->input('accre_existing', []);  // indexed filenames
-
+            
+            if(!empty($aValues['has_accreditations'])){
+                $userdetails->update([
+                    'has_accreditations' => !empty($aValues['has_accreditations']) ? 1 : 0,
+                ]);
+            }
+            
             foreach ($names as $index => $name) {
                 $id   = $ids[$index] ?? null;
                 $file = $files[$index] ?? null;
