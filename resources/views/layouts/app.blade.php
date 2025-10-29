@@ -10,7 +10,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <!-- Scripts -->
             @vite(['resources/css/app.css', 'resources/js/app.js']) 
-
+        <link rel="icon" type="image/x-icon" href="{{ url('assets/image/favicon.png') }}">
         <link rel="stylesheet" href="{{ asset('coreui/node_modules/simplebar/dist/simplebar.css') }}">
         <link rel="stylesheet" href="{{ asset('coreui/css/simplebar.css') }}">
         <!-- Main styles for this application-->

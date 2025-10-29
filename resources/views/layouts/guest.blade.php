@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Laravel') }}</title>
+        <link rel="icon" type="image/x-icon" href="{{ url('assets/image/favicon.png') }}">
         <!-- Vendors styles-->
         <link rel="stylesheet" href="{{ asset('coreui/node_modules/simplebar/dist/simplebar.css') }}">
         <link rel="stylesheet" href="{{ asset('coreui/css/simplebar.css') }}">
