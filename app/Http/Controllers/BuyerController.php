@@ -70,14 +70,11 @@ class BuyerController extends Controller
                     } catch (\Exception $e) {
                     }
                 })
-<<<<<<< Updated upstream
                 //  ->addColumn('entry_url', function ($user) {
                 //     $url = $user->entry_url ?? '';
                 //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
                 // })
                 // ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
-=======
->>>>>>> Stashed changes
                 ->addColumn('last_login', function ($user) {
                     return $user->lastLogin?->login_at
                         ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i A')
@@ -155,15 +152,12 @@ class BuyerController extends Controller
                 ->filterColumn('score', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
                 })
-<<<<<<< Updated upstream
                 // ->filterColumn('entry_url', function ($query, $keyword) {
                 //     $query->where('entry_url', 'like', "%{$keyword}%");
                 // })
                 // ->filterColumn('user_ip_address', function ($query, $keyword) {
                 //     $query->where('user_ip_address', 'like', "%{$keyword}%");
                 // })
-=======
->>>>>>> Stashed changes
                 ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'last_login', 'action'])
                 ->make(true);
         }
@@ -281,14 +275,11 @@ class BuyerController extends Controller
                     } catch (\Exception $e) {
                     }
                 })
-<<<<<<< Updated upstream
                 //  ->addColumn('entry_url', function ($user) {
                 //     $url = $user->entry_url ?? '';
                 //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
                 // })
                 //  ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
-=======
->>>>>>> Stashed changes
                 ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     $actions = '';
@@ -328,16 +319,12 @@ class BuyerController extends Controller
                 ->filterColumn('score', function ($query, $keyword) {
                     $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
                 })
-<<<<<<< Updated upstream
                 //  ->filterColumn('entry_url', function ($query, $keyword) {
                 //     $query->where('entry_url', 'like', "%{$keyword}%");
                 // })
                 // ->filterColumn('user_ip_address', function ($query, $keyword) {
                 //     $query->where('user_ip_address', 'like', "%{$keyword}%");
                 // })
-=======
-
->>>>>>> Stashed changes
                 ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'action'])
                 ->make(true);
         }
@@ -380,13 +367,7 @@ class BuyerController extends Controller
 
     public function contactForm(Request $request)
     {
-<<<<<<< Updated upstream
         $query = ContactUs::where('user_type', 1)
-=======
-        abort_if(!auth()->user()->can('quotecustomers.conatct-viewlist'), 403, __('User does not have the right permissions.'));
-      
-        $query = ContactUs::where('user_type', 2)
->>>>>>> Stashed changes
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {

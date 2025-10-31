@@ -60,13 +60,9 @@ class SellerController extends Controller
 
     public function contactForm(Request $request)
     {
-<<<<<<< Updated upstream
-        $query = ContactUs::where('user_type', 2)
-=======
         abort_if(!auth()->user()->can('leadbuyerscontact.viewlist'), 403, __('User does not have the right permissions.'));
 
         $query = ContactUs::where('user_type', 1)
->>>>>>> Stashed changes
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
