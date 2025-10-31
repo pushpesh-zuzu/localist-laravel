@@ -325,7 +325,7 @@ class MyRequestController extends Controller
             $nuData['adgroup'] = $abUser->adgroup;
             $nuData['targetid'] = $abUser->targetid;
             $nuData['msclickid'] = $abUser->msclickid;
-              $nuData['entry_url'] = $abUser->entry_url ?? null;
+            $nuData['entry_url'] = $abUser->entry_url ?? null;
             $nuData['user_ip_address'] = $abUser->user_ip_address ?? null;
             $nuData['password'] = Hash::make($password);
             $nuData['user_type'] = 2;

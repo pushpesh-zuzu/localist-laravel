@@ -2969,7 +2969,6 @@
         },
         {
             "name": "maatwebsite/excel",
-<<<<<<< Updated upstream
             "version": "3.1.67",
             "source": {
                 "type": "git",
@@ -3052,9 +3051,6 @@
         {
             "name": "maennchen/zipstream-php",
             "version": "3.1.2",
-=======
-            "version": "3.1.54",
->>>>>>> Stashed changes
             "source": {
                 "type": "git",
                 "url": "https://github.com/SpartnerNL/Laravel-Excel.git",
