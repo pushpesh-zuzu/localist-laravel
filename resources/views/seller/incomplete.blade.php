@@ -35,11 +35,8 @@
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Total Credit</th>
-<<<<<<< Updated upstream
               <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
-=======
->>>>>>> Stashed changes
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
@@ -52,13 +49,10 @@
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
               <td class="text text-center">{{ $aRow->total_credit  }}</td>
-<<<<<<< Updated upstream
                <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
-=======
->>>>>>> Stashed changes
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
               <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
