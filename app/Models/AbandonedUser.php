@@ -30,6 +30,7 @@ class AbandonedUser extends Authenticatable
         'name',
         'email',
         'password',
+        'remember_token',
         'company_reg_number',
         'business_profile_name',
         'company_name',
@@ -69,7 +70,25 @@ class AbandonedUser extends Authenticatable
         'active_status',
         'form_status',
         'remember_token',
-        'zoho_record_id'
+        'zoho_record_id',
+        'stripe_customer_id',
+        'stripe_payment_method_id',
+        'business_profile_name',
+        'company_address',
+        'company_city',
+        'company_postcode',
+        'company_country',
+        'campaignid',
+        'gclid',
+        'keyword',
+        'campaign',
+        'adgroup',
+        'targetid',
+        'msclickid',
+        'utm_source',
+        'utm_medium',
+        'entry_url',
+        'user_ip_address'
     ];
 
     /**
