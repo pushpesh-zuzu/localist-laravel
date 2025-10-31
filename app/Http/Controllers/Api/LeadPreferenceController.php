@@ -1468,8 +1468,8 @@ class LeadPreferenceController extends Controller
         // $leadtime = Carbon::parse($leadtime);
         // $createdAt = $activity->created_at;
 
-        $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
-        $createdAt = $activity->created_at->copy()->setTimezone('Asia/Kolkata');
+        $leadtime = Carbon::parse($leadtime)->setTimezone('Europe/London');
+        $createdAt = $activity->created_at->copy()->setTimezone('Europe/London');
 
         $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
         if ($diffInMinutes < 60) {

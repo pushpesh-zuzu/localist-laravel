@@ -924,8 +924,8 @@ class UserController extends Controller
 
         $leadTime = LeadRequest::where('id',$lead_id)->pluck('created_at')->first();
 
-        $leadtime = Carbon::parse($leadTime)->setTimezone('Asia/Kolkata');
-        $createdAt = Carbon::parse(date('Y-m-d H:i:s'))->setTimezone('Asia/Kolkata');
+        $leadtime = Carbon::parse($leadTime)->setTimezone('Europe/London');
+        $createdAt = Carbon::parse(date('Y-m-d H:i:s'))->setTimezone('Europe/London');
 
         $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
         if ($diffInMinutes < 60) {
