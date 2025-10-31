@@ -68,6 +68,7 @@ class SettingController extends Controller
                 'company_size'          => $aValues['company_size'] ?? null,
                 'company_total_years'   => $aValues['company_total_years'] ?? null,
                 'about_company'         => $aValues['about_company'] ?? null,
+                'business_profile_name'         => $aValues['business_profile_name'] ?? null,
             ];
 
             // Filter out any field with null or empty string ("")
