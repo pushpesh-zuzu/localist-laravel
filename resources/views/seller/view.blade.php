@@ -65,7 +65,7 @@
                   </td>
                 </tr>
 
-                <!-- <tr>
+                <tr>
                     <td>Entry URL</td>
                     <td>{{ $aRows->entry_url ?? 'N/A' }}</td>
                   </tr>
@@ -73,7 +73,7 @@
                   <tr>
                     <td>User IP Address</td>
                     <td>{{ $aRows->user_ip_address ?? 'N/A' }}</td>
-                  </tr> -->
+                  </tr>
                 
                 </tbody>
               </table>
