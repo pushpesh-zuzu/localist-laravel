@@ -100,12 +100,3 @@ ADD COLUMN `user_ip_address` VARCHAR(45) NULL AFTER `entry_url`;
 ALTER TABLE `users`
 ADD COLUMN `entry_url` TEXT NULL AFTER `msclickid`,
 ADD COLUMN `user_ip_address` VARCHAR(45) NULL AFTER `entry_url`;
-
-ALTER TABLE `admins`
-ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL AFTER `updated_at`;
-
-
-composer require maatwebsite/excel:^3.1.54 --with-all-dependencies
-
-
->>>>>>> Stashed changes
