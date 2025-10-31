@@ -143,8 +143,8 @@ class RecommendedLeadsController extends Controller
                         ->first();
                     $quickToRespond = 0;
                     if ($firstResponse) {
-                        $leadTime = Carbon::parse($lead->created_at)->setTimezone('Asia/Kolkata');
-                        $createdAt = $firstResponse->created_at->copy()->setTimezone('Asia/Kolkata');
+                        $leadTime = Carbon::parse($lead->created_at)->setTimezone('Europe/London');
+                        $createdAt = $firstResponse->created_at->copy()->setTimezone('Europe/London');
 
                         $diffInMinutes = round(abs($leadTime->diffInMinutes($createdAt)));
                         if ($diffInMinutes <= 720) {
@@ -651,8 +651,8 @@ public function sendLeadRequestReply()
                  ]);
 
          // Step 2: Calculate the time difference
-        $leadtime = Carbon::parse($leadtime)->setTimezone('Asia/Kolkata');
-        $createdAt = $activity->created_at->copy()->setTimezone('Asia/Kolkata');
+        $leadtime = Carbon::parse($leadtime)->setTimezone('Europe/London');
+        $createdAt = $activity->created_at->copy()->setTimezone('Europe/London');
 
         $diffInMinutes = round(abs($leadtime->diffInMinutes($createdAt)));
         if ($diffInMinutes < 60) {
