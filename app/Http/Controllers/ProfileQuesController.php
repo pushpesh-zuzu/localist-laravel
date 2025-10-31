@@ -12,6 +12,7 @@ class ProfileQuesController extends Controller
      */
     public function index()
     {
+         abort_if(!auth()->user()->can('profilequestions.viewlist'), 403, __('User does not have the right permissions.'));
         $aRows = ProfileQuestion::orderBy('id','DESC')->get(); 
         return view('profilequestion.index',get_defined_vars());
     }
@@ -21,6 +22,7 @@ class ProfileQuesController extends Controller
      */
     public function create()
     {
+        abort_if(!auth()->user()->can('profilequestions.create'), 403, __('User does not have the right permissions.'));
         $aRow = array();
         return view('profilequestion.create',get_defined_vars());
     }
@@ -30,6 +32,7 @@ class ProfileQuesController extends Controller
      */
     public function store(Request $request)
     {
+         abort_if(!auth()->user()->can('profilequestions.create'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request);   
         return redirect()->route('profilequestion.index')->with('success', 'Questions created successfully.');
     }
@@ -47,6 +50,7 @@ class ProfileQuesController extends Controller
      */
     public function edit(string $id)
     {
+         abort_if(!auth()->user()->can('profilequestions.edit'), 403, __('User does not have the right permissions.'));
         $aRow = ProfileQuestion::where('id',$id)->first();
         return view('profilequestion.create',get_defined_vars());
     }
@@ -56,6 +60,7 @@ class ProfileQuesController extends Controller
      */
     public function update(Request $request, string $id)
     {
+         abort_if(!auth()->user()->can('profilequestions.edit'), 403, __('User does not have the right permissions.'));
         $leads = ProfileQuestion::where('id',$id)->first();
         $this->validateSave($request,$leads);      
         return redirect()->route('profilequestion.index')
@@ -67,6 +72,7 @@ class ProfileQuesController extends Controller
      */
     public function destroy(string $id)
     {
+         abort_if(!auth()->user()->can('profilequestions.delete'), 403, __('User does not have the right permissions.'));
         ProfileQuestion::where('id',$id)->delete();
         return redirect()->route('profilequestion.index')
                          ->with('success', 'Question deleted successfully.');

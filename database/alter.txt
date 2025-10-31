@@ -78,4 +78,34 @@ ALTER TABLE `plan_histories`
 ADD COLUMN `purchase_type` VARCHAR(50) NOT NULL DEFAULT 'manual' AFTER `total_amount`;
 
 
+<<<<<<< Updated upstream
 ALTER TABLE `user_details` CHANGE `company_youtube_link` `company_youtube_link` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL;
+=======
+ALTER TABLE `admins`
+ADD COLUMN `role_id` BIGINT UNSIGNED DEFAULT NULL AFTER `remember_token`;
+
+
+ALTER TABLE `admins`
+ADD CONSTRAINT `admins_role_id_foreign`
+FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`)
+ON DELETE SET NULL
+ON UPDATE CASCADE;
+
+
+ALTER TABLE `abandoned_users`
+ADD COLUMN `entry_url` TEXT NULL AFTER `msclickid`,
+ADD COLUMN `user_ip_address` VARCHAR(45) NULL AFTER `entry_url`;
+
+
+ALTER TABLE `users`
+ADD COLUMN `entry_url` TEXT NULL AFTER `msclickid`,
+ADD COLUMN `user_ip_address` VARCHAR(45) NULL AFTER `entry_url`;
+
+ALTER TABLE `admins`
+ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL AFTER `updated_at`;
+
+
+composer require maatwebsite/excel:^3.1.54 --with-all-dependencies
+
+
+>>>>>>> Stashed changes

@@ -2,7 +2,9 @@
     <x-slot name="header">{{ __('Sectors') }} </x-slot>
     <div class="row">
         <div class="md-col-12 mb-4">
+            @can('sector.create')
             <a href="{{ route('sectors.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Sector') }}</a>
+            @endcan
         </div>
     </div>
     <div class="card mb-4">
@@ -26,7 +28,10 @@
                             </td>
                             <td>@if($sl['status']) Active @else Inactive @endif </td>
                             <td>
+                                 @can('sector.edit')
                                 <a href="{{route('sectors.edit',$sl['id'])}}" title="edit"><i class="fas fa-edit"></i></a> &nbsp;
+                                @endcan
+                                 @can('sector.delete')
                                 <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete">
                                     <i class="fas fa-trash"></i></i>
                                 </a>
@@ -34,6 +39,7 @@
                                     {{ method_field('DELETE') }}
                                     {{ csrf_field() }}
                                 </form>
+                                 @endcan
                             </td>
                         </tr>
                         {{\App\Helpers\CustomHelper::createSectorsRecursive($sl, $index+1)}}

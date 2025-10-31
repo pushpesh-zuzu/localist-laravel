@@ -12,6 +12,7 @@ class SettingController extends Controller
      */
     public function index()
     {
+         abort_if(!auth()->user()->can('generalsettings.viewlist'), 403, __('User does not have the right permissions.'));
         $data['settings'] = Setting::get(); 
         return view('settings.index',$data);
     }
@@ -21,6 +22,7 @@ class SettingController extends Controller
      */
     public function create($id=null)
     {
+        abort_if(!auth()->user()->can('generalsettings.create'), 403, __('User does not have the right permissions.'));
         $data['settings'] = '';
         
         return view('settings.create',$data);
@@ -31,6 +33,7 @@ class SettingController extends Controller
      */
     public function store(Request $request)
     {
+         abort_if(!auth()->user()->can('generalsettings.store'), 403, __('User does not have the right permissions.'));
         $validator = \Validator::make($request->all(), [
             'setting_name' => 'required|unique:settings',
             'setting_value' => 'required',
@@ -60,6 +63,7 @@ class SettingController extends Controller
      */
     public function edit(string $id)
     {
+        abort_if(!auth()->user()->can('generalsettings.edit'), 403, __('User does not have the right permissions.'));
         $data['settings'] = Setting::where('id',$id)->first();
         return view('settings.create', $data);
     }
@@ -69,6 +73,7 @@ class SettingController extends Controller
      */
     public function update(Request $request, string $id)
     {
+         abort_if(!auth()->user()->can('generalsettings.edit'), 403, __('User does not have the right permissions.'));
         $validator = \Validator::make($request->all(), [
             'setting_name' => 'required|unique:settings,setting_name,' . $id,
             'setting_value' => 'required',
@@ -89,6 +94,7 @@ class SettingController extends Controller
      */
     public function destroy(string $id)
     {
+         abort_if(!auth()->user()->can('generalsettings.delete'), 403, __('User does not have the right permissions.'));
         Setting::where('id',$id)->delete();
         return redirect()->route('settings.index')
                          ->with('success', 'Setting deleted successfully.');

@@ -4,7 +4,9 @@
     <div class="card mb-4">
       <div class="card-header">
           <strong>{{ __('Plans') }}</strong>
+           @can('plans.create')
           <a href="{{ route('plans.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Plan') }}</a>
+          @endcan
       </div>
       <div class="card-body">
         @if(count($aRows) > 0)
@@ -32,7 +34,10 @@
             <td>{{ $aRow->no_of_responses }}</td>
             <td>{{ $aRow->plan_type }}</td>
             <td>
+               @can('plans.create')
                 <a href="{{ route('plans.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></i></a>
+               @endcan
+               @can('plans.delete')
                 <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i></i>
                 </a>
                 <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('plans.destroy',$aRow->id) }}" method="post" style="display: none;">
@@ -40,7 +45,7 @@
                    {{ csrf_field() }}
                        
                 </form>
-
+              @endcan
             </td>
           </tr>
           @endforeach

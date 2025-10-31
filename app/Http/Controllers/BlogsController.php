@@ -10,18 +10,21 @@ class BlogsController extends Controller
 {
     public function index()
     {
+        abort_if(!auth()->user()->can('blog.viewlist'), 403, __('User does not have the right permissions.'));
         $aRows = Blog::get(); 
         return view('blogs.index', compact('aRows'));
     }
 
     public function create()
     {
+        abort_if(!auth()->user()->can('blog.create'), 403, __('User does not have the right permissions.'));
         $aRow = array();
         return view('blogs.create',compact('aRow'));
     }
 
     public function store(Request $request)
     {
+        abort_if(!auth()->user()->can('blog.create'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request);   
         return redirect()->route('blogs.index')->with('success', 'Blog created successfully.');
     }
@@ -33,12 +36,14 @@ class BlogsController extends Controller
 
     public function edit(Blog $blog)
     {
+        abort_if(!auth()->user()->can('blog.edit'), 403, __('User does not have the right permissions.'));
         $aRow = $blog;
         return view('blogs.create', compact('aRow'));
     }
 
     public function update(Request $request, Blog $blog)
     {
+        abort_if(!auth()->user()->can('blog.edit'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request,$blog);      
         return redirect()->route('blogs.index')
                          ->with('success', 'Blog updated successfully.');
@@ -46,6 +51,7 @@ class BlogsController extends Controller
 
     public function destroy(Blog $blog)
     {
+        abort_if(!auth()->user()->can('blog.delete'), 403, __('User does not have the right permissions.'));
         $blog->delete();
         return redirect()->route('blogs.index')
                          ->with('success', 'Blog deleted successfully.');

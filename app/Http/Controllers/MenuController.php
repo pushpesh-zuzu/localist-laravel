@@ -12,12 +12,14 @@ class MenuController extends Controller
 {
     public function index()
     {
+        abort_if(!auth()->user()->can('footermenus.viewlist'), 403, __('User does not have the right permissions.'));
         $aRows = Menu::with(['parent','pages'])->orderBy('id','DESC')->get(); 
         return view('menus.index', compact('aRows'));
     }
 
     public function create()
     {
+         abort_if(!auth()->user()->can('footermenus.create'), 403, __('User does not have the right permissions.'));
         $aRow = array();
         $parents = Menu::orderBy('id','DESC')->get();
         $pagemenu = Page::where('status',1)->get();
@@ -26,6 +28,7 @@ class MenuController extends Controller
 
     public function store(Request $request)
     {
+        abort_if(!auth()->user()->can('footermenus.create'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request);   
         return redirect()->route('menus.index')->with('success', 'Menu created successfully.');
     }
@@ -37,6 +40,7 @@ class MenuController extends Controller
 
     public function edit(Menu $menu)
     {
+        abort_if(!auth()->user()->can('footermenus.edit'), 403, __('User does not have the right permissions.'));
         
         $aRow = $menu;
         $parents = Menu::where('menu_name','!=',$aRow->menu_name)->orderBy('id','DESC')->get();
@@ -46,6 +50,7 @@ class MenuController extends Controller
 
     public function update(Request $request, Menu $menu)
     {
+        abort_if(!auth()->user()->can('footermenus.edit'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request,$menu);      
         return redirect()->route('menus.index')
                          ->with('success', 'Menu updated successfully.');
@@ -53,6 +58,7 @@ class MenuController extends Controller
 
     public function destroy(Menu $menu)
     {
+        abort_if(!auth()->user()->can('footermenus.delete'), 403, __('User does not have the right permissions.'));
         $menu->delete();
         return redirect()->route('menus.index')
                          ->with('success', 'Menu deleted successfully.');

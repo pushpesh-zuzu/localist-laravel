@@ -53,21 +53,24 @@
                 {{ $aRow->status == 1 ? 'Viewed' : 'Not Viewed' }}
               </td>
               <td>
+                  @can('quotecustomers.contact-view-details')
                 <a href="{{ route('buyer.show_contact_form', $aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" title="View">
                   <i class="bi bi-eye"></i>
                 </a>
+                  @endcan
 
-
-                <a href="javascript:void(0);" class="text text-danger"
+                   @can('quotecustomers.contact-delete')
+                  <a href="javascript:void(0);" class="text text-danger"
                   onclick="if(confirm('Are you sure you want to delete this record?')){ document.getElementById('delete-form-{{ $aRow->id }}').submit(); }"
                   data-coreui-toggle="tooltip" data-coreui-placement="top" title="Delete">
                   <i class="bi bi-trash"></i>
-                </a>
+                 </a>
 
-                <form id="delete-form-{{ $aRow->id }}" method="POST" action="{{ route('contact.delete', $aRow->id) }}" style="display:none;">
+                 <form id="delete-form-{{ $aRow->id }}" method="POST" action="{{ route('contact.delete', $aRow->id) }}" style="display:none;">
                   @csrf
                   @method('DELETE')
-                </form>
+                 </form>
+                 @endcan
               </td>
             </tr>
             @endforeach
@@ -85,7 +88,9 @@
   $('#dataTable').DataTable({
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
+    buttons: [
+      @can('quotecustomers.contact-excel')
+      {
         extend: 'excelHtml5',
         text: 'Export Excel',
         title: 'Quote Customers - Contact Form List',
@@ -99,6 +104,8 @@
           }
         }
       },
+   @endcan
+    @can('quotecustomers.contact-csv')
       {
         extend: 'csvHtml5',
         text: 'Export CSV',
@@ -113,6 +120,7 @@
           }
         }
       },
+      @endcan
     ],
     "language": {
       "emptyTable": "No records found"

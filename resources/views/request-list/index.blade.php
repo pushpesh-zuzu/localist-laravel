@@ -118,7 +118,9 @@
 
         ],
         dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-        buttons: [{
+        buttons: [
+          @can('requestlist.excelexport')
+          {
             extend: 'excelHtml5',
             text: 'Export Excel',
             title: 'Request List',
@@ -132,6 +134,8 @@
               }
             }
           },
+           @endcan
+        @can('requestlist.csvexport')
           {
             extend: 'csvHtml5',
             text: 'Export CSV',
@@ -146,6 +150,7 @@
               }
             }
           },
+          @endcan
         ],
         order: [
           [2, 'desc']

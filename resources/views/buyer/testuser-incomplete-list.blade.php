@@ -33,8 +33,11 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
+<<<<<<< Updated upstream
                <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
+=======
+>>>>>>> Stashed changes
               <th scope="col">Status</th>
               <th scope="col">Action</th>
             </tr>
@@ -45,20 +48,28 @@
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
+<<<<<<< Updated upstream
                <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+=======
+
+>>>>>>> Stashed changes
               <td>Test</td>
               <td>
+                @can('quotecustomers.quote_test_incomplete_view')
                 <a href="{{ route('buyer.show.custom', ['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+                @endcan
 
+                @can('quotecustomers.quote_test_incomplete_delete')
                 {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'abandoned', '')"
-                  class="text text-danger"
-                  title="Delete">
-                  <i class="fa-solid fa-trash"></i>
+                class="text text-danger"
+                title="Delete">
+                <i class="fa-solid fa-trash"></i>
                 </a> --}}
+                @endcan
               </td>
             </tr>
             @endforeach
@@ -74,7 +85,9 @@
   $('#dataTable').DataTable({
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
+    buttons: [
+       @can('quotecustomers.test_incomplete_excel')
+      {
         extend: 'excelHtml5',
         text: 'Export Excel',
         title: 'Quote Customers - Test Incomplete List',
@@ -88,6 +101,8 @@
           }
         }
       },
+       @endcan
+        @can('quotecustomers.test_incomplete_csv')
       {
         extend: 'csvHtml5',
         text: 'Export CSV',
@@ -102,6 +117,7 @@
           }
         }
       },
+      @endcan
     ],
     "language": {
       "emptyTable": "No records found"

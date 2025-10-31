@@ -6,13 +6,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
+use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Models\Role;
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Admin extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+     use HasRoles, SoftDeletes;
     protected $guard = "admin";
-
+ protected $guard_name = 'admin';
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +24,7 @@ class Admin extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'role_id',
         'password',
     ];
 
@@ -45,5 +49,10 @@ class Admin extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
     }
 }

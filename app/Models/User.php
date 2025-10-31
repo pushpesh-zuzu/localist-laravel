@@ -245,4 +245,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(LoginHistory::class, 'user_id')->latest('login_at');
     }
+
+
+    public function planHistories()
+    {
+        return $this->hasMany(PlanHistory::class, 'user_id');
+    }
 }

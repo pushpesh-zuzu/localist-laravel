@@ -12,6 +12,7 @@ use App\Models\Category;
 
 class SectorController extends Controller{
     public function index(Request $request, Builder $builder){
+         abort_if(!auth()->user()->can('sector.viewlist'), 403, __('User does not have the right permissions.'));
         $data['sectorsList']= Category::with(['subsectors'])->where('parent_id', '0')->where('status','1')->get()->toArray();
         // echo "<pre>";
         // print_r($data['sectorsList']);

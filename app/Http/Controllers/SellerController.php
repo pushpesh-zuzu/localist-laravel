@@ -23,7 +23,8 @@ use App\Models\ContactUs;
 use App\Models\PlanHistory;
 use App\Models\Review;
 use App\Models\CustomReview;
-
+use App\Exports\SellerCompleteListExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SellerController extends Controller
 {
@@ -33,6 +34,8 @@ class SellerController extends Controller
 
     public function index(Request $request)
     {
+        abort_if(!auth()->user()->can('leadbuyers.viewlist'), 403, __('User does not have the right permissions.'));
+
         $query = User::whereIn('user_type', [1, 3])
             ->where('form_status', 1)
             ->with('lastLogin') // eager load latest login
@@ -57,7 +60,13 @@ class SellerController extends Controller
 
     public function contactForm(Request $request)
     {
+<<<<<<< Updated upstream
         $query = ContactUs::where('user_type', 2)
+=======
+        abort_if(!auth()->user()->can('leadbuyerscontact.viewlist'), 403, __('User does not have the right permissions.'));
+
+        $query = ContactUs::where('user_type', 1)
+>>>>>>> Stashed changes
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -77,6 +86,7 @@ class SellerController extends Controller
 
     public function viewContactForm(string $id)
     {
+        abort_if(!auth()->user()->can('leadbuyerscontact.view-details'), 403, __('User does not have the right permissions.'));
         DB::table('contact_us')
             ->where('id', $id)
             ->update(['status' => 1]);
@@ -107,8 +117,10 @@ class SellerController extends Controller
     public function show(string $type, string $id)
     {
         if ($type === 'abandoned') {
+            abort_if(!auth()->user()->canAny(['leadbuyers.incomplete-view-details']), 403, __('User does not have the right permissions.'));
             $aRows = AbandonedUser::where('id', $id)->with(['details'])->first();
         } else {
+            abort_if(!auth()->user()->canAny(['leadbuyers.view-details']), 403, __('User does not have the right permissions.'));
             $aRows = User::where('id', $id)->with(['details'])->first();
         }
         return view('seller.view', compact('aRows'));
@@ -171,7 +183,7 @@ class SellerController extends Controller
 
     public function incompletelist(Request $request)
     {
-        //  $aRows = User::whereIn('user_type', [1, 3])->where('form_status', 0)->orderBy('id', 'DESC')->get();
+        abort_if(!auth()->user()->can('leadbuyers.incomplete-viewlist'), 403, __('User does not have the right permissions.'));
 
         $query = AbandonedUser::whereIn('user_type', [1, 3])
             ->where('form_status', 0)
@@ -195,6 +207,7 @@ class SellerController extends Controller
 
     public function sellerServices($userid)
     {
+        abort_if(!auth()->user()->can('leadbuyers.services'), 403, __('User does not have the right permissions.'));
         $user = User::where('id', $userid)->pluck('name')->first();
         $serviceId = UserService::where('user_id', $userid)->pluck('service_id')->toArray();
         $aRows = Category::whereIn('id', $serviceId)->get();
@@ -211,6 +224,7 @@ class SellerController extends Controller
 
     public function creditPlans($userid)
     {
+        abort_if(!auth()->user()->can('leadbuyers.creditplans'), 403, __('User does not have the right permissions.'));
         $user = User::where('id', $userid)->pluck('name')->first();
         $aRows = PlanHistory::where('user_id', $userid)->get();
         return view('seller.credit_plans', get_defined_vars());
@@ -218,6 +232,8 @@ class SellerController extends Controller
 
     public function sellerBids($userid)
     {
+        abort_if(!auth()->user()->can('leadbuyers.bids'), 403, __('User does not have the right permissions.'));
+
         // Get recommended leads for the seller
         $recommendedLeads = RecommendedLead::where('seller_id', $userid)->get();
 
@@ -302,6 +318,7 @@ class SellerController extends Controller
 
     public function suggestedQuestions($userid)
     {
+        abort_if(!auth()->user()->can('leadbuyers.suggested-questions'), 403, __('User does not have the right permissions.'));
         // $categoryId = SuggestedQuestion::distinct()->pluck('service_id')->toArray();
 
         // // Fetch only those categories which have questions
@@ -320,6 +337,8 @@ class SellerController extends Controller
 
     public function sellerLogin($userid)
     {
+        abort_if(!auth()->user()->can('leadbuyers.loginhistory'), 403, __('User does not have the right permissions.'));
+
         $aRows =  LoginHistory::where('user_id', $userid)->orderBy('id', 'DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('seller.login_history', get_defined_vars());
@@ -424,6 +443,13 @@ class SellerController extends Controller
 
     public function addCredit(Request $request)
     {
+        if (!auth()->user()->can('leadbuyers.add-credit')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('User does not have the right permissions.'),
+            ], 403);
+        }
+
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'add_credit' => 'required|numeric|min:1',
@@ -451,5 +477,32 @@ class SellerController extends Controller
             'message' => 'Credit updated successfully!',
             'new_credit' => $user->total_credit
         ]);
+    }
+
+
+
+     public function exportCompleteSellerExcel(Request $request)
+    {
+    
+        return Excel::download(
+            new SellerCompleteListExport(
+                $request->start_date,
+                $request->end_date,
+                $request->search
+            ),
+            'seller_complete_list.xlsx'
+        );
+    }
+
+   public function exportCompleteSellerCsv(Request $request)
+    {
+        return Excel::download(
+            new SellerCompleteListExport(
+                $request->start_date,
+                $request->end_date,
+                $request->search
+            ),
+            'seller_complete_list.csv'
+        );
     }
 }

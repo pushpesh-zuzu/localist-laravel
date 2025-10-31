@@ -14,6 +14,7 @@ class ServiceQuestionsController extends Controller
      */
     public function index()
     {
+         abort_if(!auth()->user()->can('servicequestions.viewlist'), 403, __('User does not have the right permissions.'));
          // Get all category IDs that have service questions
         // $categoryIdsWithQuestions = ServiceQuestion::distinct()->pluck('category')->toArray();
 
@@ -37,6 +38,7 @@ class ServiceQuestionsController extends Controller
      */
     public function create()
     {
+          abort_if(!auth()->user()->can('servicequestions.create'), 403, __('User does not have the right permissions.'));
         $aRow = array();
         $categories = Category::where('status',1)->get();
         return view('servicequestion.create',get_defined_vars());
@@ -47,6 +49,7 @@ class ServiceQuestionsController extends Controller
      */
     public function store(Request $request)
     {
+          abort_if(!auth()->user()->can('servicequestions.create'), 403, __('User does not have the right permissions.'));
         echo "<pre>";print_r($request->all());
         $validator = Validator::make($request->all(), [
             'category' => 'required|integer|exists:categories,id',

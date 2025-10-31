@@ -35,8 +35,11 @@
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Total Credit</th>
+<<<<<<< Updated upstream
               <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
+=======
+>>>>>>> Stashed changes
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
@@ -49,10 +52,13 @@
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
               <td class="text text-center">{{ $aRow->total_credit  }}</td>
+<<<<<<< Updated upstream
                <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+=======
+>>>>>>> Stashed changes
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
               <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
@@ -60,15 +66,17 @@
                 <!-- <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn"></i></a>
                 <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary"><i class="bi bi-person-lines-fill"></i></a>
                 <a href="{{ route('seller.creditPlans',$aRow->id) }}" class="text text-primary"><i class="bi bi-list-task nav-icon"></i></a> -->
+                @can('leadbuyers.incomplete-view-details')
                 <a href="{{ route('seller.show.custom',['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-
+                @endcan
+                @can('leadbuyers.incomplete-delete')
                 {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'abandoned', '')"
-                  class="text text-danger"
-                  title="Delete">
-                  <i class="fa-solid fa-trash"></i>
+                class="text text-danger"
+                title="Delete">
+                <i class="fa-solid fa-trash"></i>
                 </a> --}}
-
+                @endcan
               </td>
             </tr>
             @endforeach
@@ -84,7 +92,9 @@
   $('#dataTable').DataTable({
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
+    buttons: [
+       @can('leadbuyers.incomplete-excelexport')
+      {
         extend: 'excelHtml5',
         text: 'Export Excel',
         title: 'Lead Buyers - Incomplete List',
@@ -98,6 +108,8 @@
           }
         }
       },
+       @endcan
+        @can('leadbuyers.incomplete-csvexport')
       {
         extend: 'csvHtml5',
         text: 'Export CSV',
@@ -112,6 +124,7 @@
           }
         }
       },
+       @endcan
     ]
   });
 </script>

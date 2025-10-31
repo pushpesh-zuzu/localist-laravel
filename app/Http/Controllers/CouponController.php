@@ -12,6 +12,7 @@ class CouponController extends Controller
      */
     public function index()
     {
+         abort_if(!auth()->user()->can('coupons.viewlist'), 403, __('User does not have the right permissions.'));
         $aRows = Coupon::orderBy('id','DESC')->get(); 
         return view('coupon.index',get_defined_vars());
     }
@@ -21,6 +22,7 @@ class CouponController extends Controller
      */
     public function create()
     {
+        abort_if(!auth()->user()->can('coupons.create'), 403, __('User does not have the right permissions.'));
         $aRow = array();
         return view('coupon.create',get_defined_vars());
     }
@@ -30,6 +32,7 @@ class CouponController extends Controller
      */
     public function store(Request $request)
     {
+         abort_if(!auth()->user()->can('coupons.create'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request);   
         return redirect()->route('coupon.index')->with('success', 'Coupon created successfully.');
     }
@@ -47,6 +50,7 @@ class CouponController extends Controller
      */
     public function edit(string $id)
     {
+        abort_if(!auth()->user()->can('coupons.edit'), 403, __('User does not have the right permissions.'));
         $aRow = Coupon::where('id',$id)->first();
         return view('coupon.create',get_defined_vars());
     }
@@ -56,6 +60,7 @@ class CouponController extends Controller
      */
     public function update(Request $request, string $id)
     {
+         abort_if(!auth()->user()->can('coupons.edit'), 403, __('User does not have the right permissions.'));
         $coupon = Coupon::where('id',$id)->first();
         $this->validateSave($request,$coupon);      
         return redirect()->route('coupon.index')
@@ -67,6 +72,7 @@ class CouponController extends Controller
      */
     public function destroy(string $id)
     {
+         abort_if(!auth()->user()->can('coupons.delete'), 403, __('User does not have the right permissions.'));
         Coupon::where('id',$id)->delete();
         return redirect()->route('coupon.index')
                          ->with('success', 'Coupon deleted successfully.');

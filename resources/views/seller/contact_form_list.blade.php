@@ -51,7 +51,11 @@
                 {{ $aRow->status == 1 ? 'Viewed' : 'Not Viewed' }}
               </td>
               <td>
+
+                @can('leadbuyerscontact.view-details')
                 <a href="{{ route('seller.show_contact_form',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
+                @endcan
+                @can('leadbuyerscontact.contact-delete')
                 <form method="POST" action="{{ route('contact.delete', $aRow->id) }}" style="display:inline-block;"
                   onsubmit="return confirm('Are you sure you want to delete this record?');">
                   @csrf
@@ -60,7 +64,7 @@
                     <i class="bi bi-trash text-danger"></i>
                   </button>
                 </form>
-
+                @endcan
               </td>
             </tr>
             @endforeach
@@ -76,7 +80,9 @@
   $('#dataTable').DataTable({
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
+    buttons: [
+        @can('leadbuyers.contact-excelexport')
+      {
         extend: 'excelHtml5',
         text: 'Export Excel',
         title: 'Lead Buyers - Contact Form List',
@@ -90,6 +96,8 @@
           }
         }
       },
+       @endcan
+        @can('leadbuyers.contact-csvexport')
       {
         extend: 'csvHtml5',
         text: 'Export CSV',
@@ -104,6 +112,7 @@
           }
         }
       },
+       @endcan
     ],
     "language": {
       "emptyTable": "No records found"

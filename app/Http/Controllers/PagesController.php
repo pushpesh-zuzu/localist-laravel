@@ -12,12 +12,14 @@ class PagesController extends Controller
 {
     public function index()
     {
+        abort_if(!auth()->user()->can('page.viewlist'), 403, __('User does not have the right permissions.'));
         $aRows = Page::get(); 
         return view('pages.index', compact('aRows'));
     }
 
     public function create()
     {
+         abort_if(!auth()->user()->can('page.create'), 403, __('User does not have the right permissions.'));
         $aRow = array();
         $categories = Category::where('status',1)->get();
         $pagemenu = Page::where('status',1)->get();
@@ -26,6 +28,7 @@ class PagesController extends Controller
 
     public function store(Request $request)
     {
+         abort_if(!auth()->user()->can('page.create'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request);   
         return redirect()->route('pages.index')->with('success', 'Page created successfully.');
     }
@@ -37,7 +40,7 @@ class PagesController extends Controller
 
     public function edit(Page $page)
     {
-        
+         abort_if(!auth()->user()->can('page.edit'), 403, __('User does not have the right permissions.'));
         $aRow = $page->load('faqs');
         $categories = Category::where('status',1)->get();
         $pagemenu = Page::where('status',1)->where('page_title','!=',$page->page_title)->get();
@@ -46,6 +49,7 @@ class PagesController extends Controller
 
     public function update(Request $request, Page $page)
     {
+         abort_if(!auth()->user()->can('page.edit'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request,$page);      
         return redirect()->route('pages.index')
                          ->with('success', 'Page updated successfully.');
@@ -53,6 +57,7 @@ class PagesController extends Controller
 
     public function destroy(Page $page)
     {
+         abort_if(!auth()->user()->can('page.delete'), 403, __('User does not have the right permissions.'));
         $page->delete();
         return redirect()->route('pages.index')
                          ->with('success', 'Page deleted successfully.');

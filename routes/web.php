@@ -20,6 +20,8 @@ use App\Http\Controllers\PagesController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\EmailSettingsController;
 use App\Helpers\WhatsAppMessage;
+use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\RoleController;
 // use App\Http\Controllers\GoogleReviewController;
 use Illuminate\Http\Request;
 
@@ -124,7 +126,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('buyer-show-contact-form/{id}', [BuyerController::class, 'viewContactForm'])->name('buyer.show_contact_form');
     Route::delete('/delete-user/{id}', [BuyerController::class, 'destroy'])->name('user.destroy');
     Route::delete('/contact/{id}', [BuyerController::class, 'deleteContact'])->name('contact.delete');
-    
+
     Route::resource('seller', SellerController::class);
     Route::post('seller/custom-reviews/save', [SellerController::class, 'sellerSaveCustomReview'])->name('seller.save.custom.review');
     Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
@@ -140,6 +142,13 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('seller-login/{userid}', [SellerController::class, 'sellerLogin'])->name('seller.sellerLogin');
     Route::get('seller-accreditations/{userid}', [SellerController::class, 'sellerAccreditations'])->name('seller.sellerAccreditations');
     Route::get('seller-profile-services/{userid}', [SellerController::class, 'sellerProfileServices'])->name('seller.sellerProfileServices');
+    Route::get('/export-seller-excel', [SellerController::class, 'exportCompleteSellerExcel'])
+    ->name('export.com.seller.excel');
+
+    Route::get('/export-com-seller-csv', [SellerController::class, 'exportCompleteSellerCsv'])
+        ->name('export.com.seller.csv');
+    
+    
     Route::get('suggested-questions/{userid}', [SellerController::class, 'suggestedQuestions'])->name('seller.suggestedQuestions');
     Route::resource('servicequestion', ServiceQuestionsController::class);
     Route::POST('servicequestion/add-more-option', [ServiceQuestionsController::class, 'addMoreOption']);
@@ -149,6 +158,9 @@ Route::middleware('auth:admin')->group(function () {
     Route::resource('request-list', RequestListController::class);
     Route::resource('email-settings', EmailSettingsController::class);
     Route::post('email-settings/change-status', [EmailSettingsController::class, 'changeSettingStatus'])->name('email-settings.change-status');
+
+    Route::resource('admin-users', AdminUserController::class);
+    Route::resource('roles', RoleController::class);
 });
 
 

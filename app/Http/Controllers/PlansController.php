@@ -11,12 +11,14 @@ class PlansController extends Controller
 {
     public function index()
     {
+         abort_if(!auth()->user()->can('plans.viewlist'), 403, __('User does not have the right permissions.'));
         $aRows = Plan::with(['category'])->get(); 
         return view('plans.index', compact('aRows'));
     }
 
     public function create()
     {
+         abort_if(!auth()->user()->can('plans.create'), 403, __('User does not have the right permissions.'));
         $category = Category::where('status',1)->get();
         $aRow = array();
         return view('plans.create',compact('aRow','category'));
@@ -24,6 +26,8 @@ class PlansController extends Controller
 
     public function store(Request $request)
     {
+         abort_if(!auth()->user()->can('plans.create'), 403, __('User does not have the right permissions.'));
+
         $this->validateSave($request);   
         return redirect()->route('plans.index')->with('success', 'Plan created successfully.');
     }
@@ -34,7 +38,9 @@ class PlansController extends Controller
     }
 
     public function edit(Plan $plan)
-    {
+    { 
+        abort_if(!auth()->user()->can('plans.edit'), 403, __('User does not have the right permissions.'));
+
         $category = Category::get();
         $aRow = $plan;
         return view('plans.create', compact('aRow','category'));
@@ -42,6 +48,7 @@ class PlansController extends Controller
 
     public function update(Request $request, Plan $plan)
     {
+        abort_if(!auth()->user()->can('plans.edit'), 403, __('User does not have the right permissions.'));
         $this->validateSave($request,$plan);      
         return redirect()->route('plans.index')
                          ->with('success', 'Plan updated successfully.');
@@ -49,6 +56,7 @@ class PlansController extends Controller
 
     public function destroy(Plan $plan)
     {
+        abort_if(!auth()->user()->can('plans.delete'), 403, __('User does not have the right permissions.'));
         $plan->delete();
         return redirect()->route('plans.index')
                          ->with('success', 'Plan deleted successfully.');

@@ -19,19 +19,21 @@ class EmailSettingsController extends Controller
 {
     public function index(Request $request, Builder $builder)
     {
+         abort_if(!auth()->user()->can('email-settings.viewlist'), 403, __('User does not have the right permissions.'));
         $data['settings'] = EmailSetting::get()->toArray();
         return view('email-settings.list', $data);
     }
 
     public function create()
     {
+         abort_if(!auth()->user()->can('email-settings.create'), 403, __('User does not have the right permissions.'));
         $data['aRow'] = [];
         return view('email-settings.create', $data);
     }
 
     public function store(Request $request)
     {
-
+     abort_if(!auth()->user()->can('email-settings.create'), 403, __('User does not have the right permissions.'));
         $this->validate($request);
         if (empty($request->setting_value)) {
             $data['setting_value'] = 1;

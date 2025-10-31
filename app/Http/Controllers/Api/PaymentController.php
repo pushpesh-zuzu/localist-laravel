@@ -137,11 +137,11 @@ class PaymentController extends Controller
                     });
                 }
 
-                // if ($invId) {
-                //     CustomHelper::runInBackground(function () use ($user_id, $invId) {
-                //         ZohoEmails::sendPlanInvoiceEmail($user_id, $invId);
-                //     });
-                // }
+                if ($invId) {
+                    CustomHelper::runInBackground(function () use ($user_id, $invId) {
+                        ZohoEmails::sendPlanInvoiceEmail($user_id, $invId);
+                    });
+                }
 
                 return $this->sendResponse('Payment successful!');
             } else {

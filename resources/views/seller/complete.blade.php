@@ -33,8 +33,11 @@
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Total Credit</th>
+<<<<<<< Updated upstream
                <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
+=======
+>>>>>>> Stashed changes
               <th scope="col">Last Login</th>
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
@@ -48,43 +51,62 @@
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
               <td class="text text-center">{{ $aRow->total_credit }}</td>
+<<<<<<< Updated upstream
                <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+=======
+>>>>>>> Stashed changes
               <td>{{ $aRow->lastLogin?->login_at ? \Carbon\Carbon::parse($aRow->lastLogin->login_at)->format('m/d/Y h:i a') : '' }} </td>
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <td>
-
+                @can('leadbuyers.add-credit')
                 <a href="javascript:void(0)"
                   class="text text-success view-credit"
                   data-user-id="{{ $aRow->id }}"
                   title="Add Credit">
                   <i class="bi bi-plus-circle"></i>
-                </a> 
+                </a>
+                @endcan
+                @can('leadbuyers.bids')
                 <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
+                @endcan
+                @can('leadbuyers.loginhistory')
                 <a href="{{ route('seller.sellerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
+                @endcan
+                @can('leadbuyers.creditplans')
                 <a href="{{ route('seller.creditPlans',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Credit Plans"><i class="bi bi-list-task nav-icon"></i></a>
+                @endcan
+                @can('leadbuyers.suggested-questions')
                 <a href="{{ route('seller.suggestedQuestions',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Suggested Questions"><i class="bi bi-question-circle nav-icon"></i></a>
+                @endcan
+                @can('leadbuyers.services')
                 <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Services"><i class="bi bi-person-lines-fill"></i></a>
+                @endcan
+                @can('leadbuyers.view-details')
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Details"> <i class="bi bi-eye"></i></a>
-
+                @endcan
+                @can('leadbuyers.view-public-profile')
                 <a href="{{ url(config('app.react_base_url') .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRow->name))) .'/' .$aRow->id) }}" target="_blank" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Public Profile"> <i class="bi bi-person-badge"></i></a>
-
+                @endcan
+                @can('leadbuyers.custom-reviews')
                 <a href="javascript:void(0)"
                   onclick="openCustomReviewModal('{{ $aRow->id }}')"
                   class="text text-primary" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Custom Reviews"
                   title="Custom Reviews">
                   <i class="fa-solid fa-star"></i>
-                </a>    
-                
+                </a>
+                @endcan
+                @can('leadbuyers.complete-delete')
                 {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
-                  class="text text-danger"
-                  title="Delete">
-                  <i class="fa-solid fa-trash"></i>
-                </a>     --}}
+                class="text text-danger"
+                title="Delete">
+                <i class="fa-solid fa-trash"></i>
+                </a> --}}
+                @endcan
 
               </td>
             </tr>
@@ -127,56 +149,56 @@
 
 
   <!-- Custom Reviews Modal -->
-<div class="modal fade" id="customReviewModal" tabindex="-1" aria-labelledby="customReviewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="customReviewModalLabel">Custom Reviews</h5>
-        <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
-      </div>
+  <div class="modal fade" id="customReviewModal" tabindex="-1" aria-labelledby="customReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="customReviewModalLabel">Custom Reviews</h5>
+          <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-      <div class="modal-body">
-        <form id="customReviewForm">
-          <input type="hidden" name="user_id" id="row_id">
+        <div class="modal-body">
+          <form id="customReviewForm">
+            <input type="hidden" name="user_id" id="row_id">
 
-          <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Review Platform</th>
-                  <th>Number of Reviews</th>
-                  <th>Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Facebook</td>
-                  <td><input type="text" name="facebook_reviews" class="form-control" placeholder="Enter number"></td>
-                  <td><input type="number" name="facebook_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
-                </tr>
-                <tr>
-                  <td>Google</td>
-                  <td><input type="text" name="google_reviews" class="form-control" placeholder="Enter number"></td>
-                  <td><input type="number" name="google_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
-                </tr>
-                <tr>
-                  <td>Trust Pilot</td>
-                  <td><input type="text" name="trustpilot_reviews" class="form-control" placeholder="Enter number"></td>
-                  <td><input type="number" name="trustpilot_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </form>
-      </div>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Review Platform</th>
+                    <th>Number of Reviews</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Facebook</td>
+                    <td><input type="text" name="facebook_reviews" class="form-control" placeholder="Enter number"></td>
+                    <td><input type="number" name="facebook_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
+                  </tr>
+                  <tr>
+                    <td>Google</td>
+                    <td><input type="text" name="google_reviews" class="form-control" placeholder="Enter number"></td>
+                    <td><input type="number" name="google_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
+                  </tr>
+                  <tr>
+                    <td>Trust Pilot</td>
+                    <td><input type="text" name="trustpilot_reviews" class="form-control" placeholder="Enter number"></td>
+                    <td><input type="number" name="trustpilot_score" min="0" max="5" class="form-control" placeholder="Enter score"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </form>
+        </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" onclick="saveCustomReview()">Save Changes</button>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="saveCustomReview()">Save Changes</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
 
 
@@ -184,184 +206,201 @@
 
 
 
-<!-- Credit Modal -->
+  <!-- Credit Modal -->
 
- @push('scripts')
+  @push('scripts')
 
-<script>
-  $('#dataTable').DataTable({
+  <script>
+   $('#dataTable').DataTable({
+    
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
-        extend: 'excelHtml5',
-        text: 'Export Excel',
-        title: 'Lead Buyers - Complete List',
-        className: "buttons-excel btn btn-success btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(7))', // Exclude "Action" column (7th column)
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'applied'
-          }
+    buttons: [
+        @can('leadbuyers.complete-excelexport')
+        {
+            text: 'Export Excel',
+            className: "btn btn-success btn-sm",
+            action: function(e, dt, node, config) {
+                let start = $('#from_date').val();
+                let end = $('#to_date').val();
+                let search = dt.search(); // Use dt instead of dataTable
+                
+                let query = $.param({ start_date: start, end_date: end, search: search });
+                window.location.href = "{{ route('export.com.seller.excel') }}" + "?" + query;
+                
+                e.preventDefault();
+            }
+        },
+         @endcan
+        @can('leadbuyers.complete-csvexport')
+        {
+            text: 'Export CSV',
+            className: "btn btn-info btn-sm",
+            action: function(e, dt, node, config) {
+                let start = $('#from_date').val();
+                let end = $('#to_date').val();
+                let search = dt.search(); // Use dt instead of dataTable
+                
+                let query = $.param({ start_date: start, end_date: end, search: search });
+                window.location.href = "{{ route('export.com.seller.csv') }}" + "?" + query;
+                
+                e.preventDefault();
+            }
         }
-      },
-      {
-        extend: 'csvHtml5',
-        text: 'Export CSV',
-        title: 'Lead Buyers - Complete List',
-        className: "buttons-csv btn btn-info btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(7))',
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'applied'
-          }
-        }
-      },
+          @endcan
     ],
     "language": {
-      "emptyTable": "No records found"
-    }
+        "emptyTable": "No records found"
+    },
+     columnDefs: [
+        { targets: 0, searchable: false } // disable search on the first (#) column
+    ]
   });
 
-   $(document).on("click", ".view-credit", function() {
-    let userId = $(this).data("user-id");
-    let baseUrl = $("#_url").val();
-    $("#user_id").val('');
-    $("#current_credit").text('');
-    $('#creditMessage').html('');
-    $.ajax({
-      url: baseUrl + "/seller/get-credit/" + userId, // Route to get user credit
-      type: "GET",
-      success: function(res) {
-        if (res.success) {
+    $(document).on("click", ".view-credit", function() {
+      let userId = $(this).data("user-id");
+      let baseUrl = $("#_url").val();
+      $("#user_id").val('');
+      $("#current_credit").text('');
+      $('#creditMessage').html('');
+      $.ajax({
+        url: baseUrl + "/seller/get-credit/" + userId, // Route to get user credit
+        type: "GET",
+        success: function(res) {
+          if (res.success) {
 
-          $("#user_id").val(userId);
-          $("#current_credit").text(res.data.total_credit);
-          $("#add_credit").val("");
-          var creditModalEl = document.getElementById("creditModal");
-          var creditModal = new coreui.Modal(creditModalEl);
-          creditModal.show();
-        } else {
-          alert(res.message || "Failed to fetch user credit.");
+            $("#user_id").val(userId);
+            $("#current_credit").text(res.data.total_credit);
+            $("#add_credit").val("");
+            var creditModalEl = document.getElementById("creditModal");
+            var creditModal = new coreui.Modal(creditModalEl);
+            creditModal.show();
+          } else {
+            alert(res.message || "Failed to fetch user credit.");
+          }
+        },
+        error: function(xhr) {
+          alert("Server error. Please try again.");
+        },
+        complete: function() {
+          $("#loader").fadeOut();
         }
-      },
-      error: function(xhr) {
-        alert("Server error. Please try again.");
-      },
-      complete: function() {
-        $("#loader").fadeOut();
-      }
+      });
     });
-  });
 
-  $('#creditForm').submit(function(e) {
-    e.preventDefault();
+    $('#creditForm').submit(function(e) {
+      e.preventDefault();
 
-    let userId = $('#user_id').val();
-    let addCredit = $('#add_credit').val();
-
-
-    $('#creditMessage').html('');
-    $('#add_credit').removeClass('is-invalid');
-    $('#addCreditError').remove();
+      let userId = $('#user_id').val();
+      let addCredit = $('#add_credit').val();
 
 
-    if (!userId) {
-      $('#creditMessage').html(
-        `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
-      );
-      return;
-    }
+      $('#creditMessage').html('');
+      $('#add_credit').removeClass('is-invalid');
+      $('#addCreditError').remove();
 
-    $.ajax({
-      url: "{{ route('seller.addCredit') }}",
-      type: "POST",
-      data: {
-        _token: $('input[name=_token]').val(),
-        user_id: userId,
-        add_credit: addCredit
-      },
-      success: function(response) {
-        if (response.success) {
-          $('#creditMessage').html(
-            `<div class="alert alert-success">${response.message || 'Credit updated successfully!'}</div>`
-          );
-          $('#current_credit').text(response.new_credit);
-          $('#add_credit').val('');
-        } else {
-          $('#creditMessage').html(
-            `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
-          );
-        }
-      },
-      error: function(xhr) {
-        if (xhr.status === 422) {
-          let errors = xhr.responseJSON.errors;
-          if (errors.add_credit) {
-            $('#add_credit').addClass('is-invalid');
-            $('#add_credit').after(
-              `<div id="addCreditError" class="invalid-feedback">${errors.add_credit[0]}</div>`
+
+      if (!userId) {
+        $('#creditMessage').html(
+          `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
+        );
+        return;
+      }
+
+      $.ajax({
+        url: "{{ route('seller.addCredit') }}",
+        type: "POST",
+        data: {
+          _token: $('input[name=_token]').val(),
+          user_id: userId,
+          add_credit: addCredit
+        },
+        success: function(response) {
+          if (response.success) {
+            $('#creditMessage').html(
+              `<div class="alert alert-success">${response.message || 'Credit updated successfully!'}</div>`
+            );
+            $('#current_credit').text(response.new_credit);
+            $('#add_credit').val('');
+          } else {
+            $('#creditMessage').html(
+              `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
             );
           }
-        } else {
-          $('#creditMessage').html(
-            `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
-          );
+        },
+        error: function(xhr) {
+          if (xhr.status === 422) {
+            // Validation errors
+            let errors = xhr.responseJSON.errors;
+            if (errors.add_credit) {
+              $('#add_credit').addClass('is-invalid');
+              $('#add_credit').after(
+                `<div id="addCreditError" class="invalid-feedback">${errors.add_credit[0]}</div>`
+              );
+            }
+          } else if (xhr.status === 403) {
+            // Permission denied (no access)
+            let message = xhr.responseJSON?.message || 'You do not have permission to perform this action.';
+            $('#creditMessage').html(
+              `<div class="alert alert-danger">${message}</div>`
+            );
+          } else {
+            // Other server errors
+            $('#creditMessage').html(
+              `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
+            );
+          }
         }
-      }
+      });
     });
-  });
-</script>
-<script src="{{ asset('coreui/js/common.js') }}"></script>
-<script>
-  // Function to open modal and set row id
-  function openCustomReviewModal(rowId) {
-    document.getElementById('row_id').value = rowId;
-    const modal = new coreui.Modal(document.getElementById('customReviewModal'));
-    modal.show();
-  }
+  </script>
+  <script src="{{ asset('coreui/js/common.js') }}"></script>
+  <script>
+    // Function to open modal and set row id
+    function openCustomReviewModal(rowId) {
+      document.getElementById('row_id').value = rowId;
+      const modal = new coreui.Modal(document.getElementById('customReviewModal'));
+      modal.show();
+    }
 
-  // Example save function (you can adjust to use AJAX)
-  function saveCustomReview() {
-    const form = document.getElementById('customReviewForm');
-    const formData = new FormData(form);
+    // Example save function (you can adjust to use AJAX)
+    function saveCustomReview() {
+      const form = document.getElementById('customReviewForm');
+      const formData = new FormData(form);
 
-    // Example: log data
-    console.log(Object.fromEntries(formData.entries()));
+      // Example: log data
+      console.log(Object.fromEntries(formData.entries()));
 
-    // Example AJAX request (Laravel route)
-    $.ajax({
-      url: "{{ route('seller.save.custom.review') }}",
-      type: 'POST',
-      data: formData,
-      dataType: 'JSON',
-      processData: false,  // Important for FormData
-      contentType: false,  // Important for FormData
-      headers: {
+      // Example AJAX request (Laravel route)
+      $.ajax({
+        url: "{{ route('seller.save.custom.review') }}",
+        type: 'POST',
+        data: formData,
+        dataType: 'JSON',
+        processData: false, // Important for FormData
+        contentType: false, // Important for FormData
+        headers: {
           'X-CSRF-TOKEN': "{{ csrf_token() }}"
-      },
-      success: function(response) {
-        if (response.success === true) {
+        },
+        success: function(response) {
+          if (response.success === true) {
             alert('Saved successfully!'); // You can customize this
             const modalEl = document.getElementById('customReviewModal');
             const modal = coreui.Modal.getInstance(modalEl);
             modal.hide();
-        } else {
+          } else {
             // Handle validation errors from server
             console.log('Validation errors:', response.html);
             alert('Validation failed. Check console for details.');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.log('AJAX Error:', xhr.responseText);
         }
-      },
-      error: function(xhr, status, error) {
-        console.log('AJAX Error:', xhr.responseText); 
-      }
-    });
-  }
-</script>
-@endpush
+      });
+    }
+  </script>
+  @endpush
 
 
 </x-app-layout>

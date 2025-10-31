@@ -3,7 +3,9 @@
 
     <div class="row">
         <div class="md-col-12 mb-4">
+            @can('email-settings.create')
             <a href="{{ route('email-settings.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Email Setting') }}</a>
+           @endcan
         </div>
         <div class="md-col-12 mb-4">
             @if(session()->has('success'))
@@ -20,8 +22,8 @@
             <table id="email-settings-table" class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>{{ __('Setting Name') }}</th>
-                        <th>{{ __('Email') }}</th>
+                        <th>{{ __('Setting Name') }}</th>                        
+                        <th>{{ __('Email') }}</th>                       
                         <th>{{ __('Whatsapp') }}</th>
                     </tr>
                 </thead>
@@ -29,16 +31,24 @@
                     @foreach($settings as $s)
                     <tr>
                         <td>{{$s['setting_name']}}</td>
+                       
                         <td>
+                              @can('email-settings.email-on-off')
                             <div class="form-check form-switch m-0">
                                 <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-settingtype="email" data-value="{{$s['setting_value']}}" @if($s['setting_value']) checked @endif>
                             </div>
+                             @endcan
                         </td>
+                        
+                         
                         <td>
+                             @can('email-settings.whatsapp-on-off')
                             <div class="form-check form-switch m-0">
                                 <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-settingtype="whatsapp" data-value="{{$s['whatsapp_setting_value']}}" @if($s['whatsapp_setting_value']) checked @endif>
                             </div>
+                             @endcan
                         </td>
+                         
                     </tr>
                     @endforeach
                 </tbody>

@@ -3,7 +3,9 @@
 
     <div class="row">
       <div>
+        @can('generalsettings.create')
         <a href="{{ route('settings.create') }}" class="btn btn-secondary btn-sm float-end">Add Setting</a>
+        @endcan
       </div>
     </div>
     <div class="row">
@@ -32,12 +34,17 @@
           </div>
           <!-- Hover buttons -->
           <div class="hover-buttons position-absolute top-0 end-0 p-2 d-none">
+
+          @can('generalsettings.edit')
             <a href="{{ route('settings.edit',$s->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></i></a>
+          @endcan
+            @can('generalsettings.delete')
             <form method='POST' onsubmit="return confirm('Are you sure to delete?');" action="{{ route('settings.destroy', $s->id) }}">
                 @csrf
                 @method('DELETE')
                 <button style="color:red; margin-left:3px;" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon  cil-trash"></i></button>
             </form>
+            @endcan
           </div>
         </div>
 

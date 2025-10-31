@@ -4,7 +4,9 @@
     <div class="card mb-4">
       <div class="card-header">
           <strong>{{ __('Questions & Answers') }}</strong>
+            @can('servicequestions.create')
           <a href="{{ route('servicequestion.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Questions') }}</a>
+          @endcan
       </div>
       <div class="card-body">
         @if(count($aRows) > 0)

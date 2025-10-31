@@ -137,7 +137,21 @@ class UserController extends Controller
 
         if(!empty($request->seller_id_magic)){
             $userDetails = User::where('remember_token',$request->seller_id_magic)->first();
+           
+          if (!$userDetails) {
+                return $this->sendError('The magic link you used is invalid or has expired. Please request a new link and try again.');
+            }
+           
             $sellerId = $userDetails->id;
+
+            if(!empty($userDetails->id)){
+                LoginHistory::create([
+                    'user_id' => $userDetails->id,
+                    'login_at' => Carbon::now(),
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+            }
         }
         else{
 

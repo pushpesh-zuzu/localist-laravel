@@ -147,7 +147,9 @@
         } // column index 6 = services
       ],
       dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-      buttons: [{
+      buttons: [
+         @can('quotecustomers.incom-excelexport')
+        {
           extend: 'excelHtml5',
           text: 'Export Excel',
           title: 'Quote Customers - Incomplete List',
@@ -189,6 +191,8 @@
             dt.ajax.reload();
           }
         },
+         @endcan
+        @can('quotecustomers.incom-csvexport')
         {
           extend: 'csvHtml5',
           text: 'Export CSV',
@@ -235,6 +239,7 @@
             dt.ajax.reload();
           }
         },
+         @endcan
       ],
 
 

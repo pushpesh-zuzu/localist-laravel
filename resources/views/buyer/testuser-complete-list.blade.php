@@ -61,17 +61,26 @@
               <td>Test</td>
 
               <td>
+                @can('quotecustomers.test_complete_bids')
                 <a href="{{ route('buyer.buyerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
+                 @endcan
+                @can('quotecustomers.test-complete-unique-visitors')
                 <a href="{{ route('buyer.viewCount',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-users" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Unique Visitors"></i></a>
+                 @endcan
+                @can('quotecustomers.test_complete_loginhistory')
                 <a href="{{ route('buyer.buyerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
+                 @endcan
+                @can('quotecustomers.test-complete-view-details')
                 <a href="{{ route('buyer.show.custom', ['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
-
+                @endcan
+                @can('quotecustomers.test_complete_delete')
                 {{-- <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
                 class="text text-danger"
                 title="Delete">
                 <i class="fa-solid fa-trash"></i>
                 </a> --}}
+                @endcan
 
               </td>
             </tr>
@@ -89,7 +98,9 @@
   $('#dataTable').DataTable({
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [{
+    buttons: [
+      @can('quotecustomers.test_complete_excel')
+      {
         extend: 'excelHtml5',
         text: 'Export Excel',
         title: 'Quote Customers - Test Complete List',
@@ -103,6 +114,8 @@
           }
         }
       },
+        @endcan
+        @can('quotecustomers.test_complete_csv')
       {
         extend: 'csvHtml5',
         text: 'Export CSV',
@@ -117,6 +130,7 @@
           }
         }
       },
+       @endcan
     ],
     "language": {
       "emptyTable": "No records found"

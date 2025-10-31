@@ -11,6 +11,7 @@ class RequestListController extends Controller
 {
 
     public function index(Request $request, Builder $builder){
+         abort_if(!auth()->user()->can('requestlist.viewlist'), 403, __('User does not have the right permissions.'));
         if ($request->ajax()) {
             $matched_leads = \DB::table('lead_requests')
             ->select(
