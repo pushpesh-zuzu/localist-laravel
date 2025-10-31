@@ -57,7 +57,7 @@ class SellerController extends Controller
 
     public function contactForm(Request $request)
     {
-        $query = ContactUs::where('user_type', 1)
+        $query = ContactUs::where('user_type', 2)
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -81,7 +81,7 @@ class SellerController extends Controller
             ->where('id', $id)
             ->update(['status' => 1]);
 
-        $aRows = DB::table('contact_us')->where('user_type', 1)->where('id', $id)->first();
+        $aRows = DB::table('contact_us')->where('user_type', 2)->where('id', $id)->first();
         return view('seller.contact_view', compact('aRows'));
     }
 

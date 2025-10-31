@@ -323,7 +323,7 @@ class BuyerController extends Controller
 
     public function contactForm(Request $request)
     {
-        $query = ContactUs::where('user_type', 2)
+        $query = ContactUs::where('user_type', 1)
             ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
@@ -348,7 +348,7 @@ class BuyerController extends Controller
             ->where('id', $id)
             ->update(['status' => 1]);
 
-        $aRows = DB::table('contact_us')->where('user_type', 2)->where('id', $id)->first();
+        $aRows = DB::table('contact_us')->where('user_type', 1)->where('id', $id)->first();
         return view('buyer.contact_view', compact('aRows'));
     }
 
