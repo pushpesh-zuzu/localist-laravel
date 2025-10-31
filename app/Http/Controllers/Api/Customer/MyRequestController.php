@@ -123,6 +123,8 @@ class MyRequestController extends Controller
             $dataUser['adgroup'] = $request->adgroup;
             $dataUser['targetid'] = $request->targetid;
             $dataUser['msclickid'] = $request->msclickid;
+            $dataUser['entry_url'] = $request->entry_url ?? null;
+             $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
             //for
 
             $dataUser['password'] = Hash::make($password);
@@ -195,6 +197,8 @@ class MyRequestController extends Controller
             $dataUser['campaignid'] = $request->campaignid;
             $dataUser['gclid'] = $request->gclid;
             $dataUser['keyword'] = $request->keyword;
+             $dataUser['entry_url'] = $request->entry_url ?? null;
+             $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
             $dataUser['created_at'] = date('Y-m-d H:i:s');
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
@@ -321,6 +325,8 @@ class MyRequestController extends Controller
             $nuData['adgroup'] = $abUser->adgroup;
             $nuData['targetid'] = $abUser->targetid;
             $nuData['msclickid'] = $abUser->msclickid;
+              $nuData['entry_url'] = $abUser->entry_url ?? null;
+            $nuData['user_ip_address'] = $abUser->user_ip_address ?? null;
             $nuData['password'] = Hash::make($password);
             $nuData['user_type'] = 2;
             $nuData['active_status'] = 2;
