@@ -56,6 +56,7 @@ Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{lo
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
+Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
 
 Route::post('get-city-name', [ApiController::class, 'getCityName']);
 

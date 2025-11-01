@@ -175,7 +175,7 @@ class SettingController extends Controller
             $files    = $request->file('accre_file', []);       // indexed files
             $existing = $request->input('accre_existing', []);  // indexed filenames
             
-            if(!empty($aValues['has_accreditations'])){
+            if(isset($aValues['has_accreditations'])){
                 $userdetails->update([
                     'has_accreditations' => !empty($aValues['has_accreditations']) ? 1 : 0,
                 ]);

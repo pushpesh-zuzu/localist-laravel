@@ -37,6 +37,7 @@ use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoPurchasedLeads;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoService;
+use App\Helpers\Zoho\ZohoLeadAvailable;
 use App\Helpers\Zoho\ZohoServiceLocations;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
@@ -46,6 +47,30 @@ use App\Services\LeadService;
 
 class LeadPreferenceController extends Controller
 {
+    public function zohoLeadsAvailable(Request $request, LeadService $leadService)
+    {
+        $email = $request->email;
+        $user = User::where('email', $email)->first();
+        if (empty($user)) {
+            return $this->sendError('User not found');
+        }
+        $user_id = $user->id;
+        $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
+        $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+        //Macting as per seller pref
+        $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
+
+        echo "<pre>";
+        
+        if(count($allLeads)> 0){
+            app(ZohoLeadAvailable::class)->deleteLeadsAvailableRecords($user_id);
+            
+            foreach ($allLeads as $lead) {
+                app(ZohoLeadAvailable::class)->integrateAvailableLeads($user_id, $lead);
+            }
+        }
+
+    }
 
     public function getLeadRequest(Request $request, LeadService $leadService)
     {
