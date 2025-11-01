@@ -59,7 +59,7 @@ class ZohoLeadAvailable
                 'Credit' => $lead->credit_score ?? '',
                 'Questions' => $lead->questions ?? '',
                 'User_Id' => strval($userId),
-                'Synced_At' => Carbon::now('Asia/Kolkata')->format('jS M Y, g:i A'),
+                'Synced_At' => Carbon::now()->format('jS M Y, g:i A'),
                 'Lead_Available_Lookup' => $lookupId,
             ];
         }
