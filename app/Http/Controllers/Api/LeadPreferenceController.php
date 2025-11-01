@@ -51,26 +51,36 @@ class LeadPreferenceController extends Controller
     {
         $email = $request->email;
         $user = User::where('email', $email)->first();
+
         if (empty($user)) {
             return $this->sendError('User not found');
         }
-        $user_id = $user->id;
-        $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
-        $allLeads = $baseQuery->orderBy('id', 'desc')->get();
-        //Macting as per seller pref
-        $allLeads = $leadService->leadsAccordingTOSellerPref($user_id, $allLeads);
 
-        echo "<pre>";
-        
-        if(count($allLeads)> 0){
-            app(ZohoLeadAvailable::class)->deleteLeadsAvailableRecords($user_id);
-            
-            foreach ($allLeads as $lead) {
-                app(ZohoLeadAvailable::class)->integrateAvailableLeads($user_id, $lead);
-            }
+        $userId = $user->id;
+        $baseQuery = $leadService->getSellerLeadsBaseQuery($userId);
+        $allLeads = $baseQuery->orderBy('id', 'desc')->get();
+        $allLeads = $leadService->leadsAccordingTOSellerPref($userId, $allLeads);
+
+        if ($allLeads->isEmpty()) {
+            return $this->sendError('No leads found for this user');
         }
 
+        // Step 1: Delete old leads
+        $deleteResult = app(ZohoLeadAvailable::class)->deleteLeadsAvailableRecords($userId);
+
+        // Step 2: Batch upsert new leads
+        $insertResult = app(ZohoLeadAvailable::class)->integrateAvailableLeadsBatch($userId, $allLeads);
+
+        // Step 3: Combine and return
+        return $this->sendResponse(
+            'Leads Available synced to Zoho successfully',
+            [
+                'deleted_entries_count' => $deleteResult['deleted_count'] ?? 0,
+                'inserted_entries_count' => $insertResult['inserted_count'] ?? 0,
+            ]
+        );
     }
+
 
     public function getLeadRequest(Request $request, LeadService $leadService)
     {
