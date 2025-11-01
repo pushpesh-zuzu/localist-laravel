@@ -67,13 +67,15 @@ class LeadPreferenceController extends Controller
 
         // Step 1: Delete old leads
         $deleteResult = app(ZohoLeadAvailable::class)->deleteLeadsAvailableRecords($userId);
-
+        
+        sleep(5); // Optional: brief pause to ensure deletion is processed
+        
         // Step 2: Batch upsert new leads
         $insertResult = app(ZohoLeadAvailable::class)->integrateAvailableLeadsBatch($userId, $allLeads);
 
         // Step 3: Combine and return
         return $this->sendResponse(
-            'Leads Available synced to Zoho successfully',
+            'Leads Available synced successfully',
             [
                 'deleted_entries_count' => $deleteResult['deleted_count'] ?? 0,
                 'inserted_entries_count' => $insertResult['inserted_count'] ?? 0,
