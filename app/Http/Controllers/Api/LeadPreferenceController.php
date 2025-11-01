@@ -71,6 +71,8 @@ class LeadPreferenceController extends Controller
         // Step 2: Batch upsert new leads
         $insertResult = app(ZohoLeadAvailable::class)->integrateAvailableLeadsBatch($userId, $allLeads);
 
+        sleep(60);
+
         // Step 3: Combine and return
         return $this->sendResponse(
             'Leads Available synced to Zoho successfully',
