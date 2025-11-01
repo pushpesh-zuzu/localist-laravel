@@ -66,7 +66,7 @@
         <div class="email-container">
 
             <div class="logo-container">
-                <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localist Logo" class="logo">
+                <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localist Logo" class="logo">
             </div>
 
             <div class="card">

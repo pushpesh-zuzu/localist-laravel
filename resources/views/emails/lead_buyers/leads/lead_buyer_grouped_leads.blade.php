@@ -69,7 +69,7 @@
           <!-- logo -->
           <tr>
             <td align="center" style="padding:12px 12px 8px 12px;">
-              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="display:block;max-height:45px;margin:0 auto;height:auto;">
+              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" style="display:block;max-height:45px;margin:0 auto;height:auto;">
             </td>
           </tr>
 

@@ -34,7 +34,7 @@
           <!-- Logo -->
           <tr>
             <td style="text-align:center; padding:0 0 16px 0">
-              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" class="logo">
+              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" class="logo">
             </td>
           </tr>
 

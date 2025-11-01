@@ -60,7 +60,7 @@
 <body>
   <div class="container">
     <div class="header">
-       <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists Logo" style="max-height: 50px;">
+       <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height: 50px;">
     </div>
     <div class="content">
       <h1>Hi {{$name}}</h1>

@@ -8,7 +8,7 @@
     
     <!-- Logo and header -->
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span><img src="{{public_path('images/localist_logo.svg')}}" width="150"/></span>
+      <span><img src="{{public_path('images/localist_logo.png')}}" width="150"/></span>
       <div style="text-align: right; font-size: 14px; color: #777; margin-top:-40px">
         <strong>Localist Global Limited</strong><br>
         9th Floor, 3 Sheldon Square<br>

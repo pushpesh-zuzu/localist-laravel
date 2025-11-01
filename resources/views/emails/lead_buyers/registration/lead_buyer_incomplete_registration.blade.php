@@ -50,7 +50,7 @@
         <table width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" role="presentation" style="max-width:600px; width:100%;">
           <tr>
             <td style="padding:28px 16px 8px 16px; text-align:center;">
-              <img src="{{$baseUrl}}/assets/localist_logo.png" alt="Localists Logo" style="max-height:50px; margin:0 auto;">
+              <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height:50px; margin:0 auto;">
             </td>
           </tr>
 

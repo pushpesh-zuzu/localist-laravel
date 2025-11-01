@@ -32,7 +32,7 @@
           <!-- Logo -->
           <tr>
             <td align="center" style="padding:0 16px 20px 16px;">
-              <img src="{{ $baseUrl }}/assets/localist_logo.png" alt="Localists" class="logo" width="180" style="max-width:100%; height:auto;">
+              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists" class="logo" width="180" style="max-width:100%; height:auto;">
             </td>
           </tr>
 

@@ -31,7 +31,7 @@
           <!-- Logo -->
           <tr>
             <td align="center" style="padding:16px;">
-              <img src="https://localists.com/assets/localist_logo.png" alt="Localists Logo" style="max-height:45px;margin:0 auto;">
+              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height:45px;margin:0 auto;">
             </td>
           </tr>
 
