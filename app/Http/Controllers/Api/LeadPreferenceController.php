@@ -65,6 +65,22 @@ class LeadPreferenceController extends Controller
             return $this->sendError('No leads found for this user');
         }
 
+        // step 0: formate the questions
+        foreach ($allLeads as $lead) {
+            $output = "";
+            $quesArr = json_decode($lead->questions, true);
+            if (is_array($quesArr)) {
+                foreach ($quesArr as $index => $q) {
+                    if (!is_array($q) || !isset($q['ques'], $q['ans'])) {
+                        continue; // skip null or invalid entries
+                    }
+                    $output .= "Q" . ($index + 1) . ". " . e($q['ques']) . "\n";
+                    $output .= "Ans: " . e($q['ans']) . "\n\n";
+                }
+            }
+            $lead->questions = $output;
+        }
+
         // Step 1: Delete old leads
         $deleteResult = app(ZohoLeadAvailable::class)->deleteLeadsAvailableRecords($userId);
         
@@ -75,7 +91,7 @@ class LeadPreferenceController extends Controller
 
         // Step 3: Combine and return
         return $this->sendResponse(
-            'Leads Available synced successfully',
+            'Leads Available synced successfully, Please reload the page to see the changes.',
             [
                 'deleted_entries_count' => $deleteResult['deleted_count'] ?? 0,
                 'inserted_entries_count' => $insertResult['inserted_count'] ?? 0,
