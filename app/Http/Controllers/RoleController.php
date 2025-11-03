@@ -17,7 +17,7 @@ class RoleController extends Controller
     public function index(Request $request)
     {
 
-        // abort_if(!auth()->user()->can('role.view'), 403, __('User does not have the right permissions.'));
+        abort_if(!auth()->user()->can('role.view'), 403, __('User does not have the right permissions.'));
 
         $roles = DB::table('roles')->select('roles.id', 'roles.name')->orderBy('id', 'asc');
 
@@ -29,9 +29,9 @@ class RoleController extends Controller
                     $html = "";
 
                     if (!in_array($user->id, ['0'])) {
-                        // if (auth()->user()->can('role.edit')) {
+                        if (auth()->user()->can('role.edit')) {
                             $html .= '<a href="' . route('roles.edit', $user->id) . '" title="Edit Detail"><i class="fa fa-edit"></i></a>  ';
-                        // }
+                         }
                     }
 
                     if (!in_array($user->id, ['1'])) {
@@ -107,7 +107,7 @@ class RoleController extends Controller
 
     public function edit($id)
     {
-        // abort_if(!auth()->user()->can('role.edit'), 403, __('User does not have the right permissions.'));
+        abort_if(!auth()->user()->can('role.edit'), 403, __('User does not have the right permissions.'));
 
         if (in_array($id, ['0'])) {
             Session::flash('success', trans('System role can not be edit'));
@@ -131,7 +131,7 @@ class RoleController extends Controller
 
     public function update(Request $request, $id)
     {
-        // abort_if(!auth()->user()->can('role.edit'), 403, __('User does not have the right permissions.'));
+        abort_if(!auth()->user()->can('role.edit'), 403, __('User does not have the right permissions.'));
 
         if (in_array($id, ['0'])) {
             return redirect()->route('roles.index')->with('error', 'System role cannot be edit !');

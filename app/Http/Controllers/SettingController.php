@@ -33,7 +33,7 @@ class SettingController extends Controller
      */
     public function store(Request $request)
     {
-         abort_if(!auth()->user()->can('generalsettings.store'), 403, __('User does not have the right permissions.'));
+         abort_if(!auth()->user()->can('generalsettings.create'), 403, __('User does not have the right permissions.'));
         $validator = \Validator::make($request->all(), [
             'setting_name' => 'required|unique:settings',
             'setting_value' => 'required',

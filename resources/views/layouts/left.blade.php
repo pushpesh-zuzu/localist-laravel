@@ -39,14 +39,14 @@
     </li>
     @endcan
 
-   
+    @can('role.view')
     <li class="nav-item">
       <a href="{{ url('roles') }}" class="nav-link {{ Route::currentRouteName() == 'roles.index' ? 'active' : '' }}">
         <i class="nav-icon fas fa-user-shield"></i>
         Roles
       </a>
     </li>
- 
+  @endcan
 
     {{-- <li class="nav-item">
             <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.index') ? 'active' : '' }}">

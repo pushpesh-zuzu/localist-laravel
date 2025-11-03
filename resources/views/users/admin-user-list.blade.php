@@ -28,10 +28,11 @@
             <td>{{ $admin->email }}</td>
             <td>{{ $admin->role->name ?? '—' }}</td>
             <td>
+               @if($admin->id != 1)
               @can('adminuser.edit')
               <a href="{{ route('admin-users.edit', $admin->id) }}" class="btn btn-sm btn-info">Edit</a>
               @endcan
-              @if($admin->id != 1)
+             
               @can('adminuser.delete')
               <form method="POST" action="{{ route('admin-users.destroy', $admin->id) }}" class="d-inline">
                 @csrf @method('DELETE')

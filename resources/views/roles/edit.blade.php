@@ -44,12 +44,13 @@
                                 @php
                                 // Disable only if heading is "Manage Role"
                                 $isManageRole = (strtolower($heading) === 'manage role');
+                                  $isDisabledSection = ($role->id == 1 && $isManageRole);
                                 @endphp
                                 <tr>
                                     <td class="text-nowrap" style="min-width:200px"><b>{{ $heading }}</b></td>
                                     <td class="text-nowrap" style="min-width:200px">
                                         <label>
-                                            <input class="selectall" type="checkbox" {{ $isManageRole ? 'disabled readonly' : '' }}>
+                                            <input class="selectall" type="checkbox" {{ $isDisabledSection ? 'disabled readonly' : '' }}>
                                             {{ __('Select All') }}
                                         </label>
                                     </td>

@@ -2615,7 +2615,7 @@ class ZohoEmails
                 $user = User::with(['services.category', 'services.locations'])->where('id', $userId)->first();
                 if (!empty($user)) {
                     $invoices = Invoice::where('id', $invId)->first();                    
-                    $htmlView = view('emails.lead_buyers.lead_buyer_plan_invoice',  [
+                    $htmlView = view('emails.lead_buyers.invoice.lead_buyer_plan_invoice',  [
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
                         'email' => $user->email,

@@ -31,8 +31,13 @@ class AdminUserController extends Controller
         abort_if(!auth()->user()->can('adminuser.create'), 403, __('User does not have the right permissions.'));
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:admins,email',
+            'name' => 'required|string|max:255',          
+           'email' => [
+                        'required',
+                        'email',
+                        'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
+                        Rule::unique('admins')->whereNull('deleted_at'),
+                    ],
             'password' => 'required|min:6',
             'role_id' => 'required|integer',
         ]);
@@ -67,16 +72,18 @@ class AdminUserController extends Controller
 
         $admin = Admin::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('admins')->ignore($admin->id),
-            ],
-            'password' => 'nullable|min:6',
-            'role_id' => 'required|integer',
-        ]);
+       $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => [
+            'required',
+            'email',
+            Rule::unique('admins')
+                ->ignore($admin->id)
+                ->whereNull('deleted_at'), // ✅ Ignores soft-deleted records
+        ],
+        'password' => 'nullable|min:6',
+        'role_id' => 'required|integer',
+    ]);
 
 
         if ($request->filled('password')) {
