@@ -18,6 +18,7 @@
               <th scope="col">Que. No.</th>
               <th scope="col">Questions</th>
               <th scope="col">Sel. Type</th>
+              <th scope="col">Ques. Type</th>
               <th scope="col">Status</th>
               <!-- <th scope="col">Action</th> -->
             </tr>
@@ -27,13 +28,28 @@
             @foreach($aRows as $aKey => $aRow)
             <tr>
               <th scope="row">{{ $aKey+1 }}</th>
-              <td>{{ $aRow->categories->name ?? '' }}</td>
+              <td>
+                <span class="fw-bold">Sector:</span> {{$aRow->categories->name ?? '' }}<br/>
+                <span class="fw-bold">Credit Score Model:</span> {{$aRow->categories->credit_score_model ?? '' }}</td>
               <td>{{ $aRow->question_no ?? '' }}</td>
               <td>
                     <span class="fw-bold">Ques:</span> {{$aRow->questions ?? '' }}<br/>
-                    <span class="fw-bold">Soln:</span> {{$aRow->answer ?? ''}}</br/>
+                    <span class="fw-bold">Options:</span></br/>
+                    <?php
+                      $optDecoded = json_decode($aRow->answer ?? '[]', true); 
+                      if(!empty($optDecoded)){
+                          foreach($optDecoded as $i=> $opt){
+                            echo ($i+1) .". ";
+                            print_r(($opt['option'] ?? ''));
+                            !empty($opt['score']) ? print_r(', Score: ' . ($opt['score'] ?? '')) : '';
+                            print_r(', Next Ques: ' . ($opt['next_question'] ?? ''));
+                            echo '<br/>';
+                          }
+                      }
+                    ?>
                </td>
                <td>{{ $aRow->option_type ?? '' }}</td>
+               <td>{{ $aRow->question_type ?? '' }}</td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
               <!-- <td>
                   <a href="{{ route('servicequestion.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></a>

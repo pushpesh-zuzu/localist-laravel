@@ -520,13 +520,25 @@ class MyRequestController extends Controller
         $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
         //end evaluate Lead Badges
 
-        $predict['Location'] = $request->city .', ' . strtoupper($request->postcode);
-        $predict['Urgent'] = $data['is_urgent'];
-        $predict['High'] = $data['is_high_hiring'];
-        $predict['Verified'] = $data['is_phone_verified'];
-        $predict['Frequent'] = $data['is_frequent_user'];
+        $creditScoreModel = Category::where('id',$serviceId)->value('credit_score_model');
 
-        $data['credit_score'] = CreditScore::predict($data['service_id'],$predict,$request->questions);
+        if($creditScoreModel === 'python'){
+            $predict['Location'] = $request->city .', ' . strtoupper($request->postcode);
+            $predict['Urgent'] = $data['is_urgent'];
+            $predict['High'] = $data['is_high_hiring'];
+            $predict['Verified'] = $data['is_phone_verified'];
+            $predict['Frequent'] = $data['is_frequent_user'];
+
+            $data['credit_score'] = CreditScore::getCreditScoreFromPython($data['service_id'],$predict,$request->questions);
+        }else{
+            //laravel based credit score prediction
+            $data['credit_score'] = CreditScore::getCreditScoreFromLaravel($data['service_id'],$request->questions);
+        }
+
+        echo "<pre>";
+        $data['credit_scoremodel'] = $creditScoreModel;
+        print_r($data);
+        exit;
 
         $sId = 0;
         if($data['credit_score'] > 0){

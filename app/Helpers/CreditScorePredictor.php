@@ -1,10 +1,48 @@
 <?php
 
 namespace App\Helpers;
+use App\Models\Category;
+use App\Models\ServiceQuestion;
 
 class CreditScorePredictor{
 
-    public static function predict($servie_id, $predict, $data){
+    public static function getCreditScoreFromLaravel($service_id, $data){
+        $sQuestions = ServiceQuestion::where('category',$service_id)->get()->toArray();
+        $requestQuestions = json_decode($data, true);
+
+        $serviceQuestions = [];
+        $leadQuestions = [];
+        foreach($sQuestions as $sq){
+            $temp['ques'] = $sq['questions'];
+            $ans = [];
+            $ansDecoded = json_decode($sq['answer'], true);
+            foreach($ansDecoded as $a){
+                $temp2['option'] = $a['option'];
+                $temp2['score'] = $a['score'];
+                $ans[] = $temp2;
+            }
+            $temp['ans'] = $ans;
+            $serviceQuestions[] = $temp;
+        }
+
+        foreach($requestQuestions as $rq){
+            $temp['ques'] = $rq['ques'];
+            $temp['ans'] = $rq['ans'];
+            $leadQuestions[] = $temp;
+        }
+
+        $scoreArray = self::createScoreArray($serviceQuestions, $leadQuestions);
+
+        $creditScore = 0;
+        foreach($scoreArray as $sa){
+            // Calculate total score logic can be implemented here
+            $creditScore += $sa['score'] ?? 0;
+        }
+        
+        return $creditScore;        
+    }
+
+    public static function getCreditScoreFromPython($servie_id, $predict, $data){
         $rel = 0;
         $url = "https://localists.com/credit_score_prediction/predict/";
         switch($servie_id){
@@ -63,5 +101,78 @@ class CreditScorePredictor{
         curl_close($ch);
         return json_decode($response, true);
     }
+
+
+    private static function normalizeQuestion($ques) {
+        $ques = strtolower($ques);
+        $ques = preg_replace('/[^a-z0-9 ]/', '', $ques);
+        $ques = trim($ques);
+        return $ques;
+    }
+
+    private static function createScoreArray($serviceQuestions, $leadQuestions) {
+        $scoreArray = [];
+        foreach ($leadQuestions as $lead) {
+            $question = $lead['ques'];
+            $answer = $lead['ans'];
+
+            $score = self::getScoreForAnswer($question, $answer, $serviceQuestions);
+
+            // If answer is array, join with comma for output format
+            $answerStr = is_array($answer) ? implode(', ', $answer) : $answer;
+
+            $scoreArray[] = [
+                'ques' => $question,
+                'ans' => $answerStr,
+                'score' => $score,
+            ];
+        }
+        return $scoreArray;
+    }
+
+    private static function getScoreForAnswer($question, $ans, $serviceQuestions) {
+        $normQues = self::normalizeQuestion($question);
+
+        // Find matching question in serviceQuestions
+        foreach ($serviceQuestions as $q) {
+            if (self::normalizeQuestion($q['ques']) === $normQues) {
+                $options = $q['ans'];
+
+                // Handle multiple answers as array or comma-separated string
+                if (!is_array($ans)) {
+                    $ansList = array_map('trim', explode(',', $ans));
+                } else {
+                    $ansList = $ans;
+                }
+
+                $maxScore = null;
+                foreach ($ansList as $answer) {
+                    $foundScore = null;
+                    foreach ($options as $opt) {
+                        if (self::normalizeQuestion($opt['option']) === self::normalizeQuestion($answer)) {
+                            if ($foundScore === null || $opt['score'] > $foundScore) {
+                                $foundScore = $opt['score'];
+                            }
+                        }
+                    }
+                    if ($foundScore === null) {
+                        // Not found, assign "Something else (please describe)" score
+                        foreach ($options as $opt) {
+                            if (stripos($opt['option'], 'something else') !== false) {
+                                $foundScore = $opt['score'];
+                                break;
+                            }
+                        }
+                    }
+                    if ($maxScore === null || $foundScore > $maxScore) {
+                        $maxScore = $foundScore;
+                    }
+                }
+                return $maxScore;
+            }
+        }
+        return null;
+    }
+
 
 }
