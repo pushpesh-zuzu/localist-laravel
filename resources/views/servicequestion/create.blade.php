@@ -63,9 +63,12 @@
           <div class="row mb-3">
             <div class="col-md-12">
               <div class="row">
-                <div class="col-md-8 d-flex align-items-center gap-2">
+                <div class="col-md-7 d-flex align-items-center gap-2">
                     {{-- <strong>1. </strong> --}}
                     <input type="text" class="form-control" placeholder="Question Option" name="ques_opt[]" id="ques_opt" required>
+                </div>
+                <div class="col-md-2 d-flex align-items-center gap-2">
+                    <input type="number" class="form-control" placeholder="Score" name="ques_score[]" id="ques_score" min="1" max="50" required>
                 </div>
                 <div class="col-md-2 d-flex align-items-center gap-2">
                     <input type="text" class="form-control" placeholder="Next Question Number" name="next_ques[]" id="next_ques" pattern="^\d+$|^last$" title="Enter a number or the word 'last'" required>
@@ -78,18 +81,32 @@
           </div>
 
           <div class="row mb-3">
-            <div class="col-md-12">
+            <div class="col-md-6">
               <label class="form-label" for="option_type">{{ __('Options Selection') }}</label>
               <select name="option_type" class="form-control{{ $errors->has('option_type') ? ' is-invalid' : '' }}" required>
                 <option value="single" @if(isset($aRow->option_type) && $aRow->option_type == 'single') selected @endif> Single </option>
                 <option value="multiple" @if(isset($aRow->option_type) && $aRow->option_type == 'multiple') selected @endif> Multiple </option>
-            </select>
-            @if ($errors->has('option_type'))
-                <span class="invalid-feedback d-block" role="alert">
-                    <strong>{{ $errors->first('option_type') }}</strong>
-                </span>
-            @endif
+              </select>
+              @if ($errors->has('option_type'))
+                  <span class="invalid-feedback d-block" role="alert">
+                      <strong>{{ $errors->first('option_type') }}</strong>
+                  </span>
+              @endif
             </div>
+            <div class="col-md-6">
+              <label class="form-label" for="question_type">{{ __('Question Type') }}</label>
+              <select name="question_type" class="form-control{{ $errors->has('question_type') ? ' is-invalid' : '' }}" required>
+                <option value="compulsory" @if(isset($aRow->question_type) && $aRow->question_type == 'compulsory') selected @endif> Compulsory </option>
+                <option value="optional" @if(isset($aRow->question_type) && $aRow->question_type == 'optional') selected @endif> Optional </option>
+              </select>
+              @if ($errors->has('question_type'))
+                  <span class="invalid-feedback d-block" role="alert">
+                      <strong>{{ $errors->first('question_type') }}</strong>
+                  </span>
+              @endif
+            </div>
+
+            
             
           </div>
          

@@ -49,14 +49,17 @@ class ServiceQuestionsController extends Controller
      */
     public function store(Request $request)
     {
-          abort_if(!auth()->user()->can('servicequestions.create'), 403, __('User does not have the right permissions.'));
+        abort_if(!auth()->user()->can('servicequestions.create'), 403, __('User does not have the right permissions.'));
         echo "<pre>";print_r($request->all());
         $validator = Validator::make($request->all(), [
             'category' => 'required|integer|exists:categories,id',
             'question_no' => 'required',
             'questions' => 'required',
             'ques_opt' => 'required',
-            'option_type' => 'required'
+            'next_ques' => 'required',
+            'ques_score' => 'required',
+            'option_type' => 'required',
+            'question_type' => 'required'
             ], [
             'service_id.exists' => 'Provided service id does not exists.',
             'option_type.required' => 'Option selection type is required.'
@@ -71,9 +74,11 @@ class ServiceQuestionsController extends Controller
         $data['questions'] = $request->questions;
         $answer = [];
         $ques_opt = $request->ques_opt;
+        $ques_score = $request->ques_score;
         $next_ques = $request->next_ques;
         foreach($ques_opt as $i => $opt){
             $temp['option'] = $opt;
+            $temp['score'] = $ques_score[$i];
             $temp['next_question'] = $next_ques[$i];
             array_push($answer, $temp);
         }
@@ -81,6 +86,7 @@ class ServiceQuestionsController extends Controller
         
         $data['answer'] = json_encode($answer);
         $data['option_type'] = $request->option_type;
+        $data['question_type'] = $request->question_type;
         print_r($data);
         // exit;
         $id = ServiceQuestion::insertGetId($data);

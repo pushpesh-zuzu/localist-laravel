@@ -152,6 +152,22 @@
             </div>
           </div>
 
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="credit_score_model">{{ __('Credit Score Model') }}</label>
+              <select name="credit_score_model" class="form-control{{ $errors->has('credit_score_model') ? ' is-invalid' : '' }}" required>
+                <option value="" @if(isset($sector['credit_score_model']) && $sector['credit_score_model'] == '') selected @endif> Select Model </option>
+                <option value="python" @if(isset($sector['credit_score_model']) && $sector['credit_score_model'] == 'python') selected @endif> Python </option>
+                <option value="laravel" @if(isset($sector['credit_score_model']) && $sector['credit_score_model'] == 'laravel') selected @endif> Laravel </option>
+              </select>
+              @if ($errors->has('credit_score_model'))
+                  <span class="invalid-feedback d-block" role="alert">
+                      <strong>{{ $errors->first('credit_score_model') }}</strong>
+                  </span>
+              @endif
+            </div>  
+          </div>
+
 
           <h5 class="mt-5 mb-3">Seo Information</h5>
 

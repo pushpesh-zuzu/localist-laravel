@@ -30,6 +30,7 @@ class SectorController extends Controller{
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|unique:categories,name',
+            'credit_score_model' => 'required',
             'homepage_display_name' => 'required',
             'breadcrumb_title' => 'required',
           ], [
@@ -56,6 +57,7 @@ class SectorController extends Controller{
         if($request->hasFile('banner_image')){
             $data['banner_image'] = CustomHelper::fileUpload($request->banner_image,'category');
         }
+        $data['credit_score_model'] = $request->credit_score_model;
 
         Category::create($data);
         return redirect()->route('sectors.index')->with('success', 'Sector created successfully.');
@@ -82,8 +84,9 @@ class SectorController extends Controller{
         $validator = Validator::make($request->all(), [
             'name' => [
                 'required',
-                Rule::unique('categories', 'name')->ignore($id),
+                Rule::unique('categories', 'name')->ignore($id)
             ],
+            'credit_score_model' => 'required',
             'homepage_display_name' => 'required',
             'breadcrumb_title' => 'required',
           ], [
@@ -111,6 +114,7 @@ class SectorController extends Controller{
         if($request->hasFile('banner_image')){
             $data['banner_image'] = CustomHelper::fileUpload($request->banner_image,'category');
         }
+        $data['credit_score_model'] = $request->credit_score_model;
 
         Category::where('id', $id)->update($data);
         return redirect()->route('sectors.index')->with('success', 'Sector updated successfully.');
