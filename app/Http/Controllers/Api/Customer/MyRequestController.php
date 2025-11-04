@@ -535,10 +535,10 @@ class MyRequestController extends Controller
             $data['credit_score'] = CreditScore::getCreditScoreFromLaravel($data['service_id'],$request->questions);
         }
 
-        echo "<pre>";
-        $data['credit_scoremodel'] = $creditScoreModel;
-        print_r($data);
-        exit;
+        // echo "<pre>";
+        // $data['credit_scoremodel'] = $creditScoreModel;
+        // print_r($data);
+        // exit;
 
         $sId = 0;
         if($data['credit_score'] > 0){
