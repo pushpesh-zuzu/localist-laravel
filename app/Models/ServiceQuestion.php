@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ServiceQuestion extends Model
 {
    // use SoftDeletes; // Enable soft deletes
-    protected $fillable = ['category', 'questions','answer','seo_title','seo_description'];
+    protected $fillable = ['category', 'question_no','questions','answer','option_type','question_type'];
 
     public function categories()
     {
