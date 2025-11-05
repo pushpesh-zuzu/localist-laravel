@@ -33,14 +33,14 @@
         <!-- MESSAGE SECTION -->
         <div style="padding:0px 40px 20px 40px;">
             <p style="margin:0 0 12px 0;font-weight:600;font-size:16px;color:#001b35;">
-                Hi {{ ucfirst($customerName ?? 'Customer') }},
+                Hi {{ $customerName }} ,
             </p>
 
             <div style="display:inline-block;background:#10a37f;color:#ffffff;padding:10px 16px;border-radius:6px;font-weight:600;margin-bottom:16px;">
                 Looks like your quote request on Localists has expired
             </div>
 
-            <p style="margin:14px 0 10px 0;color:#222222;font-size:16px;font-weight:700;line-height:22px;">
+            <p style="margin:14px 0 32px 0;color:#222222;font-size:16px;font-weight:700;line-height:22px;">
                 Did you already hire someone, or would you like us to reconnect you with new verified professionals?
             </p>
         </div>
@@ -100,7 +100,7 @@
         <div style="background:#0d1b3d;color:#ffffff;text-align:center;padding:14px;font-size:14px;">
             <img src="{{ $baseUrl }}/assets/globe.png" alt="Localists" width="16" style="vertical-align:middle;margin-right:6px;">
             <a href="{{ $baseUrl }}" style="color:#ffffff;text-decoration:none;">localists.com</a>
-            
+            &nbsp;  &nbsp;
             <img src="{{ $baseUrl }}/assets/email.png" alt="Email Icon" width="16" style="vertical-align:middle;margin-right:6px;">
             <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#ffffff;text-decoration:none;">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>
         </div>
