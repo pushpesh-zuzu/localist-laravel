@@ -33,14 +33,14 @@
         <!-- MESSAGE SECTION -->
         <div style="padding:0px 40px 20px 40px;">
             <p style="margin:0 0 12px 0;font-weight:600;font-size:16px;color:#001b35;">
-                Hi {{ $customerName }} ,
+               Hi {{ ucfirst($customerName ?? 'Customer') }},
             </p>
 
             <div style="display:inline-block;background:#10a37f;color:#ffffff;padding:10px 16px;border-radius:6px;font-weight:600;margin-bottom:16px;">
                 Looks like your quote request on Localists has expired
             </div>
 
-            <p style="margin:14px 0 32px 0;color:#222222;font-size:16px;font-weight:700;line-height:22px;">
+            <p style="margin:14px 0 10px 0;color:#222222;font-size:16px;font-weight:700;line-height:22px;">
                 Did you already hire someone, or would you like us to reconnect you with new verified professionals?
             </p>
         </div>
