@@ -35,10 +35,99 @@ use \Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Attributes\Log as AttributesLog;
 use GuzzleHttp\Client;
-
+use App\Models\ServiceQuestion;
 
 class ApiController extends Controller
 {
+    public function getProgressPercentage(Request $request){
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|integer|exists:categories,id',
+            'questions' => 'required'
+        ], [
+            'service_id.exists' => 'Provided service id does not exists.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $sQuestions = ServiceQuestion::where('category',$request->service_id)->get()->toArray();
+        $requestQuestions = json_decode($request->questions, true);
+        $serviceQuestions = [];
+        $leadQuestions = [];
+
+        foreach($sQuestions as $sq){
+            $temp['question_no'] = $sq['question_no'];
+            $temp['ques'] = $sq['questions'];
+            $temp['question_type'] = $sq['question_type'];
+            $ans = [];
+            $ansDecoded = json_decode($sq['answer'], true);
+            foreach($ansDecoded as $a){
+                $temp2['option'] = $a['option'];
+                $temp2['next_question'] = $a['next_question'];
+                $ans[] = $temp2;
+            }
+            $temp['ans'] = $ans;
+            $serviceQuestions[] = $temp;
+        }
+
+        foreach($requestQuestions as $rq){
+            $temp3['ques'] = $rq['ques'];
+            $temp3['ans'] = $rq['ans'];
+            $leadQuestions[] = $temp3;
+        }
+
+        // Map questions by question_no
+        $questionMap = [];
+        foreach ($serviceQuestions as $q) {
+            $questionMap[$q['question_no']] = $q;
+        }
+
+        // Map question text to question_no for easy lookup
+        $quesToNo = [];
+        foreach ($serviceQuestions as $q) {
+            $quesToNo[$q['ques']] = $q['question_no'];
+        }
+
+        // Count all compulsory questions initially
+        $totalCount = 0;
+        $countedQuestions = [];
+
+        foreach ($serviceQuestions as $q) {
+            if ($q['question_type'] === 'compulsory') {
+                $totalCount++;
+                $countedQuestions[$q['question_no']] = true;
+            }
+        }
+
+        // Include all answered questions as well if not counted yet
+        foreach ($leadQuestions as $lead) {
+            $qNo = $quesToNo[$lead['ques']] ?? null;
+            if ($qNo !== null && !isset($countedQuestions[$qNo])) {
+                $totalCount++;
+                $countedQuestions[$qNo] = true;
+            }
+        }
+
+        $answeredCount = count($leadQuestions);
+        $percentage = $totalCount > 0 ? round(($answeredCount / $totalCount) * 100) : 0;
+
+        // echo "<pre>";
+        // print_r($serviceQuestions);
+        // print_r($leadQuestions);
+        // print_r([
+        //     'total_count' => $totalCount,
+        //     'answered_count' => $answeredCount,
+        //     'percentage' => $percentage
+        // ]);
+        return $this->sendResponse('Progress Percentage', [
+            'total_count' => $totalCount,
+            'answered_count' => $answeredCount,
+            'percentage' => $percentage
+        ]);
+    }
+
+
     public function getCityName(Request $request){
         $validator = Validator::make($request->all(), [
             'postcode' => 'required'

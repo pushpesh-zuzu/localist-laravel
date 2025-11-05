@@ -60,6 +60,8 @@ Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsA
 
 Route::post('get-city-name', [ApiController::class, 'getCityName']);
 
+Route::post('get-progress-percentage', [ApiController::class, 'getProgressPercentage']);
+
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 Route::prefix('check')->group(function () {
     Route::post('/email-id', [UserController::class, 'checkEmailId']);

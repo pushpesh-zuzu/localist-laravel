@@ -535,6 +535,17 @@ class MyRequestController extends Controller
             $data['credit_score'] = CreditScore::getCreditScoreFromLaravel($data['service_id'],$request->questions);
         }
 
+        if(!empty($request->details)){
+            $data['details'] = $request->details;
+        }
+        if(!empty($request->images)){
+            $data['images'] = $request->images;
+        }
+        if(!empty($request->professional_letin)){
+            $data['professional_letin'] = $request->professional_letin;
+        }
+        
+
         // echo "<pre>";
         // $data['credit_scoremodel'] = $creditScoreModel;
         // print_r($data);
