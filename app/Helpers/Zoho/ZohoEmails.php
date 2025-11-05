@@ -935,37 +935,40 @@ class ZohoEmails
                     'created_at' => now(),
                 ]);
             }
-        }
 
 
-        //start comment by ashish//
-        // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')->value('whatsapp_setting_value');
+     //  start comment by ashish//
 
-        // if ($sendWhatsapp) {
-        //     $user = User::find($userId);
-        //     if ($user && !empty($user->phone)) {
-        //         try {
-        //             $response = WhatsAppMessage::sendTemplate(
-        //                 userId: $user->id,
-        //                 phoneNumber: null,
-        //                 templateName: "lead_buyer_autobidenough",
-        //                 languageCode: "en_US",
-        //                 components: [
-        //                     [
-        //                         'type' => 'body',
-        //                         'parameters' => [
-        //                             ['type' => 'text', 'text' => $user->name],
-        //                         ],
+        // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
+        //     ->value('whatsapp_setting_value');
+
+        // if ($sendWhatsapp && $user && !empty($user->phone)) {
+        //     try {
+        //         $response = WhatsAppMessage::sendTemplate(
+        //             userId: $user->id,
+        //             phoneNumber: $user->phone,
+        //             templateName: "lead_buyer_autobidenough",
+        //             languageCode: "en_US",
+        //             components: [
+        //                 [
+        //                     'type' => 'body',
+        //                     'parameters' => [
+        //                         ['type' => 'text', 'text' => $user->name],
         //                     ],
-        //                 ]
-        //             );
-        //         } catch (\Exception $e) {
-        //             Log::error('WhatsApp send failed for user ' . $userId . ': ' . $e->getMessage());
-        //         }
+        //                 ],
+        //             ]
+        //         );
+
+        //         Log::info("WhatsApp sent successfully for user {$user->id}");
+        //     } catch (\Exception $e) {
+        //         Log::error("WhatsApp send failed for user {$user->id}: " . $e->getMessage());
         //     }
         // }
+    //  end comment by ashish//
 
-        //end comment by ashish//
+
+        }       
+      
     }
 
 
@@ -2678,4 +2681,89 @@ class ZohoEmails
             }
         }
     }
+
+
+    
+
+public static function sendNextDayExpiredQuoteEmail($data)
+{
+      
+    $sendEmail = EmailSetting::where('setting_name', 'Next Day Expired Quote Email')->value('setting_value');
+ 
+    if ($sendEmail) {
+       
+        $accessToken = ZohoHelper::getAccessToken();
+        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $data['userId']);
+ 
+        if (!empty($zohoId)) {
+           
+            $user = User::find($data['userId']);
+  
+            if (!empty($user)) { 
+           
+                $htmlView = view('emails.customers.expired_quote.next_day_expired_quote', [
+                    'baseUrl' => config('app.react_base_url'),
+                    'customerName' => $user->name ?? '',
+                    'serviceName' => $data['serviceName'] ?? '',
+                    'leadId' => $data['leadId'],   
+                     'token' =>$data['token'],                
+                ])->render();
+ 
+                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+              
+                $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                $fromName = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+                $toEmail = $user->email;
+                $subject = $data['subject'] ?? 'Need a hand finishing your project';
+
+          
+                DB::table('zoho_logs')->insert([
+                    'url' => $url,
+                    'function_name' => 'sendNextDayExpiredQuoteEmail',
+                    'ipaddress' => request()->ip(),
+                    'created_at' => now(),
+                ]);
+
+               
+                $response = Http::withToken($accessToken)
+                    ->post($url, [
+                        'data' => [
+                            [
+                                'from' => [
+                                    'email' => $fromEmail,
+                                    'user_name' => $fromName
+                                ],
+                                'to' => [
+                                    ['email' => $toEmail]
+                                ],
+                                'subject' => $subject,
+                                'content' => $htmlContent,
+                                'mail_format' => 'html',
+                                'org_email' => true
+                            ]
+                        ]
+                    ]);
+
+              
+                $rel = self::getZohoMailResponse($response);
+               // dd($data['leadId']);
+
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['lead_id'] = $data['leadId'] ?? null;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Next Day Expired Quote Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                
+            }
+        }
+    }
+}
 }

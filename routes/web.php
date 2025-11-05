@@ -22,6 +22,7 @@ use App\Http\Controllers\EmailSettingsController;
 use App\Helpers\WhatsAppMessage;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Api\Cron\CronController;
 // use App\Http\Controllers\GoogleReviewController;
 use Illuminate\Http\Request;
 
@@ -177,5 +178,6 @@ Route::post('/facebook-webhook', function (Request $request) {
 //Route::get('/google/callback', [GoogleReviewController::class, 'handleGoogleCallback'])->name('google.callback');
 //Route::get('/google/reviews', [GoogleReviewController::class, 'getReviews']);
 
+Route::get('/test-next-day-expired-emails', [CronController::class, 'sendNextDayExpiredQuoteEmail']);
 
 require __DIR__ . '/auth.php';

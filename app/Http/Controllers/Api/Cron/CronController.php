@@ -60,12 +60,15 @@ class CronController extends Controller
 
         $newLeadAfter5days = $this->checkCreditAfter5Days();
 
+        $sendNextDayExpiredQuoteEmail = $this->sendNextDayExpiredQuoteEmail();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
                 'new_lead_after_7_days' => $newLeadAfter7days,
-                'new_lead_after_5_days' => $newLeadAfter5days
+                'new_lead_after_5_days' => $newLeadAfter5days,
+                 'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -1021,4 +1024,73 @@ class CronController extends Controller
             'timestamp' => now()->toDateTimeString(),
         ]);
     }
+
+
+    public  function sendNextDayExpiredQuoteEmail()
+  {
+     $batchSize = 500; 
+    $expirationDays = 21; 
+    $dayAfterExpiry = 1; 
+    $totalUnsentLeadEmails = 0;
+
+    LeadRequest::with(['customer', 'category'])
+    ->whereIn('status', ['new', 'pending'])
+    ->whereDate('created_at', '=', now()->subDays($expirationDays + $dayAfterExpiry)->toDateString()) 
+    ->whereNull('lead_requests.deleted_at')
+    ->whereHas('customer', function ($query) {
+        $query->whereNotNull('zoho_record_id')
+        ->whereNull('deleted_at');
+    })
+    ->orderBy('id')
+        ->chunk($batchSize, function ($leads) use (&$totalUnsentLeadEmails) { 
+        
+            foreach ($leads as $lead) {
+
+                  try {
+                    if (empty($lead->customer) || empty($lead->customer->email)) {
+                        continue;
+                    }                
+
+                    $customerName = $lead->customer->name ?? '';
+                    $serviceName = $lead->category->name ?? '';
+                    $userId = $lead->customer->id ?? null;
+                  
+                    $alreadySent = EmailLog::where('user_id', $userId)
+                        ->where('lead_id', $lead->id)
+                        ->where('setting_name', 'Next Day Expired Quote Email')
+                        ->exists();                    
+
+                    if (!$alreadySent) {                        
+
+                        $user = User::where('email',$lead->customer->email)->where('form_status', '1')->first();
+                        $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                        $user->update(['remember_token' => $token]);
+                        
+                        $data = [
+                            'userId' => $userId,
+                            'leadId' => $lead->id,
+                            'customerName' => $customerName,
+                            'serviceName' => $serviceName,
+                            'token' => $token ?? '',                            
+                            'setting_name' => 'Next Day Expired Quote Email',
+                            'subject' => "Need a hand finishing your project",
+                        ];
+
+                        ZohoEmails::sendNextDayExpiredQuoteEmail($data);                       
+
+                        $totalUnsentLeadEmails++;
+                    }
+
+                } catch (\Throwable $e) {
+                     return $this->sendError(__("Failed next-day expired quote email for lead ID {$lead->id}: {$e->getMessage()}"), 404);
+                }
+            }
+        });
+
+     return response()->json([
+        'status' => 'success',
+        'unsent_lead_emails' => $totalUnsentLeadEmails,
+        'timestamp' => now()->toDateTimeString(),
+    ]);
+   }
 }
