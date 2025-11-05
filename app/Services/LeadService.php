@@ -119,7 +119,7 @@ class LeadService
 
             //closure condition
             ->where('status', '!=', 'hired') // do not include hired leads
-            ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString()); // do not include leads which are orlder than 14 days
+            ->where('created_at', '>', Carbon::now()->subDays(21)->toDateString()); // do not include leads which are older than 21 days
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         $slotFullLeads = DB::table('recommended_leads')
             ->select('lead_id')
@@ -336,7 +336,7 @@ class LeadService
 
             //closure condition
             ->where('status', '!=', 'hired') // do not include hired leads
-            ->where('created_at', '>', Carbon::now()->subDays(14)->toDateString()); // do not include leads which are orlder than 14 days
+            ->where('created_at', '>', Carbon::now()->subDays(21)->toDateString()); // do not include leads which are older than 21 days
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         $slotFullLeads = DB::table('recommended_leads')
             ->select('lead_id')
