@@ -316,7 +316,7 @@ class SettingController extends Controller
         return $this->sendResponse('Billing details submitted successfully!', $userdetails);
     }
 
-    public function sellerCardDetails(Request $request)
+    public function sellerCardDetailsold(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'card_number' => 'required',
@@ -413,7 +413,7 @@ class SettingController extends Controller
 
 
 
-    public function sellerCardDetailsnew(Request $request)
+    public function sellerCardDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
@@ -613,7 +613,7 @@ class SettingController extends Controller
         }
     }
 
-    public function getSellerCard(Request $request){
+    public function getSellerCardold(Request $request){
         $user_id = $request->user_id;
         $data = UserCardDetail::where('user_id',$user_id)->get()->toArray();
         if(!empty($data)){
@@ -624,7 +624,7 @@ class SettingController extends Controller
         return $this->sendResponse("No Card found!",$data);
     }
 
-    public function getSellerCardnew(Request $request)
+    public function getSellerCard(Request $request)
     {
         $user_id = $request->user_id;
         $data = UserCardDetail::where('user_id', $user_id)->get()->toArray();
