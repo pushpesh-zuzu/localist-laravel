@@ -473,6 +473,11 @@ class SettingController extends Controller
                 $paymentMethod->attach(['customer' => $stripeCustomerId]);
             }
 
+            $paymentMethod = PaymentMethod::retrieve($request->stripe_payment_method_id);
+           $cardBrand = isset($paymentMethod->card->brand) && $paymentMethod->card->brand 
+                     ? $paymentMethod->card->brand 
+                     : '';
+
             $stripeCardId = $request->stripe_payment_method_id;
             $hasPrimary = UserCardDetail::where('user_id', $user->id)->where('is_primary', 1)->exists();
 
@@ -482,6 +487,7 @@ class SettingController extends Controller
                 'expiry_date' => $request->expiry_date,
                 'cvc' => $encryptedCvc,
                 'stripe_card_id' => $stripeCardId,
+                 'brand' => $cardBrand,
                 'is_primary' => $hasPrimary ? 0 : 1,
             ]);
 
@@ -497,6 +503,7 @@ class SettingController extends Controller
             return $this->sendResponse("Card added successfully!", [
                 'card_id' => $userCard->id,
                 'last4' => substr($request->card_number, -4),
+                'brand' => $cardBrand,
                 'is_primary' => $userCard->is_primary,
                 'stripe_card_id' => $stripeCardId,
             ]);
