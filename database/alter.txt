@@ -106,3 +106,6 @@ ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL AFTER `updated_at`;
 composer require maatwebsite/excel:^3.1.54 --with-all-dependencies
 
 
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Sectors', 'sector.subsectoredit', 'Sub Sector Edit', 'admin', NULL, NULL), (NULL, 'Sectors', 'sector.subsectordelete', 'Sub Sector Delete', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Quote Customers Complete List', 'quotecustomers.viewjobpostedlist', 'View Job Posted List', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');

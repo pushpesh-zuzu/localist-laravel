@@ -91,7 +91,7 @@ class SellerCompleteListExport implements FromCollection, WithHeadings, WithMapp
     $totalReviews = $ratingData['total_reviews'] ?? 0;
 
      $leadStats = RecommendedLead::selectRaw('COUNT(*) as total_hired, SUM(bid) as total_bid')
-        ->where('status', 'hired')->where('seller_id', $user->id)
+        ->whereIn('status', ['pending', 'hired'])->where('seller_id', $user->id)
         ->first();
          $sellerTotalHired=$leadStats->total_hired ?? 0;
         $sellerTotalBid=$leadStats->total_bid ?? 0;
@@ -126,8 +126,8 @@ $userServices = $user->services->map(function ($service) use ($user) {
             $user->total_credit ?? 0,
             $user->total_credits_bought ?? 0,
             $user->lastLogin?->login_at ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i a') : '',
-             $sellerTotalHired ?? 0,
-             $sellerTotalBid ?? 0,
+            (string) $sellerTotalHired ?? 0,
+            (string) $sellerTotalBid ?? 0,
             url(config('app.react_base_url') . '/view-profile/' . 
             strtolower(preg_replace('/\s+/', '-', trim($user->name))) . 
             '/' . $user->id),           

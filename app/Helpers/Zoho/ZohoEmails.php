@@ -2766,4 +2766,88 @@ public static function sendNextDayExpiredQuoteEmail($data)
         }
     }
 }
+
+
+
+
+// public static function sendNoBidsOnQuote24hrsEmail($data)
+// {
+//     $sendEmail = EmailSetting::where('setting_name', 'No Bids On Quote Request')
+//         ->value('setting_value');
+
+//     if (!$sendEmail) {
+//         return;
+//     }
+
+//     $accessToken = ZohoHelper::getAccessToken();
+//     if (!$accessToken) {
+//         Log::error('Zoho access token not available while sending No Bids On Quote Request.');
+//         return;
+//     }
+
+//     $userId = $data['userId'] ?? null;
+//     $leadId = $data['leadId'] ?? null;
+//     $subject = 'No Bids On Quote Request';
+
+//     $user = User::find($userId);
+//     if (empty($user) || empty($user->email)) {
+//         return;
+//     }
+
+//     $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $user->id);
+//     if (empty($zohoId)) {
+//         return;
+//     }
+
+//     $htmlView = view('emails.customers.no_bids_on_quote_24hrs', [
+//         'baseUrl' => config('app.react_base_url'),
+//         'customerName' => $data['customerName'] ?? '',
+//         'serviceName' => $data['serviceName'] ?? '',
+//         'leadId' => $leadId,
+//         'token' => $data['token'] ?? '',
+//     ])->render();
+
+//     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+//     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+//     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+//     $fromName = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+//     $toEmail = $user->email;
+//     DB::table('zoho_logs')->insert([
+//         'url' => $url,
+//         'function_name' => 'sendNoBidsOnQuote24hrsEmail',
+//         'ipaddress' => request()->ip(),
+//         'created_at' => now(),
+//     ]);
+
+//     $response = Http::withToken($accessToken)->post($url, [
+//         'data' => [[
+//             'from' => [
+//                 'email' => $fromEmail,
+//                 'user_name' => $fromName
+//             ],
+//             'to' => [['email' => $user->email]],
+//             'subject' => $subject,
+//             'content' => $htmlContent,
+//             'mail_format' => 'html',
+//             'org_email' => true
+//         ]]
+//     ]);
+
+//     $rel = self::getZohoMailResponse($response);
+
+//     $dataE['user_id'] = $userId;
+//     $dataE['from_email'] = $fromEmail;
+//     $dataE['to_email'] = $toEmail;
+//     $dataE['lead_id'] = $data['leadId'] ?? null;
+//     $dataE['message_id'] = $rel['message_id'];
+//     $dataE['subject'] = $subject;
+//     $dataE['setting_name'] = 'No Bids On Quote Request';
+//     $dataE['content'] = $htmlContent;
+//     $dataE['zoho_url'] = $url;
+//     $dataE['response'] = json_encode($rel);
+//     EmailLog::insertGetId($dataE);   
+// }
+
+
 }

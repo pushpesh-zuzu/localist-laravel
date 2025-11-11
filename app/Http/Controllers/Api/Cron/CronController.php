@@ -1093,4 +1093,109 @@ class CronController extends Controller
         'timestamp' => now()->toDateTimeString(),
     ]);
    }
+
+
+
+
+// public function sendNoBidsOnQuote24hrsEmail()
+// {
+//     $batchSize = 500;
+//     $hoursAgo = 24;
+//     $totalEmailsSent = 0;
+
+//     LeadRequest::with(['customer', 'category'])
+//         ->where('status', 'new')
+//         ->whereDoesntHave('recommendedLeads')
+//         ->where('created_at', '<=', now()->subHours($hoursAgo))
+//         ->whereNull('deleted_at')
+//         ->whereHas('customer', function ($query) {
+//             $query->whereNotNull('zoho_record_id')
+//                   ->whereNull('deleted_at');
+//         })
+//         ->orderBy('id')
+//         ->chunk($batchSize, function ($leads) use (&$totalEmailsSent) {
+//              Log::info('Fetched Leads Batch', ['count' => $leads->count()]);
+//             foreach ($leads as $lead) {
+
+//                 $logData = [
+//                     'lead_id' => $lead->id,
+//                     'lead_status' => $lead->status,
+//                     'customer_name' => $lead->customer->name ?? null,
+//                     'customer_email' => $lead->customer->email ?? null,
+//                     'service' => $lead->category->name ?? null,
+//                     'created_at' => $lead->created_at,
+//                 ];
+
+//                 \Log::info('Lead found without recommended leads:', $logData);
+
+
+//                 try {
+//                     $user = $lead->customer;
+//                     if (empty($user) || empty($user->email)) {
+//                         continue;
+//                     }
+
+//                     $alreadySent = EmailLog::where('user_id', $user->id)
+//                         ->where('lead_id', $lead->id)
+//                         ->where('setting_name', 'No Bids On Quote Request')
+//                         ->exists();
+
+//                     if ($alreadySent) {
+//                         continue;
+//                     }
+
+//                     $user = User::where('email', $user->email)
+//                         ->where('form_status', '1')
+//                         ->first();
+
+//                     if (!$user) {
+//                         continue;
+//                     }
+
+//                     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+//                     $user->update(['remember_token' => $token]);
+
+//                     $data = [
+//                         'userId' => $user->id,
+//                         'leadId' => $lead->id,
+//                         'customerName' => $user->name ?? '',
+//                         'serviceName' => $lead->category->name ?? '',
+//                         'token' => $token,
+//                          ];
+
+//                     ZohoEmails::sendNoBidsOnQuote24hrsEmail($data);
+
+                  
+//                     $totalEmailsSent++;
+
+//                 } catch (\Throwable $e) {
+//                     Log::error("Failed No Bids On Quote 24hrs Email for lead ID {$lead->id}: {$e->getMessage()}");
+//                     continue;
+//                 }
+//             }
+//         });
+
+//     return response()->json([
+//         'status' => 'success',
+//         'emails_sent' => $totalEmailsSent,
+//         'timestamp' => now()->toDateTimeString(),
+//     ]);
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

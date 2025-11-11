@@ -151,6 +151,10 @@ class UserController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
+
+                 CustomHelper::runInBackground(function() use ($sellerId) {
+                    app(ZohoService::class)->updateZohoLastLogin($sellerId);
+                });
             }
         }
         else{
@@ -706,6 +710,10 @@ class UserController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
+
+                CustomHelper::runInBackground(function() use ($user) {
+                    app(ZohoService::class)->updateZohoLastLogin($user->id);
+                });
 
                 $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
                 $user->update(['remember_token' => $token]);

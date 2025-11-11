@@ -113,17 +113,21 @@ class CustomHelper
                             <img src="' . \App\Helpers\CustomHelper::displayImage($d['category_icon'], 'category') . '" height="25" width="25" style="display: inline" /> &nbsp;' . $d['name'] . '
                         </td>
                         <td>' . ($d['status'] ? 'Active' : 'Inactive') . '</td>
-                        <td>
-                            <a href="' . route('sectors.edit', $d['id']) . '" title="Edit"><i class="fas fa-edit"></i></a> &nbsp;
+                        <td>';
 
-                            <a href="javascript:void(0);" onclick="event.preventDefault(); if(confirm(\'Are you sure to delete?\')) document.getElementById(\'' . $deleteFormId . '\').submit();" title="Delete">
+                        if (auth()->user()->can('sector.subsectoredit')) {
+                           echo ' <a href="' . route('sectors.edit', $d['id']) . '" title="Edit"><i class="fas fa-edit"></i></a> &nbsp';
+                        }
+                           if (auth()->user()->can('sector.subsectordelete')) {
+                           echo '  <a href="javascript:void(0);" onclick="event.preventDefault(); if(confirm(\'Are you sure to delete?\')) document.getElementById(\'' . $deleteFormId . '\').submit();" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </a>
 
                             <form id="' . $deleteFormId . '" action="' . route('sectors.destroy', $d['id']) . '" method="POST" style="display: none;">
                                 ' . method_field('DELETE') . csrf_field() . '
-                            </form>
-                        </td>
+                            </form>';
+                            }
+                       echo  '</td>
                     </tr>';
 
                 // Recursive call
@@ -534,8 +538,8 @@ class CustomHelper
             $threshold    = ($planHistory->credits * $autopay_credit_percent) / 100;
 
             //  Check auto-pay eligibility
-            if ($remaining > $threshold || $isTopup != 1) {
-                Log::info("Auto-pay skipped for user {$userId}. Remaining: {$remaining}, Threshold: {$threshold}, is_topup: {$isTopup}");
+            if ($remaining > $threshold || $isTopup != 1 || $type != 1) {
+                Log::info("Auto-pay skipped for user {$userId}. Remaining: {$remaining}, Threshold: {$threshold}, is_topup: {$isTopup}, type: {$type}");
                 return $debitTransactionId;
             }
 

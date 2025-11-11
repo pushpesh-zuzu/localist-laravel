@@ -23,7 +23,20 @@ class ContactUsController extends Controller
 
 
         $contact = ContactUs::create($validated);
-        
+  
+
+         $data = [
+                'full_name' => $validated['full_name'],
+                'phone'     => $validated['phone'],
+                'email'     => $validated['email'],
+                'message'   => $validated['message'],
+                'user_type' => $validated['user_type'],
+                'subject'   => "Contact Form Submission from {$validated['full_name']}",
+            ];
+
+    // Send to Zoho Desk
+        app(\App\Helpers\Zoho\ZohoDesk::class)->createTicket($data);
+
         // Send email to user
         $dataUser['email'] = $request->email;
         $dataUser['fullName'] = $request->full_name;

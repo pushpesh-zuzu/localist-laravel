@@ -147,4 +147,76 @@ class ZohoService
     }
 
 
+        public function updateZohoLastLogin($userId)
+    {
+        $accessToken = ZohoHelper::getAccessToken();
+
+        if (!$accessToken) {
+            Log::error("Zoho access token not available while updating last login for user ID: {$userId}");
+            return null;
+        }
+
+        // Load user with last login relation
+        $user = User::with('lastLogin')->findOrFail($userId);
+
+        // Get existing Zoho record ID or fetch based on user type
+        $zohoId = $user->zoho_record_id;
+
+        if (empty($zohoId)) {
+            if ($user->user_type == '1') {
+                $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+            } elseif ($user->user_type == '2') {
+                $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+            } else {
+                Log::warning("Unknown user type ({$user->user_type}) for user ID: {$userId}");
+                return false;
+            }
+
+            if (!$zohoId) {
+                Log::warning("Zoho record ID not found or could not be fetched for user ID: {$userId}");
+                return false;
+            }
+        }
+
+        // Format last login timestamp
+        $lastLogin = $user->lastLogin?->login_at
+            ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i A')
+            : null;
+
+        $payload = [
+            'data' => [[
+                'Last_Login' => $lastLogin,
+            ]],
+        ];
+
+        // Determine Zoho module based on user type
+        switch ($user->user_type) {
+            case '1':
+                $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}";
+                break;
+
+            case '2':
+                $url = "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}";
+                break;
+
+            default:
+                Log::warning("Unknown user type ({$user->user_type}) for user ID: {$userId}");
+                return false;
+        }
+
+        // Send update request to Zoho CRM
+        $response = Http::withToken($accessToken)->put($url, $payload);
+        $responseData = $response->json();
+
+        if (!$response->successful()) {
+            Log::error("Zoho Last Login update failed for user {$userId}", [
+                'status' => $response->status(),
+                'response' => $responseData,
+            ]);
+        }
+
+        return $responseData;
+    }
+
+
 }
