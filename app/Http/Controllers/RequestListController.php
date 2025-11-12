@@ -54,7 +54,22 @@ class RequestListController extends Controller
                 }
                 return $output;
             })
-
+            ->editColumn('hired_to', function ($item) {
+                $hired_user = "";
+                if($item->status != 'hired'){
+                    return '';
+                }else if($item->status == 'hired' && $item->hired_to == null){
+                    return 'N/A';
+                }else if($item->status == 'hired' && $item->hired_to == 0){
+                    $hired_user = "Someone not on Localists";
+                }else if ($item->status == 'hired' && !empty($item->hired_to)) {
+                    $user = \DB::table('users')->where('id', $item->hired_to)->first();
+                    if ($user) {
+                        $hired_user = $user->name;
+                    }
+                }
+                return $hired_user;
+            })
             ->filter(function ($query) use ($request) {
                 if ($request->has('search') && $search = $request->get('search')['value']) {
                     $query->where(function ($q) use ($search) {

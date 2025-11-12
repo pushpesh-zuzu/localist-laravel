@@ -24,6 +24,7 @@
               <th>Status</th>
               <th>Que/Ans</th>
               <th>Additional Dtails</th>
+              <th>Hired User</th>
             </thead>
             <tbody>
 
@@ -114,6 +115,10 @@
           {
             data: 'details',
             name: 'details'
+          },
+          {
+            data: 'hired_to',
+            name: 'hired_to'
           },
 
         ],

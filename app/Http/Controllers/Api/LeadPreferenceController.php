@@ -500,7 +500,8 @@ class LeadPreferenceController extends Controller
         if($lead->status != 'hired'){
             LeadRequest::where('id',$aVals['lead_id'])->update([
                 'status'=>'hired',
-                'hired_by' => $sellerId
+                'hired_by' => $sellerId,
+                'hired_to' => $sellerId
             ]);
             // $leadsDetails = LeadRequest::where('id',$aVals['lead_id'])->first();
             // $zohoService = new ZohoService();
@@ -572,7 +573,8 @@ class LeadPreferenceController extends Controller
         if($lead->status != 'hired'){
             LeadRequest::where('id',$aVals['lead_id'])->update([
                 'status'=>'hired',
-                'hired_by' => $buyerId
+                'hired_by' => $buyerId,
+                'hired_to' => $sellerId
             ]);
             $statusUpdate =RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
