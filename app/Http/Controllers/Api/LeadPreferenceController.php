@@ -764,7 +764,7 @@ class LeadPreferenceController extends Controller
         $location = UserServiceLocation::where('id', $request->location_id)->first();
 
         $userId = $location->user_id;
-        $data['miles'] = $location->miles + 10;
+        $data['miles'] = $location->miles + 20;
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         UserServiceLocation::where('id',$request->location_id)->update($data);
