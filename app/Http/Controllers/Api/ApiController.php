@@ -331,9 +331,9 @@ class ApiController extends Controller
                                         ->orWhere('tags', 'LIKE', "%{$search}%")
                                         ->orWhere('description', 'LIKE', "%{$search}%");
                               });
-                              if (!empty($serviceTitle)  || $serviceTitle != null) {
-                                    $categoriess->where('slug', '!=', $serviceTitle);
-                                }
+                            //   if (!empty($serviceTitle)  || $serviceTitle != null) {
+                            //         $categoriess->where('slug', '!=', $serviceTitle);
+                            //     }
                               $categoriess->where('show_in_search', '1');
                          $categories= $categoriess->get();
         }
