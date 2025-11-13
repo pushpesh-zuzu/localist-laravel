@@ -597,12 +597,14 @@ class CustomHelper
                             'updated_at'   => now(),
                         ]);
 
+                        $details = $planHistory->plan_name . ' ' . $planHistory->credits . " Auto top-up credits purchased";
+                      
                         $transactionId = PurchaseHistory::insertGetId([
                             'user_id'        => $userId,
                             'purchase_date'  => now()->toDateString(),
                             'price'          => $planHistory->total_amount,
                             'credits'        => $planHistory->credits,
-                            'details'        => $planHistory->plan_name,
+                            'details'        => $details,
                             'payment_type'   => 0,
                             'error_response' => '',
                             'status'         => 1,

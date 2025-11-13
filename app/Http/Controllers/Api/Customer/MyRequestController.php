@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use App\Helpers\CustomHelper;
 use App\Helpers\CreditScorePredictor as CreditScore;
 use App\Helpers\Zoho\ZohoCustomerQuestionAnswer;
+use App\Helpers\Zoho\ZohoAbandonCustomerQuoteRequest;
 use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoQuoteCustomers;
@@ -154,6 +155,7 @@ class MyRequestController extends Controller
 
             CustomHelper::runInBackground(function() use ($euId, $rel,$phone,$phoneOtp) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+                app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
                 if($phone){
                     app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
                 }
@@ -205,7 +207,7 @@ class MyRequestController extends Controller
 
             CustomHelper::runInBackground(function() use ($euId) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
-
+               app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
                 app(self::class)->sendEncouragementEmail(['userId' => $euId]);
             });
             return $this->sendResponse('Abandoned Quote Customer');
@@ -273,6 +275,7 @@ class MyRequestController extends Controller
 
         CustomHelper::runInBackground(function() use ($euId, $phone, $phoneOtp) {
             app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+            app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
             if($phone){
                 app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
             }
@@ -338,6 +341,8 @@ class MyRequestController extends Controller
             AbandonedUser::where('email', $nuData['email'])->delete();
 
             $phoneOtp = $abUser->otp;
+           $zohoAbandonedQuoteId = $abUser->zoho_abandoned_quote_request_id ?? null;
+           $abUserId = $abUser->id ?? null;
             if(!empty($euId)){
 
                 UserDetail::create([
@@ -406,7 +411,10 @@ class MyRequestController extends Controller
             $rel['total_credit'] = $user->total_credit;
             $rel['nation_wide'] = $user->nation_wide;
 
-            CustomHelper::runInBackground(function() use ($userId, $rel, $password, $phoneOtp, $user) {
+            CustomHelper::runInBackground(function() use ($userId, $rel, $password, $phoneOtp, $user,$zohoAbandonedQuoteId,$abUserId) {
+                if ($zohoAbandonedQuoteId && $abUserId) {
+                    app(ZohoAbandonCustomerQuoteRequest::class)->deleteAbandonedQuoteRequest($zohoAbandonedQuoteId,$abUserId);
+                }
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId); // change it to update form status in zoho crm
                 if($user->form_status ==1){
                     ZohoEmails::sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp);
@@ -600,7 +608,7 @@ class MyRequestController extends Controller
                     });
 
                 app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
-                app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
+                // app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
                 $lead = LeadRequest::find($sId);
                 $sellers = $leadService->getAllSellers($lead);
                 if(!empty($sellers['response']['sellers'])){
