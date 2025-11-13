@@ -301,9 +301,9 @@ class ApiController extends Controller
                 $base->where('id', '!=', $serviceid);
             }
 
-            if (!empty($serviceTitle)  || $serviceTitle != null) {
-                $base->where('slug', '!=', $serviceTitle);
-            }
+            // if (!empty($serviceTitle)  || $serviceTitle != null) {
+            //     $base->where('slug', '!=', $serviceTitle);
+            // }
 
         // Check if search keyword is provided; otherwise, return empty
         if ($search === '') {
