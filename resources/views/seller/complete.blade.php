@@ -94,12 +94,12 @@
                 </a>
                 @endcan
                 @can('leadbuyers.complete-delete')
-                {{-- <a href="javascript:void(0)"
+                 <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
                 class="text text-danger"
                 title="Delete">
                 <i class="fa-solid fa-trash"></i>
-                </a> --}}
+                </a> 
                 @endcan
 
               </td>

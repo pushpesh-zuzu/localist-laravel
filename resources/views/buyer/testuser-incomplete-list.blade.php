@@ -56,12 +56,12 @@
                 @endcan
 
                 @can('quotecustomers.quote_test_incomplete_delete')
-                {{-- <a href="javascript:void(0)"
+                <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'abandoned', '')"
                 class="text text-danger"
                 title="Delete">
                 <i class="fa-solid fa-trash"></i>
-                </a> --}}
+                </a> 
                 @endcan
               </td>
             </tr>

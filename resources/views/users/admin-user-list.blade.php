@@ -22,6 +22,10 @@
         </thead>
         <tbody>
           @foreach ($admins as $admin)
+
+          @if(auth()->user()->role_id != 7 && $admin->role_id == 7)
+        @continue
+    @endif
           <tr>
             <td>{{ $loop->iteration }}</td>
             <td>{{ $admin->name }}</td>

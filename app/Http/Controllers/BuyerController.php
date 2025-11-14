@@ -133,13 +133,13 @@ class BuyerController extends Controller
                         ';
                     }
 
-                    // if (auth()->user()->can('quotecustomers.complete-user-delete')) {
-                    //     $actions .= '
-                    //     <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
-                    //         <i class="fa-solid fa-trash"></i>
-                    //     </a>
-                    //  ';
-                    // }
+                    if (auth()->user()->can('quotecustomers.complete-user-delete')) {
+                        $actions .= '
+                        <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'complete\', \'dataTable\')" class="text text-danger" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </a>
+                     ';
+                    }
 
                     return $actions;
                 })
@@ -294,14 +294,14 @@ class BuyerController extends Controller
                     }
 
                     // Example for future use (if you want to add delete)
-                    // if (auth()->user()->can('quotecustomers.incom-delete')) {
-                    //     $actions .= '
-                    //         <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" 
-                    //            class="text text-danger" title="Delete">
-                    //             <i class="fa-solid fa-trash"></i>
-                    //         </a>
-                    //     ';
-                    // }
+                    if (auth()->user()->can('quotecustomers.incom-delete')) {
+                        $actions .= '
+                            <a href="javascript:void(0)" onclick="deleteUser(' . $user->id . ', \'abandoned\', \'dataTable\')" 
+                               class="text text-danger" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        ';
+                    }
 
                     return $actions;
                 })

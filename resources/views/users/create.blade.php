@@ -69,6 +69,9 @@
                 class="form-control {{ $errors->has('role_id') ? 'is-invalid' : '' }}" required>
                 <option value="">-- Select Role --</option>
                 @foreach($roles as $id => $name)
+                @if(auth()->user()->role_id != 7 && $id == 7)
+                @continue
+               @endif
                 <option value="{{ $id }}" {{ (old('role_id', $aRow->role_id ?? '') == $id) ? 'selected' : '' }}>
                   {{ $name }}
                 </option>

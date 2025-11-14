@@ -18,8 +18,15 @@ class RoleController extends Controller
     {
 
         abort_if(!auth()->user()->can('role.view'), 403, __('User does not have the right permissions.'));
+         $loggedInRole = auth()->user()->role_id;
 
-        $roles = DB::table('roles')->select('roles.id', 'roles.name')->orderBy('id', 'asc');
+        $roles = DB::table('roles')
+            ->select('roles.id', 'roles.name')
+            ->when($loggedInRole != 7, function($q) {
+                // Agar super-admin nahi hai to super-admin role ko hide karo
+                $q->where('roles.name', '!=', 'super-admin');
+            })
+            ->orderBy('id', 'asc');
 
         if ($request->ajax()) {
             return DataTables::of($roles)

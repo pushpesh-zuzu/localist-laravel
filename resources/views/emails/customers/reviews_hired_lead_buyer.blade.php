@@ -47,7 +47,7 @@
               </p>
 
               <p style="margin:0;text-align:center;">
-                <a href="{{ $baseUrl }}/quote/{{ $leadId }}/edit?token={{ $token }}" 
+                <a href="" 
                    style="background:#00AFE3;color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-size:14px;font-weight:bold;">
                   Add Details
                 </a>
