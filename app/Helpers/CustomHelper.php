@@ -326,102 +326,128 @@ class CustomHelper
     {
         $apiKey = CustomHelper::setting_value('google_maps_api');
 
-        // Normalize input
+        // Normalize postcode
         $postcode = strtoupper(trim($postcode));
-        $postcode = preg_replace('/\s+/', '', $postcode); // remove all spaces
+        $postcode = preg_replace('/\s+/', '', $postcode);
 
-        // Auto-insert a space before the last 3 characters
+        // Insert space before last 3 characters
         if (strlen($postcode) > 3) {
             $postcode = substr($postcode, 0, -3) . ' ' . substr($postcode, -3);
         }
 
-        // ✅ Strict UK postcode regex
+        // Strict UK postcode format
         $isValidFormat = preg_match('/^(GIR 0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/', $postcode);
 
         if (!$isValidFormat) {
             return [
                 'valid' => false,
                 'postcode' => $postcode,
-                'error' => 'Invalid UK postcode format.',
+                'error' => 'Invalid UK postcode format.'
             ];
         }
 
-        // --- First: Try Postcodes.io API (free & UK-specific) ---
+        /** --------------------------------------------
+         *  1. PRIMARY: Check Postcodes.io (authoritative)
+         * --------------------------------------------- */
         try {
-            $response = Http::get("https://api.postcodes.io/postcodes/{$postcode}");
+            $response = Http::timeout(4)->get("https://api.postcodes.io/postcodes/{$postcode}");
+
+            // If the postcode DOES NOT EXIST → return invalid, DO NOT FALLBACK
+            if ($response->status() === 404) {
+                return [
+                    'valid' => false,
+                    'postcode' => $postcode,
+                    'error' => 'Postcode does not exist in the UK.'
+                ];
+            }
+
             if ($response->successful()) {
                 $data = $response->json();
+
                 if (isset($data['status']) && $data['status'] === 200 && isset($data['result'])) {
                     $result = $data['result'];
-                    $city = $result['admin_district'] ?? null;
-                    $region = $result['region'] ?? null;
-                    $gPostcode = $result['postcode'] ?? $postcode;
-
-                    if ($city && $region) {
-                        return [
-                            'valid' => true,
-                            'city' => $city,
-                            'region' => $region,
-                            'postcode' => $gPostcode,
-                            'formatted_address' => "{$city}, {$region}, UK",
-                            'source' => 'postcodes.io',
-                        ];
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // ignore fallback failure
-        }
-
-        // --- Fallback: Google Maps API (if Postcodes.io fails) ---
-        $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
-            'address' => $postcode,
-            'key' => $apiKey,
-            'region' => 'uk',
-            'components' => 'country:GB',
-        ]);
-
-        if ($response->successful()) {
-            $data = $response->json();
-            if (!empty($data['results'][0])) {
-                $result = $data['results'][0];
-                $country = $city = $region = $gPostcode = null;
-
-                foreach ($result['address_components'] as $component) {
-                    if (in_array('country', $component['types'])) {
-                        $country = $component['short_name'];
-                    }
-                    if (in_array('postal_town', $component['types']) || in_array('locality', $component['types'])) {
-                        $city = $component['long_name'];
-                    }
-                    if (in_array('administrative_area_level_1', $component['types'])) {
-                        $region = $component['long_name'];
-                    }
-                    if (in_array('postal_code', $component['types'])) {
-                        $gPostcode = $component['long_name'];
-                    }
-                }
-
-                if ($country === 'GB' && !empty($city) && !empty($region)) {
                     return [
                         'valid' => true,
-                        'city' => $city,
-                        'region' => $region,
-                        'postcode' => $gPostcode ?? $postcode,
-                        'formatted_address' => $result['formatted_address'],
-                        'source' => 'google',
+                        'city' => $result['admin_district'],
+                        'region' => $result['region'],
+                        'postcode' => $result['postcode'],
+                        'formatted_address' => $result['admin_district'] . ', ' . $result['region'] . ', UK',
+                        'source' => 'postcodes.io'
                     ];
                 }
             }
+        } catch (\Exception $e) {
+            // Postcodes.io failed or timeout → fall back to Google
         }
 
-        // --- If both fail ---
+        /** --------------------------------------------
+         *  2. SECONDARY: Google Maps fallback
+         *  Only when Postcodes.io is unavailable
+         * --------------------------------------------- */
+        try {
+            $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
+                'address' => $postcode,
+                'key' => $apiKey,
+                'region' => 'uk',
+                'components' => 'country:GB',
+            ]);
+
+            $data = $response->json();
+
+            // If Google also cannot find → invalid
+            if (empty($data['results'][0])) {
+                return [
+                    'valid' => false,
+                    'postcode' => $postcode,
+                    'error' => 'Postcode not recognized.'
+                ];
+            }
+
+            $result = $data['results'][0];
+
+            $city = $region = $gPostcode = null;
+            foreach ($result['address_components'] as $c) {
+                if (in_array('postal_town', $c['types']) || in_array('locality', $c['types'])) {
+                    $city = $c['long_name'];
+                }
+                if (in_array('administrative_area_level_1', $c['types'])) {
+                    $region = $c['long_name'];
+                }
+                if (in_array('postal_code', $c['types'])) {
+                    $gPostcode = $c['long_name'];
+                }
+            }
+
+            // Google MUST return a full valid postcode — not partial
+            if (!$gPostcode || strtoupper($gPostcode) !== strtoupper($postcode)) {
+                return [
+                    'valid' => false,
+                    'postcode' => $postcode,
+                    'error' => 'Postcode not found in Google lookup.'
+                ];
+            }
+
+            return [
+                'valid' => true,
+                'city' => $city,
+                'region' => $region,
+                'postcode' => $gPostcode,
+                'formatted_address' => $result['formatted_address'],
+                'source' => 'google'
+            ];
+
+        } catch (\Exception $e) {}
+
+        /** --------------------------------------------
+         *  3. If everything fails
+         * --------------------------------------------- */
         return [
             'valid' => false,
             'postcode' => $postcode,
-            'error' => 'Postcode not recognized or missing city/region information.',
+            'error' => 'Postcode lookup error.'
         ];
     }
+
 
 
 
