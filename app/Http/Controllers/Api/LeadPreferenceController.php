@@ -35,6 +35,7 @@ use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoPurchasedLeads;
+use App\Helpers\Zoho\ZohoQuoteRequest;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoLeadAvailable;
@@ -520,11 +521,19 @@ class LeadPreferenceController extends Controller
             }
 
             if($statusUpdate){
-                CustomHelper::runInBackground(function() use ($sellerId, $recommendedId,$leadId) {
+                CustomHelper::runInBackground(function() use ($sellerId, $recommendedId,$leadId,$buyerId) {
 	                app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
                     // ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
                     ZohoEmails::newLeadHiredEmail($leadId,$sellerId);
+                   // ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId,$buyerId);
                 });
+
+                $requestLeadId = $lead->id ?? null;
+                if (!empty($requestLeadId)) {
+                    CustomHelper::runInBackground(function() use ($requestLeadId) {
+                        app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
+                    });
+                }
                 return $this->sendResponse('Request Submitted Successfully');
                 
             }
@@ -595,9 +604,22 @@ class LeadPreferenceController extends Controller
         }
 
         if($statusUpdate){
-            CustomHelper::runInBackground(function() use ($sellerId,$leadId) {
+            CustomHelper::runInBackground(function() use ($sellerId,$leadId,$buyerId) {
                 ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
+              //  ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId,$buyerId);
 		    });
+
+            $requestLeadId = $lead->id ?? null;
+            if (!empty($requestLeadId)) {
+                 $recommendedId= RecommendedLead::where('lead_id', $aVals['lead_id'])
+                ->where('seller_id', $sellerId)
+                ->where('buyer_id', $buyerId)
+                ->value('id');
+                CustomHelper::runInBackground(function() use ($requestLeadId,$sellerId,$recommendedId) {
+                    app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
+                    app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
+                });
+            }
             return $this->sendResponse($sendmessage);
             
         }

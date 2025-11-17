@@ -131,6 +131,48 @@ class ZohoQuoteRequest
     }
 
 
+
+
+
+    public function updateZohoQuoteStatus($leadRequestId)
+{
+    $accessToken = ZohoHelper::getAccessToken();
+    if (!$accessToken) return null;
+
+    $leadRequest = LeadRequest::find($leadRequestId);
+    if (!$leadRequest) return null;
+
+    
+    if (empty($leadRequest->zoho_quote_request_id)) {
+        Log::warning("Zoho update skipped — no zoho_quote_request_id", [
+            'lead_request_id' => $leadRequestId
+        ]);
+        return null;
+    }
+
+    // Build payload for updating only Status
+   
+    $payload = [
+            'data' => [[
+                'Quote_Request_Record_Id'      => $leadRequest->id,                
+                'Status'                       => $leadRequest->status, 
+            ]],
+            'duplicate_check_fields' => ['Quote_Request_Record_Id']
+
+        ];
+
+    // Update using your existing Zoho update function
+    $response = $this->upsertToZohoService($accessToken, $leadRequest, $payload);
+
+    Log::info('Zoho Quote Status Updated', [
+        'lead_request_id' => $leadRequestId,
+        'new_status'      => $leadRequest->status,
+        'response'        => $response->json()
+    ]);
+
+    return $response->json();
+}
+
     // protected function getZohoPurchasedLeadsId($accessToken, $recommendedLeadId)
     // {
     //     $response = Http::withToken($accessToken)

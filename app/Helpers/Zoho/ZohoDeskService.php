@@ -16,9 +16,9 @@ class ZohoDeskService
 
     public function __construct()
     {
-        $this->clientId     = CustomHelper::setting_value('zoho_desk_client_id')     ?? '1000.AXS4MVA6T0E39GKH3R1XMY70YBL5DP';
-        $this->clientSecret = CustomHelper::setting_value('zoho_desk_client_secret') ?? '1066247f78394dbc54bcdd3716e5429cd686a9a6e5';
-        $this->refreshToken = CustomHelper::setting_value('zoho_desk_refresh_token') ?? '1000.a975fda2da95f028691c81cb63f8e90c.c751309a3cbd1619d18099b9aeb46f29';
+        $this->clientId     = CustomHelper::setting_value('zoho_desk_client_id');
+        $this->clientSecret = CustomHelper::setting_value('zoho_desk_client_secret');
+        $this->refreshToken = CustomHelper::setting_value('zoho_desk_refresh_token');
         $this->region       =  'eu';
     }
 

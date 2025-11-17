@@ -20,12 +20,12 @@ public function createTicket($data)
             return ['error' => 'Access token not found'];
         }
 
-        $orgId =  CustomHelper::setting_value('zoho_desk_org_id') ?? '20105748683';
+        $orgId =  CustomHelper::setting_value('zoho_desk_org_id');
 
        if ($data['user_type'] == 1) {
-            $departmentId = CustomHelper::setting_value('zoho_desk_buyer_dept_id') ?? '197781000001100111';
+            $departmentId = CustomHelper::setting_value('zoho_desk_buyer_dept_id');
         } else {
-            $departmentId = CustomHelper::setting_value('zoho_desk_seller_dept_id') ?? '197781000001052044';
+            $departmentId = CustomHelper::setting_value('zoho_desk_seller_dept_id');
         }
 
 

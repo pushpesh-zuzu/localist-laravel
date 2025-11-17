@@ -38,18 +38,23 @@
           <!-- Main card -->
            <tr>
             <td style="padding:25px 30px;color:#333;">
-              <p style="margin:0 0 8px;font-size:16px;color:#00AFE3;font-weight:bold;">Hi {{ $customerName }},</p>
-              <p style="margin:0 0 12px;font-size:14px;">
-                It’s been 24 hours since you posted your <b>{{ $serviceName }}</b> request, and no professionals have placed a bid yet.
+              <p style="margin:0 0 8px;font-size:16px;color:#00AFE3;font-weight:bold;">Hi {{ ucfirst($customerName) }},</p>
+              <p style="margin:0 0 12px;font-size:14px;">    
+             
+                 We hope your <b>{{ ucfirst($serviceName) }}</b> went smoothly.
+                 
               </p>
               <p style="margin:0 0 20px;font-size:14px;">
-                Add more details or photos to help local pros understand your job better.
+               We’d love to hear about your experience with <b>{{ ucfirst($sellerName) }}</b>, the professional you hired  on Localists.
+              </p>
+              <p style="margin:0 0 20px;font-size:14px;">
+                Your quick feedback helps us improve our service.
               </p>
 
               <p style="margin:0;text-align:center;">
-                <a href="" 
+                <a href="{{ $reviewUrl }}" 
                    style="background:#00AFE3;color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-size:14px;font-weight:bold;">
-                  Add Details
+                  Leave Your Feedback
                 </a>
               </p>
             </td>
@@ -67,7 +72,7 @@
                       </a>.
                     </p>
 
-                    <p>Regards,<br>Localists Team</p>
+                    <p>Kind Regards,<br>Localists Team</p>
                   </td>
                 </tr>
               </table>
