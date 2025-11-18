@@ -223,6 +223,9 @@ class AbandonedUser extends Authenticatable
     }
 
     
-
+public function categoryData()
+{
+    return $this->belongsTo(Category::class, 'service_id', 'id');
+}
 
 }

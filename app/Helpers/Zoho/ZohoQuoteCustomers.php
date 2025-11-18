@@ -77,7 +77,7 @@ class ZohoQuoteCustomers
                 'Name'              => $user->name,
                 'Email'             => $user->email,
                 'Mobile'            => $user->phone,
-                'zipcode'           => $user->zipcode,
+                'Zipcode'           => $user->zipcode,
                 'city'              => $user->city,
                 'otp'               => $user->otp ?? 0,
                 'Campaign_Id'      => $user->campaignid ?? '',
@@ -87,6 +87,8 @@ class ZohoQuoteCustomers
                 'AdGroup'           => $user->adgroup ?? '',
                 'Target_Id'          => $user->targetid ?? '',
                 'MS_Click_Id'         => $user->msclickid ?? '',
+                'User_IP_Address'    => $user->user_ip_address ?? '',
+                'Entry_URL'         => $user->entry_url ?? '',                
                 'registration_type' => $user->form_status ==1 ? 'completed' : 'abandoned',
                 'created_at'        => $formatted
             ]],

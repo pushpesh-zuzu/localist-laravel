@@ -2943,9 +2943,10 @@ public static function leadAcceptedMailToSendCustomer($leadId,  $buyerId,LeadSer
     if (empty($zohoId)) {
         return;
     }
-
     $htmlView = view('emails.customers.lead-accepted-email', [
         'baseUrl' => config('app.react_base_url'),
+         'appURL' => config('app.url'),
+        
         'customerName' => $customerName ?? '',
         'serviceName' => $categoryName ?? '',
         'leadId' => $leadId,

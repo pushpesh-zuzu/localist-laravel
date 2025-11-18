@@ -68,7 +68,7 @@
                   <td width="60" align="center" valign="top">
 
                     @if(!empty($seller->profile_image))
-                      <img src="{{ $baseUrl }}/images/users/{{ $seller->profile_image }}"
+                      <img src="{{ $appURL }}/storage/app/public/images/users/{{ $seller->profile_image }}"
                            style="width:52px; height:52px; border-radius:50%; object-fit:cover;">
                     @else
                       <div style="width:52px; height:52px; background:#e0e0e0;

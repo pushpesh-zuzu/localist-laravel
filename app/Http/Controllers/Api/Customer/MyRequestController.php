@@ -318,6 +318,8 @@ class MyRequestController extends Controller
             $nuData['name'] = $abUser->name;
             $nuData['email'] = $abUser->email;
             $nuData['phone'] = $abUser->phone;
+            $nuData['zipcode'] = $abUser->zipcode ?? '';
+            $nuData['city'] = $abUser->city ?? '';
             $nuData['otp'] = $abUser->otp;
             $nuData['otp_sinch_status'] = $abUser->otp_sinch_status;
             $nuData['zoho_record_id'] = $abUser->zoho_record_id;
@@ -627,6 +629,12 @@ class MyRequestController extends Controller
                 app(self::class)->sendLeadEmailCreditEnough();
                 // app(self::class)->sendLeadEmailCreditNotEnough();
             });
+
+            //  if (!empty($euId)) {
+            //     CustomHelper::runInBackground(function() use ($sId, $euId, $leadService) {
+            //         ZohoEmails::leadAcceptedMailToSendCustomer($sId, $euId, $leadService);
+            //     });
+            //  }
             return $this->sendResponse('Quote Submitted Successfully',$rel);
 
         }

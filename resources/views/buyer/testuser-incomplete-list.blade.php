@@ -33,7 +33,7 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
-               <!-- <th scope="col">Entry URL</th>
+              <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
               <th scope="col">Status</th>
               <th scope="col">Action</th>
@@ -45,7 +45,7 @@
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
-               <!-- <td style="word-break: break-all; max-width: 200px;">
+              <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
@@ -58,10 +58,10 @@
                 @can('quotecustomers.quote_test_incomplete_delete')
                 <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'abandoned', '')"
-                class="text text-danger"
-                title="Delete">
-                <i class="fa-solid fa-trash"></i>
-                </a> 
+                  class="text text-danger"
+                  title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
                 @endcan
               </td>
             </tr>
@@ -79,35 +79,44 @@
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
     buttons: [
-       @can('quotecustomers.test_incomplete_excel')
-      {
-        extend: 'excelHtml5',
+      @can('quotecustomers.test_incomplete_excel') {
         text: 'Export Excel',
-        title: 'Quote Customers - Test Incomplete List',
-        className: "buttons-excel btn btn-success btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(4))', // Exclude "Action" column (7th column)
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'applied'
-          }
+        className: "btn btn-success btn-sm",
+        action: function(e, dt, node, config) {
+          let start = $('#from_date').val();
+          let end = $('#to_date').val();
+          let search = dt.search(); // Use dt instead of dataTable
+          let type = 'customer-testincomplete-list';
+          let query = $.param({
+            type: type,
+            start_date: start,
+            end_date: end,
+            search: search
+          });
+          window.location.href = "{{ route('export.buyer.excel') }}" + "?" + query;
+
+          e.preventDefault();
         }
       },
-       @endcan
-        @can('quotecustomers.test_incomplete_csv')
-      {
-        extend: 'csvHtml5',
+      @endcan
+      @can('quotecustomers.test_incomplete_csv') {
         text: 'Export CSV',
-        title: 'Quote Customers - Test Incomplete List',
-        className: "buttons-csv btn btn-info btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(4))',
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'applied'
-          }
+        className: "btn btn-info btn-sm",
+        action: function(e, dt, node, config) {
+          let start = $('#from_date').val();
+          let end = $('#to_date').val();
+          let type = 'customer-testincomplete-list';
+          let search = dt.search(); // Use dt instead of dataTable
+
+          let query = $.param({
+            type: type,
+            start_date: start,
+            end_date: end,
+            search: search
+          });
+          window.location.href = "{{ route('export.buyer.csv') }}" + "?" + query;
+
+          e.preventDefault();
         }
       },
       @endcan

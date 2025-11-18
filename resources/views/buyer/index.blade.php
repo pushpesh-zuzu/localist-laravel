@@ -159,96 +159,38 @@
       dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
       buttons: [
           @can('quotecustomers.complete-excelexport')
-        {
-          extend: 'excelHtml5',
-          text: 'Export Excel',
-          title: 'Quote Customers - Complete List',
-          className: "buttons-excel btn btn-success btn-sm",
-          exportOptions: {
-            columns: ':not(:eq(10))', // Exclude "Action" column (7th column)
-            modifier: {
-              order: 'index',
-              page: 'all',
-              search: 'applied'
+         {
+            text: 'Export Excel',
+            className: "btn btn-success btn-sm",
+            action: function(e, dt, node, config) {
+                let start = $('#from_date').val();
+                let end = $('#to_date').val();
+                let search = dt.search(); // Use dt instead of dataTable
+                let type = 'customer-complete-list';
+                let query = $.param({ type: type, start_date: start, end_date: end, search: search });
+                window.location.href = "{{ route('export.buyer.excel') }}" + "?" + query;
+                
+                e.preventDefault();
             }
-
-          },
-          action: function(e, dt, button, config) {
-            var self = this;
-            var oldStart = dt.settings()[0]._iDisplayStart;
-
-            // Pre-fetch all data
-            dt.one('preXhr', function(e, s, data) {
-              data.start = 0;
-              data.length = -1; // tell server to return ALL rows
-            });
-
-            dt.one('xhr', function(e, s, json) {
-              var oldData = dt.rows().data();
-              dt.clear();
-              dt.rows.add(json.data).draw();
-
-              // Call default excelHtml5 action
-              $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt, button, config);
-
-              // Restore old page
-              dt.clear();
-              dt.rows.add(oldData).draw();
-              dt.settings()[0]._iDisplayStart = oldStart;
-              dt.draw(false);
-            });
-
-            dt.ajax.reload();
-          }
-        },
+        },        
          @endcan
-        @can('quotecustomers.complete-csvexport')
+        @can('quotecustomers.complete-csvexport')               
         {
-          extend: 'csvHtml5',
-          text: 'Export CSV',
-          title: 'Quote Customers - Complete List',
-          className: "buttons-csv btn btn-info btn-sm",
-          exportOptions: {
-            columns: ':not(:eq(10))',
-            modifier: {
-              order: 'index',
-              page: 'all',
-              search: 'applied'
-            },
-            format: {
-              body: function(data, row, column, node) {
-                if (typeof data === 'string') {
-                  return data.replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+(>|$)/g, "");
-                }
-                return data;
-              }
+            text: 'Export CSV',
+            className: "btn btn-info btn-sm",
+            action: function(e, dt, node, config) {
+                let start = $('#from_date').val();
+                let end = $('#to_date').val();
+                 let type = 'customer-complete-list';
+                let search = dt.search(); // Use dt instead of dataTable
+                
+                let query = $.param({ type: type,start_date: start, end_date: end, search: search });
+                window.location.href = "{{ route('export.buyer.csv') }}" + "?" + query;
+                
+                e.preventDefault();
             }
-          },
-          action: function(e, dt, button, config) {
-            var self = this;
-            var oldStart = dt.settings()[0]._iDisplayStart;
-
-            dt.one('preXhr', function(e, s, data) {
-              data.start = 0;
-              data.length = -1;
-            });
-
-            dt.one('xhr', function(e, s, json) {
-              var oldData = dt.rows().data();
-              dt.clear();
-              dt.rows.add(json.data).draw();
-
-              $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config);
-
-              dt.clear();
-              dt.rows.add(oldData).draw();
-              dt.settings()[0]._iDisplayStart = oldStart;
-              dt.draw(false);
-            });
-
-            dt.ajax.reload();
-          }
-        },
+        }
+       
           @endcan
       ]
     });

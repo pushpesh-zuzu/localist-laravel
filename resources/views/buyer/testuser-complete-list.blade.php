@@ -63,23 +63,23 @@
               <td>
                 @can('quotecustomers.test_complete_bids')
                 <a href="{{ route('buyer.buyerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
-                 @endcan
+                @endcan
                 @can('quotecustomers.test-complete-unique-visitors')
                 <a href="{{ route('buyer.viewCount',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-users" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Unique Visitors"></i></a>
-                 @endcan
+                @endcan
                 @can('quotecustomers.test_complete_loginhistory')
                 <a href="{{ route('buyer.buyerLogin',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-history" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Login History"></i></a>
-                 @endcan
+                @endcan
                 @can('quotecustomers.test-complete-view-details')
                 <a href="{{ route('buyer.show.custom', ['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
                 @endcan
                 @can('quotecustomers.test_complete_delete')
-                 <a href="javascript:void(0)"
+                <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
-                class="text text-danger"
-                title="Delete">
-                <i class="fa-solid fa-trash"></i>
-                </a> 
+                  class="text text-danger"
+                  title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
                 @endcan
 
               </td>
@@ -99,38 +99,47 @@
     destroy: true,
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
     buttons: [
-      @can('quotecustomers.test_complete_excel')
-      {
-        extend: 'excelHtml5',
+      @can('quotecustomers.test_complete_excel') {
         text: 'Export Excel',
-        title: 'Quote Customers - Test Complete List',
-        className: "buttons-excel btn btn-success btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(5))', // Exclude "Action" column (7th column)
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'applied'
-          }
+        className: "btn btn-success btn-sm",
+        action: function(e, dt, node, config) {
+          let start = $('#from_date').val();
+          let end = $('#to_date').val();
+          let search = dt.search(); // Use dt instead of dataTable
+          let type = 'customer-testcomplete-list';
+          let query = $.param({
+            type: type,
+            start_date: start,
+            end_date: end,
+            search: search
+          });
+          window.location.href = "{{ route('export.buyer.excel') }}" + "?" + query;
+
+          e.preventDefault();
         }
       },
-        @endcan
-        @can('quotecustomers.test_complete_csv')
-      {
-        extend: 'csvHtml5',
+      @endcan
+      @can('quotecustomers.test_complete_csv') {
         text: 'Export CSV',
-        title: 'Quote Customers - Test Complete List',
-        className: "buttons-csv btn btn-info btn-sm",
-        exportOptions: {
-          columns: ':not(:eq(5))',
-          modifier: {
-            order: 'index',
-            page: 'all',
-            search: 'applied'
-          }
+        className: "btn btn-info btn-sm",
+        action: function(e, dt, node, config) {
+          let start = $('#from_date').val();
+          let end = $('#to_date').val();
+          let type = 'customer-testcomplete-list';
+          let search = dt.search(); // Use dt instead of dataTable
+
+          let query = $.param({
+            type: type,
+            start_date: start,
+            end_date: end,
+            search: search
+          });
+          window.location.href = "{{ route('export.buyer.csv') }}" + "?" + query;
+
+          e.preventDefault();
         }
       },
-       @endcan
+      @endcan
     ],
     "language": {
       "emptyTable": "No records found"

@@ -15,6 +15,8 @@ use Carbon\Carbon;
 use DB;
 use Yajra\Datatables\Datatables;
 use Yajra\DataTables\Html\Builder;
+use App\Exports\BuyerListExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BuyerController extends Controller
 {
@@ -28,6 +30,7 @@ class BuyerController extends Controller
         if ($request->ajax()) {
 
             $query = User::with(['leadRequests.category', 'lastLogin'])
+                ->whereNull('deleted_at')
                 ->whereIn('user_type', [2, 3])
                 ->where('form_status', 1)
                 ->where(function ($q) {
@@ -81,23 +84,28 @@ class BuyerController extends Controller
                         : '';
                 })
                 ->filterColumn('last_login', function ($query, $keyword) {
+                    // Try: Full datetime search
                     try {
-                        $parsed = \Carbon\Carbon::createFromFormat('m/d/Y h:i A', $keyword);
-                        $query->whereHas('lastLogin', function ($q) use ($parsed) {
+                        $parsed = Carbon::createFromFormat('m/d/Y h:i A', $keyword);
+                        return $query->whereHas('lastLogin', function ($q) use ($parsed) {
                             $q->whereDate('login_at', $parsed->toDateString());
                         });
                     } catch (\Exception $e) {
-                        try {
-                            $parsed = \Carbon\Carbon::createFromFormat('m/d/Y', $keyword);
-                            $query->whereHas('lastLogin', function ($q) use ($parsed) {
-                                $q->whereDate('login_at', $parsed->toDateString());
-                            });
-                        } catch (\Exception $ex) {
-                            $query->whereHas('lastLogin', function ($q) use ($keyword) {
-                                $q->where('login_at', 'like', "%{$keyword}%");
-                            });
-                        }
                     }
+
+                    // Try: Date only search
+                    try {
+                        $parsed = Carbon::createFromFormat('m/d/Y', $keyword);
+                        return $query->whereHas('lastLogin', function ($q) use ($parsed) {
+                            $q->whereDate('login_at', $parsed->toDateString());
+                        });
+                    } catch (\Exception $e) {
+                    }
+
+                    // Fallback: safe LIKE search (only on DATE part)
+                    return $query->whereHas('lastLogin', function ($q) use ($keyword) {
+                        $q->whereRaw("DATE(login_at) LIKE ?", ["%{$keyword}%"]);
+                    });
                 })
                 ->addColumn('status', fn($user) => 'Complete')
                 ->addColumn('action', function ($user) {
@@ -231,7 +239,7 @@ class BuyerController extends Controller
 
         if ($request->ajax()) {
 
-            $query = AbandonedUser::with(['leadRequests.category'])
+            $query = AbandonedUser::with(['categoryData'])
                 ->whereIn('user_type', [2, 3])
                 ->where('form_status', 0)
                 ->where(function ($q) {
@@ -256,15 +264,17 @@ class BuyerController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('postcode', function ($user) {
+                ->addColumn('zipcode', function ($user) {
                     return $user->zipcode ?? '';
                 })
-                ->addColumn('services', function ($user) {
-                    $service = Category::where('id', $user->service_id)->pluck('name')->first();
-                    return $service ?? '';
+
+                ->filterColumn('zipcode', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('zipcode', 'like', "%{$keyword}%");
+                    });
                 })
-                ->addColumn('score', function ($user) {
-                    return $user->leadRequests->pluck('credit_score')->implode('<br>');
+                ->addColumn('services', function ($user) {
+                    return $user->categoryData->name ?? '';
                 })
                 ->addColumn('date', function ($user) {
                     return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
@@ -275,11 +285,6 @@ class BuyerController extends Controller
                     } catch (\Exception $e) {
                     }
                 })
-                //  ->addColumn('entry_url', function ($user) {
-                //     $url = $user->entry_url ?? '';
-                //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
-                // })
-                //  ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
                 ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     $actions = '';
@@ -305,27 +310,14 @@ class BuyerController extends Controller
 
                     return $actions;
                 })
-                ->filterColumn('postcode', function ($query, $keyword) {
-                    $query->where(function ($q) use ($keyword) {
-                        $q->whereHas('leadRequests', function ($leadQuery) use ($keyword) {
-                            $leadQuery->where('postcode', 'like', "%{$keyword}%");
-                        })
-                            ->orWhere('zipcode', 'like', "%{$keyword}%");
+
+                ->filterColumn('services', function ($query, $keyword) {
+                    $query->whereHas('categoryData', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
-                ->filterColumn('services', function ($query, $keyword) {
-                    $query->whereHas('leadRequests.category', fn($q) => $q->where('name', 'like', "%{$keyword}%"));
-                })
-                ->filterColumn('score', function ($query, $keyword) {
-                    $query->whereHas('leadRequests', fn($q) => $q->where('credit_score', 'like', "%{$keyword}%"));
-                })
-                //  ->filterColumn('entry_url', function ($query, $keyword) {
-                //     $query->where('entry_url', 'like', "%{$keyword}%");
-                // })
-                // ->filterColumn('user_ip_address', function ($query, $keyword) {
-                //     $query->where('user_ip_address', 'like', "%{$keyword}%");
-                // })
-                ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'action'])
+
+                ->rawColumns(['services', 'zipcode',  'status', 'action'])
                 ->make(true);
         }
 
@@ -368,7 +360,7 @@ class BuyerController extends Controller
     public function contactForm(Request $request)
     {
         abort_if(!auth()->user()->can('quotecustomers.conatct-viewlist'), 403, __('User does not have the right permissions.'));
-      
+
         $query = ContactUs::where('user_type', 1)
             ->orderBy('id', 'DESC');
 
@@ -391,7 +383,7 @@ class BuyerController extends Controller
     public function viewContactForm(string $id)
     {
         abort_if(!auth()->user()->can('quotecustomers.contact-view-details'), 403, __('User does not have the right permissions.'));
-        
+
         DB::table('contact_us')
             ->where('id', $id)
             ->update(['status' => 1]);
@@ -480,7 +472,7 @@ class BuyerController extends Controller
 
     public function leadDetails($leadid)
     {
-        
+
         $aRows =  LeadRequest::where('id', $leadid)->first();
         $user = User::where('id', $aRows->customer_id)->pluck('name')->first();
         return view('buyer.lead_details', get_defined_vars());
@@ -488,7 +480,7 @@ class BuyerController extends Controller
 
     public function buyerBids($userid)
     {
-         abort_if(!auth()->user()->canAny(['quotecustomers.bids', 'quotecustomers.test_complete_bids']), 403, __('User does not have the right permissions.'));
+        abort_if(!auth()->user()->canAny(['quotecustomers.bids', 'quotecustomers.test_complete_bids']), 403, __('User does not have the right permissions.'));
         // $buyerIds = RecommendedLead::where('buyer_id', $userid)->pluck('seller_id')->unique()->toArray();
         $leads = LeadRequest::whereIn('customer_id', [$userid])->orderBy('id', 'DESC')->get();
         // Group all leads by customer_id
@@ -514,7 +506,7 @@ class BuyerController extends Controller
 
     public function buyerLogin($userid)
     {
-         abort_if(!auth()->user()->canAny(['quotecustomers.loginhistory', 'quotecustomers.test_complete_loginhistory']), 403, __('User does not have the right permissions.'));
+        abort_if(!auth()->user()->canAny(['quotecustomers.loginhistory', 'quotecustomers.test_complete_loginhistory']), 403, __('User does not have the right permissions.'));
         $aRows =  LoginHistory::where('user_id', $userid)->orderBy('id', 'DESC')->get();
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('buyer.login_history', get_defined_vars());
@@ -535,5 +527,47 @@ class BuyerController extends Controller
         }
         $user = User::where('id', $userid)->pluck('name')->first();
         return view('buyer.view_count', get_defined_vars());
+    }
+
+
+    public function exportBuyerExcelList(Request $request)
+    {
+        $fromDate = $request->start_date ?? null;
+        $toDate = $request->end_date ?? null;
+        $search = $request->search ?? null;
+        $type = $request->type ?? null;
+
+
+        if ($type == 'customer-complete-list') {
+            $fileName = 'Quote Customers - Complete List' . '.xlsx';
+        } elseif ($type == 'customer-incomplete-list') {
+            $fileName = 'Quote Customers - Incomplete List' . '.xlsx';
+        } elseif ($type == 'customer-testcomplete-list') {
+            $fileName = 'Quote Customers - Test Complete List' . '.xlsx';
+        } elseif ($type == 'customer-testincomplete-list') {
+            $fileName = 'Quote Customers - Test Incomplete List' . '.xlsx';
+        }
+
+        return Excel::download(new BuyerListExport($fromDate, $toDate, $search, $type), $fileName);
+    }
+
+    public function exportBuyerCsvList(Request $request)
+    {
+        $fromDate = $request->start_date ?? null;
+        $toDate = $request->end_date ?? null;
+        $search = $request->search ?? null;
+        $type = $request->type ?? null;
+
+        if ($type == 'customer-complete-list') {
+            $fileName = 'Quote Customers - Complete List' . '.csv';
+        } elseif ($type == 'customer-incomplete-list') {
+            $fileName = 'Quote Customers - Incomplete List' . '.csv';
+        } elseif ($type == 'customer-testcomplete-list') {
+            $fileName = 'Quote Customers - Test Complete List' . '.csv';
+        } elseif ($type == 'customer-testincomplete-list') {
+            $fileName = 'Quote Customers - Test Incomplete List' . '.csv';
+        }
+
+        return Excel::download(new BuyerListExport($fromDate, $toDate, $search, $type), $fileName);
     }
 }

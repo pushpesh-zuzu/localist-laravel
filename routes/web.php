@@ -128,6 +128,11 @@ Route::middleware('auth:admin')->group(function () {
     Route::delete('/delete-user/{id}', [BuyerController::class, 'destroy'])->name('user.destroy');
     Route::delete('/contact/{id}', [BuyerController::class, 'deleteContact'])->name('contact.delete');
 
+    Route::get('/export-buyer-excel', [BuyerController::class, 'exportBuyerExcelList'])
+        ->name('export.buyer.excel');
+     Route::get('/export-buyer-csv', [BuyerController::class, 'exportBuyerCsvList'])
+        ->name('export.buyer.csv');
+
     Route::resource('seller', SellerController::class);
     Route::post('seller/custom-reviews/save', [SellerController::class, 'sellerSaveCustomReview'])->name('seller.save.custom.review');
     Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
