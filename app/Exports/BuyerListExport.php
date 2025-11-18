@@ -112,7 +112,9 @@ class BuyerListExport implements FromCollection, WithHeadings, WithMapping, With
                     });
                 } else {
                     $q->orWhere(function ($qx) use ($search) {
-                        $qx->orWhere('zipcode', 'like', "%{$search}%")
+                        $clean = str_replace(' ', '', $search);
+
+                        $qx->orWhereRaw("REPLACE(zipcode, ' ', '') LIKE ?", ["%{$clean}%"])
                             ->orWhereHas('categoryData', function ($qc) use ($search) {
                                 $qc->where('name', 'like', "%{$search}%");
                             });
