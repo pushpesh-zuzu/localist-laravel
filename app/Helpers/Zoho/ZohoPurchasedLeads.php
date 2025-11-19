@@ -82,7 +82,14 @@ class ZohoPurchasedLeads
                 'Credit'               => $creditScore,
                 'Date'                 => $formatted,
                 'Purchase_Type'        => $recommendedLeads->purchase_type,
-                'Status'               => $recommendedLeads->status
+                'Status'               => $recommendedLeads->status,
+                'Lead_Distance'         => (string) ($recommendedLeads->distance ?? ''),
+                'LeadId'                => (string) ($recommendedLeads->lead_id ?? ''),
+                'ServiceId'             => (string) ($recommendedLeads->service_id ?? ''),
+                'Unit_Type'             => (string) ($recommendedLeads->unit_type ?? ''),
+                'BuyerId'               => (string) ($recommendedLeads->buyer_id ?? ''),
+                'Disclose_Information'  => (string) ($recommendedLeads->disclose_information ?? ''),
+                'Final_Price'           => (string) ($recommendedLeads->final_price ?? '')
 
             ]],
             'duplicate_check_fields' => ['Lead_Purchase_Id']

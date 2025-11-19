@@ -150,12 +150,21 @@ class ZohoQuoteRequest
         return null;
     }
 
+    $Hired_User = '';
+
+    if (!empty($leadRequest->hired_to)) {
+        $user = User::find($leadRequest->hired_to);
+        $Hired_User = $user->name ?? '';
+    }  
+    
     // Build payload for updating only Status
    
     $payload = [
             'data' => [[
                 'Quote_Request_Record_Id'      => $leadRequest->id,                
                 'Status'                       => $leadRequest->status, 
+                'Hired_User'                   => $Hired_User, 
+                'Hired_To'                     => $leadRequest->hired_to ?? '', 
             ]],
             'duplicate_check_fields' => ['Quote_Request_Record_Id']
 
