@@ -1027,7 +1027,7 @@ class LeadPreferenceController extends Controller
             $value['total_services'] = $items->pluck('service_id')->unique()->count();
             $value['leadcount'] = LeadRequest::where('postcode', $first->postcode)->count();
             $value['service_ids'] = $items->pluck('service_id')->unique()->values();
-            //$value['coordinates'] = json_decode($first->coordinates, true);
+           // $value['coordinates'] = $first->coordinates ? json_decode($first->coordinates, true) : [];
             $finalRows->push($value);
         }
         return $this->sendResponse(__('User Service Data'), $finalRows);
