@@ -143,7 +143,7 @@ class PaymentController extends Controller
                     });
                 }
 
-                return $this->sendResponse('Payment successful!');
+                return $this->sendResponse('Payment successful!',['invoice_number' => $dataInv['invoice_number']]);
             } else {
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');
