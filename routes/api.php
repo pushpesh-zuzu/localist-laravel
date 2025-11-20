@@ -200,6 +200,9 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-profile', [LeadPreferenceController::class, 'getLeadProfile']);
         Route::post('/save-for-later', [LeadPreferenceController::class, 'saveForLater']);
         Route::post('/get-pending-leads', [LeadPreferenceController::class, 'getPendingLeads']);
+        Route::post('/archive-pending-lead', [LeadPreferenceController::class, 'archivePendingLead']);
+        Route::post('/get-archive-leads', [LeadPreferenceController::class, 'getArchiveLeads']);
+        Route::post('/unarchive-pending-lead', [LeadPreferenceController::class, 'unarchivePendingLead']);
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
         Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
         Route::post('/submit-leads', [LeadPreferenceController::class, 'submitLeads']);

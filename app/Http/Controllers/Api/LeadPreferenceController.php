@@ -409,12 +409,14 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse( $relType .' Request Data', $allLeads->values());
     }
 
+    
     public function getPendingLeads(Request $request)
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
             ->where('status','<>', 'hired')
+            ->where('is_archived', 0)
             ->pluck('lead_id')
             ->toArray();
         $allLeads = LeadRequest::with(['customer', 'category'])
@@ -446,6 +448,112 @@ class LeadPreferenceController extends Controller
 
         }
         return $this->sendResponse(__('Lead Request Data'), $allLeads);
+    }
+
+    public function archivePendingLead(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'lead_id' => 'required|integer|exists:lead_requests,id',
+            'customer_id' => 'required|integer|exists:users,id'
+            ], [
+            'lead_id.required' => 'Lead ID is required.',
+            'lead_id.exists' => 'Lead ID does not exist.',
+            'customer_id.required' => 'Customer ID is required.',
+            'customer_id.exists' => 'Customer ID does not exist.',
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $seller_id = $request->user_id;
+        $buyer_id = $request->customer_id;
+        $lead_id = $request->lead_id;
+
+        $leadArchiveId = RecommendedLead::where('seller_id', $seller_id)
+            ->where('buyer_id', $buyer_id)
+            ->where('lead_id', $lead_id)
+            ->value('id');
+        if(!empty($leadArchiveId)){
+            RecommendedLead::where('id', $leadArchiveId)
+                ->update([
+                    'is_archived' => 1
+                ]);
+            return $this->sendResponse('Lead archived successfully');
+        }
+        return $this->sendError('Pending Lead not found');        
+    }
+
+    public function getArchiveLeads(Request $request)
+    {
+        $aVals = $request->all();
+        $user_id = $request->user_id;
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+            ->where('status','<>', 'hired')
+            ->where('is_archived', 1)
+            ->pluck('lead_id')
+            ->toArray();
+        $allLeads = LeadRequest::with(['customer', 'category'])
+            ->whereIn('id',$recommendedLeadIds)
+            ->whereHas('customer', function($query) {
+                $query->where('form_status', 1);
+            })
+            ->orderBy('id', 'DESC')
+            ->get();
+        foreach ($allLeads as $key => $value) {
+            $isActivity = ActivityLog::where('to_user_id',$user_id)
+                                 ->where('from_user_id',$value->customer_id)
+                                 ->where('lead_id',$value->id)
+                                 ->latest()
+                                 ->first();
+            if(!empty($isActivity)){
+                if($isActivity->activity_name == 'Requested a callback'){
+                    $value['profile_view'] = "Requested a callback";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }else{
+                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                    $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
+                }
+
+            }else{
+                $value['profile_view'] = "";
+                $value['profile_view_time'] = "";
+            }
+
+        }
+        return $this->sendResponse(__('Archive Lead Request Data'), $allLeads);
+    }
+
+    public function unarchivePendingLead(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'lead_id' => 'required|integer|exists:lead_requests,id',
+            'customer_id' => 'required|integer|exists:users,id'
+            ], [
+            'lead_id.required' => 'Lead ID is required.',
+            'lead_id.exists' => 'Lead ID does not exist.',
+            'customer_id.required' => 'Customer ID is required.',
+            'customer_id.exists' => 'Customer ID does not exist.',
+        ]);
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $seller_id = $request->user_id;
+        $buyer_id = $request->customer_id;
+        $lead_id = $request->lead_id;
+
+        $leadArchiveId = RecommendedLead::where('seller_id', $seller_id)
+            ->where('buyer_id', $buyer_id)
+            ->where('lead_id', $lead_id)
+            ->value('id');
+        if(!empty($leadArchiveId)){
+            RecommendedLead::where('id', $leadArchiveId)
+                ->update([
+                    'is_archived' => 0
+                ]);
+            return $this->sendResponse('Lead unarchived successfully');
+        }
+        return $this->sendError('Archived Lead not found');        
     }
 
     public function getHiredLeads(Request $request)
