@@ -80,7 +80,7 @@ class CreditScorePredictor{
                 $tRel = number_format(($output['prediction'] * 1.17), 5);
                 $rel = ceil($tRel);
 
-                if($service_id == 49){
+                if($servie_id == 49){
                     // increase by 37%
                     $tRel = number_format(($rel * 1.37), 5);
                 }else{
