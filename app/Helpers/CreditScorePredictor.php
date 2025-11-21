@@ -76,8 +76,19 @@ class CreditScorePredictor{
         $output = self::getPrediction($url, $predict);
         if(!empty($output['success'])){
             if($output['success'] == 1){
+                // increase by 17%
                 $tRel = number_format(($output['prediction'] * 1.17), 5);
                 $rel = ceil($tRel);
+
+                if($service_id == 49){
+                    // increase by 37%
+                    $tRel = number_format(($rel * 1.37), 5);
+                }else{
+                    // increase by 27%
+                    $tRel = number_format(($rel * 1.27), 5);
+                }
+                $rel = ceil($tRel);
+
             }else{
                 print_r($output);
             }
