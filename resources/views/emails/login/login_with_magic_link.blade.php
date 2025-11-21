@@ -65,7 +65,7 @@
     <div class="content">
       <h1>Hi {{$name}}</h1>
       <p>Use the link below to log in to your account </p>
-      <a href="{{ $baseUrl }}/login?client_id={{base64_encode($token)}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Log In Now</a>
+      <a href="{{ $baseUrl }}/en/gb/login?client_id={{base64_encode($token)}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Log In Now</a>
     </div>
   </div>
 </body>
