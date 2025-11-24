@@ -8,69 +8,94 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoQuestionAnswer
 {
-    public function integrateServiceQa($userId, $serviceIds)
-    {
-        $access_token = ZohoHelper::getAccessToken();
-        if (!$access_token) return null;
+   public function integrateServiceQa($userId, $serviceIds)
+{
+    $access_token = ZohoHelper::getAccessToken();
+    if (!$access_token) return null;
 
-        //$serviceIds = LeadPrefrence::where('user_id', $userId)->pluck('service_id')->unique();
+    $results = [];
+    $totalCreditsUsed = 0;
 
-        $results = [];
-        $totalCreditsUsed = 0;
+    foreach ($serviceIds as $serviceId) {
+        try {
+            Log::info('Response question details', [
+                'user_id' => $userId,
+                'serviceId' => $serviceId,
+            ]);
 
-        foreach ($serviceIds as $serviceId) {
-            try {
-                Log::info('response question details', [
-                    'user_id' => $userId,
-                    'serviceId' => $serviceId,
-                ]);
-
-                $payload = $this->buildQaPayloadByServiceId($access_token, $userId, $serviceId);
-                if (!$payload) {
-                    $results[$serviceId] = ['error' => 'Empty or invalid payload'];
-                    continue;
-                }
-
-                $response = $this->upsertToZohoService($access_token, $payload);
-                $responseData = $response->json();
-
-                if (
-                    isset($responseData['data'][0]['status']) &&
-                    $responseData['data'][0]['status'] === 'success' &&
-                    isset($responseData['data'][0]['details']['id'])
-                ) {
-                    $zohoRecordId = $responseData['data'][0]['details']['id'];
-
-                    LeadPrefrence::where('user_id', $userId)->where('service_id', $serviceId)->update([
-                        'zoho_question_id' => $zohoRecordId,
-                    ]);
-                }
-
-                $usedCredits = (int) $response->header('X-API-COST');
-                $totalCreditsUsed += $usedCredits;
-
-                $results[$serviceId] = [
-                    'response' => $response->json(),
-                    'credits_used' => $usedCredits
-                ];
-            } catch (\Throwable $e) {
-                $results[$serviceId] = ['error' => $e->getMessage()];
+            $payload = $this->buildQaPayloadByServiceId($access_token, $userId, $serviceId);
+            if (!$payload) {
+                $results[$serviceId] = ['error' => 'Empty or invalid payload'];
+                continue;
             }
+
+            $response = $this->upsertToZohoService($access_token, $payload);
+            $responseData = $response->json();
+
+            // Extract response item and error message
+            $responseDataItem = $responseData['data'][0] ?? null;
+            $errorMessage = $responseData['data'][0]['message'] ?? null;
+
+            // Log Zoho request and response
+            $dbRecordId = $userId;
+            $dbTable = 'lead_prefrences'; // In your context, this could vary if needed
+
+            try {
+                ZohoHelper::logZohoRequest(
+                    'integrateServiceQa',
+                    'https://www.zohoapis.eu/crm/v2/Question_Answers/upsert',
+                    $payload,           // payload sent to Zoho
+                    $responseDataItem,   // response received from Zoho
+                    $errorMessage,       // error message if any
+                    $userId ?? null,     // main user ID
+                    $dbRecordId,         // database record ID
+                    $dbTable              // database table name
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to log Zoho QA sync', [
+                    'exception' => $e->getMessage(),
+                    'user_id' => $userId
+                ]);
+            }
+
+            if (
+                isset($responseDataItem['status']) &&
+                $responseDataItem['status'] === 'success' &&
+                isset($responseDataItem['details']['id'])
+            ) {
+                $zohoRecordId = $responseDataItem['details']['id'];
+
+                LeadPrefrence::where('user_id', $userId)->where('service_id', $serviceId)->update([
+                    'zoho_question_id' => $zohoRecordId,
+                ]);
+            }
+
+            $usedCredits = (int) $response->header('X-API-COST');
+            $totalCreditsUsed += $usedCredits;
+
+            $results[$serviceId] = [
+                'response' => $responseData,
+                'credits_used' => $usedCredits
+            ];
+        } catch (\Throwable $e) {
+            $results[$serviceId] = ['error' => $e->getMessage()];
         }
-
-        Log::info('Reduced credit Zoho QA sync by service_id', [
-            'user_id' => $userId,
-            'total_credits_used' => $totalCreditsUsed,
-            'results' => $results
-        ]);
-
-        Log::info('response question for user', [
-            'user_id' => $userId,
-            'response' => $results,
-        ]);
-
-        return $results;
     }
+
+    Log::info('Reduced credit Zoho QA sync by service_id', [
+        'user_id' => $userId,
+        'total_credits_used' => $totalCreditsUsed,
+        'results' => $results
+    ]);
+
+    Log::info('Response question for user', [
+        'user_id' => $userId,
+        'response' => $results,
+    ]);
+
+    return $results;
+}
+
 
     protected function buildQaPayloadByServiceId($access_token, $userId, $serviceId)
     {

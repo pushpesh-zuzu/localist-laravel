@@ -478,11 +478,7 @@ class UserController extends Controller
                 });
 
                 // Welcome Email
-                if($user->form_status == 1){
-                    CustomHelper::runInBackground(function() use ($user, $passwordRandomString) {
-                        ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
-                    });
-                }
+               
 
                 // Service Integration
                 CustomHelper::runInBackground(function() use ($user, $serviceAllIds) {
@@ -499,6 +495,12 @@ class UserController extends Controller
                     app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id, $serviceIds);
                 });
 
+
+                 if($user->form_status == 1){
+                    CustomHelper::runInBackground(function() use ($user, $passwordRandomString) {
+                        ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+                    });
+                }
                 // Auto-bid check (currently commented)
                 if ($auto_bid == 0) {
                     // CustomHelper::runInBackground(function() use ($user) {
