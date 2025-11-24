@@ -132,7 +132,7 @@ class ZohoQuestionAnswer
                 'Lead_Questions_Lookup' => $lookUpId,
                 'Unique_QA_Key' => "{$lookUpId}_{$serviceId}",
                 'Name' => $category->name ?? 'Service Q&A',
-                'QuestionAnswers' => $formattedQA,
+                'Question_Answers' => $formattedQA,
             ]],
             'duplicate_check_fields' => ['Unique_QA_Key']
         ];
@@ -224,7 +224,7 @@ class ZohoQuestionAnswer
                     'Question_Id'           => $pref->id,
                     'Lead_Questions_Lookup' => ZohoHelper::getZohoLeadBuyerId($access_token, $userId),
                     'Name'                  => $category->name,
-                    'QuestionAnswers'       => $formattedQA,
+                    'Question_Answers'       => $formattedQA,
                 ]],
                 'duplicate_check_fields' => ['Question_Id']
             ];
