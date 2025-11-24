@@ -643,7 +643,7 @@ class MyRequestController extends Controller
                         }
                     });
 
-                app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+              
                 // app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
                 $lead = LeadRequest::find($sId);
                 $sellers = $leadService->getAllSellers($lead);
@@ -655,14 +655,19 @@ class MyRequestController extends Controller
                     foreach($sortedSellers as $seller){
                         ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                     }
-                }
-                
+                }                
 
                 //Auto bid related emails
                 app(self::class)->sendNewLeadRequestAutoBidOff();
                 app(self::class)->sendLeadEmailCreditEnough();
                 // app(self::class)->sendLeadEmailCreditNotEnough();
             });
+
+            if (!empty($euId)) {
+                CustomHelper::runInBackground(function() use ($euId, $sId) {
+                    app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                });
+             }
 
             //  if (!empty($euId)) {
             //     CustomHelper::runInBackground(function() use ($sId, $euId, $leadService) {
