@@ -447,27 +447,72 @@ class UserController extends Controller
             }
             $user->remember_tokens = $token;
 
-            CustomHelper::runInBackground(function() use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString, $auto_bid, $serviceIds) {
-                if ($user->user_type == 1) {
+            // CustomHelper::runInBackground(function() use ($user, $serviceAllIds, $locationIds, $questionIds, $passwordRandomString, $auto_bid, $serviceIds) {
+            //     if ($user->user_type == 1) {
 
+            //         app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
+            //         if($user->form_status ==1){
+            //             ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
+            //         }
+
+            //         //app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
+            //         app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
+            //         app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
+            //         app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);
+
+            //         if ($auto_bid == 0) {
+            //             //app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
+            //         }
+
+            //     } elseif ($user->user_type == 2) {
+            //         app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
+            //     }
+            // });
+
+
+            if ($user->user_type == 1) {
+
+                // Zoho Lead Buyers
+                CustomHelper::runInBackground(function() use ($user) {
                     app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user->id);
-                    if($user->form_status ==1){
+                });
+
+                // Welcome Email
+                if($user->form_status == 1){
+                    CustomHelper::runInBackground(function() use ($user, $passwordRandomString) {
                         ZohoEmails::sendWelcomeEmail($user->id, $passwordRandomString);
-                    }
-
-                    //app(ZohoSocialMedia::class)->integrateSocialLinks($user->id);
-                    app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
-                    app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
-                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id,$serviceIds);
-
-                    if ($auto_bid == 0) {
-                        //app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
-                    }
-
-                } elseif ($user->user_type == 2) {
-                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
+                    });
                 }
-            });
+
+                // Service Integration
+                CustomHelper::runInBackground(function() use ($user, $serviceAllIds) {
+                    app(ZohoService::class)->integrateService($user->id, $serviceAllIds);
+                });
+
+                // Service Locations
+                CustomHelper::runInBackground(function() use ($user, $locationIds) {
+                    app(ZohoServiceLocations::class)->integrateServiceLocations($user->id, $locationIds);
+                });
+
+                // Service QA
+                CustomHelper::runInBackground(function() use ($user, $serviceIds) {
+                    app(ZohoQuestionAnswer::class)->integrateServiceQa($user->id, $serviceIds);
+                });
+
+                // Auto-bid check (currently commented)
+                if ($auto_bid == 0) {
+                    // CustomHelper::runInBackground(function() use ($user) {
+                    //     app(self::class)->sendEncouragementEmail(['userId' => $user->id]);
+                    // });
+                }
+
+            } elseif ($user->user_type == 2) {
+
+                CustomHelper::runInBackground(function() use ($user) {
+                    app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($user->id);
+                });
+
+            }
             return $this->sendResponse('Registration successfully.', $user);
 
         }else{
