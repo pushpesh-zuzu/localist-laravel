@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoQuoteRequest
 {
-    public function integrateQuoteRequest($userId,$id)
+    public function integrateQuoteRequest($userId, $id)
     {
         $accessToken = ZohoHelper::getAccessToken();
 
@@ -22,12 +22,12 @@ class ZohoQuoteRequest
         }
 
         $leadRequests = LeadRequest::where('id', $id)
-               ->first();
+            ->first();
 
 
         // $recommendedLeadId = $this->getZohoPurchasedLeadsId($accessToken, $recommendedLeads->id);
 
-        $payload = $this->buildQuoteRequestPayload($accessToken,$leadRequests,$userId);
+        $payload = $this->buildQuoteRequestPayload($accessToken, $leadRequests, $userId);
 
         Log::info('Zoho API Purchase Payload', [
             'user_id' => $userId,
@@ -36,7 +36,7 @@ class ZohoQuoteRequest
         ]);
         if (!$payload) return null;
 
-        $response = $this->upsertToZohoService($accessToken,$leadRequests, $payload);
+        $response = $this->upsertToZohoService($accessToken, $leadRequests, $payload);
 
         $responseData = $response->json();
 
@@ -52,24 +52,45 @@ class ZohoQuoteRequest
             ]);
         }
 
-        Log::info('Zoho API Credit Used for Quote Request', [
-            'user_id' => $userId,
-            'lead_request_id' => $id,
-            'response' => $response->json(),
-        ]);
+
+        $responseDataItem = $responseData['data'][0] ?? null;
+        $errorMessage = $responseData['data'][0]['message'] ?? null;
+
+        $dbRecordId = $id;  // LeadRequest ID
+        $dbTable =  'lead_requests';
+
+        try {
+            ZohoHelper::logZohoRequest(
+                'integrateQuoteRequest',
+                'https://www.zohoapis.eu/crm/v2/Quote_Request/upsert',
+                $payload,           // payload sent to Zoho
+                $responseDataItem,   // response received from Zoho
+                $errorMessage,
+                $userId ?? null,      // main user ID
+                $dbRecordId,         // database record ID
+                $dbTable,            // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho request', [
+                'exception' => $e->getMessage(),
+                'user_id' => $userId,
+                'lead_request_id' => $id,
+            ]);
+        }
+
+
+
         return $response->json();
-
-
     }
 
-    protected function buildQuoteRequestPayload($accessToken, $leadRequests,$userId)
+    protected function buildQuoteRequestPayload($accessToken, $leadRequests, $userId)
     {
 
-        $lookUpId =ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
-        $userName=User::find($userId)->name;
-        $customerName=User::find($leadRequests->customer_id )->name;
-        $service=Category::find($leadRequests->service_id)->name;
-        $creditScore=$leadRequests->credit_score;
+        $lookUpId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+        $userName = User::find($userId)->name;
+        $customerName = User::find($leadRequests->customer_id)->name;
+        $service = Category::find($leadRequests->service_id)->name;
+        $creditScore = $leadRequests->credit_score;
 
         $questions = json_decode($leadRequests->arrayed_questions, true); // decode to array
 
@@ -114,7 +135,7 @@ class ZohoQuoteRequest
         ];
     }
 
-    protected function upsertToZohoService($accessToken,$leadRequests, array $payload)
+    protected function upsertToZohoService($accessToken, $leadRequests, array $payload)
     {
 
         if ($leadRequests->zoho_quote_request_id) {
@@ -135,52 +156,172 @@ class ZohoQuoteRequest
 
 
     public function updateZohoQuoteStatus($leadRequestId)
-{
-    $accessToken = ZohoHelper::getAccessToken();
-    if (!$accessToken) return null;
+    {
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) return null;
 
-    $leadRequest = LeadRequest::find($leadRequestId);
-    if (!$leadRequest) return null;
+        $leadRequest = LeadRequest::find($leadRequestId);
+        if (!$leadRequest) return null;
 
-    
-    if (empty($leadRequest->zoho_quote_request_id)) {
-        Log::warning("Zoho update skipped — no zoho_quote_request_id", [
-            'lead_request_id' => $leadRequestId
-        ]);
-        return null;
-    }
 
-    $Hired_User = '';
+        if (empty($leadRequest->zoho_quote_request_id)) {
+            Log::warning("Zoho update skipped — no zoho_quote_request_id", [
+                'lead_request_id' => $leadRequestId
+            ]);
+            return null;
+        }
 
-    if (!empty($leadRequest->hired_to)) {
-        $user = User::find($leadRequest->hired_to);
-        $Hired_User = $user->name ?? '';
-    }  
-    
-    // Build payload for updating only Status
-   
-    $payload = [
+        $Hired_User = '';
+
+        if (!empty($leadRequest->hired_to)) {
+            $user = User::find($leadRequest->hired_to);
+            $Hired_User = $user->name ?? '';
+        }
+
+        // Build payload for updating only Status
+
+        $payload = [
             'data' => [[
-                'Quote_Request_Record_Id'      => $leadRequest->id,                
-                'Status'                       => $leadRequest->status, 
-                'Hired_User'                   => $Hired_User, 
-                'Hired_To'                     => $leadRequest->hired_to ?? '', 
+                'Quote_Request_Record_Id'      => $leadRequest->id,
+                'Status'                       => $leadRequest->status,
+                'Hired_User'                   => $Hired_User,
+                'Hired_To'                     => $leadRequest->hired_to ?? '',
             ]],
             'duplicate_check_fields' => ['Quote_Request_Record_Id']
 
         ];
 
-    // Update using your existing Zoho update function
-    $response = $this->upsertToZohoService($accessToken, $leadRequest, $payload);
+        // Update using your existing Zoho update function
+        $response = $this->upsertToZohoService($accessToken, $leadRequest, $payload);
 
-    Log::info('Zoho Quote Status Updated', [
-        'lead_request_id' => $leadRequestId,
-        'new_status'      => $leadRequest->status,
-        'response'        => $response->json()
-    ]);
+        Log::info('Zoho Quote Status Updated', [
+            'lead_request_id' => $leadRequestId,
+            'new_status'      => $leadRequest->status,
+            'response'        => $response->json()
+        ]);
 
-    return $response->json();
-}
+
+
+        $responseDataItem = $response->json()['data'][0] ?? null;
+        $errorMessage = $response->json()['data'][0]['message'] ?? null;
+        $dbRecordId = $leadRequest->id;
+        $dbTable = 'lead_requests';
+
+        // Safe Zoho logging
+        try {
+            ZohoHelper::logZohoRequest(
+                'updateZohoQuoteStatus',
+                'https://www.zohoapis.eu/crm/v2/Quote_Request/upsert',
+                $payload,           // payload sent to Zoho
+                $responseDataItem,   // response received from Zoho
+                $errorMessage,       // error message if any
+                $leadRequest->customer_id ?? null, // main user ID
+                $dbRecordId,         // database record ID
+                $dbTable,            // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho quote status update', [
+                'exception' => $e->getMessage(),
+                'lead_request_id' => $leadRequestId
+            ]);
+        }
+
+
+
+
+
+
+        return $response->json();
+    }
+
+
+
+
+
+
+
+    public function updateZohoQuoteAssignToCustomer($userId, $leadRequestId)
+    {
+        // 1. Get Access Token
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error("Zoho Access Token missing");
+            return null;
+        }
+
+        // 2. Get Zoho Lookup ID of Quote Customer
+        $lookUpId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+        if (empty($lookUpId)) {
+            Log::warning("Zoho Lookup ID not found for user", [
+                'user_id' => $userId
+            ]);
+            return null;
+        }
+
+        // 3. Fetch Lead Request
+        $leadRequest = LeadRequest::find($leadRequestId);
+        if (!$leadRequest) {
+            Log::warning("Lead Request not found", [
+                'lead_request_id' => $leadRequestId
+            ]);
+            return null;
+        }
+
+        // 4. Check Zoho Quote Request ID exists
+        if (empty($leadRequest->zoho_quote_request_id)) {
+            Log::warning("Update skipped — missing zoho_quote_request_id", [
+                'lead_request_id' => $leadRequestId
+            ]);
+            return null;
+        }
+
+        // 5. Payload
+        $payload = [
+            'data' => [[
+                'Quote_Request_Record_Id' => $leadRequest->id,
+                'Quote_Customer_Lookup'   => $lookUpId,
+            ]],
+            'duplicate_check_fields' => ['Quote_Request_Record_Id']
+        ];
+
+        // 6. Upsert
+        $response = $this->upsertToZohoService($accessToken, $leadRequest, $payload);
+
+        $responseDataItem = $response?->json()['data'][0] ?? null;
+        $errorMessage = $response?->json()['data'][0]['message'] ?? null;
+        $dbRecordId = $leadRequest->id;
+        $dbTable = 'lead_requests';
+
+        try {
+            ZohoHelper::logZohoRequest(
+                'updateZohoQuoteAssignToCustomer',
+                'https://www.zohoapis.eu/crm/v2/Quote_Request/upsert',
+                $payload,            // payload sent to Zoho
+                $responseDataItem,    // response received from Zoho
+                $errorMessage,        // error message if any
+                $userId ?? null,      // main user ID
+                $dbRecordId,          // database record ID
+                $dbTable,             // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho quote assignment', [
+                'exception' => $e->getMessage(),
+                'lead_request_id' => $leadRequestId
+            ]);
+        }
+
+
+        return $response?->json();
+    }
+
+
+
+
+
+
+
+
+
 
     // protected function getZohoPurchasedLeadsId($accessToken, $recommendedLeadId)
     // {

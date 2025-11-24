@@ -1,11 +1,22 @@
 <x-app-layout>
   <x-slot name="header">{{ __('Quote Customers (Test Complete List)') }} </x-slot>
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+    </div>
+   @endif
 
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+    </div>
+   @endif
   <div class="card mb-4">
     <div class="card-header">
       <strong>{{ __('Quote Test Customers') }}</strong>
     </div>
 
+   
     <div class="card-body">
 
       <div class="container mb-5">
@@ -38,6 +49,7 @@
               <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
               <th scope="col">Last Login</th>
+              <th>Zoho Status</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
             </tr>
@@ -48,6 +60,7 @@
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
+               
               <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
@@ -58,9 +71,19 @@
             ? \Carbon\Carbon::parse($aRow->lastLogin->login_at)->format('m/d/Y h:i A')
             : '' }}
               </td>
+               <td>{{ $aRow->zoho_record_id  ? 'Inserted'     : 'Not-inserted'; }}</td>
               <td>Test</td>
-
+         
               <td>
+
+                @can('quotecustomers.test-complete-sendtozoho')
+                      @if(!$aRow->zoho_record_id && !empty($aRow->name) && !empty($aRow->email))
+                          <a href="{{ route('zoho.send', ['type' => 'complete', 'id' => $aRow->id]) }}" class="text-primary text-decoration-none">
+                              <i class="fa-solid fa-cloud-arrow-up"></i> Send to Zoho |
+                          </a>
+                      @endif
+               @endcan
+
                 @can('quotecustomers.test_complete_bids')
                 <a href="{{ route('buyer.buyerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
                 @endcan

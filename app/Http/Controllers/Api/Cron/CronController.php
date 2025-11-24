@@ -40,7 +40,8 @@ class CronController extends Controller
         ]);
     }
 
-    public function onEveningBasis(){
+    public function onEveningBasis()
+    {
         $sendGroupedLeadEmail = $this->sendGroupedLeadEmail();
 
         return response()->json([
@@ -51,8 +52,24 @@ class CronController extends Controller
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
-
     }
+
+    public function onMinuteBasis()
+    {
+
+        $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Zoho email cron ran successfully.',
+            'details' => [
+                'abandoned_cart_reminder_summary' => $sendAbandonedCartReminderEmail,
+            ],
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
+
 
     public function onDayBasis()
     {
@@ -68,7 +85,7 @@ class CronController extends Controller
             'details' => [
                 'new_lead_after_7_days' => $newLeadAfter7days,
                 'new_lead_after_5_days' => $newLeadAfter5days,
-                 'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail
+                'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -392,9 +409,9 @@ class CronController extends Controller
             ->groupBy('user_id')
             ->toBase();
 
-         User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
-                $join->on('users.id', '=', 'latest_plan.user_id');
-            })
+        User::leftJoinSub($latestPlanHistory, 'latest_plan', function ($join) {
+            $join->on('users.id', '=', 'latest_plan.user_id');
+        })
             ->where('users.form_status', 1)
             ->whereIn('users.user_type', [1, 3])
             ->whereNotNull('users.zoho_record_id')
@@ -404,7 +421,7 @@ class CronController extends Controller
             )
             ->select('users.id', 'users.total_credit', 'latest_plan.last_plan_date')
 
-                    ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
+            ->chunk(1000, function ($sellersChunk) use (&$sellerLeadSummary, $from, $to) {
 
                 foreach ($sellersChunk as $seller) {
                     $serviceLocations = UserServiceLocation::where('user_id', $seller->id)->get();
@@ -897,7 +914,7 @@ class CronController extends Controller
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
 
-                   $emailedLeadIds = EmailLog::where('user_id', $seller->id)
+                    $emailedLeadIds = EmailLog::where('user_id', $seller->id)
                         ->where('setting_name', 'Send Lead Details Email At Evening')
                         ->pluck('lead_id')
                         ->all();
@@ -916,25 +933,25 @@ class CronController extends Controller
                         // Check if email was already sent today for this seller
 
                         $alreadySents = EmailLog::where('user_id', $seller->id)
-                                ->whereDate('created_at', Carbon::today())
-                                ->where('setting_name', 'Send Lead Details Email At Evening')
-                                ->exists();
+                            ->whereDate('created_at', Carbon::today())
+                            ->where('setting_name', 'Send Lead Details Email At Evening')
+                            ->exists();
 
 
-                            if ($alreadySents) {
-                                continue;
-                            }
+                        if ($alreadySents) {
+                            continue;
+                        }
 
 
-                            // Send one email for all leads
-                            $result=ZohoEmails::sendGroupedLeadDetails($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
-                            $totalUnsentLeadEmails++;
+                        // Send one email for all leads
+                        $result = ZohoEmails::sendGroupedLeadDetails($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
+                        $totalUnsentLeadEmails++;
 
-                            Log::info('Zoho Email for bid-not-enough leads', [
-                                'user_id' => $seller->id,
-                                'response' => $result,
-                            ]);
-                            // Log one entry per seller to avoid re-sending
+                        Log::info('Zoho Email for bid-not-enough leads', [
+                            'user_id' => $seller->id,
+                            'response' => $result,
+                        ]);
+                        // Log one entry per seller to avoid re-sending
 
                     }
                 }
@@ -970,7 +987,7 @@ class CronController extends Controller
 
         foreach ($leads as $lead) {
 
-            $userId=$lead->customer_id;
+            $userId = $lead->customer_id;
             $result = $leadService->getAllSellers($lead);
 
             if (isset($result['response']['sellers'])) {
@@ -979,8 +996,8 @@ class CronController extends Controller
                 $w80 = (int) ($recommendedCount * 0.8);
 
                 $sorted = $result['response']['sellers']
-                ->sortByDesc('total_credit')
-                ->values();
+                    ->sortByDesc('total_credit')
+                    ->values();
 
                 $topN = $sorted->take($w80);
                 $remaining = $sorted->slice($w80)
@@ -992,29 +1009,28 @@ class CronController extends Controller
 
                 $sellersFinalList = $finalSorted->take(10)->values()->toArray();
 
-                    $alreadySent = EmailLog::where('user_id',$userId)
-                        ->where('lead_id', $lead->id)
-                        ->where('setting_name', 'Unsold Leads After 12 hrs')
-                        ->exists();
+                $alreadySent = EmailLog::where('user_id', $userId)
+                    ->where('lead_id', $lead->id)
+                    ->where('setting_name', 'Unsold Leads After 12 hrs')
+                    ->exists();
 
-                    $alreadyRecommended = RecommendedLead::where('lead_id', $lead->id)
-                        ->exists();
+                $alreadyRecommended = RecommendedLead::where('lead_id', $lead->id)
+                    ->exists();
 
-                    if ($alreadyRecommended) {
-                        continue;
-                    }
+                if ($alreadyRecommended) {
+                    continue;
+                }
 
 
-                    if (!$alreadySent) {
-                        $dataU1['userId'] = $userId;
-                        $dataU1['leadId'] = $lead->id;
-                        $dataU1['sellerDetails'] = $sellersFinalList;
-                        $dataU1['setting_name'] = 'Unsold Leads After 12 hrs';
-                        $dataU1['subject'] = 'Opportunity Alert: A Lead Needs Your Service';
-                        ZohoEmails::unsoldLeadEmailAfter12hrs($dataU1);
-                        $totalUnsentLeadEmails++;
-                    }
-
+                if (!$alreadySent) {
+                    $dataU1['userId'] = $userId;
+                    $dataU1['leadId'] = $lead->id;
+                    $dataU1['sellerDetails'] = $sellersFinalList;
+                    $dataU1['setting_name'] = 'Unsold Leads After 12 hrs';
+                    $dataU1['subject'] = 'Opportunity Alert: A Lead Needs Your Service';
+                    ZohoEmails::unsoldLeadEmailAfter12hrs($dataU1);
+                    $totalUnsentLeadEmails++;
+                }
             }
         }
 
@@ -1027,175 +1043,208 @@ class CronController extends Controller
 
 
     public  function sendNextDayExpiredQuoteEmail()
-  {
-     $batchSize = 500; 
-    $expirationDays = 21; 
-    $dayAfterExpiry = 1; 
-    $totalUnsentLeadEmails = 0;
+    {
+        $batchSize = 500;
+        $expirationDays = 21;
+        $dayAfterExpiry = 1;
+        $totalUnsentLeadEmails = 0;
 
-    LeadRequest::with(['customer', 'category'])
-    ->whereIn('status', ['new', 'pending'])
-    ->whereDate('created_at', '=', now()->subDays($expirationDays + $dayAfterExpiry)->toDateString()) 
-    ->whereNull('lead_requests.deleted_at')
-    ->whereHas('customer', function ($query) {
-        $query->whereNotNull('zoho_record_id')
-        ->whereNull('deleted_at');
-    })
-    ->orderBy('id')
-        ->chunk($batchSize, function ($leads) use (&$totalUnsentLeadEmails) { 
-        
-            foreach ($leads as $lead) {
+        LeadRequest::with(['customer', 'category'])
+            ->whereIn('status', ['new', 'pending'])
+            ->whereDate('created_at', '=', now()->subDays($expirationDays + $dayAfterExpiry)->toDateString())
+            ->whereNull('lead_requests.deleted_at')
+            ->whereHas('customer', function ($query) {
+                $query->whereNotNull('zoho_record_id')
+                    ->whereNull('deleted_at');
+            })
+            ->orderBy('id')
+            ->chunk($batchSize, function ($leads) use (&$totalUnsentLeadEmails) {
 
-                  try {
-                    if (empty($lead->customer) || empty($lead->customer->email)) {
-                        continue;
-                    }                
+                foreach ($leads as $lead) {
 
-                    $customerName = $lead->customer->name ?? '';
-                    $serviceName = $lead->category->name ?? '';
-                    $userId = $lead->customer->id ?? null;
-                  
-                    $alreadySent = EmailLog::where('user_id', $userId)
-                        ->where('lead_id', $lead->id)
-                        ->where('setting_name', 'Next Day Expired Quote Email')
-                        ->exists();                    
+                    try {
+                        if (empty($lead->customer) || empty($lead->customer->email)) {
+                            continue;
+                        }
 
-                    if (!$alreadySent) {                        
+                        $customerName = $lead->customer->name ?? '';
+                        $serviceName = $lead->category->name ?? '';
+                        $userId = $lead->customer->id ?? null;
 
-                        $user = User::where('email',$lead->customer->email)->where('form_status', '1')->first();
-                        $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-                        $user->update(['remember_token' => $token]);
-                        
-                        $data = [
-                            'userId' => $userId,
-                            'leadId' => $lead->id,
-                            'customerName' => $customerName,
-                            'serviceName' => $serviceName,
-                            'token' => $token ?? '',                            
-                            'setting_name' => 'Next Day Expired Quote Email',
-                            'subject' => "Need a hand finishing your project",
-                        ];
+                        $alreadySent = EmailLog::where('user_id', $userId)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'Next Day Expired Quote Email')
+                            ->exists();
 
-                        ZohoEmails::sendNextDayExpiredQuoteEmail($data);                       
+                        if (!$alreadySent) {
 
-                        $totalUnsentLeadEmails++;
+                            $user = User::where('email', $lead->customer->email)->where('form_status', '1')->first();
+                            $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                            $user->update(['remember_token' => $token]);
+
+                            $data = [
+                                'userId' => $userId,
+                                'leadId' => $lead->id,
+                                'customerName' => $customerName,
+                                'serviceName' => $serviceName,
+                                'token' => $token ?? '',
+                                'setting_name' => 'Next Day Expired Quote Email',
+                                'subject' => "Need a hand finishing your project",
+                            ];
+
+                            ZohoEmails::sendNextDayExpiredQuoteEmail($data);
+
+                            $totalUnsentLeadEmails++;
+                        }
+                    } catch (\Throwable $e) {
+                        return $this->sendError(__("Failed next-day expired quote email for lead ID {$lead->id}: {$e->getMessage()}"), 404);
                     }
+                }
+            });
 
+        return response()->json([
+            'status' => 'success',
+            'unsent_lead_emails' => $totalUnsentLeadEmails,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
+
+
+
+    // public function sendNoBidsOnQuote24hrsEmail()
+    // {
+    //     $batchSize = 500;
+    //     $hoursAgo = 24;
+    //     $totalEmailsSent = 0;
+
+    //     LeadRequest::with(['customer', 'category'])
+    //         ->where('status', 'new')
+    //         ->whereDoesntHave('recommendedLeads')
+    //         ->where('created_at', '<=', now()->subHours($hoursAgo))
+    //         ->whereNull('deleted_at')
+    //         ->whereHas('customer', function ($query) {
+    //             $query->whereNotNull('zoho_record_id')
+    //                   ->whereNull('deleted_at');
+    //         })
+    //         ->orderBy('id')
+    //         ->chunk($batchSize, function ($leads) use (&$totalEmailsSent) {
+    //              Log::info('Fetched Leads Batch', ['count' => $leads->count()]);
+    //             foreach ($leads as $lead) {
+
+    //                 $logData = [
+    //                     'lead_id' => $lead->id,
+    //                     'lead_status' => $lead->status,
+    //                     'customer_name' => $lead->customer->name ?? null,
+    //                     'customer_email' => $lead->customer->email ?? null,
+    //                     'service' => $lead->category->name ?? null,
+    //                     'created_at' => $lead->created_at,
+    //                 ];
+
+    //                 \Log::info('Lead found without recommended leads:', $logData);
+
+
+    //                 try {
+    //                     $user = $lead->customer;
+    //                     if (empty($user) || empty($user->email)) {
+    //                         continue;
+    //                     }
+
+    //                     $alreadySent = EmailLog::where('user_id', $user->id)
+    //                         ->where('lead_id', $lead->id)
+    //                         ->where('setting_name', 'No Bids On Quote Request')
+    //                         ->exists();
+
+    //                     if ($alreadySent) {
+    //                         continue;
+    //                     }
+
+    //                     $user = User::where('email', $user->email)
+    //                         ->where('form_status', '1')
+    //                         ->first();
+
+    //                     if (!$user) {
+    //                         continue;
+    //                     }
+
+    //                     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+    //                     $user->update(['remember_token' => $token]);
+
+    //                     $data = [
+    //                         'userId' => $user->id,
+    //                         'leadId' => $lead->id,
+    //                         'customerName' => $user->name ?? '',
+    //                         'serviceName' => $lead->category->name ?? '',
+    //                         'token' => $token,
+    //                          ];
+
+    //                     ZohoEmails::sendNoBidsOnQuote24hrsEmail($data);
+
+
+    //                     $totalEmailsSent++;
+
+    //                 } catch (\Throwable $e) {
+    //                     Log::error("Failed No Bids On Quote 24hrs Email for lead ID {$lead->id}: {$e->getMessage()}");
+    //                     continue;
+    //                 }
+    //             }
+    //         });
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'emails_sent' => $totalEmailsSent,
+    //         'timestamp' => now()->toDateTimeString(),
+    //     ]);
+    // }
+
+    public function sendAbandonedCartReminderEmails()
+    {
+        $batchSize = 500;
+        $totalEmailsSent = 0;
+
+        $cutoffTime = now()->subMinutes(30);
+
+        $query = AbandonedUser::with(['categoryData'])
+            ->whereIn('user_type', [2, 3])
+            ->where('form_status', 0)
+            ->where('created_at', '<=', $cutoffTime)
+            ->whereNotNull('email')
+            ->whereNotNull('zoho_record_id')
+            ->orderBy('id', 'DESC');
+
+        // Process users in chunks
+        $query->chunk($batchSize, function ($users) use (&$totalEmailsSent) {
+
+            foreach ($users as $user) {
+                try {
+                    // Check if reminder already sent
+                    $alreadySent = EmailLog::where('user_id', $user->id)
+                        ->where('setting_name', 'Send Abandoned Encouragement Email')
+                        ->exists();
+
+                    if (!$alreadySent) {
+
+                        $serviceName = $user->categoryData->name ?? null;
+                        // Send email
+                        ZohoEmails::sendAbandonedEncouragementEmail($user->id, $serviceName);
+
+                        $totalEmailsSent++;
+                    }
                 } catch (\Throwable $e) {
-                     return $this->sendError(__("Failed next-day expired quote email for lead ID {$lead->id}: {$e->getMessage()}"), 404);
+                    Log::error("Failed to send abandoned cart email to user ID {$user->id}: {$e->getMessage()}");
+                    continue;
                 }
             }
         });
 
-     return response()->json([
-        'status' => 'success',
-        'unsent_lead_emails' => $totalUnsentLeadEmails,
-        'timestamp' => now()->toDateTimeString(),
-    ]);
-   }
+        return response()->json([
+            'status' => 'success',
+            'emails_sent' => $totalEmailsSent,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
 
 
 
-
-// public function sendNoBidsOnQuote24hrsEmail()
-// {
-//     $batchSize = 500;
-//     $hoursAgo = 24;
-//     $totalEmailsSent = 0;
-
-//     LeadRequest::with(['customer', 'category'])
-//         ->where('status', 'new')
-//         ->whereDoesntHave('recommendedLeads')
-//         ->where('created_at', '<=', now()->subHours($hoursAgo))
-//         ->whereNull('deleted_at')
-//         ->whereHas('customer', function ($query) {
-//             $query->whereNotNull('zoho_record_id')
-//                   ->whereNull('deleted_at');
-//         })
-//         ->orderBy('id')
-//         ->chunk($batchSize, function ($leads) use (&$totalEmailsSent) {
-//              Log::info('Fetched Leads Batch', ['count' => $leads->count()]);
-//             foreach ($leads as $lead) {
-
-//                 $logData = [
-//                     'lead_id' => $lead->id,
-//                     'lead_status' => $lead->status,
-//                     'customer_name' => $lead->customer->name ?? null,
-//                     'customer_email' => $lead->customer->email ?? null,
-//                     'service' => $lead->category->name ?? null,
-//                     'created_at' => $lead->created_at,
-//                 ];
-
-//                 \Log::info('Lead found without recommended leads:', $logData);
-
-
-//                 try {
-//                     $user = $lead->customer;
-//                     if (empty($user) || empty($user->email)) {
-//                         continue;
-//                     }
-
-//                     $alreadySent = EmailLog::where('user_id', $user->id)
-//                         ->where('lead_id', $lead->id)
-//                         ->where('setting_name', 'No Bids On Quote Request')
-//                         ->exists();
-
-//                     if ($alreadySent) {
-//                         continue;
-//                     }
-
-//                     $user = User::where('email', $user->email)
-//                         ->where('form_status', '1')
-//                         ->first();
-
-//                     if (!$user) {
-//                         continue;
-//                     }
-
-//                     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-//                     $user->update(['remember_token' => $token]);
-
-//                     $data = [
-//                         'userId' => $user->id,
-//                         'leadId' => $lead->id,
-//                         'customerName' => $user->name ?? '',
-//                         'serviceName' => $lead->category->name ?? '',
-//                         'token' => $token,
-//                          ];
-
-//                     ZohoEmails::sendNoBidsOnQuote24hrsEmail($data);
-
-                  
-//                     $totalEmailsSent++;
-
-//                 } catch (\Throwable $e) {
-//                     Log::error("Failed No Bids On Quote 24hrs Email for lead ID {$lead->id}: {$e->getMessage()}");
-//                     continue;
-//                 }
-//             }
-//         });
-
-//     return response()->json([
-//         'status' => 'success',
-//         'emails_sent' => $totalEmailsSent,
-//         'timestamp' => now()->toDateTimeString(),
-//     ]);
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   
 }

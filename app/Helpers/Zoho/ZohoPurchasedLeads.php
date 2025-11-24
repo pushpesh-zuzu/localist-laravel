@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoPurchasedLeads
 {
-    public function integratePurchaseLeads($userId,$id)
+    public function integratePurchaseLeads($userId, $id)
     {
         $accessToken = ZohoHelper::getAccessToken();
 
@@ -22,12 +22,12 @@ class ZohoPurchasedLeads
         }
 
         $recommendedLeads = RecommendedLead::where('id', $id)
-               ->first();
+            ->first();
 
 
         // $recommendedLeadId = $this->getZohoPurchasedLeadsId($accessToken, $recommendedLeads->id);
 
-        $payload = $this->buildPurchasedLeadPayload($accessToken,$recommendedLeads,$userId);
+        $payload = $this->buildPurchasedLeadPayload($accessToken, $recommendedLeads, $userId);
 
         Log::info('Zoho API Purchase Payload', [
             'user_id' => $userId,
@@ -36,7 +36,7 @@ class ZohoPurchasedLeads
         ]);
         if (!$payload) return null;
 
-        $response = $this->upsertToZohoService($accessToken,$recommendedLeads, $payload);
+        $response = $this->upsertToZohoService($accessToken, $recommendedLeads, $payload);
 
         $responseData = $response->json();
 
@@ -52,24 +52,45 @@ class ZohoPurchasedLeads
             ]);
         }
 
-        Log::info('Zoho API Credit Used for Purchased Sync', [
-            'user_id' => $userId,
-            'purchase_id' => $id,
-            'response' => $response->json(),
-        ]);
+
+        // ===== Safe Zoho Logging =====
+        $responseDataItem = $responseData['data'][0] ?? null;
+        $errorMessage = $responseData['data'][0]['message'] ?? null;
+        $dbRecordId = $id;
+        $dbTable = 'recommended_leads';
+
+        try {
+            ZohoHelper::logZohoRequest(
+                'integratePurchaseLeads',
+                'https://www.zohoapis.eu/crm/v2/Lead_Purchased/upsert',
+                $payload,             // payload sent to Zoho
+                $responseDataItem,    // response received from Zoho
+                $errorMessage,        // error message if any
+                $userId ?? null,      // main user ID
+                $dbRecordId,          // database record ID
+                $dbTable,             // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho Purchased Leads', [
+                'exception' => $e->getMessage(),
+                'user_id' => $userId,
+                'purchase_id' => $id
+            ]);
+        }
+
+
+
         return $response->json();
-
-
     }
 
-    protected function buildPurchasedLeadPayload($accessToken, $recommendedLeads,$userId)
+    protected function buildPurchasedLeadPayload($accessToken, $recommendedLeads, $userId)
     {
 
-        $lookUpId =ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
-        $userName=User::find($userId)->name;
-        $customerName=User::find($recommendedLeads->buyer_id)->name;
-        $service=Category::find($recommendedLeads->service_id)->name;
-        $creditScore=LeadRequest::find($recommendedLeads->lead_id)->credit_score;
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        $userName = User::find($userId)->name;
+        $customerName = User::find($recommendedLeads->buyer_id)->name;
+        $service = Category::find($recommendedLeads->service_id)->name;
+        $creditScore = LeadRequest::find($recommendedLeads->lead_id)->credit_score;
         $datetime = new DateTime($recommendedLeads->created_at, new DateTimeZone('Europe/London'));
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
 
@@ -97,13 +118,13 @@ class ZohoPurchasedLeads
         ];
     }
 
-    protected function upsertToZohoService($accessToken,$recommendedLeads, array $payload)
+    protected function upsertToZohoService($accessToken, $recommendedLeads, array $payload)
     {
 
         if ($recommendedLeads->zoho_purchase_id) {
 
             $response = Http::withToken($accessToken)
-                ->put("https://www.zohoapis.eu/crm/v2/Lead_Purchased/{$recommendedLeads->zoho_purchase_id}", [
+                ->patch("https://www.zohoapis.eu/crm/v2/Lead_Purchased/{$recommendedLeads->zoho_purchase_id}", [
                     'data' => $payload['data']
                 ]);
         } else {

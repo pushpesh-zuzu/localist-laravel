@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Helpers\Zoho;
 
 use App\Models\User;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoService
 {
-    public function integrateService($userId,$serviceIds)
+    public function integrateService($userId, $serviceIds)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -36,7 +37,7 @@ class ZohoService
 
             if ($payload) {
                 $response = $this->upsertToZohoService($access_token, $payload);
-                $results=$response->json();
+                $results = $response->json();
 
                 if (
                     isset($results['data'][0]['status']) &&
@@ -47,15 +48,35 @@ class ZohoService
                     UserService::where('id', $serviceId)->update([
                         'zoho_service_id' => $zohoRecordId,
                     ]);
-
                 }
 
 
-            }
+                    $responseDataItem = $results['data'][0] ?? null;
+                    $errorMessage = $results['data'][0]['message'] ?? null;
 
+                    try {
+                        ZohoHelper::logZohoRequest(
+                            'integrateService',
+                            'https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/upsert',
+                            $payload,
+                            $responseDataItem,
+                            $errorMessage,
+                            $userId,
+                            $serviceId,         // db record
+                            'user_services',    // db table
+                        );
+                    } catch (\Exception $e) {
+                        Log::error('Failed to log Zoho Service', [
+                            'exception' => $e->getMessage(),
+                            'user_id' => $userId,
+                            'service_id' => $serviceId
+                        ]);
+                    }
+
+            }
         }
 
-        $usedCredits = $response->header('X-API-COST'); // this may return 24
+        $usedCredits = $response ? $response->header('X-API-COST') : 0;
 
         Log::info('Zoho API Credit Used for service Sync', [
             'user_id' => $userId,
@@ -63,7 +84,6 @@ class ZohoService
         ]);
 
         return $results;
-
     }
 
     protected function buildServicePayload($access_token, $userId, $serviceId)
@@ -76,7 +96,7 @@ class ZohoService
         if (!$serviceDetails) return null;
 
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
-        if($lookUpId){
+        if ($lookUpId) {
             $payload = [
                 'data' => [[
                     'Service_Id'        => $service->id,
@@ -86,22 +106,87 @@ class ZohoService
                 ]],
                 'duplicate_check_fields' => ['Service_Id']
             ];
-        }
-        else{
+        } else {
             return false;
         }
 
         return $payload;
     }
 
-    protected function upsertToZohoService($accessToken, array $payload)
+    // protected function upsertToZohoService($accessToken, array $payload)
+    // {
+    //     return Http::withToken($accessToken)
+    //         ->post('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/upsert', $payload);
+    // }
+
+
+
+    protected function upsertToZohoService($accessToken, array $payload, $zohoServiceId = null)
     {
+        // Update existing record using PUT
+        if (!empty($zohoServiceId)) {
+            return Http::withToken($accessToken)
+                ->put("https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/{$zohoServiceId}", [
+                    'data' => $payload['data']
+                ]);
+        }
+
+        // Create new record using POST / upsert
         return Http::withToken($accessToken)
-            ->post('https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/upsert', $payload);
+            ->post("https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/upsert", $payload);
     }
 
 
 
+    public function updateZohoServiceAssign($userId, $serviceId, $zohoServiceId)
+    {
+        // 1. Access Token
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error("Zoho Access Token missing");
+            return null;
+        }
+
+        // 2. Get Zoho Lookup ID
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        if (!$lookUpId) {
+            Log::error("Lookup ID missing for user {$userId}");
+            return null;
+        }
+
+        // 3. Build Payload
+        $payload = [
+            'data' => [[
+                'Service_Id'            => $serviceId,
+                'Lead_Services_Lookup'  => $lookUpId,
+            ]],
+            'duplicate_check_fields' => ['Service_Id']
+        ];
+
+        // 4. Upsert/Update
+        $response = $this->upsertToZohoService($accessToken, $payload, $zohoServiceId);
+
+        $responseJson = $response?->json();
+        $responseDataItem = $responseJson['data'][0] ?? null;
+        $errorMessage     = $responseJson['data'][0]['message'] ?? null;
+
+        // 5. Log Correct URL (PUT or POST)
+        $logUrl = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Services/{$zohoServiceId}";
+
+        // 6. Save Zoho Logs
+        ZohoHelper::logZohoRequest(
+            'updateZohoServiceAssign',
+            $logUrl,
+            $payload,
+            $responseDataItem,
+            $errorMessage,
+            $userId,
+            $serviceId,        // correct record for user_services table
+            'user_services'
+        );
+
+        return $responseJson;
+    }
 
 
 
@@ -147,7 +232,7 @@ class ZohoService
     }
 
 
-        public function updateZohoLastLogin($userId)
+    public function updateZohoLastLogin($userId)
     {
         $accessToken = ZohoHelper::getAccessToken();
 
@@ -217,6 +302,4 @@ class ZohoService
 
         return $responseData;
     }
-
-
 }

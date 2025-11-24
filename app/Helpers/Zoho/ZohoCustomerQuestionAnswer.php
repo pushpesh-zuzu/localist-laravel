@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoCustomerQuestionAnswer
 {
-    public function integrateServiceQa($userId,$requestId)
+    public function integrateServiceQa($userId, $requestId)
     {
         $access_token = ZohoHelper::getAccessToken();
         if (!$access_token) return null;
@@ -20,44 +20,57 @@ class ZohoCustomerQuestionAnswer
         $totalCreditsUsed = 0;
 
 
-            try {
-                 Log::info('response question details', [
-                        'user_id' => $userId,
-                        'requestId' => $requestId,
-                    ]);
+        try {
+            Log::info('response question details', [
+                'user_id' => $userId,
+                'requestId' => $requestId,
+            ]);
 
-                $payload = $this->buildQaPayloadByServiceId($access_token, $userId, $requestId);
-                if (!$payload) {
-                    $results[$requestId] = ['error' => 'Empty or invalid payload'];
-                    return ;
-                }
-
-                $response = $this->upsertToZohoService($access_token, $payload);
-                $responseData = $response->json();
-
-
-                $results[$requestId] = [
-                    'response' => $response->json(),
-                    'credits_used' => $responseData
-                ];
-            } catch (\Throwable $e) {
-                $results[$requestId] = ['error' => $e->getMessage()];
+            $payload = $this->buildQaPayloadByServiceId($access_token, $userId, $requestId);
+            if (!$payload) {
+                $results[$requestId] = ['error' => 'Empty or invalid payload'];
+                return;
             }
 
+            $response = $this->upsertToZohoService($access_token, $payload);
+            $responseData = $response->json();
 
-        Log::info('Reduced credit Zoho Customer QA sync by service_id', [
-            'user_id' => $userId,
-            'total_credits_used' => $totalCreditsUsed,
-            'results' => $results
-        ]);
 
-        Log::info('response question for user', [
-                        'user_id' => $userId,
-                        'response' => $results,
-                    ]);
+            $results[$requestId] = [
+                'response' => $response->json(),
+                'credits_used' => $responseData
+            ];
+
+
+            // ===== Safe Zoho Logging =====
+            $responseDataItem = $responseData['data'][0] ?? null;
+            $errorMessage = $responseData['data'][0]['message'] ?? null;
+            $dbRecordId = $requestId;
+            $dbTable = 'lead_prefrences';
+
+            try {
+                ZohoHelper::logZohoRequest(
+                    'integrateServiceQa',
+                    'https://www.zohoapis.eu/crm/v2/Customer_Question_Answer/upsert',
+                    $payload,            // payload sent to Zoho
+                    $responseDataItem,    // response received from Zoho
+                    $errorMessage,        // error message if any
+                    $userId ?? null,      // main user ID
+                    $dbRecordId,          // database record ID
+                    $dbTable,             // database table name
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to log Zoho Service QA', [
+                    'exception' => $e->getMessage(),
+                    'user_id' => $userId,
+                    'request_id' => $requestId
+                ]);
+            }
+        } catch (\Throwable $e) {
+            $results[$requestId] = ['error' => $e->getMessage()];
+        }
 
         return $results;
-
     }
 
     protected function buildQaPayloadByServiceId($access_token, $userId, $requestId)
@@ -72,7 +85,7 @@ class ZohoCustomerQuestionAnswer
         $questionBlocks = [];
         $category = null;
 
-       foreach ($prefs as $pref) {
+        foreach ($prefs as $pref) {
             $questions = json_decode($pref->arrayed_questions, true); // decode to array
 
             if (!is_array($questions)) continue;
@@ -117,29 +130,29 @@ class ZohoCustomerQuestionAnswer
         return  Http::withToken($accessToken)->$method($url, $payload);
     }
 
-//    protected function getZohoBuyerQaId($accessToken, $serviceId)
-//     {
-//         $response = Http::withToken($accessToken)
-//             ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
-//                 'criteria' => "(Question_Id:equals:{$serviceId})"
-//             ]);
+    //    protected function getZohoBuyerQaId($accessToken, $serviceId)
+    //     {
+    //         $response = Http::withToken($accessToken)
+    //             ->get('https://www.zohoapis.eu/crm/v2/Question_Answers/search', [
+    //                 'criteria' => "(Question_Id:equals:{$serviceId})"
+    //             ]);
 
-//         $data = $response->json();
+    //         $data = $response->json();
 
-//         return $data['data'][0]['id'] ?? null;
-//     }
+    //         return $data['data'][0]['id'] ?? null;
+    //     }
 
-//     protected function sendUserQaToZoho($accessToken, array $payload, $zohoServiceId = null)
-//     {
-//         $url = $zohoServiceId
-//             ? "https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}"
-//             : "https://www.zohoapis.eu/crm/v2/Question_Answers";
+    //     protected function sendUserQaToZoho($accessToken, array $payload, $zohoServiceId = null)
+    //     {
+    //         $url = $zohoServiceId
+    //             ? "https://www.zohoapis.eu/crm/v2/Question_Answers/{$zohoServiceId}"
+    //             : "https://www.zohoapis.eu/crm/v2/Question_Answers";
 
-//         $method = $zohoServiceId ? 'put' : 'post';
+    //         $method = $zohoServiceId ? 'put' : 'post';
 
-//         return  Http::withToken($accessToken)->$method($url, $payload);
+    //         return  Http::withToken($accessToken)->$method($url, $payload);
 
-//     }
+    //     }
 
 
 

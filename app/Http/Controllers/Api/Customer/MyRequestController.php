@@ -210,11 +210,20 @@ class MyRequestController extends Controller
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
 
+        // 1) Quote Customer Integration
             CustomHelper::runInBackground(function() use ($euId) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId,'abandon');
-               app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
-                app(self::class)->sendEncouragementEmail(['userId' => $euId]);
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
             });
+
+            // 2) Abandon Quote Request Integration
+            CustomHelper::runInBackground(function() use ($euId) {
+                app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
+            });
+
+            // 3) Send Encouragement Email
+            // CustomHelper::runInBackground(function() use ($euId) {
+            //     app(self::class)->sendEncouragementEmail(['userId' => $euId]);
+            // });
             return $this->sendResponse('Abandoned Quote Customer');
             
         }
@@ -278,13 +287,22 @@ class MyRequestController extends Controller
 
         AbandonedUser::where('id',$request->user_id)->update($dataUser);
 
-        CustomHelper::runInBackground(function() use ($euId, $phone, $phoneOtp) {
-            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
-            app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
-            if($phone){
-                app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
+                // 1) Zoho Quote Customer
+            CustomHelper::runInBackground(function() use ($euId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+            });
+
+            // 2) Abandon Quote Request
+            CustomHelper::runInBackground(function() use ($euId) {
+                app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
+            });
+
+            // 3) Send OTP (only if phone exists)
+            if ($phone) {
+                CustomHelper::runInBackground(function() use ($phone, $phoneOtp, $euId) {
+                    app(self::class)->sendOtpDirect($phone, $phoneOtp, $euId);
+                });
             }
-        });
         return $this->sendResponse('Phone Number updated Successfully', $rel);
     }
 
@@ -348,7 +366,7 @@ class MyRequestController extends Controller
             AbandonedUser::where('email', $nuData['email'])->delete();
 
             $phoneOtp = $abUser->otp;
-           $zohoAbandonedQuoteId = $abUser->zoho_abandoned_quote_request_id ?? null;
+            $zohoAbandonedQuoteId = $abUser->zoho_abandoned_quote_request_id ?? null;
            $abUserId = $abUser->id ?? null;
             if(!empty($euId)){
 
@@ -418,16 +436,27 @@ class MyRequestController extends Controller
             $rel['total_credit'] = $user->total_credit;
             $rel['nation_wide'] = $user->nation_wide;
 
-            CustomHelper::runInBackground(function() use ($userId, $rel, $password, $phoneOtp, $user,$zohoAbandonedQuoteId,$abUserId) {
+
+            CustomHelper::runInBackground(function() use ($zohoAbandonedQuoteId, $abUserId) {
                 if ($zohoAbandonedQuoteId && $abUserId) {
-                    app(ZohoAbandonCustomerQuoteRequest::class)->deleteAbandonedQuoteRequest($zohoAbandonedQuoteId,$abUserId);
+                    app(ZohoAbandonCustomerQuoteRequest::class)->deleteAbandonedQuoteRequest($zohoAbandonedQuoteId, $abUserId);
                 }
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId); // change it to update form status in zoho crm
-                if($user->form_status ==1){
-                    ZohoEmails::sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp);
-                }
-	
             });
+
+                        // 1) Integrate Quote Customer
+            CustomHelper::runInBackground(function() use ($userId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId);
+            });
+
+            // 2) Send Welcome Email IF form_status = 1
+            if ($user->form_status == 1) {
+                CustomHelper::runInBackground(function() use ($userId, $password, $phoneOtp) {
+                    ZohoEmails::sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp);
+                });
+            }
+
+            
+            
             return $this->sendResponse('Phone verified Successfully',$rel);
 
         }
@@ -661,8 +690,12 @@ class MyRequestController extends Controller
             // }])
             ->get();
 
+      $user = AbandonedUser::find($userId);
 
-        ZohoEmails::sendAbandonedEncouragementEmail($userId);
+    // only send if email is NOT NULL
+        if (!empty($user->email)) {
+            ZohoEmails::sendAbandonedEncouragementEmail($userId);
+        }
         return response()->json([
             'status' => 'success',
             'message' => "$sentCount encouragement email(s) sent.",

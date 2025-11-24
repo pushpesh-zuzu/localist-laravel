@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoFinance
 {
-    public function integratePurchaseHistory($userId,$logId)
+    public function integratePurchaseHistory($userId, $logId)
     {
         $accessToken = ZohoHelper::getAccessToken();
 
@@ -19,9 +19,9 @@ class ZohoFinance
         }
 
         $log = PurchaseHistory::where('id', $logId)
-               ->first();
+            ->first();
 
-        $payload = $this->buildFinancePayload($accessToken,$log,$userId);
+        $payload = $this->buildFinancePayload($accessToken, $log, $userId);
 
         Log::info('Zoho Finance', [
             'user_id' => $userId,
@@ -46,18 +46,36 @@ class ZohoFinance
         }
 
 
-        Log::info('Zoho API for Finance ', [
-            'user_id' => $userId,
-            'response' => $response->json(),
-        ]);
+        // ===== Safe Zoho Logging =====
+        $responseDataItem = $responseData['data'][0] ?? null;
+        $errorMessage = $responseData['data'][0]['message'] ?? null;
+        $dbRecordId = $logId;
+        $dbTable = 'purchase_history';
 
+        try {
+            ZohoHelper::logZohoRequest(
+                'integratePurchaseHistory',
+                'https://www.zohoapis.eu/crm/v2/Purchase_History/upsert',
+                $payload,            // payload sent to Zoho
+                $responseDataItem,    // response received from Zoho
+                $errorMessage,        // error message if any
+                $userId ?? null,      // main user ID
+                $dbRecordId,          // database record ID
+                $dbTable,             // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho Finance', [
+                'exception' => $e->getMessage(),
+                'user_id' => $userId,
+                'log_id' => $logId
+            ]);
+        }
+        // =================================
 
         return $response->json();
-
-
     }
 
-    protected function buildFinancePayload($accessToken, $log,$userId)
+    protected function buildFinancePayload($accessToken, $log, $userId)
     {
         $statusText = 'Unknown';
         switch ($log->status) {
@@ -71,14 +89,14 @@ class ZohoFinance
                 $statusText = 'Failed';
                 break;
         }
-        $lookUpId =ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
-        $userName=User::find($userId)->name;
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        $userName = User::find($userId)->name;
         return [
             'data' => [[
                 'Transaction_Id1' => $log->id,
-                'Lead_Finance_Lookup' =>$lookUpId,
-                 'Name'           => $log->price,
-                 'Details'        => $log->details,
+                'Lead_Finance_Lookup' => $lookUpId,
+                'Name'           => $log->price,
+                'Details'        => $log->details,
                 //'Price'           => $log->price,
                 'Credits'         => $log->credits,
                 'Transaction_Date' => \Carbon\Carbon::parse($log->purchase_Date)->toDateString(),
@@ -119,4 +137,67 @@ class ZohoFinance
 
     //     return Http::withToken($accessToken)->$method($url, $payload);
     // }
+
+
+
+    public function updateZohoPurchaseHistory($userId, $dbId, $zohoFinanceId)
+    {
+        // 1. Access Token
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error("Zoho Access Token missing");
+            return null;
+        }
+
+        // 2. Get Zoho Lookup ID
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        if (!$lookUpId) {
+            Log::error("Lookup ID missing for user {$userId}");
+            return null;
+        }
+
+        // 3. Build Payload
+        $payload = [
+            'data' => [[
+                'Lead_Finance_Lookup' => $lookUpId,
+            ]],
+            'duplicate_check_fields' => ['Transaction_Id1']
+        ];
+
+        // 4. Upsert / Update
+        $response = $this->upsertToZohoPurchaseHistory($accessToken, $payload, $zohoFinanceId);
+
+        $responseJson = $response?->json();
+        $responseDataItem = $responseJson['data'][0] ?? null;
+        $errorMessage = $responseJson['data'][0]['message'] ?? null;
+
+        // 5. Correct Log URL
+        $logUrl = "https://www.zohoapis.eu/crm/v2/Purchase_History/{$zohoFinanceId}";
+
+        // 6. Save Zoho Logs
+        ZohoHelper::logZohoRequest(
+            'updateZohoPurchaseHistory',
+            $logUrl,
+            $payload,
+            $responseDataItem,
+            $errorMessage,
+            $userId,
+            $dbId,
+            'purchase_histories'
+        );
+
+        return $responseJson;
+    }
+    protected function upsertToZohoPurchaseHistory($accessToken, array $payload, $zohoFinanceId)
+    {
+        // Update existing record using PUT
+        if (!empty($zohoFinanceId)) {
+            return Http::withToken($accessToken)
+                ->patch("https://www.zohoapis.eu/crm/v2/Purchase_History/{$zohoFinanceId}", [
+                    'data' => $payload['data']
+                ]);
+        }
+
+        return null; // No create call here
+    }
 }

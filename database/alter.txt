@@ -116,3 +116,14 @@ ALTER TABLE `abandoned_users` ADD `zoho_abandoned_quote_request_id` TINYTEXT NUL
 
 
 
+ALTER TABLE `zoho_logs` ADD `payload` TEXT NULL AFTER `ipaddress`;
+
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Quote Customers InComplete List', 'quotecustomers.incom-sendtozoho', 'Send to Zoho', 'admin', NULL, NULL), (NULL, 'Quote Customers Complete List', 'quotecustomers.complete-sendtozoho', 'Send to Zoho', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Quote Customers Test InComplete List', 'quotecustomers.quote_test_incomplete_sendtozoho', 'Send to Zoho', 'admin', NULL, NULL), (NULL, 'Quote Customers Test Complete List', 'quotecustomers.test-complete-sendtozoho', 'Send to Zoho', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Lead Buyers Incomplete List', 'leadbuyers.incomplete-sendtozoho', 'Send to Zoho', 'admin', NULL, NULL), (NULL, 'Lead Buyers Complete List', 'leadbuyers.sendtozoho', 'Send to Zoho', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');

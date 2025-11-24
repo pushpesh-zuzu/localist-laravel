@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Helpers\Zoho;
 
 use App\Models\AbandonedUser;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoLeadBuyers
 {
-    public function integrateZohoLeadBuyers($userId,$type=null)
+    public function integrateZohoLeadBuyers($userId, $type = null)
     {
 
 
@@ -22,7 +23,7 @@ class ZohoLeadBuyers
 
         //$zohoId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
 
-        $payload = $this->buildLeadBuyerPayload($userId,$type);
+        $payload = $this->buildLeadBuyerPayload($userId, $type);
 
         $response = $this->upsertToZohoService($access_token, $payload);
 
@@ -34,36 +35,54 @@ class ZohoLeadBuyers
             isset($responseData['data'][0]['details']['id'])
         ) {
             $zohoRecordId = $responseData['data'][0]['details']['id'];
-            if($type){
+            if ($type) {
                 AbandonedUser::where('id', $userId)->update([
                     'zoho_record_id' => $zohoRecordId,
                 ]);
-            }else{
+            } else {
                 User::where('id', $userId)->update([
                     'zoho_record_id' => $zohoRecordId,
                 ]);
             }
-
         }
         $usedCredits = $response->header('X-API-COST'); // this may return 24
 
-        Log::info('Zoho API Credit Used for LeadBuyer Sync', [
-            'user_id' => $userId,
-            'response' => $responseData
-        ]);
+
+
+        $responseDataItem = $responseData['data'][0] ?? null;
+        $errorMessage = $responseData['data'][0]['message'] ?? null;
+
+        $dbRecordId = $userId;
+        $dbTable = $type ? 'abandoned_users' : 'users';
+
+        try {
+            ZohoHelper::logZohoRequest(
+                'integrateZohoLeadBuyers',
+                'https://www.zohoapis.eu/crm/v2/LeadBuyers/upsert',
+                $payload,           // payload sent to Zoho
+                $responseDataItem,   // response received from Zoho
+                $errorMessage,       // error message if any
+                $userId ?? null,     // main user ID
+                $dbRecordId,         // database record ID
+                $dbTable,            // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho LeadBuyer sync', [
+                'exception' => $e->getMessage(),
+                'user_id' => $userId
+            ]);
+        }
 
         return $responseData;
-
     }
 
 
-    protected function buildLeadBuyerPayload($userId,$type=null)
+    protected function buildLeadBuyerPayload($userId, $type = null)
     {
-        if($type){
+        if ($type) {
             $user = AbandonedUser::findOrFail($userId);
-        }
-        else{
-           $user = User::with('details','primaryCategory')->findOrFail($userId);
+        } else {
+            $user = User::with('details', 'primaryCategory')->findOrFail($userId);
         }
         $payload = [
             'data' => [[
@@ -150,7 +169,8 @@ class ZohoLeadBuyers
     // }
 
 
-    public function integrateZohoSocialMediaDetails($userId){
+    public function integrateZohoSocialMediaDetails($userId)
+    {
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
@@ -165,10 +185,10 @@ class ZohoLeadBuyers
             return false;
         }
 
-         $payload = [
+        $payload = [
             'data' => [[
 
-               'YouTube'     => $user->details->company_youtube_link,
+                'YouTube'     => $user->details->company_youtube_link,
                 'Facebook'    => $user->details->fb_link,
                 'Twitter'     => $user->details->twitter_link,
                 'TikTok'      => $user->details->tiktok_link,
@@ -195,7 +215,8 @@ class ZohoLeadBuyers
         return $responseData;
     }
 
-    public function integrateZohoDetails($userId){
+    public function integrateZohoDetails($userId)
+    {
         $access_token = ZohoHelper::getAccessToken();
 
         if (!$access_token) {
@@ -210,12 +231,12 @@ class ZohoLeadBuyers
             return false;
         }
 
-         $payload = [
+        $payload = [
             'data' => [[
 
-                'city'                          =>($user->city) ? $user->city : $user->details->billing_city,
-                'zipcode'                       =>($user->zipcode) ? $user->zipcode : $user->details->billing_postcode,
-                'phone'                         =>($user->phone) ? $user->phone : $user->details->billing_phone,
+                'city'                          => ($user->city) ? $user->city : $user->details->billing_city,
+                'zipcode'                       => ($user->zipcode) ? $user->zipcode : $user->details->billing_postcode,
+                'phone'                         => ($user->phone) ? $user->phone : $user->details->billing_phone,
                 'address'                       => ($user->address) ? $user->address : $user->details->billing_address1,
 
             ]]
@@ -236,7 +257,4 @@ class ZohoLeadBuyers
 
         return $responseData;
     }
-
-
-
 }

@@ -17,6 +17,11 @@ use Yajra\Datatables\Datatables;
 use Yajra\DataTables\Html\Builder;
 use App\Exports\BuyerListExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
+use App\Helpers\Zoho\ZohoQuoteRequest;
+use App\Helpers\Zoho\ZohoAbandonCustomerQuoteRequest;
+use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoHelper;
 
 class BuyerController extends Controller
 {
@@ -64,6 +69,20 @@ class BuyerController extends Controller
                 ->addColumn('score', function ($user) {
                     return $user->leadRequests->pluck('credit_score')->implode('<br>');
                 })
+                ->addColumn('zoho_status', function ($user) {
+                    return $user->zoho_record_id
+                        ? 'Inserted'
+                        : 'Not-inserted';
+                })
+                ->filterColumn('zoho_status', function ($query, $keyword) {
+                    $keyword = trim(strtolower($keyword));
+                    $notInsertedKeywords = ['not', 'not-inserted', 'notinserted'];
+                    if ($keyword === 'inserted') {
+                        $query->whereNotNull('zoho_record_id');
+                    } elseif (in_array($keyword, $notInsertedKeywords)) {
+                        $query->whereNull('zoho_record_id');
+                    }
+                })
                 ->addColumn('date', function ($user) {
                     return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
                 })->filterColumn('date', function ($query, $keyword) {
@@ -73,11 +92,7 @@ class BuyerController extends Controller
                     } catch (\Exception $e) {
                     }
                 })
-                //  ->addColumn('entry_url', function ($user) {
-                //     $url = $user->entry_url ?? '';
-                //     return '<div style="word-break: break-all; max-width: 200px;">' . e($url) . '</div>';
-                // })
-                // ->addColumn('user_ip_address', fn($user) => $user->user_ip_address ?? '')
+
                 ->addColumn('last_login', function ($user) {
                     return $user->lastLogin?->login_at
                         ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i A')
@@ -110,6 +125,14 @@ class BuyerController extends Controller
                 ->addColumn('status', fn($user) => 'Complete')
                 ->addColumn('action', function ($user) {
                     $actions = '';
+
+                    if (auth()->user()->can('quotecustomers.complete-sendtozoho')) {
+                        if (!$user->zoho_record_id && !empty($user->name) && !empty($user->email)) {
+                            $actions .= '<a href="' . route('zoho.send', ['type' => 'complete', 'id' => $user->id]) . '" class="text-primary text-decoration-none" title="Send to Zoho">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Send to Zoho |
+                                    </a>';
+                        }
+                    }
 
                     if (auth()->user()->can('quotecustomers.bids')) {
                         $actions .= '<a href="' . route('buyer.buyerBids', $user->id) . '" class="text text-primary" title="Bids">
@@ -166,7 +189,7 @@ class BuyerController extends Controller
                 // ->filterColumn('user_ip_address', function ($query, $keyword) {
                 //     $query->where('user_ip_address', 'like', "%{$keyword}%");
                 // })
-                ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'last_login', 'action'])
+                ->rawColumns(['services', 'postcode', 'score', 'entry_url', 'user_ip_address', 'status', 'last_login', 'action', 'zoho_status'])
                 ->make(true);
         }
 
@@ -276,6 +299,20 @@ class BuyerController extends Controller
                 ->addColumn('services', function ($user) {
                     return $user->categoryData->name ?? '';
                 })
+                ->addColumn('zoho_status', function ($user) {
+                    return $user->zoho_record_id
+                        ? 'Inserted'
+                        : 'Not-inserted';
+                })
+                ->filterColumn('zoho_status', function ($query, $keyword) {
+                    $keyword = trim(strtolower($keyword));
+                    $notInsertedKeywords = ['not', 'not-inserted', 'notinserted'];
+                    if ($keyword === 'inserted') {
+                        $query->whereNotNull('zoho_record_id');
+                    } elseif (in_array($keyword, $notInsertedKeywords)) {
+                        $query->whereNull('zoho_record_id');
+                    }
+                })
                 ->addColumn('date', function ($user) {
                     return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
                 })->filterColumn('date', function ($query, $keyword) {
@@ -288,6 +325,15 @@ class BuyerController extends Controller
                 ->addColumn('status', fn($user) => 'Incomplete') // Always show Complete
                 ->addColumn('action', function ($user) {
                     $actions = '';
+
+                    if (auth()->user()->can('quotecustomers.incom-sendtozoho')) {
+                        if (!$user->zoho_record_id && !empty($user->name) && !empty($user->email)) {
+                            $actions .= '<a href="' . route('zoho.send', ['type' => 'abandoned', 'id' => $user->id]) . '" class="text-primary text-decoration-none" title="Send to Zoho">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i> Send to Zoho |
+                                        </a>';
+                        }
+                    }
+
 
                     if (auth()->user()->can('quotecustomers.incom-view-detail')) {
                         $actions .= '
@@ -316,8 +362,7 @@ class BuyerController extends Controller
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
-
-                ->rawColumns(['services', 'zipcode',  'status', 'action'])
+                ->rawColumns(['services', 'zipcode', 'zoho_status', 'status', 'action'])
                 ->make(true);
         }
 
@@ -569,5 +614,128 @@ class BuyerController extends Controller
         }
 
         return Excel::download(new BuyerListExport($fromDate, $toDate, $search, $type), $fileName);
+    }
+
+
+
+    public function sendToZoho($type = null, $userId)
+    {
+        try {
+            // 🔥 Call Zoho integration
+            $response = $type === 'abandoned'
+                ? app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId, $type)
+                : app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId);
+
+
+            // Validate response
+            if (!isset($response['data'][0])) {
+                \Log::error('Zoho Response Missing Data', compact('type', 'id', 'response'));
+                return back()->with('error', 'Invalid Zoho response.');
+            }
+
+            $responseData = $response['data'][0];
+
+            // 🔥 Success Condition
+            if (
+                isset($responseData['status']) &&
+                $responseData['status'] === 'success' &&
+                isset($responseData['details']['id'])
+            ) {
+                $zohoRecordId = $responseData['details']['id'];
+
+                // 🔥 Update correct table
+                if ($type === 'abandoned') {
+
+                    // Update abandoned user record
+                    AbandonedUser::where('id', $userId)->update([
+                        'zoho_record_id' => $zohoRecordId
+                    ]);
+
+                    $user = AbandonedUser::find($userId); // cleaner
+
+                    $zohoAbandonedQuoteId = $user->zoho_abandoned_quote_request_id ?? null;
+
+
+                    // Delete old abandoned quote request
+                    CustomHelper::runInBackground(function () use ($zohoAbandonedQuoteId, $userId) {
+                        if (!empty($zohoAbandonedQuoteId)) {
+                            app(ZohoAbandonCustomerQuoteRequest::class)
+                                ->deleteAbandonedQuoteRequest($zohoAbandonedQuoteId, $userId);
+                        }
+                    });
+
+                    // Create new integrate abandoned quote request
+                    CustomHelper::runInBackground(function () use ($userId) {
+                        app(ZohoAbandonCustomerQuoteRequest::class)
+                            ->integrateAbandonQuoteRequest($userId);
+                    });
+                } else {
+
+                    // Update normal user record
+                    User::where('id', $userId)->update([
+                        'zoho_record_id' => $zohoRecordId
+                    ]);
+
+
+                    $leadRequestArr = LeadRequest::with(['customer', 'category'])
+                        ->where('customer_id', $userId)
+                        ->get();
+
+                    if ($leadRequestArr->isNotEmpty()) {
+
+                        foreach ($leadRequestArr as $lrequest) {
+
+                            $leadId  = $lrequest->id;
+                            $zohoId  = $lrequest->zoho_quote_request_id;
+
+                            CustomHelper::runInBackground(function () use ($userId, $leadId, $zohoId) {
+
+                                if (!empty($zohoId)) {
+                                    app(ZohoQuoteRequest::class)
+                                        ->updateZohoQuoteAssignToCustomer($userId, $leadId);
+                                } else {
+                                    app(ZohoQuoteRequest::class)
+                                        ->integrateQuoteRequest($userId, $leadId);
+                                }
+
+                                app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($leadId);
+                            });
+                        }
+                    }
+                }
+
+
+
+                $responseData = $response['data'][0] ?? null;
+                $errorMessage = $response['data'][0]['message'] ?? null;
+
+                $dbRecordId = $userId;           // jo record update ho raha hai
+                $dbTable    = $type === 'abandoned' ? 'abandoned_users' : 'users';
+
+                // Call ZohoHelper log
+                ZohoHelper::logZohoRequest(
+                    'sendToZoho',
+                    'https://www.zohoapis.eu/crm/v2/Quote_Customers/upsert',
+                    null,             // payload
+                    $responseData,    // response
+                    $errorMessage,
+                    $userId ?? null,    // error message               
+                    $dbRecordId,      // database record ID
+                    $dbTable          // database table name
+                );
+
+
+                return back()->with('success', 'User pushed to Zoho successfully.');
+            }
+
+
+
+            return back()->with('error', 'Zoho push failed. Check logs.');
+        } catch (\Throwable $e) {
+
+
+
+            return back()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
 }

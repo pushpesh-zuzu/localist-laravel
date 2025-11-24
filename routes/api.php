@@ -78,6 +78,7 @@ Route::prefix('cron')->group(function () {
     Route::get('on-day-basis', [CronController::class, 'onDayBasis']);
     Route::get('on-two-basis', [CronController::class, 'onTwoDayBasis']);
     Route::get('on-evening-basis', [CronController::class, 'onEveningBasis']);
+    Route::get('on-minute-basis', [CronController::class, 'onMinuteBasis']);
 });
 
 Route::prefix('notification')->group(function () {

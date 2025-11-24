@@ -130,9 +130,11 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::get('/export-buyer-excel', [BuyerController::class, 'exportBuyerExcelList'])
         ->name('export.buyer.excel');
-     Route::get('/export-buyer-csv', [BuyerController::class, 'exportBuyerCsvList'])
+    Route::get('/export-buyer-csv', [BuyerController::class, 'exportBuyerCsvList'])
         ->name('export.buyer.csv');
 
+    Route::get('/zoho/send/{type}/{id}', [BuyerController::class, 'sendToZoho'])
+        ->name('zoho.send');
     Route::resource('seller', SellerController::class);
     Route::post('seller/custom-reviews/save', [SellerController::class, 'sellerSaveCustomReview'])->name('seller.save.custom.review');
     Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
@@ -149,12 +151,14 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('seller-accreditations/{userid}', [SellerController::class, 'sellerAccreditations'])->name('seller.sellerAccreditations');
     Route::get('seller-profile-services/{userid}', [SellerController::class, 'sellerProfileServices'])->name('seller.sellerProfileServices');
     Route::get('/export-seller-excel', [SellerController::class, 'exportCompleteSellerExcel'])
-    ->name('export.com.seller.excel');
+        ->name('export.com.seller.excel');
 
     Route::get('/export-com-seller-csv', [SellerController::class, 'exportCompleteSellerCsv'])
         ->name('export.com.seller.csv');
-    
-    
+
+    Route::get('/zoho/seller/send/{type}/{id}', [SellerController::class, 'sellerSendToZoho'])
+        ->name('zoho.seller.send');
+
     Route::get('suggested-questions/{userid}', [SellerController::class, 'suggestedQuestions'])->name('seller.suggestedQuestions');
     Route::resource('servicequestion', ServiceQuestionsController::class);
     Route::POST('servicequestion/add-more-option', [ServiceQuestionsController::class, 'addMoreOption']);
