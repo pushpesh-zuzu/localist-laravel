@@ -28,16 +28,22 @@
         h1 { font-size: 22px; font-weight: 600; color: #333; margin: 0 0 10px; }
         .highlight { color: #00afe3; margin-bottom: 16px; }
         p { color: #61696d; }
+
+        /* UPDATED BUTTON FIX */
         .btn {
-            display: inline-block;
+            display: block;
+            width: 100%;
+            text-align: center;
             background-color: #3399ff;
             color: #ffffff !important;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
-            padding: 10px 18px;
+            padding: 12px 0;
             border-radius: 4px;
+            margin-top: 12px;
         }
+
         .section-header {
             background-color: #d8edf8;
             color: #1a588c;
@@ -53,9 +59,10 @@
             color: #666;
         }
         a { color: #007bff; }
+
         @media only screen and (max-width: 600px) {
             .card { padding: 24px 20px !important; }
-            .btn { display: block; width: 100%; text-align: center; padding: 12px 0; font-size: 16px; }
+            .btn { width: 100% !important; font-size: 16px !important; }
             h1 { font-size: 20px !important; }
             .section-header { font-size: 15px !important; padding: 12px 16px !important; }
         }
@@ -87,14 +94,14 @@
 
             <div class="card">
                 <div class="section-header">Manage Your Requests</div>
-                <p style="margin-bottom:0px">Create & manage your requests from  <a href="{{$baseUrl}}/buyers/create">My Request Panel</a></p>
+                <p style="margin-bottom:0px">Create & manage your requests from <a href="{{$baseUrl}}/buyers/create">My Request Panel</a></p>
             </div>
 
             <div class="card">
                 <div class="section-header">Help</div>
                 <p>If you have any questions, please reach out to us at
                   <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
-                <p>Regards,<br>Localists Team</p>
+                <p>Kind Regards,<br>Localists Team</p>
             </div>
 
             <div class="footer">

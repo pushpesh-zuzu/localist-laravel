@@ -43,7 +43,7 @@
                 <!-- Intro -->
                 <tr>
                   <td class="card-pad" style="padding:24px 32px;color:#4a4a4a;">
-                    <p style="margin:0 0 10px 0;font-size:16px;line-height:22px;color:#00AFE3;font-weight:700;">Hi {{ $name }},</p>
+                    <p style="margin:0 0 10px 0;font-size:16px;line-height:22px;font-weight:700;">Hi {{ $name }},</p>
                     <p style="margin:0 0 10px 0;font-size:14px;line-height:20px;color:#000;font-weight:700;">We noticed you haven’t connected with a professional yet – we’re here to help!</p>
                     <p style="margin:0;font-size:14px;line-height:22px;color:#000;">
                       To make things easier, we’ve selected a few top-rated professionals who are ready to help with your <b>{{ $service_name }}</b> request.
@@ -173,13 +173,13 @@
             <td style="padding:10px 16px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#d8edf8" style="border-radius:6px;">
                 <tr>
-                  <td align="center" style="padding:19px 16px;">
-                    <div style="font:700 18px/22px Helvetica,Arial,sans-serif;color:#000;max-width:482px;">
-                      Need help or have questions? contact@localists.com
-                    </div>
-                    <div style="font:400 12px/18px Helvetica,Arial,sans-serif;color:#000;margin-top:6px;">
-                      – The Localists Team
-                    </div>
+                  <td  style="padding:19px 16px;">
+                   <div class="card">
+                <div class="section-header">Need Help?</div>
+                <p>If you have any questions, please reach out to us at
+                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
+                <p>Kind Regards,<br>Localists Team</p>
+                </div>
                   </td>
                 </tr>
               </table>

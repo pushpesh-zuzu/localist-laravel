@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta content="width=device-width,initial-scale=1.0" name="viewport">
-  <title>Recommended Pros</title>
+  <title>A Verified Professional Is Now Available</title>
   <style>
     /* Email-safe resets */
-    body {
+       body {
             margin: 0;
             background-color: #f1f2f4;
-            font-family: 'Lato',Helvetica,Arial,sans-serif;
+            font-family: 'Lato', Helvetica, Arial, sans-serif;
             font-size: 18px;
             font-weight: 510;
             line-height: 25px;
@@ -46,24 +46,24 @@
 
           <!-- Main card -->
            <tr>
-            <td style="padding:25px 30px;color:#333;">
-              <p style="margin:0 0 8px;font-size:16px;color:#00AFE3;font-weight:bold;">Hi {{ ucfirst($customerName) }},</p>
-              <p style="margin:0 0 12px;font-size:14px;">    
-             
-                 We hope your <b>{{ ucfirst($serviceName) }}</b> went smoothly.
-                 
+            <td style="padding:25px 30px;">
+              <p style="font-size: 22px; font-weight: 600; color: #333333;">Hi {{ ucfirst($customerName) }},</p>
+              <p style="margin:0 0 12px;">    
+                 Good news! We’ve just added a verified professional in your area who can help with your <b>{{ ucfirst($serviceName ?? 'your service') }}</b> request.
               </p>
-              <p style="margin:0 0 20px;font-size:14px;">
-               We’d love to hear about your experience with <b>{{ ucfirst($sellerName) }}</b>, the professional you hired  on Localists.
+              @if(!empty($postCode))
+              <p style="margin:0 0 20px;">
+              Your quote request now matches a professional covering <b>{{$postCode }}</b>, and they’re able to review and respond to it.
               </p>
-              <p style="margin:0 0 20px;font-size:14px;">
-                Your quick feedback helps us improve our service.
+              @endif
+              <p style="margin:0 0 20px;">
+                To keep things moving, please log in and check the professional available for your quote.
               </p>
 
               <p style="margin:0;text-align:center;">
-                <a href="{{ $reviewUrl }}" 
+                <a href="{{ $baseUrl }}/en/gb/login" 
                    style="background:#00AFE3;color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-size:14px;font-weight:bold;">
-                  Leave Your Feedback
+                  View Professional
                 </a>
               </p>
             </td>
@@ -75,7 +75,7 @@
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#d8edf8" style="border-radius:6px;">
                 <tr>
                   <td style="padding:19px 16px;">
-                    <p style="margin-top:12px">You can also call our customer support team at
+                    <p style="margin-top:12px">If you need any assistance, our team is always here to help.
                       <a>
                         {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
                       </a>.

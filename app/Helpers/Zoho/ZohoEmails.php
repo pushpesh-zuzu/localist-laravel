@@ -2999,4 +2999,92 @@ public static function leadAcceptedMailToSendCustomer($leadId,  $buyerId,LeadSer
 }
 
 
+public static function notifyCustomerNewProfessionalinPostcode($leadId)
+{
+    $sendEmail = EmailSetting::where('setting_name', 'Notify Customer New Professional in Postcode added')
+        ->value('setting_value');
+
+    if (!$sendEmail) {
+        return;
+    }
+
+    $accessToken = ZohoHelper::getAccessToken();
+    if (!$accessToken) {
+        Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
+        return;
+    }
+
+    $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+ 
+    $serviceName  = optional($lead->category)->name;
+    $postCode  = $lead->postcode;
+    $customerName  = optional($lead->customer)->name;
+    $customerEmail = optional($lead->customer)->email;
+    $customerId    = optional($lead->customer)->id;
+
+    if (!$customerEmail) {
+        Log::error("Customer email missing for lead {$leadId}");
+        return;
+    }
+
+    $subject = ($customerName ? ucfirst($customerName) : "Customer") . ", a Verified Professional Is Now Available for Your Quote Request";
+
+    $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
+    if (empty($zohoId)) {
+        return;
+    }
+    $htmlView = view('emails.customers.notify-new-professional-postcode', [
+        'baseUrl' => config('app.react_base_url'),
+         'appURL' => config('app.url'),        
+        'customerName' => $customerName ?? '',
+        'serviceName' => $serviceName ?? '',
+        'postCode' => $postCode,
+        
+    ])->render();
+
+    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+    $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+
+    DB::table('zoho_logs')->insert([
+        'url' => $url,
+        'function_name' => 'notifyCustomerNewProfessionalinPostcode',
+        'ipaddress' => request()->ip(),
+        'created_at' => now(),
+    ]);
+
+    $response = Http::withToken($accessToken)->post($url, [
+        'data' => [[
+            'from' => [
+                'email' => $fromEmail,
+                'user_name' => $fromName
+            ],
+            'to' => [['email' => $customerEmail]],
+            'subject' => $subject,
+            'content' => $htmlContent,
+            'mail_format' => 'html',
+            'org_email' => true
+        ]]
+    ]);
+
+    $rel = self::getZohoMailResponse($response);
+    $messageId = $rel['message_id'] ?? null;
+    $dataE['user_id'] =$customerId;
+    $dataE['from_email'] = $fromEmail;
+    $dataE['to_email'] = $customerEmail;
+    $dataE['lead_id'] = $leadId ?? null;
+    $dataE['message_id'] = $messageId;
+    $dataE['subject'] = $subject;
+    $dataE['setting_name'] = 'Notify Customer New Professional in Postcode added';
+    $dataE['content'] = $htmlContent;
+    $dataE['zoho_url'] = $url;
+    $dataE['response'] = json_encode($rel);
+    EmailLog::insertGetId($dataE);
+
+}
+
+
+
 }

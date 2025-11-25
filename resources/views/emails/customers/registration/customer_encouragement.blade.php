@@ -113,12 +113,14 @@
                 <div class="highlight">Just one more step to activate your Localists account.</div>
                 <p>We noticed you started signing up but didn’t finish. Complete your registration to get access to top local professionals - your just 1 step away.</p>
                 <p>By registering, you can:</p>
-                <ul>
+                <ul style="list-style:none; padding-left:0; margin-left:0;">
                     <li>✅ Connect with verified local professionals</li>
                     <li>✅ Quickly get responses to your service requests</li>
                     <li>✅ Choose the best provider based on your needs</li>
                 </ul>
                 <a href="{{$baseUrl}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;" class="btn">Complete Registration</a>
+            
+            
             </div>
 
             <div class="card">
@@ -127,7 +129,7 @@
                 <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
                 </p>
                 <p>We’re excited to help you grow 🚀</p>
-                <p>— The Localists Team</p>
+                <p>Kind Regards,<br>Localists Team</p>
             </div>
 
             <div class="footer">

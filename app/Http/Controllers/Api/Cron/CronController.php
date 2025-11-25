@@ -78,6 +78,8 @@ class CronController extends Controller
         $newLeadAfter5days = $this->checkCreditAfter5Days();
 
         $sendNextDayExpiredQuoteEmail = $this->sendNextDayExpiredQuoteEmail();
+      //  $sendNewProPostcodeEmail = $this->sendnotifyCustomerNewProfessionalinPostcodeEmail();
+        
 
         return response()->json([
             'status' => 'success',
@@ -85,7 +87,8 @@ class CronController extends Controller
             'details' => [
                 'new_lead_after_7_days' => $newLeadAfter7days,
                 'new_lead_after_5_days' => $newLeadAfter5days,
-                'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail
+                'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail,
+             //  'pro_available_postcode_email' => $sendNewProPostcodeEmail
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -1246,5 +1249,92 @@ class CronController extends Controller
 
 
 
+
+
+    public function sendnotifyCustomerNewProfessionalinPostcodeEmail()
+    {
+        $batchSize = 500;
+        $hoursAgo = 24;
+        $totalEmailsSent = 0;
+
+        LeadRequest::with(['customer', 'category'])
+            ->where('status', 'new')
+            ->whereDoesntHave('recommendedLeads')
+            ->where('created_at', '<=', now()->subHours($hoursAgo))
+            ->whereNull('deleted_at')
+            ->whereHas('customer', function ($query) {
+                $query->whereNotNull('zoho_record_id')
+                    ->whereNull('deleted_at');
+            })
+            ->orderBy('id')
+            ->chunk($batchSize, function ($leads) use (&$totalEmailsSent) {
+
+                Log::info('Fetched Leads Batch', ['count' => $leads->count()]);
+
+                foreach ($leads as $lead) {
+
+                    try {
+
+                        $customer = $lead->customer;
+
+                        if (!$customer || empty($customer->email)) {
+                            continue;
+                        }
+
+                        $alreadySent = EmailLog::where('user_id', $customer->id)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'Notify Customer New Professional in Postcode added')
+                            ->exists();
+
+                        if ($alreadySent) {
+                            continue;
+                        }
+
+                        // Customer must have completed form
+                        $user = User::where('email', $customer->email)
+                            ->where('form_status', '1')
+                            ->first();
+
+                        if (!$user) {
+                            continue;
+                        }
+
+                        // -----------------------------
+                        // GET SELLERS FROM LEADSERVICE
+                        // -----------------------------
+                        $leadService = app(LeadService::class);
+                        $sellerData = $leadService->getAllSellers($lead);
+
+                        $sellers = $sellerData['response']['sellers'] ?? [];
+
+                        if (empty($sellers)) {
+                            Log::info("No sellers found for Lead ID: {$lead->id}");
+                            continue;
+                        }
+
+                        $sellerCount = collect($sellers)->count();
+
+                        Log::info("Sellers found for Lead ID {$lead->id}: {$sellerCount}");
+
+                        if ($sellerCount > 0) {
+
+                            ZohoEmails::notifyCustomerNewProfessionalinPostcode($lead->id);                            
+
+                            $totalEmailsSent++;
+                        }
+
+                    } catch (\Throwable $e) {
+                        Log::error("Error sending 24hr seller email for Lead ID {$lead->id}: {$e->getMessage()}");
+                        continue;
+                    }
+                }
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'emails_sent' => $totalEmailsSent,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
    
 }
