@@ -338,7 +338,7 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                    
-                    $subject = "Complete your " . ($serviceName ? $serviceName : "service") . " quote request on Localists";
+                    $subject = "Your " . ($serviceName ? $serviceName : "service") . " quote is nearly done";
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [
