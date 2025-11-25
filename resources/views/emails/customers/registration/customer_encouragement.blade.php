@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Complete Your Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <style>
         body {
             margin: 0;
@@ -14,60 +14,47 @@
         }
         .container {
             max-width: 600px;
-            margin: auto;
             width: 100%;
+            margin: auto;
             background: #ffffff;
         }
         .card {
             background: #ffffff;
-            padding: 28px;
+            padding: 24px;
         }
         h1 {
             font-size: 22px;
             font-weight: 600;
-            color: #333333;
+            color: #333;
             margin: 0 0 10px;
             text-align: center;
         }
         p {
             font-size: 16px;
-            line-height: 24px;
+            line-height: 23px;
             color: #4a4a4a;
-            margin: 0 0 16px;
+            margin: 0 0 14px;
         }
         .highlight {
             color: #00afe3;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
+            font-size: 16px;
             text-align: center;
-            font-size: 16px;
-        }
-        .btn {
-            display: block;
-            background-color: #00afe3;
-            color: #ffffff !important;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 14px;
-            border-radius: 4px;
-            text-align: center;
-            width: 100%;
-        }
-        ul {
-            padding-left: 0;
-            list-style: none;
-        }
-        li {
-            margin-bottom: 6px;
-            font-size: 16px;
         }
         .section-header {
             background-color: #d8edf8;
             color: #1a588c;
             padding: 12px 18px;
             font-size: 16px;
-            border-radius: 4px 4px 0 0;
             font-weight: 600;
+        }
+        ul {
+            padding-left: 0;
+            list-style: none;
+        }
+        li {
+            font-size: 16px;
+            margin-bottom: 6px;
         }
         .footer {
             text-align: center;
@@ -76,7 +63,7 @@
             color: #666;
         }
 
-        /* MOBILE FIXES */
+        /* MOBILE RESPONSIVE FIX */
         @media only screen and (max-width: 600px) {
             .card {
                 padding: 20px !important;
@@ -84,9 +71,12 @@
             h1 {
                 font-size: 20px !important;
             }
-            .btn {
-                font-size: 16px;
-                padding: 14px;
+            p {
+                font-size: 15px !important;
+            }
+            .mobile-btn {
+                font-size: 16px !important;
+                padding: 14px !important;
             }
         }
     </style>
@@ -94,13 +84,12 @@
 
 <body>
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f2f4; padding:20px 0;">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f1f2f4" style="padding:20px 0;">
     <tr>
         <td align="center">
 
-            <!-- MAIN CONTAINER -->
             <table class="container" cellpadding="0" cellspacing="0">
-                
+
                 <!-- LOGO -->
                 <tr>
                     <td align="center" style="padding: 20px;">
@@ -108,16 +97,14 @@
                     </td>
                 </tr>
 
-                <!-- CARD 1 -->
+                <!-- MAIN CARD -->
                 <tr>
                     <td class="card">
 
                         <h1>Hi {{ $name }},</h1>
                         <p style="text-align:center; font-size:17px;">You’re almost there!</p>
 
-                        <div class="highlight">
-                            Just one more step to activate your Localists account.
-                        </div>
+                        <div class="highlight">Just one more step to activate your Localists account.</div>
 
                         <p>
                             We noticed you started signing up but didn’t finish. Complete your registration to get access to top local professionals — you're just 1 step away.
@@ -131,14 +118,39 @@
                             <li>✅ Choose the best provider based on your needs</li>
                         </ul>
 
-                        <a href="{{$baseUrl}}" class="btn">Complete Registration</a>
+                        <!-- BUTTON FIX (Email-Safe Table Structure) -->
+                       <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin-top:20px; width:100%;">
+                        <tr>
+                            <td align="center">
+                                <a 
+                                    href="{{$baseUrl}}"
+                                    style="
+                                        background-color:#00afe3;
+                                        color:#ffffff;
+                                        text-decoration:none;
+                                        font-size:16px;
+                                        font-weight:bold;
+                                        padding:14px 0;
+                                        display:inline-block;
+                                        border-radius:4px;
+                                        width:260px;        /* FIXED BUTTON WIDTH */
+                                        max-width:100%;     /* AUTO-SHRINK ON SMALL SCREENS */
+                                        text-align:center;
+                                        box-sizing:border-box;
+                                    "
+                                >
+                                    Complete Registration
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
 
                     </td>
                 </tr>
 
-                <!-- CARD 2 -->
+                <!-- HELP SECTION -->
                 <tr>
-                    <td class="card" style="padding:0;">
+                    <td style="padding:0;">
 
                         <div class="section-header">Need Help?</div>
 
@@ -167,6 +179,7 @@
                 </tr>
 
             </table>
+
         </td>
     </tr>
 </table>
