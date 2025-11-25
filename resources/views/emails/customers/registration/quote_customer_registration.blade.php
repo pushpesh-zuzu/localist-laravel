@@ -89,7 +89,7 @@
                   Email: {{$email}} <br/>
                   Password: <strong>{{$password}}</strong>
                 </p>
-                <a href="{{$baseUrl}}/login" class="btn">Log in to Localists</a>
+                <a href="{{$baseUrl}}/en/gb/login" class="btn">Log in to Localists</a>
             </div>
 
             <div class="card">

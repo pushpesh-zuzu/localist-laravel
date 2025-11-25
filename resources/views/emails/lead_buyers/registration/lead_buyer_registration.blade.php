@@ -63,7 +63,7 @@
                     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px">
                       <tbody><tr>
                         <td style="padding:0 16px">
-                          <a href="{{$baseUrl}}/login" class="btn" style="display:inline-block; text-decoration:none">Log in to Localists</a>
+                          <a href="{{$baseUrl}}/en/gb/login" class="btn" style="display:inline-block; text-decoration:none">Log in to Localists</a>
                         </td>
                       </tr>
                     </tbody></table>
