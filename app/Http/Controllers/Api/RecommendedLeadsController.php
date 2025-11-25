@@ -39,7 +39,7 @@ use App\Helpers\Zoho\ZohoPurchasedLeads;
 use App\Models\EmailLog;
 use Illuminate\Support\Facades\Log;
 use App\Services\LeadService;
-
+use App\Helpers\Zoho\ZohoQuoteRequest;
 class RecommendedLeadsController extends Controller
 {
 
@@ -541,6 +541,13 @@ class RecommendedLeadsController extends Controller
                 app(ZohoFinance::class)->integratePurchaseHistory($sellerId, $tId);
             });
         }
+
+          $requestLeadId=$aVals['lead_id'] ?? null;
+            if (!empty($requestLeadId)) {
+                CustomHelper::runInBackground(function() use ($requestLeadId) {
+                    app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
+                });
+            }
 
         if($aVals['bidtype'] == 'reply'){
             CustomHelper::runInBackground(function() {
