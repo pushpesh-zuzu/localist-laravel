@@ -1,6 +1,18 @@
 <x-app-layout>
   <x-slot name="header">{{ __('Quote Customers (Test Incomplete List)') }} </x-slot>
 
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+    </div>
+   @endif
+
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+    </div>
+   @endif
+
   <div class="card mb-4">
     <div class="card-header">
       <strong>{{ __('Quote Test Customers') }}</strong>
@@ -33,8 +45,7 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
-              <!-- <th scope="col">Entry URL</th>
-              <th scope="col">User IP</th> -->
+               <th>Zoho Status</th>
               <th scope="col">Status</th>
               <th scope="col">Action</th>
             </tr>
@@ -44,16 +55,21 @@
             <tr id="userid{{ $aRow->id }}">
               <th scope="row">{{ $aKey+1 }}</th>
               <td>{{ $aRow->name }}</td>
-              <td>{{ $aRow->email }}</td>
-              <!-- <td style="word-break: break-all; max-width: 200px;">
-                {{ $aRow->entry_url ?? '' }}
-              </td>
-              <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+              <td>{{ $aRow->email }}</td>              
+               <td>{{ $aRow->zoho_record_id  ? 'Inserted'     : 'Not-inserted'; }}</td>
               <td>Test</td>
               <td>
+             @can('quotecustomers.quote_test_incomplete_sendtozoho')
+               @if(!$aRow->zoho_record_id && !empty($aRow->name) && !empty($aRow->email))
+                  <a href="{{ route('zoho.send', ['type' => 'abandoned', 'id' => $aRow->id]) }}" class="text-primary text-decoration-none">
+                      <i class="fa-solid fa-cloud-arrow-up"></i> Send to Zoho  | 
+                  </a>
+               @endif
+               @endcan
                 @can('quotecustomers.quote_test_incomplete_view')
                 <a href="{{ route('buyer.show.custom', ['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
                 @endcan
+             
 
                 @can('quotecustomers.quote_test_incomplete_delete')
                 <a href="javascript:void(0)"

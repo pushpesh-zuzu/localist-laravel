@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Helpers\Zoho;
 
 use App\Models\User;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class ZohoServiceLocations
 {
-    public function integrateServiceLocations($userId,$locationIds)
+    public function integrateServiceLocations($userId, $locationIds)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -20,9 +21,9 @@ class ZohoServiceLocations
         }
 
         Log::info('request location for user', [
-                        'user_id' => $userId,
-                        'locations' => $locationIds
-                    ]);
+            'user_id' => $userId,
+            'locations' => $locationIds
+        ]);
 
         // $zohoServiceId = $this->getZohoBuyerServiceId($access_token, $locationId);
 
@@ -59,21 +60,41 @@ class ZohoServiceLocations
                         'zoho_location_id' => $zohoRecordId,
                     ]);
                 }
+
+                // ===== Safe Zoho Logging =====
+                $responseDataItem = $responseData['data'][0] ?? null;
+                $errorMessage = $responseData['data'][0]['message'] ?? null;
+                $dbRecordId = $locationId;
+                $dbTable = 'user_service_locations';
+
+                try {
+                    ZohoHelper::logZohoRequest(
+                        'integrateServiceLocations',
+                        'https://www.zohoapis.eu/crm/v2/Services_Locations/upsert',
+                        $payload,
+                        $responseDataItem,
+                        $errorMessage,
+                        $userId ?? null,
+                        $dbRecordId,
+                        $dbTable,
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to log Zoho Service Location', [
+                        'exception' => $e->getMessage(),
+                        'user_id' => $userId,
+                        'location_id' => $locationId
+                    ]);
+                }
             } catch (\Throwable $e) {
                 $results[$locationId] = ['error' => $e->getMessage()];
             }
         }
 
-         Log::info('response location for user', [
-                        'user_id' => $userId,
-                        'response' => $results,
-                    ]);
 
         return $results;
-
     }
 
-    public function integrateServiceSingleLocations($userId,$locationId)
+    public function integrateServiceSingleLocations($userId, $locationId)
     {
 
         $access_token = ZohoHelper::getAccessToken();
@@ -89,9 +110,6 @@ class ZohoServiceLocations
         $response = $this->upsertToZohoService($access_token, $payload);
 
         return $response->json();
-
-
-
     }
 
     protected function buildServicePayload($access_token, $userId, $locationId)
@@ -104,7 +122,7 @@ class ZohoServiceLocations
         if (!$serviceDetails) return null;
 
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($access_token, $userId);
-        if($lookUpId){
+        if ($lookUpId) {
             $payload = [
                 'data' => [[
                     'Location_Id'        => $location->id,
@@ -120,24 +138,84 @@ class ZohoServiceLocations
                 ]],
                 'duplicate_check_fields' => ['Location_Id']
             ];
-        }
-        else{
+        } else {
             return false;
         }
 
-       //dd($payload);
+        //dd($payload);
 
 
         return $payload;
     }
 
-    protected function upsertToZohoService($accessToken, array $payload)
+
+
+    protected function upsertToZohoService($accessToken, array $payload, $zohoLocationId = null)
     {
+        // Update existing record using PUT
+        if (!empty($zohoLocationId)) {
+            return Http::withToken($accessToken)
+                ->put("https://www.zohoapis.eu/crm/v2/Services_Locations/{$zohoLocationId}", [
+                    'data' => $payload['data']
+                ]);
+        }
+
+        // Create new record using POST / upsert
         return Http::withToken($accessToken)
             ->post('https://www.zohoapis.eu/crm/v2/Services_Locations/upsert', $payload);
     }
 
 
+
+    public function updateZohoAssignServiceLocation($userId, $locationId, $zohoLocationId)
+    {
+        // 1. Access Token
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error("Zoho Access Token missing");
+            return null;
+        }
+
+        // 2. Get Zoho Lookup ID
+        $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        if (!$lookUpId) {
+            Log::error("Lookup ID missing for user {$userId}");
+            return null;
+        }
+
+        // 3. Build Payload
+        $payload = [
+            'data' => [[
+                'Location_Id'            => $locationId,
+                'Lead_Buyer_Lookup'  => $lookUpId,
+            ]],
+            'duplicate_check_fields' => ['Location_Id']
+        ];
+
+        // 4. Upsert/Update
+        $response = $this->upsertToZohoService($accessToken, $payload, $zohoLocationId);
+
+        $responseJson = $response?->json();
+        $responseDataItem = $responseJson['data'][0] ?? null;
+        $errorMessage     = $responseJson['data'][0]['message'] ?? null;
+
+        // 5. Log Correct URL (PUT or POST)
+        $logUrl =  "https://www.zohoapis.eu/crm/v2/Services_Locations/{$zohoLocationId}";
+
+        // 6. Save Zoho Logs
+        ZohoHelper::logZohoRequest(
+            'updateZohoAssignServiceLocation',
+            $logUrl,
+            $payload,
+            $responseDataItem,
+            $errorMessage,
+            $userId,
+            $serviceId,        // correct record for user_services table
+            'user_service_locations'
+        );
+
+        return $responseJson;
+    }
 
     // protected function getZohoBuyerServiceId($accessToken, $serviceId)
     // {
@@ -203,6 +281,4 @@ class ZohoServiceLocations
 
         //return $response->json();
     }
-
-
 }

@@ -32,6 +32,7 @@ class ContactUsController extends Controller
                 'message'   => $validated['message'],
                 'user_type' => $validated['user_type'],
                 'subject'   => "Contact Form Submission from {$validated['full_name']}",
+                'contactId' => $contact->id
             ];
 
     // Send to Zoho Desk

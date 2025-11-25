@@ -1,6 +1,16 @@
 <x-app-layout>
   <x-slot name="header">{{ __('Quote Customers (Complete List)') }}</x-slot>
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+    </div>
+   @endif
 
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+    </div>
+   @endif
   <div class="card mb-4">
     <div class="card-header">
       <strong>{{ __('Quote Customers') }}</strong>
@@ -45,6 +55,7 @@
             <th>User IP</th> -->
               <th>Date</th>
               <th>Last Login</th>
+              <th>Zoho Status</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -140,7 +151,14 @@
         },
         { data: 'last_login', name: 'last_login', orderable: false,
           searchable: true },
+{
+          data: 'zoho_status',
+          name: 'zoho_status',
+          orderable: false,
+          searchable: true
+        },
 
+          
         {
           data: 'action',
           name: 'action',

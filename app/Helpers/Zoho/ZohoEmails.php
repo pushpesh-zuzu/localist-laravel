@@ -305,7 +305,7 @@ class ZohoEmails
         }
     }
 
-    public static function sendAbandonedEncouragementEmail($userId)
+    public static function sendAbandonedEncouragementEmail($userId,$serviceName=null)
     {
 
         $sendEncouragementEmail = EmailSetting::where('setting_name', 'Send Abandoned Encouragement Email')->value('setting_value');
@@ -337,7 +337,8 @@ class ZohoEmails
                     ]);
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
-                    $subject = 'Complete your registration – we’ve saved your spot!';
+                   
+                    $subject = "Your " . ($serviceName ? $serviceName : "service") . " quote is nearly done";
 
                     $response = Http::withToken($accessToken)
                         ->post($url, [

@@ -966,9 +966,9 @@ class LeadPreferenceController extends Controller
                     $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
 
                      // CLEAN COORDINATES HANDLING
-                    // $coords = $aVals['coordinates'] ?? [];
-                    //     if (is_string($coords)) $coords = json_decode($coords, true);
-                    //     if (!is_array($coords)) $coords = [];
+                    $coords = $aVals['coordinates'] ?? [];
+                        if (is_string($coords)) $coords = json_decode($coords, true);
+                        if (!is_array($coords)) $coords = [];
 
                 $aLocation = UserServiceLocation::create(
                     ['user_id' => $aVals['user_id'],
@@ -981,8 +981,8 @@ class LeadPreferenceController extends Controller
                     'city'=>$aVals['city'],
                     'travel_time'=>$travel_time,
                     'travel_by'=>$travel_by,
-                    'coordinates' => $aVals['coordinates']
-                   // 'coordinates'     => json_encode($coords),
+                   // 'coordinates' => $aVals['coordinates']
+                    'coordinates'     => json_encode($coords),
                     ] // Fields to insert
                 );
                 $insertedId = $aLocation->id;
@@ -1027,7 +1027,7 @@ class LeadPreferenceController extends Controller
             $value['total_services'] = $items->pluck('service_id')->unique()->count();
             $value['leadcount'] = LeadRequest::where('postcode', $first->postcode)->count();
             $value['service_ids'] = $items->pluck('service_id')->unique()->values();
-           // $value['coordinates'] = $first->coordinates ? json_decode($first->coordinates, true) : [];
+            $value['coordinates'] = $first->coordinates ? json_decode($first->coordinates, true) : [];
             $finalRows->push($value);
         }
         return $this->sendResponse(__('User Service Data'), $finalRows);

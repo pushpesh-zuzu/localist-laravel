@@ -25,6 +25,15 @@ use App\Models\Review;
 use App\Models\CustomReview;
 use App\Exports\SellerCompleteListExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoServiceLocations;
+use App\Helpers\Zoho\ZohoLeadBuyers;
+use App\Helpers\Zoho\ZohoQuestionAnswer;
+use App\Helpers\Zoho\ZohoService;
+use App\Helpers\Zoho\ZohoFinance;
+use App\Helpers\Zoho\ZohoPurchasedLeads;
+use App\Helpers\Zoho\ZohoQuoteRequest;
 
 class SellerController extends Controller
 {
@@ -477,9 +486,9 @@ class SellerController extends Controller
 
 
 
-     public function exportCompleteSellerExcel(Request $request)
+    public function exportCompleteSellerExcel(Request $request)
     {
-    
+
         return Excel::download(
             new SellerCompleteListExport(
                 $request->start_date,
@@ -490,7 +499,7 @@ class SellerController extends Controller
         );
     }
 
-   public function exportCompleteSellerCsv(Request $request)
+    public function exportCompleteSellerCsv(Request $request)
     {
         return Excel::download(
             new SellerCompleteListExport(
@@ -500,5 +509,170 @@ class SellerController extends Controller
             ),
             'seller_complete_list.csv'
         );
+    }
+
+
+
+
+    public function sellerSendToZoho($type = null, $userId)
+    {
+        try {
+
+            if ($type == 'abandoned') {
+                // 🔥 Run abandoned integration in background
+                CustomHelper::runInBackground(function () use ($userId) {
+                    app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId, 'abandon');
+                });
+            } else {
+
+                // 🔥 Main integration (non-abandoned)
+                app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
+
+                
+                $services = UserService::where('user_id', $userId)->get();
+                if ($services->isNotEmpty()) {
+                    CustomHelper::runInBackground(function () use ($userId, $services) {
+                        $zohoService = app(ZohoService::class);
+
+                        foreach ($services as $service) {                           
+                             if ($service->zoho_service_id === null || $service->zoho_service_id === '') {
+                                // Create new Zoho record
+                                $zohoService->integrateService($userId, [$service->id]);
+                            } else {
+
+                                // Update Zoho record
+                                $zohoService->updateZohoServiceAssign(
+                                    $userId,
+                                    $service->id,
+                                    $service->zoho_service_id
+                                );
+                            }
+                        }
+                    });
+                }
+
+                /**
+                 * -------------------------------------
+                 *  SERVICE LOCATION INTEGRATION
+                 * -------------------------------------
+                 */
+                $serviceLocations = UserServiceLocation::where('user_id', $userId)->get();
+
+                if ($serviceLocations->isNotEmpty()) {
+                    CustomHelper::runInBackground(function () use ($userId, $serviceLocations) {
+                        $zohoService = app(ZohoServiceLocations::class);
+
+                        foreach ($serviceLocations as $location) {
+                            if ($location->zoho_location_id === null || $location->zoho_location_id === '') {
+                                // Create new Zoho record
+                                $zohoService->integrateServiceLocations($userId, [$location->id]);
+                            } else {
+
+                                // Update existing Zoho record
+                                $zohoService->updateZohoAssignServiceLocation(
+                                    $userId,
+                                    $location->id,
+                                    $location->zoho_location_id
+                                );
+                            }
+                        }
+                    });
+                }
+
+                /**
+                 * -------------------------------------
+                 *  SERVICE QUESTION ANSWER (QA)
+                 * -------------------------------------
+                 */
+                $serviceIds = LeadPrefrence::where('user_id', $userId)
+                    ->get(['service_id', 'zoho_question_id'])
+                    ->unique('service_id')
+                    ->toArray();
+
+                if (!empty($serviceIds)) {
+                    CustomHelper::runInBackground(function () use ($userId, $serviceIds) {                      
+
+                        $zohoQA = app(ZohoQuestionAnswer::class);
+
+                        foreach ($serviceIds as $item) {
+
+                            \Log::info("Processing QA Service", [
+                                'user_id' => $userId,
+                                'service_id' => $item['service_id'],
+                                'zoho_question_id' => $item['zoho_question_id']
+                            ]);
+
+                            if ($item['zoho_question_id'] === null || $item['zoho_question_id'] === '') {
+
+                                // For integrate, pass ARRAY exactly as function expects
+                                $zohoQA->integrateServiceQa($userId, [$item['service_id']]);
+                            } else {
+
+                                $zohoQA->updateZohoAssignServiceQa(
+                                    $userId,
+                                    $item['service_id'],
+                                    $item['zoho_question_id']
+                                );
+                            }
+                        }
+
+                        \Log::info("QA Background Sync Finished", [
+                            'user_id' => $userId
+                        ]);
+                    });
+                }
+
+                /**
+                 * -------------------------------------
+                 *  SERVICE LOCATION INTEGRATION
+                 * -------------------------------------
+                 */
+                $recommendedLeads = RecommendedLead::where('seller_id', $userId)->get();
+
+                if ($recommendedLeads->isNotEmpty()) {
+                    CustomHelper::runInBackground(function () use ($userId, $recommendedLeads) {
+                        $zohoService = app(ZohoPurchasedLeads::class);
+
+                        foreach ($recommendedLeads as $recm) {
+                            $zohoService->integratePurchaseLeads($userId, $recm->id);
+                            $requestLeadId = $recm->lead_id ?? null;
+                            if (!empty($requestLeadId)) {
+                                CustomHelper::runInBackground(function () use ($requestLeadId) {
+                                    app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
+                                });
+                            }
+                        }
+                    });
+                }
+
+
+
+                $purchaseHistory = PurchaseHistory::where('user_id', $userId)->get();
+                if ($purchaseHistory->isNotEmpty()) {
+                    CustomHelper::runInBackground(function () use ($userId, $purchaseHistory) {
+                        $zohoPH = app(ZohoFinance::class);
+                        foreach ($purchaseHistory as $phi) {
+                            if ($phi->zoho_finance_id === null || $phi->zoho_finance_id === '') {
+                                // Create new Zoho record
+                                $zohoPH->integratePurchaseHistory($userId, $phi->id);
+                            } else {
+                                // Update existing Zoho record
+                                $zohoPH->updateZohoPurchaseHistory(
+                                    $userId,
+                                    $phi->id,
+                                    $phi->zoho_finance_id
+                                );
+                            }
+                        }
+                    });
+                }
+            }
+
+
+            return back()->with('success', 'Seller  pushed to Zoho successfully.');
+        } catch (\Throwable $e) {
+
+            return back()->with('error', 'Error: ' . $e->getMessage());
+        }
     }
 }

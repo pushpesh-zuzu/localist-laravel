@@ -83,7 +83,7 @@
 
         <!-- BUTTON SECTION -->
         <div style="background:#ffffff;padding:30px 0;text-align:center;">
-            <a href="{{ $baseUrl }}/login?client_id={{base64_encode($token)}}" style="background:#F76C32;color:#ffffff;font-weight:700;padding:14px 36px;border-radius:6px;text-decoration:none;display:inline-block;">
+            <a href="{{ $baseUrl }}/en/gb/login?client_id={{base64_encode($token)}}" style="background:#F76C32;color:#ffffff;font-weight:700;padding:14px 36px;border-radius:6px;text-decoration:none;display:inline-block;">
                 Relist My Quote
             </a>
         </div>

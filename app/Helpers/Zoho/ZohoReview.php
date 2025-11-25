@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Helpers\Zoho;
 
 use App\Models\Review;
@@ -26,18 +27,34 @@ class ZohoReview
 
         if (!$payload) return null;
 
-        $response = $this->updateZohoLeadBuyer($access_token, $zohoId,$payload);
+        $response = $this->updateZohoLeadBuyer($access_token, $zohoId, $payload);
         $responseData = $response->json();
 
 
-        Log::info('Zoho Review Response', [
-            'user_id' => $userId,
-            'payload' => $payload,
-            'response' => $responseData,
-        ]);
+        $responseDataItem = $responseData['data'][0] ?? null;
+        $errorMessage = $responseData['data'][0]['message'] ?? null;
+        $dbRecordId = $userId;
+        $dbTable = 'reviews';
+
+        try {
+            ZohoHelper::logZohoRequest(
+                'integrateZohoReview',
+                'https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/upsert',
+                $payload,            // payload sent to Zoho
+                $responseDataItem,    // response received from Zoho
+                $errorMessage,        // error message if any
+                $userId ?? null,      // main user ID
+                $dbRecordId,          // database record ID
+                $dbTable,             // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho Review', [
+                'exception' => $e->getMessage(),
+                'user_id' => $userId
+            ]);
+        }
 
         return $responseData;
-
     }
 
 
@@ -58,9 +75,9 @@ class ZohoReview
 
     protected function updateZohoLeadBuyer($accessToken, $zohoRecordId, array $payload)
     {
-       $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoRecordId}";
-       $method = 'put';
-       return Http::withToken($accessToken)->$method($url, $payload);
+        $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoRecordId}";
+        $method = 'put';
+        return Http::withToken($accessToken)->$method($url, $payload);
     }
 
 
