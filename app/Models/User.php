@@ -122,7 +122,7 @@ class User extends Authenticatable
 
     public function accreditations()
     {
-        return $this->hasMany(UserAccreditation::class, 'id', 'user_id');
+        return $this->hasMany(UserAccreditation::class, 'user_id', 'id');
     }
 
     public function services()
