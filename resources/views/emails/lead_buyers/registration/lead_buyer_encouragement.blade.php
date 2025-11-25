@@ -71,10 +71,10 @@
                     <p>Right now, Auto Bid is turned <strong>off</strong> on your account — which means you might be missing out on top leads.</p>
 
                     <p>Sellers using Auto Bid get:</p>
-                    <ul style="margin:0 0 12px 18px; color:#4a4a4a;">
-                      <li>✅ Up to 35% more sales</li>
-                      <li>✅ Faster conversions with automatic matching</li>
-                      <li>✅ Hands-free lead purchases 24/7</li>
+                    <ul style="margin:0 0 12px 18px; color:#4a4a4a;list-style:none;line-height: 28px;">
+                      <li style="margin-bottom: 6px;">✅ Up to 35% more sales</li>
+                      <li style="margin-bottom: 6px;">✅ Faster conversions with automatic matching</li>
+                      <li style="margin-bottom: 6px;">✅ Hands-free lead purchases 24/7</li>
                     </ul>
 
                     <p>Don't miss out on high-intent customers. Enable Auto Bid and let Localists do the work for you!</p>
@@ -142,7 +142,7 @@
                       <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
                     </p>
                     <p>Let’s grow your business together 🚀</p>
-                    <p>— The Localists Team</p>
+                     <p>Kind Regards,<br>Localists Team</p>
                   </td>
                 </tr>
               </table>

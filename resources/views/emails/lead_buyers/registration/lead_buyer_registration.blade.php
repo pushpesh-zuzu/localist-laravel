@@ -229,7 +229,7 @@
                       </a>.
                     </p>
 
-                    <p>Regards,<br>Localists Team</p>
+                    <p>Kind Regards,<br>Localists Team</p>
                   </td>
                 </tr>
               </tbody></table>

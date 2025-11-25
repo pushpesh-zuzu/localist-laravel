@@ -66,11 +66,11 @@
                     <p class="highlight">You're just one step away from connecting with more buyers on Localists!</p>
 
                     <p>We noticed you started signing up but didn't finish. Sellers who complete their profile can:</p>
-                    <ul style="margin:0 0 12px 18px; color:#4a4a4a;">
-                      <li>✅ Access premium leads instantly</li>
-                      <li>✅ Appear in more buyer searches</li>
-                      <li>✅ Track engagement and conversions</li>
-                      <li>✅ View all leads for free</li>
+                    <ul style="margin:0 0 12px 18px; color:#4a4a4a;list-style:none;line-height: 28px;">
+                      <li style="margin-bottom: 6px;">✅ Access premium leads instantly</li>
+                      <li style="margin-bottom: 6px;">✅ Appear in more buyer searches</li>
+                      <li style="margin-bottom: 6px;">✅ Track engagement and conversions</li>
+                      <li style="margin-bottom: 6px;">✅ View all leads for free</li>
                     </ul>
 
                     <p>Finish registering and unlock your full potential on Localists.</p>
