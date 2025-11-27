@@ -61,8 +61,8 @@ class LeadService
         $userServices = UserService::where('user_id', $user_id)->select('service_id')->get();
         //get all types of locations
         $ulNationWide = UserServiceLocation::where('user_id', $user_id)->where('nation_wide', '1')->get();
-        $ulDistance = UserServiceLocation::where('user_id', $user_id)->where('type', 'Distance')->get()->toArray();
-        $ulTravel = UserServiceLocation::where('user_id', $user_id)->where('type', 'Travel Time')->get()->toArray();
+        $ulDistance = UserServiceLocation::where('user_id', $user_id)->whereIn('type', ['Distance', 'Travel Time'])->get()->toArray();
+        // $ulTravel = UserServiceLocation::where('user_id', $user_id)->where('type', 'Travel Time')->get()->toArray();
         $ulMap = UserServiceLocation::where('user_id', $user_id)->where('type', 'Draw on Map')->get()->toArray();
 
         //get Nation Wide services
@@ -78,9 +78,9 @@ class LeadService
         $ulDistance = array_filter($ulDistance, function ($item) use ($nwServices) {
             return !in_array($item['service_id'], $nwServices);
         });
-        $ulTravel = array_filter($ulTravel, function ($item) use ($nwServices) {
-            return !in_array($item['service_id'], $nwServices);
-        });
+        // $ulTravel = array_filter($ulTravel, function ($item) use ($nwServices) {
+        //     return !in_array($item['service_id'], $nwServices);
+        // });
         $ulMap = array_filter($ulMap, function ($item) use ($nwServices) {
             return !in_array($item['service_id'], $nwServices);
         });
@@ -91,9 +91,9 @@ class LeadService
         foreach ($ulDistance as $d) {
             array_push($otherServices, $d['service_id']);
         }
-        foreach ($ulTravel as $t) {
-            array_push($otherServices, $t['service_id']);
-        }
+        // foreach ($ulTravel as $t) {
+        //     array_push($otherServices, $t['service_id']);
+        // }
         foreach ($ulMap as $m) {
             array_push($otherServices, $m['service_id']);
         }
@@ -133,7 +133,7 @@ class LeadService
 
         if ($requestPostcode === null) { //select default condition for location
             //include locations
-            $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, $ulTravel, $ulMap, $nwServices) {
+            $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, /*$ulTravel,*/ $ulMap, $nwServices) {
                 //for distance type
 
 
@@ -285,8 +285,8 @@ class LeadService
         $userServices = UserService::where('user_id', $user_id)->select('service_id')->get();
         //get all types of locations
         $ulNationWide = UserServiceLocation::where('user_id', $user_id)->where('nation_wide', '1')->get();
-        $ulDistance = UserServiceLocation::where('user_id', $user_id)->where('type', 'Distance')->get()->toArray();
-        $ulTravel = UserServiceLocation::where('user_id', $user_id)->where('type', 'Travel Time')->get()->toArray();
+        $ulDistance = UserServiceLocation::where('user_id', $user_id)->whereIn('type', ['Distance', 'Travel Time'])->get()->toArray();
+        // $ulTravel = UserServiceLocation::where('user_id', $user_id)->where('type', 'Travel Time')->get()->toArray();
         $ulMap = UserServiceLocation::where('user_id', $user_id)->where('type', 'Draw on Map')->get()->toArray();
 
         //get Nation Wide services
@@ -302,9 +302,9 @@ class LeadService
         $ulDistance = array_filter($ulDistance, function ($item) use ($nwServices) {
             return !in_array($item['service_id'], $nwServices);
         });
-        $ulTravel = array_filter($ulTravel, function ($item) use ($nwServices) {
-            return !in_array($item['service_id'], $nwServices);
-        });
+        // $ulTravel = array_filter($ulTravel, function ($item) use ($nwServices) {
+        //     return !in_array($item['service_id'], $nwServices);
+        // });
         $ulMap = array_filter($ulMap, function ($item) use ($nwServices) {
             return !in_array($item['service_id'], $nwServices);
         });
@@ -315,9 +315,9 @@ class LeadService
         foreach ($ulDistance as $d) {
             array_push($otherServices, $d['service_id']);
         }
-        foreach ($ulTravel as $t) {
-            array_push($otherServices, $t['service_id']);
-        }
+        // foreach ($ulTravel as $t) {
+        //     array_push($otherServices, $t['service_id']);
+        // }
         foreach ($ulMap as $m) {
             array_push($otherServices, $m['service_id']);
         }
@@ -350,13 +350,11 @@ class LeadService
 
         if ($requestPostcode === null) { //select default condition for location
             //include locations
-            $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, $ulTravel, $ulMap, $nwServices) {
+            $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, /*$ulTravel,*/ $ulMap, $nwServices) {
                 //for distance type
 
 
                 foreach ($ulDistance as $item) {
-                    // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($item['postcode'], $item['miles']);
-
                     // check if request postcode exists in postcode table, if not then get coordinates and save
                     if (!empty($item['postcode'])) {
                         $dbPostcode = Postcode::where('postcode', $item['postcode'])->first();
@@ -394,10 +392,7 @@ class LeadService
         } else {
 
             $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
-                //for distance type
-                // $radiusPostcode = CustomHelper::getPostcodesWithinRadius($requestPostcode, $requestMiles);
-
-
+                
                 // check if request postcode exists in postcode table, if not then get coordinates and save
                 if (!empty($requestPostcode)) {
                     $dbPostcode = Postcode::where('postcode', $requestPostcode)->first();

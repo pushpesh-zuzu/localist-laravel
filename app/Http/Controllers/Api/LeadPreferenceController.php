@@ -939,6 +939,7 @@ class LeadPreferenceController extends Controller
         if(isset($userlocations) && $userlocations !=''){
             return $this->sendError('Postcode with the same user already exists');
         }
+        
 
         if(!empty($aVals['travel_time'])){
             $travel_time = $aVals['travel_time'];
@@ -950,6 +951,17 @@ class LeadPreferenceController extends Controller
         }else{
             $travel_by = "";
         }
+        //make miles 0 if type is not distance
+        if($aVals['type'] != 'Distance'){
+            $aVals['miles'] = 0;
+        }
+
+        //calculate miles from transport mode and tavel time if type is travel time
+        if($aVals['type'] == 'Travel Time'){
+            $travelTimeInMinutes = CustomHelper::convertTravelTimeToMinutes($aVals['travel_time']);
+            $aVals['miles'] = CustomHelper::getDistanceMilesFromTravellingMode($aVals['travel_by'], $travelTimeInMinutes);
+        }
+
         $serviceIds = is_array($aVals['service_id']) ? $aVals['service_id'] : explode(',', $aVals['service_id']);
         if ($serviceIds) {
             $locationIds = [];
@@ -1072,8 +1084,18 @@ class LeadPreferenceController extends Controller
         $travel_time = $aVals['travel_time'] ?? '';
         $travel_by = $aVals['travel_by'] ?? '';
         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
-        // Delete old entry
+        
+        //make miles 0 if type is not distance
+        if($aVals['type'] != 'Distance'){
+            $aVals['miles'] = 0;
+        }
+        //calculate miles from transport mode and tavel time if type is travel time
+        if($aVals['type'] == 'Travel Time'){
+            $travelTimeInMinutes = CustomHelper::convertTravelTimeToMinutes($aVals['travel_time']);
+            $aVals['miles'] = CustomHelper::getDistanceMilesFromTravellingMode($aVals['travel_by'], $travelTimeInMinutes);
+        }
 
+        // Delete old entry
         $locationIds = UserServiceLocation::where('user_id', $userId)
         ->pluck('zoho_location_id');
 

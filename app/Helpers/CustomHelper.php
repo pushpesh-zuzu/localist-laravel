@@ -257,6 +257,60 @@ class CustomHelper
         return ucfirst($f->format($number));
     }
 
+    public static function convertTravelTimeToMinutes($text)
+    {
+        $text = strtolower(trim($text));
+
+        // Extract the numeric value (supports integers & decimals)
+        preg_match('/([\d\.]+)/', $text, $matches);
+        if (! isset($matches[1])) {
+            throw new \InvalidArgumentException("Invalid travel time text: {$text}");
+        }
+
+        $value = (float) $matches[1];
+
+        // Determine if the text is in hours
+        if (str_contains($text, 'hour') || str_contains($text, 'hr')) {
+            return (int) round($value * 60);
+        }
+
+        // Otherwise treat as minutes
+        return (int) round($value);
+    }
+
+
+    public static function getDistanceMilesFromTravellingMode($mode, $minutes)
+    {
+        // Average speeds in miles per hour
+        $speeds = [
+            'driving' => 30,
+            'walking' => 3,
+            'biking'  => 10,
+            'transit' => 18,
+        ];
+
+        // Normalize mode
+        $mode = strtolower(trim($mode));
+
+        // Handle synonyms without creating new functions
+        if ($mode === 'public transport' || $mode === 'public_transport') {
+            $mode = 'transit';
+        } elseif ($mode === 'cycling') {
+            $mode = 'biking';
+        }
+
+        if (! isset($speeds[$mode])) {
+            throw new \InvalidArgumentException("Unsupported travel mode: {$mode}");
+        }
+
+        // Convert minutes to hours
+        $hours = $minutes / 60;
+
+        // Miles = hours × mph
+        return round($hours * $speeds[$mode], 2);
+    }
+
+
     public static function getPostcodesWithinRadiusQuery($postcode, $radius = 0, $km = false)
     {
         $val = $km ? 6371 : 3959; // Earth radius
