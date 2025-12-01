@@ -1064,7 +1064,7 @@ class LeadPreferenceController extends Controller
             $validator = Validator::make($aVals, [
                 'service_id' => ['required', 'exists:categories,id'],
                 'user_id' => 'required|exists:users,id',
-                'postcode' => 'required',
+                'postcode'   => 'sometimes|required',
                 'miles' => 'required',
                 'type' => 'required',
             ], [
