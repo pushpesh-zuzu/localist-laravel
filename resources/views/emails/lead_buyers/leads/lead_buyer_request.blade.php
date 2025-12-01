@@ -131,6 +131,7 @@
                 <tr>
                   <td style="padding:14px; font-family:Helvetica, Arial, sans-serif; color:#61696d;">
                     <p style="margin:0;">Email us at <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
+                  <p><br>Kind Regards,<br>Localists Team</p>
                   </td>
                 </tr>
               </table>

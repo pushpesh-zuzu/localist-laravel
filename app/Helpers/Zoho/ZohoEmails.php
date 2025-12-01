@@ -142,6 +142,10 @@ class ZohoEmails
 
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
+
+               $lead = LeadRequest::where('customer_id', $userId)
+                ->latest('created_at') // order by created_at DESC
+                ->first();
                 if (!empty($user)) {
 
 
@@ -150,7 +154,10 @@ class ZohoEmails
                         'name' => $user->name,
                         'email' => $user->email,
                         'password' => $password,
-                        'phone_otp' => $phoneOtp
+                        'phone_otp' => $phoneOtp,
+                        'leadId' => $lead->id ?? '',
+                        'buyerId' => $userId ?? '',
+                        
 
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -2827,7 +2834,7 @@ public static function reviewsForHiredLeadBuyer($leadId, $sellerId, $buyerId)
     $htmlView = view('emails.customers.reviews_hired_lead_buyer', [
         'baseUrl' => config('app.react_base_url'),
         'customerName' => $customerName ?? '',
-         'sellerName' => $seller->name ?? '',
+        'sellerName' => $seller->name ?? '',
         'serviceName' => $categoryName ?? '',
         'reviewUrl' => $reviewUrl ?? '',
         'leadId' => $leadId,

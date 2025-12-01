@@ -199,6 +199,7 @@
                     <a href="mailto:{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}" style="color:#007bff;">
                       {{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}
                     </a>.
+                    <p>Kind Regards,<br>Localists Team</p>
                   </td>
                 </tr>
               </table>

@@ -45,7 +45,7 @@ use App\Helpers\Zoho\ZohoSocialMedia;
 use App\Models\EmailLog;
 use App\Models\EmailSetting;
 use App\Models\NotificationSetting;
-
+use App\Http\Controllers\Api\RecommendedLeadsController;
 class UserController extends Controller
 {
 
@@ -1017,5 +1017,88 @@ class UserController extends Controller
         $baseUrl = CustomHelper::setting_value('react_base_url', config('app.react_base_url'));
         return redirect($baseUrl .'sellers/leads/my-responses');
     }
+
+
+    private function redirectToReactSuccess($message)
+    {
+        $baseUrl = CustomHelper::setting_value('react_base_url', config('app.react_base_url'));
+        
+        // Add status=true and message
+        return redirect($baseUrl . 'en/gb/?status=true&message=' . urlencode($message));
+    }
+
+    private function redirectToReactError($message)
+    {
+        $baseUrl = CustomHelper::setting_value('react_base_url', config('app.react_base_url'));
+        
+        // Add status=false and message
+        return redirect($baseUrl . 'en/gb/?status=false&message=' . urlencode($message));
+    }
+
+public function emailRequestTopFiveMatches($lead_id, $buyer_id, Request $request, LeadService $leadService)
+{
+    if (!$lead_id || !$buyer_id) {
+        return $this->redirectToReactError('Lead ID and Buyer ID are required');
+    }
+
+    $recommendedController = new RecommendedLeadsController();
+
+    try {
+        // Prepare request
+        $request->merge([
+            'lead_id' => $lead_id,
+            'user_id' => $buyer_id
+        ]);
+
+        // STEP 1: GET SELLERS LIST
+        $manualResult = $recommendedController->getManualLeads($request, $leadService);
+        $manualData = $manualResult->getData(true);
+
+        // CHECK ERROR
+        if (($manualData['success'] ?? false) === false) {
+            return $this->redirectToReactError($manualData['message'] ?? 'Unknown error while fetching sellers');
+        }
+
+        // Extract sellers
+        $data = $manualData['data'][0] ?? null;
+        if (!$data || empty($data['sellers'])) {
+            return $this->redirectToReactError("No sellers found for this lead");
+        }
+
+        $sellers = collect($data['sellers'])->take(5);
+
+        // STEP 2: PREPARE PAYLOAD
+        $payload = [
+            'lead_id'    => $lead_id,
+            'user_id'    => $buyer_id,
+            'service_id' => $sellers->pluck('service_id')->toArray(),
+            'seller_id'  => $sellers->pluck('id')->toArray(),
+            'bid'        => array_fill(0, $sellers->count(), 20),
+            'distance'   => $sellers->pluck('distance')->toArray(),
+        ];
+
+        $request->replace($payload);
+
+        // STEP 3: SEND MULTIPLE BIDS
+        $bidResult = $recommendedController->addMultipleManualBid($request);
+        $bidData = $bidResult->getData(true);
+
+        if (($bidData['success'] ?? false) === false) {
+            return $this->redirectToReactError($bidData['message'] ?? 'Bid sending failed');
+        }
+
+        // STEP 4: SUCCESS → REDIRECT TO REACT WITH TOAST
+        return $this->redirectToReactSuccess('Requests sent successfully');
+
+    } catch (\Exception $e) {
+        // Catch unexpected exceptions and redirect with error
+        \Log::error('Error in emailRequestTopFiveMatches: ' . $e->getMessage(), [
+            'lead_id' => $lead_id,
+            'buyer_id' => $buyer_id
+        ]);
+        return $this->redirectToReactError('Something went wrong: ' . $e->getMessage());
+    }
+}
+
 
 }

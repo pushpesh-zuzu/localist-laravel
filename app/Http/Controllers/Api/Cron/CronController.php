@@ -78,7 +78,7 @@ class CronController extends Controller
         $newLeadAfter5days = $this->checkCreditAfter5Days();
 
         $sendNextDayExpiredQuoteEmail = $this->sendNextDayExpiredQuoteEmail();
-      //  $sendNewProPostcodeEmail = $this->sendnotifyCustomerNewProfessionalinPostcodeEmail();
+       $sendNewProPostcodeEmail = $this->sendnotifyCustomerNewProfessionalinPostcodeEmail();
         
 
         return response()->json([
@@ -88,7 +88,7 @@ class CronController extends Controller
                 'new_lead_after_7_days' => $newLeadAfter7days,
                 'new_lead_after_5_days' => $newLeadAfter5days,
                 'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail,
-             //  'pro_available_postcode_email' => $sendNewProPostcodeEmail
+                'pro_available_postcode_email' => $sendNewProPostcodeEmail
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);

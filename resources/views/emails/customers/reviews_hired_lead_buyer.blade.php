@@ -6,7 +6,7 @@
   <title>Recommended Pros</title>
   <style>
     /* Email-safe resets */
-    body {
+   body {
             margin: 0;
             background-color: #f1f2f4;
             font-family: 'Lato',Helvetica,Arial,sans-serif;
@@ -25,7 +25,25 @@
       .card-pad{padding:16px !important;}
       .stack{display:block !important;width:100% !important;}
       .right{text-align:left !important;}
+      p {
+      font-size: 15px !important;
+      line-height: 22px !important;
     }
+    }
+     .btn {
+    display: block;
+    max-width: 260px; /* reduced width */
+    width: 100%;
+    text-align: center;
+    background-color: #3399ff;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 0;
+    border-radius: 4px;
+    margin: 12px auto 0 auto; /* center the button */
+}
   </style>
 </head>
 <body style="margin:0;padding:0;background:#f1f2f4;">
@@ -62,7 +80,7 @@
 
               <p style="margin:0;text-align:center;">
                 <a href="{{ $reviewUrl }}" 
-                   style="background:#00AFE3;color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-size:14px;font-weight:bold;">
+                   class="btn">
                   Leave Your Feedback
                 </a>
               </p>

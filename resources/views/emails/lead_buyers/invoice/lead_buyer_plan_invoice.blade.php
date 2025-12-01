@@ -8,7 +8,9 @@
       margin: 0;
       background-color: #f1f2f4;
       font-family: "Lato", Helvetica, Arial, sans-serif;
-      font-size: 16px;
+      font-size: 18px;
+            font-weight: 510;
+            line-height: 25px;
       line-height: 1.6;
       color: #4a4a4a;
       -webkit-font-smoothing: antialiased;
@@ -167,7 +169,7 @@
                       </a>.
                     </p>
 
-                    <p>Regards,<br>Localists Team</p>
+                    <p>Kind Regards,<br>Localists Team</p>
 
                   </td>
                 </tr>

@@ -14,13 +14,23 @@
     p.lead-intro { color:#61696d; margin:10px 0 0 0; text-align:center; }
     .stat-block { margin-top:16px; background-color:#f5f9fc; padding:16px; border-radius:4px; font-size:15px; color:#333; }
     .stat-block strong { font-weight:600; }
-    .btn { display:block; background:#00afe3; color:#fff !important; text-decoration:none; font-size:16px; font-weight:700; padding:14px; border-radius:4px; text-align:center; margin-top:20px; }
+   .btn {
+      display:inline-block;
+      background-color:#00afe3;
+      color:#ffffff !important;
+      text-decoration:none;
+      font-size:15px;
+      font-weight:700;
+      padding:10px 16px;
+      border-radius:4px;
+      -webkit-text-size-adjust:none;
+    }
     .help-card { background:#ffffff; padding:24px; border-radius:6px; margin-top:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
     .help-header { background:#d8edf8; color:#1a588c; padding:12px 20px; margin:-24px -24px 20px -24px; border-top-left-radius:6px; border-top-right-radius:6px; font-weight:700; }
     .footer { text-align:center; padding:20px; font-size:12px; color:#666; }
     @media only screen and (max-width:600px) {
       h1 { font-size:20px; }
-      .btn { font-size:16px; padding:12px; }
+       .btn { font-size:14px !important; padding:10px 14px !important; }
       .card, .help-card { padding:18px; }
     }
   </style>
@@ -83,6 +93,7 @@
                     {{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}
                   </a>.
                 </p>
+                <p>Kind Regards,<br>Localists Team</p>
               </div>
             </td>
           </tr>

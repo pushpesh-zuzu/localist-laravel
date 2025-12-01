@@ -9,7 +9,17 @@
     .email-wrap { width: 100%; background-color: #f1f2f4; padding: 32px 0; }
     .email-container { max-width: 600px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; }
     .logo { max-height: 50px; display: block; margin: 0 auto 20px auto; max-width:100%; height:auto; }
-    .btn { display: inline-block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 18px; border-radius: 4px; }
+    .btn {
+      display:inline-block;
+      background-color:#00afe3;
+      color:#ffffff !important;
+      text-decoration:none;
+      font-size:15px;
+      font-weight:700;
+      padding:10px 16px;
+      border-radius:4px;
+      -webkit-text-size-adjust:none;
+    }
     h1 { font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 8px 0; font-family: Helvetica, Arial, sans-serif; }
     .highlight { color: #00afe3; margin-bottom: 12px; font-size: 15px; font-family: Helvetica, Arial, sans-serif; text-align:center; }
     p { color: #61696d; margin: 0 0 12px 0; font-family: Helvetica, Arial, sans-serif; }
@@ -22,7 +32,7 @@
     del { color: #9aa1a6; margin-right:6px; }
     @media only screen and (max-width: 600px) {
       .email-container { width: 100% !important; padding: 0 12px !important; }
-      .btn { font-size: 16px !important; padding: 12px 20px !important; display:block; width:100%; box-sizing:border-box; text-align:center; }
+       .btn { font-size:14px !important; padding:10px 14px !important; }
       h1 { font-size: 20px !important; }
     }
   </style>
@@ -110,6 +120,7 @@
                 <div class="section-header">Need Help?</div>
                 <div style="padding:16px">
                   <p class="muted">Email us at <a href="mailto:{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}">{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}</a>.</p>
+                 <p><br>Kind Regards,<br>Localists Team</p>
                 </div>
               </div>
             </td>

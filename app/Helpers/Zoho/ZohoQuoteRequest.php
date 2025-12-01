@@ -152,9 +152,6 @@ class ZohoQuoteRequest
     }
 
 
-
-
-
     public function updateZohoQuoteStatus($leadRequestId)
     {
         $accessToken = ZohoHelper::getAccessToken();
@@ -163,6 +160,7 @@ class ZohoQuoteRequest
         $leadRequest = LeadRequest::find($leadRequestId);
         if (!$leadRequest) return null;
 
+        $totalNumberOfLeads = RecommendedLead::where('lead_id', $leadRequestId)->count();
 
         if (empty($leadRequest->zoho_quote_request_id)) {
             Log::warning("Zoho update skipped — no zoho_quote_request_id", [
@@ -178,6 +176,31 @@ class ZohoQuoteRequest
             $Hired_User = $user->name ?? '';
         }
 
+    
+
+       $leadBuyers = RecommendedLead::where('lead_id', $leadRequestId)
+            ->whereNotNull('seller_id')
+            ->pluck('seller_id')
+            ->filter() // remove null/empty values
+            ->toArray();
+
+        // If empty → send empty string safely
+        if (empty($leadBuyers)) {
+            $sellerLinks = '';
+        } else {
+            $sellerLinks = User::whereIn('id', $leadBuyers)
+                ->get()
+                ->map(function ($user) {
+                    $name  = $user->name ?? '';
+                    $email = $user->email ?? '';
+
+                    // Format: Name (email)
+                    return ucfirst($name) . ($email ? " ($email)" : '');
+                })
+                ->filter() // remove NULL names
+                ->implode(', ');
+        }
+
         // Build payload for updating only Status
 
         $payload = [
@@ -186,6 +209,9 @@ class ZohoQuoteRequest
                 'Status'                       => $leadRequest->status,
                 'Hired_User'                   => $Hired_User,
                 'Hired_To'                     => $leadRequest->hired_to ?? '',
+                'Total_Number_of_Bids'         => $totalNumberOfLeads ?? 0,
+                'Lead_Buyers'                  => $sellerLinks,
+                
             ]],
             'duplicate_check_fields' => ['Quote_Request_Record_Id']
 
@@ -226,17 +252,8 @@ class ZohoQuoteRequest
             ]);
         }
 
-
-
-
-
-
         return $response->json();
     }
-
-
-
-
 
 
 

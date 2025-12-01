@@ -2,7 +2,17 @@
     <meta charset="UTF-8">
 
     <meta content="width=device-width" name="viewport">
-    <style>body { margin: 0; background-color: rgb(241, 242, 244); font-family: "Lato", Helvetica, Arial, sans-serif; font-size: 18px; line-height: 25px; color: rgb(74, 74, 74); -webkit-font-smoothing: antialiased }.email-wrap { width: 100%; background-color: rgb(241, 242, 244); padding: 32px 0 }.email-container { max-width: 600px; margin: 0 auto; padding: 0 16px }.logo { max-height: 50px; display: block; margin: 0 auto 20px auto }.btn { display: inline-block; background-color: rgb(51, 153, 255); color: rgb(255, 255, 255) !important; text-decoration: none; font-size: 14px; font-weight: bold; padding: 10px 18px; border-radius: 4px }h1 { font-size: 22px; font-weight: 600; color: rgb(51, 51, 51); margin: 0 0 10px 0; font-family: Helvetica, Arial, sans-serif }.highlight { color: rgb(0, 175, 227); margin-bottom: 16px; font-size: 15px; font-family: Helvetica, Arial, sans-serif }p { color: rgb(97, 105, 109); margin: 0 0 12px 0; font-family: Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.5 }a { color: rgb(0, 123, 255) }@media only screen and (max-width: 600px) {.email-container { width: 100% !important; padding: 0 12px !important } .btn { font-size: 16px !important; padding: 12px 20px !important } h1 { font-size: 20px !important } }</style>
+    <style>body { margin: 0; background-color: rgb(241, 242, 244); font-family: "Lato", Helvetica, Arial, sans-serif; font-size: 18px; line-height: 25px; color: rgb(74, 74, 74); -webkit-font-smoothing: antialiased }.email-wrap { width: 100%; background-color: rgb(241, 242, 244); padding: 32px 0 }.email-container { max-width: 600px; margin: 0 auto; padding: 0 16px }.logo { max-height: 50px; display: block; margin: 0 auto 20px auto }.btn { display: inline-block; background-color: rgb(51, 153, 255); color: rgb(255, 255, 255) !important; text-decoration: none; font-size: 14px; font-weight: bold; padding: 10px 18px; border-radius: 4px }h1 { font-size: 22px; font-weight: 600; color: rgb(51, 51, 51); margin: 0 0 10px 0; font-family: Helvetica, Arial, sans-serif }.highlight { color: rgb(0, 175, 227); margin-bottom: 16px; font-size: 15px; font-family: Helvetica, Arial, sans-serif }p { color: rgb(97, 105, 109); margin: 0 0 12px 0; font-family: Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.5 }a { color: rgb(0, 123, 255) }@media only screen and (max-width: 600px) {.email-container { width: 100% !important; padding: 0 12px !important } .btn { font-size: 16px !important; padding: 12px 20px !important } h1 { font-size: 20px !important } }
+
+
+@media only screen and (max-width: 620px) {
+  .btn.btn-fixed {
+    font-size: 14px !important;
+    padding: 10px 18px !important;
+  }
+}
+
+    </style>
 
 </head><body><div style="word-wrap:break-word; word-break:break-word"><div style="word-wrap:break-word; word-break:break-word"><div style="word-wrap:break-word; word-break:break-word"><div style="word-wrap:break-word; word-break:break-word"><div style="font-family:Verdana, arial, Helvetica, sans-serif">
 
@@ -31,7 +41,7 @@
                     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px">
                       <tbody><tr>
                         <td style="padding:0 16px">
-                          <a href="{{$baseUrl}}/settings/leads/my-services" class="btn">Confirm lead preferences</a>
+                          <a href="{{$baseUrl}}/settings/leads/my-services" class="btn btn-fixed">Confirm lead preferences</a>
                         </td>
                       </tr>
                     </tbody></table>

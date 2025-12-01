@@ -31,19 +31,34 @@
 
         /* UPDATED BUTTON FIX */
         .btn {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background-color: #3399ff;
-            color: #ffffff !important;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: bold;
-            padding: 12px 0;
-            border-radius: 4px;
-            margin-top: 12px;
-        }
+    display: block;
+    max-width: 260px; /* reduced width */
+    width: 100%;
+    text-align: center;
+    background-color: #3399ff;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 0;
+    border-radius: 4px;
+    /* margin: 12px auto 0 auto; center the button */
+}
 
+ .btn2 {
+    display: block;
+    max-width: 335px; /* reduced width */
+    width: 100%;
+    text-align: center;
+    background-color: #3399ff;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 0;
+    border-radius: 4px;
+    /* margin: 12px auto 0 auto; center the button */
+}
         .section-header {
             background-color: #d8edf8;
             color: #1a588c;
@@ -63,6 +78,7 @@
         @media only screen and (max-width: 600px) {
             .card { padding: 24px 20px !important; }
             .btn { width: 100% !important; font-size: 16px !important; }
+            .btn2 { width: 100% !important; font-size: 16px !important; }
             h1 { font-size: 20px !important; }
             .section-header { font-size: 15px !important; padding: 12px 16px !important; }
         }
@@ -90,6 +106,11 @@
                   Password: <strong>{{$password}}</strong>
                 </p>
                 <a href="{{$baseUrl}}/en/gb/login" class="btn">Log in to Localists</a>
+            </div>
+
+           <div class="card">
+                <div class="section-header">Your Requests</div>
+                <p style="margin-bottom:20px">Manage your requests from one place. You can request replies from the top 5 lead buyers in one click:</p> <a href="{{ url('/api/email-customer-request-top-five-matches/' . $leadId . '/' . $buyerId) }}" class="btn2">Request Quote From Top 5 Professionals</a>
             </div>
 
             <div class="card">

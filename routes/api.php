@@ -53,6 +53,10 @@ Route::post('/resend-otp', [ApiController::class, 'resendOtp']);
 Route::post('/contact-us', [ContactUsController::class, 'store']);
 
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
+Route::get('email-customer-request-top-five-matches/{lead_id}/{buyer_id}', [UserController::class, 'emailRequestTopFiveMatches']);
+
+
+
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 

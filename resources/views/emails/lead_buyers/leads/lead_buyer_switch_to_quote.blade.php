@@ -117,9 +117,10 @@
             <td style="padding:0 16px 16px 16px;">
               <table role="presentation" width="100%" style="border-radius:6px; overflow:hidden;">
                 <tr>
-                  <td style="background:#00afe3; color:#fff; padding:14px; text-align:center; font-size:14px;">
+                  <td style="background:#00afe3; color:#fff; padding:14px;  font-size:14px;">
                     If you didn’t make this change or need help, please email us at
                     <a href="mailto:contact@localists.com" style="color:#fff; text-decoration:underline;">contact@localists.com</a>.
+                    <p>Kind Regards,<br>Localists Team</p>
                   </td>
                 </tr>
               </table>
@@ -131,13 +132,13 @@
             <td style="padding:0 16px 24px 16px;">
               <table role="presentation" width="100%" class="card" style="background:#111637; color:#fff;">
                 <tr>
-                  <td style="padding:12px 14px; font-size:13px;text-align:center">
+                  <td style="padding:12px 14px; font-size:13px;">
                     Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification" style="color:#fff; text-decoration:underline;">here</a>.
                   </td>
 
                 </tr>
                 <tr>
-                  <td colspan="2" style="padding:0 14px 14px 14px; font-size:12px; color:#d0d4e0;text-align:center">
+                  <td colspan="2" style="padding:0 14px 14px 14px; font-size:12px; color:#d0d4e0;">
                     {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
                   </td>
                 </tr>
