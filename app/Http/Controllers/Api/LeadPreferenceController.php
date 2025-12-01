@@ -1085,6 +1085,10 @@ class LeadPreferenceController extends Controller
         $travel_by = $aVals['travel_by'] ?? '';
         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
         
+       $coords = $aVals['coordinates'] ?? [];
+        if (is_string($coords)) $coords = json_decode($coords, true);
+        if (!is_array($coords)) $coords = [];
+
         //make miles 0 if type is not distance
         if($aVals['type'] != 'Distance'){
             $aVals['miles'] = 0;
@@ -1159,7 +1163,7 @@ class LeadPreferenceController extends Controller
                 'nation_wide' => $nationWide,
                 'travel_time' => $travel_time,
                 'travel_by' => $travel_by,
-                'coordinates' => $aVals['coordinates']
+                'coordinates'     => json_encode($coords),
             ]);
 
             $locationIdLists[] = $locationInsert->id;
