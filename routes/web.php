@@ -24,6 +24,7 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Api\Cron\CronController;
 // use App\Http\Controllers\GoogleReviewController;
+use App\Http\Controllers\MapController;
 use Illuminate\Http\Request;
 
 Route::get('phpinfo', function () {
@@ -106,6 +107,9 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/service-map', [MapController::class, 'index'])->name('service-map.index');
+    Route::get('/service-map/data', [MapController::class, 'data'])->name('service-map.data');
 
     Route::resource('sectors', SectorController::class);
 

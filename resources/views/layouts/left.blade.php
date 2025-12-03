@@ -255,6 +255,13 @@
     </li>
     @endcanany
 
+    <li class="nav-item">
+      <a href="{{ route('service-map.index') }}" class="nav-link {{ request()->routeIs('service-map.index') ? 'active' : '' }}">
+        <i class="bi bi-geo-alt nav-icon"></i>
+        Service Map
+      </a>
+    </li>
+
   </ul>
 
 </div>

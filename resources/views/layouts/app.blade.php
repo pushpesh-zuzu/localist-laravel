@@ -53,7 +53,7 @@
             background-color: #e6f7fc !important; /* match image background */
           }
         </style>
-        
+        @yield('css')
   </head>
   <body>
   @include('layouts.left')  
