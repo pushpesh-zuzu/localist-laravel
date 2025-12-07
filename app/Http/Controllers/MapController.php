@@ -26,7 +26,7 @@ class MapController extends Controller
      */
     public function data(Request $request)
     {
-        sleep(20); // simulate delay for testing
+        // sleep(20); // simulate delay for testing
 
         // BUYERS: user_type IN (1,3) who have credits and valid postcode
         $crediBuyersQuery = DB::table('users')
