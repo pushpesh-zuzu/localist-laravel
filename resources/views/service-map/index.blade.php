@@ -1,11 +1,30 @@
 @section('css')
     <!-- Leaflet -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
 
+    <!-- Leaflet.fullscreen plugin (must be AFTER leaflet.js) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/leaflet.fullscreen.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Leaflet.fullscreen.min.js"></script>
+
     <style>
-        /* Map container */
-        #map { width: 100%; height: 100vh; }
+    /* ensure fullscreen control visible above other controls/legend */
+        .leaflet-control-fullscreen {
+            z-index: 10000 !important;
+            background: rgba(255,255,255,0.95);
+        }
+
+        /* if plugin icon is missing, ensure some minimal padding/size */
+        .leaflet-control-fullscreen a {
+            width: 30px;
+            height: 30px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+
+        /* optional: ensure map container can expand cleanly */
+        #map { width:100%; height:700px; }
 
         /* Pin styles adapted from your example (valid CSS) */
         .pin-container { position: relative; width: 40px; height: 40px; display:inline-block; }
@@ -100,10 +119,59 @@
             display:inline-block; border: 1px solid rgba(0,0,0,0.08);
         }
 
-        /* small screens */
+        .leaflet-control-fullscreen {
+            background: white !important;
+        }
+        
+        #map .map-overlay {
+            position: absolute;
+            inset: 0; /* top:0; right:0; bottom:0; left:0 */
+            background: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001; /* above controls/legend */
+            pointer-events: all; /* block interactions while loading */
+            transition: opacity 200ms ease;
+            opacity: 1;
+        }
+
+        #map .map-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        /* spinner */
+        .map-overlay .loader {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: Arial, sans-serif;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .map-overlay .spinner {
+            border: 4px solid rgba(0,0,0,0.08);
+            border-top-color: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+            /* small screens */
         @media (max-width: 576px) {
             .map-legend { font-size: 12px; padding: 6px 8px; }
+            .map-overlay .loader { font-size: 13px; }
+            .map-overlay .spinner { width:28px; height:28px; border-width:3px; }
         }
+
     </style>
 @endsection
 
@@ -112,9 +180,31 @@
 
     <div class="card mb-4">
        <div class="card-body" style="padding: 0px !important; ">
+            <div class="row" style="padding:10px;">
+                <div class="col-md-4">
+                    <strong>Buyer with credit:</strong>
+                    <span id="buyer-with-credit-count"></span>
+                </div>
+                <div class="col-md-4">
+                    <strong>Buyer without credit:</strong>
+                    <span id="buyer-without-credit-count"></span>
+                </div>
+                <div class="col-md-4">
+                    <strong>Lead:</strong>
+                    <span id="lead-count"></span>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-12">
-                    <div id="map" style="height: 700px;"></div>
+                    <div id="map" style="height:700px; position:relative;">
+                        <!-- map tiles & controls live here -->
+                        <div class="map-overlay hidden" id="map-overlay" aria-hidden="true" role="status" aria-live="polite">
+                            <div class="loader">
+                                <div class="spinner" aria-hidden="true"></div>
+                                <div class="text"><span id="map-overlay-text">Loading map data…</span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,202 +212,292 @@
 </x-app-layout>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // init map
-    const map = L.map('map').setView([54.5, -3], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    document.addEventListener('DOMContentLoaded', function () {
+        // init map (no fullscreen option here — we'll add the control programmatically)
+        const map = L.map('map').setView([54.5, -3], 6);
 
-    // legend
-    const legend = L.control({ position: 'topright' });
-    legend.onAdd = function () {
-        const div = L.DomUtil.create('div', 'map-legend');
-        div.innerHTML = `
-            <div style="font-weight:600;margin-bottom:6px;">Map legend</div>
-            <div class="legend-item"><span class="legend-swatch" style="background:#00C800"></span> Buyer with credit (green)</div>
-            <div class="legend-item"><span class="legend-swatch" style="background:#FF3B30"></span> Buyer without credit (red)</div>
-            <div class="legend-item"><span class="legend-swatch" style="background:#1370FF"></span> Lead (blue)</div>
-        `;
-        return div;
-    };
-    legend.addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-    // helpers
-    function safeNum(v) {
-        const n = parseFloat(v);
-        return Number.isFinite(n) ? n : null;
-    }
-    function escapeHtml(str) {
-        return String(str || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+        // Programmatically add the fullscreen control if plugin exists,
+        // otherwise add a small fallback control that toggles browser fullscreen.
+        (function addFullscreenControl() {
+            try {
+                const pluginExists = !!(window.L && L.Control && typeof L.Control.Fullscreen === 'function');
 
-    // Keep created markers so we can clear
-    const markers = [];
-    function clearMarkers() {
-        markers.forEach(m => {
-            try { map.removeLayer(m); } catch(e){}
-        });
-        markers.length = 0;
-    }
+                if (pluginExists) {
+                    // explicit add (so we control position)
+                    const fs = new L.Control.Fullscreen({ position: 'bottomleft' });
+                    map.addControl(fs);
 
-    let initialFit = false;
+                    // ensure map resizes after entering/exiting fullscreen
+                    document.addEventListener('fullscreenchange', () => {
+                        setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 200);
+                    });
 
-    // Create a DivIcon with count and color and an x-offset so three pins do not exactly overlap.
-    // offsetX in pixels (-20, 0, +20)
-    function makeCountDivIcon(count, colorClass, offsetX = 0) {
-        const html = `
-            <div class="pin-container" style="transform: translateX(${offsetX}px);">
-                <div class="pin ${colorClass}" style="z-index:2;">
-                    <span style="transform: rotate(45deg); display:inline-block; position:relative; z-index:3;">${count}</span>
-                </div>
-                <div class="pulse" style="z-index:1;"></div>
-            </div>
-        `;
-        return L.divIcon({
-            html: html,
-            className: 'custom-count-icon', // keep default styling off
-            iconSize: [40, 40],
-            iconAnchor: [20, 40], // bottom center
-            popupAnchor: [0, -38]
-        });
-    }
+                    console.info('Leaflet.fullscreen plugin detected and control added.');
+                    return;
+                }
 
-    // Main fetch + render
-    async function refreshMap() {
-        try {
-            console.log('Refreshing map data...');
-            const res = await fetch('{{ route("service-map.data") }}', { cache: 'no-store' });
-            if (!res.ok) {
-                console.warn('Map data fetch failed:', res.status);
-                return;
-            }
-            const data = await res.json();
+                console.warn('Leaflet.fullscreen plugin NOT detected — adding fallback fullscreen control.');
 
-            clearMarkers();
+                // fallback control
+                const FullscreenControl = L.Control.extend({
+                    options: { position: 'bottomleft' },
+                    onAdd: function () {
+                        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                        const a = L.DomUtil.create('a', '', container);
+                        a.href = '#';
+                        a.title = 'Toggle fullscreen';
+                        a.setAttribute('role','button');
+                        a.innerHTML = '&#x26F6;'; // simple icon
 
-            // aggregate by postcode + coordinates fallback
-            // key = postcode|lat|lng to avoid collapsing different coordinates that share postcode string
-            const agg = new Map();
+                        L.DomEvent.on(a, 'mousedown', L.DomEvent.stopPropagation)
+                            .on(a, 'click', L.DomEvent.stopPropagation)
+                            .on(a, 'click', L.DomEvent.preventDefault)
+                            .on(a, 'click', () => {
+                                const elem = document.getElementById('map');
+                                if (!document.fullscreenElement) {
+                                    elem.requestFullscreen && elem.requestFullscreen();
+                                } else {
+                                    document.exitFullscreen && document.exitFullscreen();
+                                }
+                                // allow time for browser to enter/exit, then invalidate size
+                                setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 300);
+                            });
 
-            (data.buyers || []).forEach(b => {
-                const lat = safeNum(b.latitude);
-                const lng = safeNum(b.longitude);
-                const postcode = (b.zipcode || b.postcode || '').trim();
-                if (lat === null || lng === null) return;
-                const key = `${postcode}|${lat.toFixed(6)}|${lng.toFixed(6)}`;
-                if (!agg.has(key)) agg.set(key, {
-                    postcode,
-                    lat,
-                    lng,
-                    buyers_with_credit: 0,
-                    buyers_no_credit: 0,
-                    leads: 0
+                        return container;
+                    }
                 });
-                const rec = agg.get(key);
-                const credit = Number(b.total_credit) || 0;
-                if (credit > 0) rec.buyers_with_credit += 1;
-                else rec.buyers_no_credit += 1;
-            });
 
-            (data.leads || []).forEach(l => {
-                const lat = safeNum(l.latitude);
-                const lng = safeNum(l.longitude);
-                const postcode = (l.postcode || '').trim();
-                if (lat === null || lng === null) return;
-                const key = `${postcode}|${lat.toFixed(6)}|${lng.toFixed(6)}`;
-                if (!agg.has(key)) agg.set(key, {
-                    postcode,
-                    lat,
-                    lng,
-                    buyers_with_credit: 0,
-                    buyers_no_credit: 0,
-                    leads: 0
+                map.addControl(new FullscreenControl());
+
+                // keep layout correct on fullscreen change
+                document.addEventListener('fullscreenchange', () => {
+                    setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 200);
                 });
-                const rec = agg.get(key);
-                rec.leads += 1;
-            });
 
-            // create markers for each aggregated point
-            const bounds = L.latLngBounds();
-            let addedAny = false;
-
-            for (const [key, rec] of agg.entries()) {
-                const { lat, lng, postcode, buyers_with_credit, buyers_no_credit, leads } = rec;
-
-                // We will create up to 3 separate markers (green, red, blue) if their count > 0
-                // offset them slightly: green (-18px), blue (0), red (+18px) so labels readable
-                if (buyers_with_credit > 0) {
-                    const ico = makeCountDivIcon(buyers_with_credit, 'pin-green', -18);
-                    const m = L.marker([lat, lng], { icon: ico })
-                        .bindPopup(`
-                            <div style="min-width:200px;">
-                                <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
-                                <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
-                                <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
-                                <strong>Leads:</strong> ${leads}
-                            </div>
-                        `);
-                    m.addTo(map);
-                    markers.push(m);
-                    try { bounds.extend(m.getLatLng()); addedAny = true; } catch(e){}
-                }
-
-                if (leads > 0) {
-                    const ico = makeCountDivIcon(leads, 'pin-blue', 0);
-                    const m = L.marker([lat, lng], { icon: ico })
-                        .bindPopup(`
-                            <div style="min-width:200px;">
-                                <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
-                                <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
-                                <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
-                                <strong>Leads:</strong> ${leads}
-                            </div>
-                        `);
-                    m.addTo(map);
-                    markers.push(m);
-                    try { bounds.extend(m.getLatLng()); addedAny = true; } catch(e){}
-                }
-
-                if (buyers_no_credit > 0) {
-                    const ico = makeCountDivIcon(buyers_no_credit, 'pin-red', 18);
-                    const m = L.marker([lat, lng], { icon: ico })
-                        .bindPopup(`
-                            <div style="min-width:200px;">
-                                <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
-                                <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
-                                <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
-                                <strong>Leads:</strong> ${leads}
-                            </div>
-                        `);
-                    m.addTo(map);
-                    markers.push(m);
-                    try { bounds.extend(m.getLatLng()); addedAny = true; } catch(e){}
-                }
+            } catch (err) {
+                console.error('addFullscreenControl error', err);
             }
+        })();
 
-            // Fit to bounds on first load (or when map empty then keep view)
-            if (!initialFit && addedAny && bounds.isValid()) {
-                map.fitBounds(bounds.pad(0.18));
-                initialFit = true;
-            }
+        // --- Legend, helpers and rest of your map code follow exactly as you had ---
+        // legend
+        const legend = L.control({ position: 'topright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'map-legend');
+            div.innerHTML = `
+                <div style="font-weight:600;margin-bottom:6px;">Map legend</div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#00C800"></span> Buyer with credit (green)</div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#FF3B30"></span> Buyer without credit (red)</div>
+                <div class="legend-item"><span class="legend-swatch" style="background:#1370FF"></span> Lead (blue)</div>
+            `;
+            return div;
+        };
+        legend.addTo(map);
 
-        } catch (err) {
-            console.error('refreshMap error', err);
+        // helpers
+        function safeNum(v) {
+            const n = parseFloat(v);
+            return Number.isFinite(n) ? n : null;
         }
-    }
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
-    // initial load
-    refreshMap();
+        // Keep created markers so we can clear
+        const markers = [];
+        function clearMarkers() {
+            markers.forEach(m => {
+                try { map.removeLayer(m); } catch(e){}
+            });
+            markers.length = 0;
+        }
 
-    // refresh interval (every 10s)
-    // const REFRESH_MS = 10000;
-    // setInterval(refreshMap, REFRESH_MS);
-});
+        let initialFit = false;
+
+        function makeCountDivIcon(count, colorClass, offsetX = 0) {
+            const html = `
+                <div class="pin-container" style="transform: translateX(${offsetX}px);">
+                    <div class="pin ${colorClass}" style="z-index:2;">
+                        <span style="transform: rotate(45deg); display:inline-block; position:relative; z-index:3;">${count}</span>
+                    </div>
+                    <div class="pulse" style="z-index:1;"></div>
+                </div>
+            `;
+            return L.divIcon({
+                html: html,
+                className: 'custom-count-icon',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -38]
+            });
+        }
+
+        // show/hide overlay
+        function showMapLoading(message) {
+            try {
+                const ov = document.getElementById('map-overlay');
+                if (!ov) return;
+                const txt = document.getElementById('map-overlay-text');
+                if (txt && message) txt.textContent = message;
+                ov.classList.remove('hidden');
+                ov.setAttribute('aria-hidden', 'false');
+            } catch(e){ console.warn('showMapLoading error', e); }
+        }
+        function hideMapLoading() {
+            try {
+                const ov = document.getElementById('map-overlay');
+                if (!ov) return;
+                ov.classList.add('hidden');
+                ov.setAttribute('aria-hidden', 'true');
+            } catch(e){ console.warn('hideMapLoading error', e); }
+        }
+
+        // Main fetch + render (unchanged)
+        async function refreshMap() {
+            showMapLoading('Loading map data…'); // show overlay
+            try {
+                console.log('Refreshing map data...');
+                const res = await fetch('{{ route("service-map.data") }}', { cache: 'no-store' });
+                if (!res.ok) {
+                    console.warn('Map data fetch failed:', res.status);
+                    return;
+                }
+                const data = await res.json();
+
+                clearMarkers();
+
+                const agg = new Map();
+
+                $('#buyer-with-credit-count').text((data.crediBuyers || []).length || '0');
+                $('#buyer-without-credit-count').text((data.noCreditBuyers || []).length || '0');
+                $('#lead-count').text((data.leads || []).length || '0');
+
+                const combinedBuyers = [
+                    ...(data.crediBuyers || []),
+                    ...(data.noCreditBuyers || [])
+                ];
+
+                combinedBuyers.forEach(b => {
+                    const lat = safeNum(b.latitude);
+                    const lng = safeNum(b.longitude);
+                    const postcode = (b.zipcode || b.postcode || '').trim();
+                    if (lat === null || lng === null) return;
+                    const key = `${postcode}|${lat.toFixed(6)}|${lng.toFixed(6)}`;
+                    if (!agg.has(key)) agg.set(key, {
+                        postcode,
+                        lat,
+                        lng,
+                        buyers_with_credit: 0,
+                        buyers_no_credit: 0,
+                        leads: 0
+                    });
+                    const rec = agg.get(key);
+                    const credit = Number(b.total_credit) || 0;
+                    if (credit > 0) rec.buyers_with_credit += 1;
+                    else rec.buyers_no_credit += 1;
+                });
+
+                (data.leads || []).forEach(l => {
+                    const lat = safeNum(l.latitude);
+                    const lng = safeNum(l.longitude);
+                    const postcode = (l.postcode || '').trim();
+                    if (lat === null || lng === null) return;
+                    const key = `${postcode}|${lat.toFixed(6)}|${lng.toFixed(6)}`;
+                    if (!agg.has(key)) agg.set(key, {
+                        postcode,
+                        lat,
+                        lng,
+                        buyers_with_credit: 0,
+                        buyers_no_credit: 0,
+                        leads: 0
+                    });
+                    const rec = agg.get(key);
+                    rec.leads += 1;
+                });
+
+                const bounds = L.latLngBounds();
+                let addedAny = false;
+
+                for (const [key, rec] of agg.entries()) {
+                    const { lat, lng, postcode, buyers_with_credit, buyers_no_credit, leads } = rec;
+
+                    if (buyers_with_credit > 0) {
+                        const ico = makeCountDivIcon(buyers_with_credit, 'pin-green', -18);
+                        const m = L.marker([lat, lng], { icon: ico })
+                            .bindPopup(`
+                                <div style="min-width:200px;">
+                                    <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
+                                    <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
+                                    <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
+                                    <strong>Leads:</strong> ${leads}
+                                </div>
+                            `);
+                        m.addTo(map);
+                        markers.push(m);
+                        try { bounds.extend(m.getLatLng()); addedAny = true; } catch(e){}
+                    }
+
+                    if (leads > 0) {
+                        const ico = makeCountDivIcon(leads, 'pin-blue', 0);
+                        const m = L.marker([lat, lng], { icon: ico })
+                            .bindPopup(`
+                                <div style="min-width:200px;">
+                                    <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
+                                    <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
+                                    <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
+                                    <strong>Leads:</strong> ${leads}
+                                </div>
+                            `);
+                        m.addTo(map);
+                        markers.push(m);
+                        try { bounds.extend(m.getLatLng()); addedAny = true; } catch(e){}
+                    }
+
+                    if (buyers_no_credit > 0) {
+                        const ico = makeCountDivIcon(buyers_no_credit, 'pin-red', 18);
+                        const m = L.marker([lat, lng], { icon: ico })
+                            .bindPopup(`
+                                <div style="min-width:200px;">
+                                    <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
+                                    <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
+                                    <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
+                                    <strong>Leads:</strong> ${leads}
+                                </div>
+                            `);
+                        m.addTo(map);
+                        markers.push(m);
+                        try { bounds.extend(m.getLatLng()); addedAny = true; } catch(e){}
+                    }
+                }
+
+                if (!initialFit && addedAny && bounds.isValid()) {
+                    map.fitBounds(bounds.pad(0.18));
+                    initialFit = true;
+                }
+
+            } catch (err) {
+                console.error('refreshMap error', err);
+                showMapLoading('Error loading map data.');
+            } finally {
+                // hide overlay after a short delay so UI doesn't feel jumpy
+                setTimeout(hideMapLoading, 300);
+            }
+        }
+
+        // initial load
+        refreshMap();
+
+        // refresh interval (every 10s)
+        // setInterval(refreshMap, 10000);
+    });
 </script>
