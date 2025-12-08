@@ -43,7 +43,8 @@
                 <!-- Intro -->
                 <tr>
                   <td class="card-pad" style="padding:24px 32px;color:#4a4a4a;">
-                    <p style="margin:0 0 10px 0;font-size:16px;line-height:22px;font-weight:700;">Hi {{ $name }},</p>
+                    <p style="margin:0 0 10px 0;font-size:16px;line-height:22px;">Hi <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
+                                         
                     <p style="margin:0 0 10px 0;font-size:14px;line-height:20px;color:#000;font-weight:700;">We noticed you haven’t connected with a professional yet – we’re here to help!</p>
                     <p style="margin:0;font-size:14px;line-height:22px;color:#000;">
                       To make things easier, we’ve selected a few top-rated professionals who are ready to help with your <b>{{ $service_name }}</b> request.

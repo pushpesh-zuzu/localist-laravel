@@ -65,16 +65,17 @@
           <!-- Main card -->
            <tr>
             <td style="padding:25px 30px;color:#333;">
-              <p style="margin:0 0 8px;font-size:16px;color:#00AFE3;font-weight:bold;">Hi {{ ucfirst($customerName) }},</p>
-              <p style="margin:0 0 12px;font-size:14px;">    
+             <p>Hi <strong style="color: #333;">{{ ucfirst($customerName) }}</strong>,</p>
+              
+              <p style="margin:0 0 12px;">    
              
                  We hope your <b>{{ ucfirst($serviceName) }}</b> went smoothly.
                  
               </p>
-              <p style="margin:0 0 20px;font-size:14px;">
+              <p style="margin:0 0 20px;">
                We’d love to hear about your experience with <b>{{ ucfirst($sellerName) }}</b>, the professional you hired  on Localists.
               </p>
-              <p style="margin:0 0 20px;font-size:14px;">
+              <p style="margin:0 0 20px;">
                 Your quick feedback helps us improve our service.
               </p>
 

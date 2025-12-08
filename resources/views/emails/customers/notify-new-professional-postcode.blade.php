@@ -78,9 +78,8 @@
                 <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localist Logo" class="logo">
             </div>
 
-            <div class="card">
-                <h1> Hi {{ ucfirst($customerName) }},</h1>
-              
+            <div class="card">                
+               <p>Hi <strong style="color: #333;">{{ ucfirst($customerName) }}</strong>,</p>
                 <p> Good news! We’ve just added a verified professional in your area who can help with your 
               <b>{{ ucfirst($serviceName ?? 'your service') }}</b> request.</p>
 

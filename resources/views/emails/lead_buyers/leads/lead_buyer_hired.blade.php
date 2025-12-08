@@ -53,8 +53,8 @@
           <!-- Main Card -->
           <tr>
             <td>
-              <div class="card">
-                <h1 style="text-align:center">Hi {{ $name }}</h1>
+              <div class="card">                
+                 <p style="text-align:center;font-size: 18px;   font-weight: 600;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
                 <div class="highlight">You have purchased a new lead</div>
 
                 <p style="margin-bottom:12px;color:#61696d;">Congratulations — You have successfully purchased the <strong>{{ $service_name }}</strong> lead.</p>

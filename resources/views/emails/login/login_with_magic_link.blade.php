@@ -94,7 +94,8 @@
        <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height: 50px;">
     </div>
     <div class="content">
-      <h1>Hi {{$name}}</h1>
+      <p>Hi  <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
+               
       <p>Use the link below to log in to your account </p>
       <a href="{{ $baseUrl }}/en/gb/login?client_id={{base64_encode($token)}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Log In Now</a>
     </div>

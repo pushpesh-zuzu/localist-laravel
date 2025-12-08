@@ -60,7 +60,9 @@
               <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" role="presentation" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden;">
                 <tr>
                   <td class="card-td" style="padding:32px; font-family:Helvetica, Arial, sans-serif; color:#4a4a4a;">
-                    <h1>Hi {{ $name }},</h1>
+                   
+                    <p style="text-align:center;font-size: 18px;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
+                    
                     <p style="text-align:center; margin-top:8px;">Complete your registration – we’ve saved your spot!</p>
 
                     <p class="highlight">You're just one step away from connecting with more buyers on Localists!</p>

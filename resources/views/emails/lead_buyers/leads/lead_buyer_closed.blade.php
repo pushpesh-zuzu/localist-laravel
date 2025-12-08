@@ -44,8 +44,8 @@
             <td align="center">
               <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
                 <tr>
-                  <td style="padding:20px;">
-                    <h1 style="text-align:center;">Hi {{ $name }}</h1>
+                  <td style="padding:20px;">                   
+                    <p style="text-align:center;">Hi <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
                     <div class="highlight" style="text-align:center;"><strong>{{ $service_name }} lead is no longer available</strong></div>
 
                     <p style="margin-bottom:12px;color:#61696d;">

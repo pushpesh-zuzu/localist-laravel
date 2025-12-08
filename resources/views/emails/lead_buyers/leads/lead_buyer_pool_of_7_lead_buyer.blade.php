@@ -40,7 +40,7 @@
           <tr>
             <td>
               <div class="card">
-                <h1 style="text-align:center">Hi {{ $name }},</h1>
+                <p style="text-align:center;font-size: 18px;   font-weight: 600;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
                 <div class="highlight" style="text-align:center">You've got a new lead!</div>
 
                 <p style="margin-bottom:12px;color:#61696d;"><strong>{{ $lead_name }}</strong> is looking for <strong>{{ $service_name }}</strong>.</p>

@@ -51,8 +51,8 @@
 
           <!-- Header -->
           <tr>
-            <td style="padding-bottom:12px; text-align:center;">
-              <h1>Hi {{ $name }}</h1>
+            <td style="padding-bottom:12px; text-align:center;">              
+               <p>Hi <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
               <div style="font-size:14px; color:#61696d; margin-top:6px;">You've got new leads!</div>
             </td>
           </tr>

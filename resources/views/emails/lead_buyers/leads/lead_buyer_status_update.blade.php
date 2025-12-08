@@ -44,7 +44,9 @@
               <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" class="card">
                 <tr>
                   <td style="padding:20px">
-                    <h1  style="text-align:center">Hi {{ $name }}</h1>
+                    
+                    <p style="text-align:center;font-size: 18px;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
+                    
                     <div class="highlight">You've purchased a <strong>{{ $service }}</strong> lead. Please update its status below:</div>
 
                     <!-- Tags -->

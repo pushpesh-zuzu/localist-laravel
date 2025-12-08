@@ -9,7 +9,7 @@
         body {
             margin: 0;
             background-color: #f1f2f4;
-            font-family: 'Lato', Helvetica, Arial, sans-serif;
+            font-family: 'Lato', Helvetica, Arial, sans-serif !important;
             -webkit-font-smoothing: antialiased;
         }
         .container {
@@ -23,7 +23,7 @@
             padding: 24px;
         }
         h1 {
-            font-size: 22px;
+            font-size: 16px;
             font-weight: 600;
             color: #333;
             margin: 0 0 10px;
@@ -32,7 +32,7 @@
         p {
             font-size: 16px;
             line-height: 23px;
-            color: #4a4a4a;
+            /* color: #4a4a4a; */
             margin: 0 0 14px;
         }
         .highlight {
@@ -101,8 +101,8 @@
                 <tr>
                     <td class="card">
 
-                        <h1>Hi {{ $name }},</h1>
-                        <p style="text-align:center; font-size:17px;">You’re almost there!</p>
+                        <p style="text-align:center;">Hi <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
+                        <p style="text-align:center;">You’re almost there!</p>
 
                         <div class="highlight">Just one more step to activate your Localists account.</div>
 

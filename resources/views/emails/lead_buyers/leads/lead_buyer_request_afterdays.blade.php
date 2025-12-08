@@ -51,7 +51,7 @@
           <tr>
             <td>
               <div class="card">
-                <h1>Hi {{ $name }}</h1>
+                 <p style="text-align:center;font-size: 18px;   font-weight: 600;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
                 <p class="lead-intro">New jobs are waiting for you!</p>
 
                 @if($credit_purchase)

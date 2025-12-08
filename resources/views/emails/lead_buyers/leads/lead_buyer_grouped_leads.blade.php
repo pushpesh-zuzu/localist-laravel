@@ -80,7 +80,7 @@
                      style="max-width:560px;width:100%;margin:0 auto;background:#ffffff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
                 <tr>
                   <td style="padding:16px;">
-                    <h1 style="margin:0;font-size:20px;font-weight:600;color:#222;text-align:center;">Hi {{ $name }}</h1>
+                    <p style="text-align:center;">Hi <strong style="color: #222;">{{ ucfirst($name) }}</strong>,</p>
                     <p style="margin:8px 0 0 0;font-size:15px;line-height:1.4;color:#61696d;text-align:center;"><strong>You've got new leads waiting for you!</strong></p>
                   </td>
                 </tr>

@@ -39,7 +39,8 @@
           <tr>
             <td>
               <div class="card" style="text-align:center">
-                <h1>Welcome back, {{ $name }}</h1>
+                 <p style="text-align:center;font-size: 18px;">Welcome back, <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
+                    
                 <div class="highlight">You've received new lead request(s)</div>
                 <p>We found leads that match your services and locations — check them below and respond quickly to secure the work.</p>
                 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px">

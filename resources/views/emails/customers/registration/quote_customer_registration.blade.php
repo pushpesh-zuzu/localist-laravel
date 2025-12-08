@@ -92,8 +92,8 @@
                 <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localist Logo" class="logo">
             </div>
 
-            <div class="card">
-                <h1>Welcome to Localists, {{ $name }}</h1>
+            <div class="card">                
+                 <p style="text-align:center;">Welcome to Localists, <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
                 <div class="highlight">Your account has been created successfully!</div>
                 <p>You can now log in and start managing your requests and profile.</p>
             </div>
