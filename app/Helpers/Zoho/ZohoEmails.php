@@ -42,13 +42,17 @@ class ZohoEmails
                         }
                         array_push($services, $sl);
                     }
-                    $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
+
+                     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                            $user->update(['remember_token' => $token]);
+                    $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration_new',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'email' => $user->email,
                         'password' => $password,
-                        'jobs' => rand(1, 50),
-                        'services' => $services
+                        'token' => $token,
+                        // 'services' => $services
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
@@ -56,6 +60,24 @@ class ZohoEmails
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
+
+                     // --- Attach existing PDF ---
+                    $pdfPath = public_path('Localists_Lead_Strategies.pdf'); // Path to your PDF
+                    if (!file_exists($pdfPath)) {
+                        Log::error("PDF file not found: $pdfPath");
+                        return;
+                    }
+                    $pdfContent = file_get_contents($pdfPath);
+                    $base64Pdf = base64_encode($pdfContent);
+
+                    $attachments = [
+                        [
+                            'content' => $base64Pdf,
+                            'type' => 'application/pdf',
+                            'name' => 'Localists_Lead_Strategies.pdf'
+                        ]
+                    ];
+
 
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
@@ -80,6 +102,7 @@ class ZohoEmails
                                     'subject' => $subject,
                                     'content' => $htmlContent,
                                     'mail_format' => 'html',
+                                    'attachments' => $attachments,
                                     'org_email' => true
                                 ]
                             ]
