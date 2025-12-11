@@ -92,6 +92,9 @@ class ZohoHelper
         $data = $response->json();
         if (isset($data['access_token'], $data['expires_in'])) {
             Cache::put('zoho_access_token', $data['access_token'], now()->addSeconds($data['expires_in'] - 100));
+
+            $scopes = $data['scope'] ?? null;  // Extract scopes (always present if token succeeds)
+           \Log::info('Extracted Zoho scopes: ' . ($scopes ?? 'null'));
             return $data['access_token'];
         }
 
@@ -355,6 +358,33 @@ class ZohoHelper
     return null;
 }
         Log::error('Failed to fetch Zoho accountId: ' . $response->body());
+        return null;
+    }
+
+
+
+    public static function getnewAccessTokenTest()
+    {
+        if (Cache::has('zoho_access_token')) {
+            return Cache::get('zoho_access_token');
+        }
+
+        $response = Http::asForm()->post('https://accounts.zoho.eu/oauth/v2/token', [
+            'refresh_token' => CustomHelper::setting_value('zoho_refresh_token', '1000.d0a97ae6984c62b12f48ff5713738ff5.909decfa9983a8c1948ef6b318e7338e'),
+            'client_id' => CustomHelper::setting_value('zoho_client_id', '1000.FJEIQ7MU0TDJVHYALND65YGXHACOBP'),
+            'client_secret' => CustomHelper::setting_value('zoho_client_secret', 'be2d92d7c7e894d377bfbcd68fd62ea54175b5a683'),
+            'grant_type' => 'refresh_token'
+        ]);
+
+        $data = $response->json();
+        if (isset($data['access_token'], $data['expires_in'])) {
+            Cache::put('zoho_access_token', $data['access_token'], now()->addSeconds($data['expires_in'] - 100));
+
+           return $scopes = $data['scope'] ?? null;  // Extract scopes (always present if token succeeds)
+           //\Log::info('Extracted Zoho scopes: ' . ($scopes ?? 'null'));
+          //  return $data['access_token'];
+        }
+
         return null;
     }
 }
