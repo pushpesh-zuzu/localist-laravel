@@ -26,7 +26,8 @@ use App\Http\Controllers\Api\Cron\CronController;
 // use App\Http\Controllers\GoogleReviewController;
 use App\Http\Controllers\MapController;
 use Illuminate\Http\Request;
-
+use App\Helpers\Zoho\ZohoHelper;
+use Illuminate\Support\Facades\Http;
 Route::get('phpinfo', function () {
     phpinfo();
 });
@@ -193,4 +194,15 @@ Route::post('/facebook-webhook', function (Request $request) {
 
 Route::get('/test-next-day-expired-emails', [CronController::class, 'sendNextDayExpiredQuoteEmail']);
 
+Route::get('/zoho/scopes', function () {
+    $accessToken = ZohoHelper::getAccessToken();
+
+    $response = Http::get("https://accounts.zoho.eu/oauth/v2/tokeninfo?access_token={$accessToken}");
+
+    if (!$response->successful()) {
+        return response()->json(['error' => $response->body()]);
+    }
+
+    return response()->json(['scopes' => $response->json('scope')]);
+});
 require __DIR__ . '/auth.php';

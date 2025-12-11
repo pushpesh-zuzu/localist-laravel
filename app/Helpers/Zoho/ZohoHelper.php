@@ -333,4 +333,28 @@ class ZohoHelper
             \Log::error('Zoho Log Failed: ' . $e->getMessage());
         }
     }
+
+
+    public static function getAccountId($accessToken)
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Zoho-oauthtoken ' . $accessToken,
+        ])->get('https://mail.zoho.eu/api/accounts');
+
+       if ($response->successful()) {
+
+    Log::info('Zoho accounts response:', $response->json());
+
+    $accounts = $response->json('data', []);
+
+    if (!empty($accounts) && isset($accounts[0]['accountId'])) {
+        return $accounts[0]['accountId'];
+    }
+
+    Log::error('Zoho accountId not found; response missing accountId');
+    return null;
+}
+        Log::error('Failed to fetch Zoho accountId: ' . $response->body());
+        return null;
+    }
 }
