@@ -22,11 +22,22 @@ class ZohoOAuthTestController extends Controller
     }
 
     // Step 2: Zoho redirects here with ?code=AUTH_CODE
-    public function callback(Request $request)
-    {
-        $code = $request->get('code');
-        return "Authorization Code: " . $code;
-    }
+     public function callback(Request $request) 
+{
+    $code = $request->get('code');
+
+    $response = Http::asForm()->post('https://accounts.zoho.eu/oauth/v2/token', [
+        'grant_type'    => 'authorization_code',
+        'client_id'     => '1000.4AU5IDFN2PO9X0S25QX5GJMH1NR0YA',
+        'client_secret' => '4090502db26791407f55c70aeb95f188bdaccc0648',
+        'redirect_uri'  => 'https://localists.com/admin/zoho/callback',
+        'code'          => $code,
+    ]);
+
+    return $response->json();
+}
+
+    
 
     // Step 3: Exchange code or refresh token for access token
     public function getAccessToken()
