@@ -3181,11 +3181,11 @@ class ZohoEmails
 
                     if (file_exists($pdfPath)) {
 
-                        $url = "https://www.zohoapis.eu/crm/v3/Lead_Buyer_Registration/$zohoId/Attachments";
+                        $url1 = "https://www.zohoapis.eu/crm/v3/Lead_Buyer_Registration/$zohoId/Attachments";
 
                         $uploadResponse = Http::withToken($accessToken)
                             ->attach('file', fopen($pdfPath, 'r'), 'Localists_Lead_Strategies.pdf')
-                            ->post($url);
+                            ->post($url1);
 
                         Log::info("CRM Upload Response: " . $uploadResponse->body());
 
