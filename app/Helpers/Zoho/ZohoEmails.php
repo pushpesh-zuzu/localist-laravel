@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\LeadService;
 use App\Models\Postcode;
+
 class ZohoEmails
 {
     // protected string $accessToken;
@@ -43,8 +44,8 @@ class ZohoEmails
                         array_push($services, $sl);
                     }
 
-                     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-                            $user->update(['remember_token' => $token]);
+                    $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                    $user->update(['remember_token' => $token]);
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration_new',  [
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
@@ -61,17 +62,20 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
-                     // --- Attach existing PDF ---
+                    // --- Attach existing PDF ---
                     $pdfPath = public_path('Localists_Lead_Strategies.pdf'); // Path to your PDF
                     if (!file_exists($pdfPath)) {
                         Log::error("PDF file not found: $pdfPath");
                         return;
                     }
+
                     $pdfContent = file_get_contents($pdfPath);
                     $base64Pdf = base64_encode($pdfContent);
 
+                    // ✅ FIX: Zoho requires "id" and we use a stable ID (not random)
                     $attachments = [
                         [
+                            'id' => md5($pdfContent), // stable unique ID based on file content
                             'content' => $base64Pdf,
                             'type' => 'application/pdf',
                             'name' => 'Localists_Lead_Strategies.pdf'
@@ -166,9 +170,9 @@ class ZohoEmails
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
 
-               $lead = LeadRequest::where('customer_id', $userId)
-                ->latest('created_at') // order by created_at DESC
-                ->first();
+                $lead = LeadRequest::where('customer_id', $userId)
+                    ->latest('created_at') // order by created_at DESC
+                    ->first();
                 if (!empty($user)) {
 
 
@@ -180,7 +184,7 @@ class ZohoEmails
                         'phone_otp' => $phoneOtp,
                         'leadId' => $lead->id ?? '',
                         'buyerId' => $userId ?? '',
-                        
+
 
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -335,7 +339,7 @@ class ZohoEmails
         }
     }
 
-    public static function sendAbandonedEncouragementEmail($userId,$serviceName=null)
+    public static function sendAbandonedEncouragementEmail($userId, $serviceName = null)
     {
 
         $sendEncouragementEmail = EmailSetting::where('setting_name', 'Send Abandoned Encouragement Email')->value('setting_value');
@@ -367,7 +371,7 @@ class ZohoEmails
                     ]);
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
-                   
+
                     $subject = "Your " . ($serviceName ? $serviceName : "service") . " quote is nearly done";
 
                     $response = Http::withToken($accessToken)
@@ -969,38 +973,37 @@ class ZohoEmails
             }
 
 
-     //  start comment by ashish//
+            //  start comment by ashish//
 
-        // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
-        //     ->value('whatsapp_setting_value');
+            // $sendWhatsapp = EmailSetting::where('setting_name', 'New Lead - Auto Bid Enabled (With Credits)')
+            //     ->value('whatsapp_setting_value');
 
-        // if ($sendWhatsapp && $user && !empty($user->phone)) {
-        //     try {
-        //         $response = WhatsAppMessage::sendTemplate(
-        //             userId: $user->id,
-        //             phoneNumber: $user->phone,
-        //             templateName: "lead_buyer_autobidenough",
-        //             languageCode: "en_US",
-        //             components: [
-        //                 [
-        //                     'type' => 'body',
-        //                     'parameters' => [
-        //                         ['type' => 'text', 'text' => $user->name],
-        //                     ],
-        //                 ],
-        //             ]
-        //         );
+            // if ($sendWhatsapp && $user && !empty($user->phone)) {
+            //     try {
+            //         $response = WhatsAppMessage::sendTemplate(
+            //             userId: $user->id,
+            //             phoneNumber: $user->phone,
+            //             templateName: "lead_buyer_autobidenough",
+            //             languageCode: "en_US",
+            //             components: [
+            //                 [
+            //                     'type' => 'body',
+            //                     'parameters' => [
+            //                         ['type' => 'text', 'text' => $user->name],
+            //                     ],
+            //                 ],
+            //             ]
+            //         );
 
-        //         Log::info("WhatsApp sent successfully for user {$user->id}");
-        //     } catch (\Exception $e) {
-        //         Log::error("WhatsApp send failed for user {$user->id}: " . $e->getMessage());
-        //     }
-        // }
-    //  end comment by ashish//
+            //         Log::info("WhatsApp sent successfully for user {$user->id}");
+            //     } catch (\Exception $e) {
+            //         Log::error("WhatsApp send failed for user {$user->id}: " . $e->getMessage());
+            //     }
+            // }
+            //  end comment by ashish//
 
 
-        }       
-      
+        }
     }
 
 
@@ -2649,7 +2652,7 @@ class ZohoEmails
             if (!empty($zohoId)) {
                 $user = User::with(['services.category', 'services.locations'])->where('id', $userId)->first();
                 if (!empty($user)) {
-                    $invoices = Invoice::where('id', $invId)->first();                    
+                    $invoices = Invoice::where('id', $invId)->first();
                     $htmlView = view('emails.lead_buyers.invoice.lead_buyer_plan_invoice',  [
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
@@ -2660,7 +2663,7 @@ class ZohoEmails
                         'vat'           => $invoices->vat,
                         'total_amount'  => $invoices->total_amount,
                         'period'  => $invoices->period,
-                        'created_at'    => $invoices->created_at,                         
+                        'created_at'    => $invoices->created_at,
                         'jobs' => rand(1, 50),
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -2715,72 +2718,72 @@ class ZohoEmails
     }
 
 
-    
 
-public static function sendNextDayExpiredQuoteEmail($data)
-{
-      
-    $sendEmail = EmailSetting::where('setting_name', 'Next Day Expired Quote Email')->value('setting_value');
- 
-    if ($sendEmail) {
-       
-        $accessToken = ZohoHelper::getAccessToken();
-        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $data['userId']);
- 
-        if (!empty($zohoId)) {
-           
-            $user = User::find($data['userId']);
-  
-            if (!empty($user)) { 
-           
-                $htmlView = view('emails.customers.expired_quote.next_day_expired_quote', [
-                    'baseUrl' => config('app.react_base_url'),
-                    'customerName' => $user->name ?? '',
-                    'serviceName' => $data['serviceName'] ?? '',
-                    'leadId' => $data['leadId'],   
-                     'token' =>$data['token'],                
-                ])->render();
- 
-                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
 
-              
-                $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
-                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-                $fromName = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
-                $toEmail = $user->email;
-                $subject = $data['subject'] ?? 'Need a hand finishing your project';
+    public static function sendNextDayExpiredQuoteEmail($data)
+    {
 
-          
-                DB::table('zoho_logs')->insert([
-                    'url' => $url,
-                    'function_name' => 'sendNextDayExpiredQuoteEmail',
-                    'ipaddress' => request()->ip(),
-                    'created_at' => now(),
-                ]);
+        $sendEmail = EmailSetting::where('setting_name', 'Next Day Expired Quote Email')->value('setting_value');
 
-               
-                $response = Http::withToken($accessToken)
-                    ->post($url, [
-                        'data' => [
-                            [
-                                'from' => [
-                                    'email' => $fromEmail,
-                                    'user_name' => $fromName
-                                ],
-                                'to' => [
-                                    ['email' => $toEmail]
-                                ],
-                                'subject' => $subject,
-                                'content' => $htmlContent,
-                                'mail_format' => 'html',
-                                'org_email' => true
-                            ]
-                        ]
+        if ($sendEmail) {
+
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $data['userId']);
+
+            if (!empty($zohoId)) {
+
+                $user = User::find($data['userId']);
+
+                if (!empty($user)) {
+
+                    $htmlView = view('emails.customers.expired_quote.next_day_expired_quote', [
+                        'baseUrl' => config('app.react_base_url'),
+                        'customerName' => $user->name ?? '',
+                        'serviceName' => $data['serviceName'] ?? '',
+                        'leadId' => $data['leadId'],
+                        'token' => $data['token'],
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                    $fromName = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+                    $toEmail = $user->email;
+                    $subject = $data['subject'] ?? 'Need a hand finishing your project';
+
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendNextDayExpiredQuoteEmail',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
                     ]);
 
-              
-                $rel = self::getZohoMailResponse($response);
-               // dd($data['leadId']);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => $fromName
+                                    ],
+                                    'to' => [
+                                        ['email' => $toEmail]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+
+
+                    $rel = self::getZohoMailResponse($response);
+                    // dd($data['leadId']);
 
                     $dataE['user_id'] = $user->id;
                     $dataE['from_email'] = $fromEmail;
@@ -2793,328 +2796,322 @@ public static function sendNextDayExpiredQuoteEmail($data)
                     $dataE['zoho_url'] = $url;
                     $dataE['response'] = json_encode($rel);
                     EmailLog::insertGetId($dataE);
-                
-            }
-        }
-    }
-}
-
-
-
-
-public static function reviewsForHiredLeadBuyer($leadId, $sellerId, $buyerId)
-{
-    $sendEmail = EmailSetting::where('setting_name', 'Reviews Hired Lead Buyer')
-        ->value('setting_value');
-
-    if (!$sendEmail) {
-        return;
-    }
-
-    $accessToken = ZohoHelper::getAccessToken();
-    if (!$accessToken) {
-        Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
-        return;
-    }
-
-    $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
-
-    if (!$lead) {
-        Log::error("Lead not found for ID: {$leadId}");
-        return;
-    }
-
-   
-
-    $categoryName  = optional($lead->category)->name;
-    $customerName  = optional($lead->customer)->name;
-    $customerEmail = optional($lead->customer)->email;
-    $customerId    = optional($lead->customer)->id;
-
-    if (!$customerEmail) {
-        Log::error("Customer email missing for lead {$leadId}");
-        return;
-    }
-
-    $subject = ucfirst($customerName) . ", we’d love your quick feedback";
-
-    $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
-    if (empty($zohoId)) {
-        return;
-    }
-
-    $seller = User::find($sellerId);
-
-    if (!$seller) {
-        Log::error("Seller not found for ID: {$sellerId}");
-        return;
-    }
-
-    $slug = strtolower(preg_replace('/\s+/', '-', trim($seller->name)));
-
-    $reviewUrl = config('app.react_base_url') . '/view-profile/' . $slug . '/' . $seller->id;
-
-    $htmlView = view('emails.customers.reviews_hired_lead_buyer', [
-        'baseUrl' => config('app.react_base_url'),
-        'customerName' => $customerName ?? '',
-        'sellerName' => $seller->name ?? '',
-        'serviceName' => $categoryName ?? '',
-        'reviewUrl' => $reviewUrl ?? '',
-        'leadId' => $leadId,
-    ])->render();
-
-    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-
-    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
-    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-    $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
-
-    DB::table('zoho_logs')->insert([
-        'url' => $url,
-        'function_name' => 'reviewsForHiredLeadBuyer',
-        'ipaddress' => request()->ip(),
-        'created_at' => now(),
-    ]);
-
-    $response = Http::withToken($accessToken)->post($url, [
-        'data' => [[
-            'from' => [
-                'email' => $fromEmail,
-                'user_name' => $fromName
-            ],
-            'to' => [['email' => $customerEmail]],
-            'subject' => $subject,
-            'content' => $htmlContent,
-            'mail_format' => 'html',
-            'org_email' => true
-        ]]
-    ]);
-
-    $rel = self::getZohoMailResponse($response);
-    $messageId = $rel['message_id'] ?? null;
-
-    EmailLog::insertGetId([
-        'user_id' => $customerId,
-        'from_email' => $fromEmail,
-        'to_email' => $customerEmail,
-        'lead_id' => $leadId,
-        'message_id' => $messageId,
-        'subject' => $subject,
-        'setting_name' => 'Reviews Hired Lead Buyer',
-        'content' => $htmlContent,
-        'zoho_url' => $url,
-        'response' => json_encode($rel),
-    ]);
-}
-
-
-
-public static function leadAcceptedMailToSendCustomer($leadId,  $buyerId,LeadService $leadService)
-{
-    $sendEmail = EmailSetting::where('setting_name', 'Lead Accepted')
-        ->value('setting_value');
-
-    if (!$sendEmail) {
-        return;
-    }
-
-    $accessToken = ZohoHelper::getAccessToken();
-    if (!$accessToken) {
-        Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
-        return;
-    }
-
-    $lead = LeadRequest::with(['category', 'customer'])->find($leadId);    
-
-   $reqPostcode = $lead->postcode;
-    if (!empty($reqPostcode)) {
-        $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
-        if (empty($dbPostcode)) {
-            $tempCord = CustomHelper::getCoordinates($reqPostcode);
-            if (!empty($tempCord)) {
-                $cordArr = json_decode($tempCord, true);
-                if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
-                    Postcode::insertGetId([
-                        'postcode' => $reqPostcode,
-                        'latitude' => $cordArr['lat'],
-                        'longitude' => $cordArr['lng'],
-                    ]);
                 }
             }
         }
     }
 
-    // Get Seller List
-    $result = $leadService->getAllSellers($lead);
 
-    // Replies Count
-    $result['response']['repliesListCount'] =
-        RecommendedLead::where('buyer_id', $buyerId)
+
+
+    public static function reviewsForHiredLeadBuyer($leadId, $sellerId, $buyerId)
+    {
+        $sendEmail = EmailSetting::where('setting_name', 'Reviews Hired Lead Buyer')
+            ->value('setting_value');
+
+        if (!$sendEmail) {
+            return;
+        }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
+            return;
+        }
+
+        $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+
+        if (!$lead) {
+            Log::error("Lead not found for ID: {$leadId}");
+            return;
+        }
+
+
+
+        $categoryName  = optional($lead->category)->name;
+        $customerName  = optional($lead->customer)->name;
+        $customerEmail = optional($lead->customer)->email;
+        $customerId    = optional($lead->customer)->id;
+
+        if (!$customerEmail) {
+            Log::error("Customer email missing for lead {$leadId}");
+            return;
+        }
+
+        $subject = ucfirst($customerName) . ", we’d love your quick feedback";
+
+        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
+        if (empty($zohoId)) {
+            return;
+        }
+
+        $seller = User::find($sellerId);
+
+        if (!$seller) {
+            Log::error("Seller not found for ID: {$sellerId}");
+            return;
+        }
+
+        $slug = strtolower(preg_replace('/\s+/', '-', trim($seller->name)));
+
+        $reviewUrl = config('app.react_base_url') . '/view-profile/' . $slug . '/' . $seller->id;
+
+        $htmlView = view('emails.customers.reviews_hired_lead_buyer', [
+            'baseUrl' => config('app.react_base_url'),
+            'customerName' => $customerName ?? '',
+            'sellerName' => $seller->name ?? '',
+            'serviceName' => $categoryName ?? '',
+            'reviewUrl' => $reviewUrl ?? '',
+            'leadId' => $leadId,
+        ])->render();
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+        $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'reviewsForHiredLeadBuyer',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [[
+                'from' => [
+                    'email' => $fromEmail,
+                    'user_name' => $fromName
+                ],
+                'to' => [['email' => $customerEmail]],
+                'subject' => $subject,
+                'content' => $htmlContent,
+                'mail_format' => 'html',
+                'org_email' => true
+            ]]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+        $messageId = $rel['message_id'] ?? null;
+
+        EmailLog::insertGetId([
+            'user_id' => $customerId,
+            'from_email' => $fromEmail,
+            'to_email' => $customerEmail,
+            'lead_id' => $leadId,
+            'message_id' => $messageId,
+            'subject' => $subject,
+            'setting_name' => 'Reviews Hired Lead Buyer',
+            'content' => $htmlContent,
+            'zoho_url' => $url,
+            'response' => json_encode($rel),
+        ]);
+    }
+
+
+
+    public static function leadAcceptedMailToSendCustomer($leadId,  $buyerId, LeadService $leadService)
+    {
+        $sendEmail = EmailSetting::where('setting_name', 'Lead Accepted')
+            ->value('setting_value');
+
+        if (!$sendEmail) {
+            return;
+        }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
+            return;
+        }
+
+        $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+
+        $reqPostcode = $lead->postcode;
+        if (!empty($reqPostcode)) {
+            $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
+            if (empty($dbPostcode)) {
+                $tempCord = CustomHelper::getCoordinates($reqPostcode);
+                if (!empty($tempCord)) {
+                    $cordArr = json_decode($tempCord, true);
+                    if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
+                        Postcode::insertGetId([
+                            'postcode' => $reqPostcode,
+                            'latitude' => $cordArr['lat'],
+                            'longitude' => $cordArr['lng'],
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Get Seller List
+        $result = $leadService->getAllSellers($lead);
+
+        // Replies Count
+        $result['response']['repliesListCount'] =
+            RecommendedLead::where('buyer_id', $buyerId)
             ->where('lead_id', $lead->id)
             ->count();
-     $sellers = collect($result['response']['sellers'] ?? [])
-    ->sortByDesc('rating')  // 👈 change 'rating' to your field
-    ->take(5)
-    ->values();  
+        $sellers = collect($result['response']['sellers'] ?? [])
+            ->sortByDesc('rating')  // 👈 change 'rating' to your field
+            ->take(5)
+            ->values();
 
 
-    $categoryName  = optional($lead->category)->name;
-    $customerName  = optional($lead->customer)->name;
-    $customerEmail = optional($lead->customer)->email;
-    $customerId    = optional($lead->customer)->id;
+        $categoryName  = optional($lead->category)->name;
+        $customerName  = optional($lead->customer)->name;
+        $customerEmail = optional($lead->customer)->email;
+        $customerId    = optional($lead->customer)->id;
 
-    if (!$customerEmail) {
-        Log::error("Customer email missing for lead {$leadId}");
-        return;
+        if (!$customerEmail) {
+            Log::error("Customer email missing for lead {$leadId}");
+            return;
+        }
+
+        $subject = "Lead Accepted";
+
+        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
+        if (empty($zohoId)) {
+            return;
+        }
+        $htmlView = view('emails.customers.lead-accepted-email', [
+            'baseUrl' => config('app.react_base_url'),
+            'appURL' => config('app.url'),
+
+            'customerName' => $customerName ?? '',
+            'serviceName' => $categoryName ?? '',
+            'leadId' => $leadId,
+            'sellers' => $sellers,
+
+        ])->render();
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+        $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'leadAcceptedMailToSendCustomer',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [[
+                'from' => [
+                    'email' => $fromEmail,
+                    'user_name' => $fromName
+                ],
+                'to' => [['email' => $customerEmail]],
+                'subject' => $subject,
+                'content' => $htmlContent,
+                'mail_format' => 'html',
+                'org_email' => true
+            ]]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+        $messageId = $rel['message_id'] ?? null;
+        $dataE['user_id'] = $customerId;
+        $dataE['from_email'] = $fromEmail;
+        $dataE['to_email'] = $customerEmail;
+        $dataE['lead_id'] = $leadId ?? null;
+        $dataE['message_id'] = $messageId;
+        $dataE['subject'] = $subject;
+        $dataE['setting_name'] = 'Lead Accepted';
+        $dataE['content'] = $htmlContent;
+        $dataE['zoho_url'] = $url;
+        $dataE['response'] = json_encode($rel);
+        EmailLog::insertGetId($dataE);
     }
 
-    $subject = "Lead Accepted";
 
-    $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
-    if (empty($zohoId)) {
-        return;
+    public static function notifyCustomerNewProfessionalinPostcode($leadId)
+    {
+        $sendEmail = EmailSetting::where('setting_name', 'Notify Customer New Professional in Postcode added')
+            ->value('setting_value');
+
+        if (!$sendEmail) {
+            return;
+        }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
+            return;
+        }
+
+        $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+
+        $serviceName  = optional($lead->category)->name;
+        $postCode  = $lead->postcode;
+        $customerName  = optional($lead->customer)->name;
+        $customerEmail = optional($lead->customer)->email;
+        $customerId    = optional($lead->customer)->id;
+
+        if (!$customerEmail) {
+            Log::error("Customer email missing for lead {$leadId}");
+            return;
+        }
+
+        $subject = ($customerName ? ucfirst($customerName) : "Customer") . ", a Verified Professional Is Now Available for Your Quote Request";
+
+        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
+        if (empty($zohoId)) {
+            return;
+        }
+        $htmlView = view('emails.customers.notify-new-professional-postcode', [
+            'baseUrl' => config('app.react_base_url'),
+            'appURL' => config('app.url'),
+            'customerName' => $customerName ?? '',
+            'serviceName' => $serviceName ?? '',
+            'postCode' => $postCode,
+
+        ])->render();
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+        $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'notifyCustomerNewProfessionalinPostcode',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [[
+                'from' => [
+                    'email' => $fromEmail,
+                    'user_name' => $fromName
+                ],
+                'to' => [['email' => $customerEmail]],
+                'subject' => $subject,
+                'content' => $htmlContent,
+                'mail_format' => 'html',
+                'org_email' => true
+            ]]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+        $messageId = $rel['message_id'] ?? null;
+        $dataE['user_id'] = $customerId;
+        $dataE['from_email'] = $fromEmail;
+        $dataE['to_email'] = $customerEmail;
+        $dataE['lead_id'] = $leadId ?? null;
+        $dataE['message_id'] = $messageId;
+        $dataE['subject'] = $subject;
+        $dataE['setting_name'] = 'Notify Customer New Professional in Postcode added';
+        $dataE['content'] = $htmlContent;
+        $dataE['zoho_url'] = $url;
+        $dataE['response'] = json_encode($rel);
+        EmailLog::insertGetId($dataE);
     }
-    $htmlView = view('emails.customers.lead-accepted-email', [
-        'baseUrl' => config('app.react_base_url'),
-         'appURL' => config('app.url'),
-        
-        'customerName' => $customerName ?? '',
-        'serviceName' => $categoryName ?? '',
-        'leadId' => $leadId,
-        'sellers' => $sellers,
-        
-    ])->render();
-
-    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-
-    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
-    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-    $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
-
-    DB::table('zoho_logs')->insert([
-        'url' => $url,
-        'function_name' => 'leadAcceptedMailToSendCustomer',
-        'ipaddress' => request()->ip(),
-        'created_at' => now(),
-    ]);
-
-    $response = Http::withToken($accessToken)->post($url, [
-        'data' => [[
-            'from' => [
-                'email' => $fromEmail,
-                'user_name' => $fromName
-            ],
-            'to' => [['email' => $customerEmail]],
-            'subject' => $subject,
-            'content' => $htmlContent,
-            'mail_format' => 'html',
-            'org_email' => true
-        ]]
-    ]);
-
-    $rel = self::getZohoMailResponse($response);
-    $messageId = $rel['message_id'] ?? null;
-    $dataE['user_id'] =$customerId;
-    $dataE['from_email'] = $fromEmail;
-    $dataE['to_email'] = $customerEmail;
-    $dataE['lead_id'] = $leadId ?? null;
-    $dataE['message_id'] = $messageId;
-    $dataE['subject'] = $subject;
-    $dataE['setting_name'] = 'Lead Accepted';
-    $dataE['content'] = $htmlContent;
-    $dataE['zoho_url'] = $url;
-    $dataE['response'] = json_encode($rel);
-    EmailLog::insertGetId($dataE);
-
-}
-
-
-public static function notifyCustomerNewProfessionalinPostcode($leadId)
-{
-    $sendEmail = EmailSetting::where('setting_name', 'Notify Customer New Professional in Postcode added')
-        ->value('setting_value');
-
-    if (!$sendEmail) {
-        return;
-    }
-
-    $accessToken = ZohoHelper::getAccessToken();
-    if (!$accessToken) {
-        Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
-        return;
-    }
-
-    $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
- 
-    $serviceName  = optional($lead->category)->name;
-    $postCode  = $lead->postcode;
-    $customerName  = optional($lead->customer)->name;
-    $customerEmail = optional($lead->customer)->email;
-    $customerId    = optional($lead->customer)->id;
-
-    if (!$customerEmail) {
-        Log::error("Customer email missing for lead {$leadId}");
-        return;
-    }
-
-    $subject = ($customerName ? ucfirst($customerName) : "Customer") . ", a Verified Professional Is Now Available for Your Quote Request";
-
-    $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
-    if (empty($zohoId)) {
-        return;
-    }
-    $htmlView = view('emails.customers.notify-new-professional-postcode', [
-        'baseUrl' => config('app.react_base_url'),
-         'appURL' => config('app.url'),        
-        'customerName' => $customerName ?? '',
-        'serviceName' => $serviceName ?? '',
-        'postCode' => $postCode,
-        
-    ])->render();
-
-    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
-
-    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
-    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
-    $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
-
-    DB::table('zoho_logs')->insert([
-        'url' => $url,
-        'function_name' => 'notifyCustomerNewProfessionalinPostcode',
-        'ipaddress' => request()->ip(),
-        'created_at' => now(),
-    ]);
-
-    $response = Http::withToken($accessToken)->post($url, [
-        'data' => [[
-            'from' => [
-                'email' => $fromEmail,
-                'user_name' => $fromName
-            ],
-            'to' => [['email' => $customerEmail]],
-            'subject' => $subject,
-            'content' => $htmlContent,
-            'mail_format' => 'html',
-            'org_email' => true
-        ]]
-    ]);
-
-    $rel = self::getZohoMailResponse($response);
-    $messageId = $rel['message_id'] ?? null;
-    $dataE['user_id'] =$customerId;
-    $dataE['from_email'] = $fromEmail;
-    $dataE['to_email'] = $customerEmail;
-    $dataE['lead_id'] = $leadId ?? null;
-    $dataE['message_id'] = $messageId;
-    $dataE['subject'] = $subject;
-    $dataE['setting_name'] = 'Notify Customer New Professional in Postcode added';
-    $dataE['content'] = $htmlContent;
-    $dataE['zoho_url'] = $url;
-    $dataE['response'] = json_encode($rel);
-    EmailLog::insertGetId($dataE);
-
-}
-
-
-
 }
