@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\Cron\CronController;
 use App\Http\Controllers\MapController;
 use Illuminate\Http\Request;
 use App\Helpers\Zoho\ZohoHelper;
+use App\Http\Controllers\ZohoOAuthTestController;
 use Illuminate\Support\Facades\Http;
 Route::get('phpinfo', function () {
     phpinfo();
@@ -200,4 +201,14 @@ Route::get('/zoho/scopes', function () {
 return $scope;
     
 });
+
+
+Route::get('/zoho/authorize', [ZohoOAuthTestController::class, 'authorize']); // Step 1: open auth URL
+Route::get('/zoho/callback', [ZohoOAuthTestController::class, 'callback']);   // Step 2: get code
+Route::get('/zoho/access-token', [ZohoOAuthTestController::class, 'getAccessToken']);
+
+
+
+
+
 require __DIR__ . '/auth.php';
