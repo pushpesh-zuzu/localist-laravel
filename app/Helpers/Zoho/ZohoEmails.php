@@ -66,9 +66,10 @@ class ZohoEmails
                     $pdfPath = public_path('Localists_Lead_Strategies.pdf');
 
                     if (file_exists($pdfPath)) {
+                        $zohoBaseUrl = 'https://mail.zoho.eu';
                         $uploadResponse = Http::withToken($accessToken)
                             ->attach('file', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')
-                            ->post('https://mail.zoho.com/api/v1/files'); // make sure domain is correct
+                            ->post($zohoBaseUrl . '/api/v1/files'); // make sure domain is correct
 
                         Log::info("Zoho Upload Response: " . $uploadResponse->body());
 
