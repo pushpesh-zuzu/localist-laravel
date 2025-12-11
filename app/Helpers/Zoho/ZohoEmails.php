@@ -62,31 +62,24 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
-                    // --- Attach existing PDF ---
+                    $attachments = [];
                     $pdfPath = public_path('Localists_Lead_Strategies.pdf');
-                    if (!file_exists($pdfPath)) {
-                        Log::error("PDF file not found: $pdfPath");
-                        return;
+
+                    if (file_exists($pdfPath)) {
+                        $uploadResponse = Http::withToken($accessToken)
+                            ->attach('file', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')
+                            ->post('https://mail.zoho.com/api/v1/files'); // make sure domain is correct
+
+                        Log::info("Zoho Upload Response: " . $uploadResponse->body());
+
+                        $attachmentId = $uploadResponse->json('data.attachments.0.attachmentId');
+
+                        if ($attachmentId) {
+                            $attachments[] = ['id' => $attachmentId];
+                        } else {
+                            Log::error("Zoho attachment upload failed: " . $uploadResponse->body());
+                        }
                     }
-
-                    // STEP 1: Upload PDF to Zoho (required)
-                    $uploadResponse = Http::withToken($accessToken)
-                        ->attach('file', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')
-                        ->post('https://mail.zoho.com/api/v1/files');
-
-                    $attachmentId = $uploadResponse->json('data.attachments.0.attachmentId');
-
-                    if (!$attachmentId) {
-                        Log::error("Zoho attachment upload failed: " . $uploadResponse->body());
-                        return;
-                    }
-
-                    // STEP 2: Use attachmentId only
-                    $attachments = [
-                        [
-                            'id' => $attachmentId
-                        ]
-                    ];
 
 
                     DB::table('zoho_logs')->insert([
