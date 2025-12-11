@@ -1213,6 +1213,7 @@ class CronController extends Controller
             ->where('created_at', '<=', $cutoffTime)
             ->whereNotNull('email')
             ->whereNotNull('zoho_record_id')
+            ->whereNull('deleted_at')
             ->orderBy('id', 'DESC');
 
         // Process users in chunks
