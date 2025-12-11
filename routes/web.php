@@ -29,6 +29,7 @@ use Illuminate\Http\Request;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Http\Controllers\ZohoOAuthTestController;
 use Illuminate\Support\Facades\Http;
+use App\Helpers\Zoho\ZohoEmails;
 Route::get('phpinfo', function () {
     phpinfo();
 });
@@ -207,7 +208,11 @@ Route::get('/zoho/authorize', [ZohoOAuthTestController::class, 'authorize']); //
 Route::get('/zoho/callback', [ZohoOAuthTestController::class, 'callback']);   // Step 2: get code
 Route::get('/zoho/access-token', [ZohoOAuthTestController::class, 'getAccessToken']);
 
-
+Route::get('/zohowelcome-email', function () {
+    $scope = ZohoEmails::sendWelcomeEmailTest('1158','zqQKYVz6');
+return $scope;
+    
+});
 
 
 

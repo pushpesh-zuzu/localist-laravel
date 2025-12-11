@@ -71,35 +71,35 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
-                //     $attachments = [];
-                // $pdfPath = public_path('Localists_Lead_Strategies.pdf');
+                    //     $attachments = [];
+                    // $pdfPath = public_path('Localists_Lead_Strategies.pdf');
 
-                // if (file_exists($pdfPath)) {
-                //     $accountId = ZohoHelper::getAccountId($accessToken);  // Fetch accountId
-                //     if (!$accountId) {
-                //         Log::error('Zoho accountId not found; skipping attachment upload.');
-                //     } else {
-                //         $zohoBaseUrl = 'https://mail.zoho.eu';
-                //         $uploadUrl = $zohoBaseUrl . '/api/accounts/' . $accountId . '/messages/attachments?uploadType=multipart';
+                    // if (file_exists($pdfPath)) {
+                    //     $accountId = ZohoHelper::getAccountId($accessToken);  // Fetch accountId
+                    //     if (!$accountId) {
+                    //         Log::error('Zoho accountId not found; skipping attachment upload.');
+                    //     } else {
+                    //         $zohoBaseUrl = 'https://mail.zoho.eu';
+                    //         $uploadUrl = $zohoBaseUrl . '/api/accounts/' . $accountId . '/messages/attachments?uploadType=multipart';
 
-                //         $uploadResponse = Http::withHeaders([
-                //             'Authorization' => 'Zoho-oauthtoken ' . $accessToken,  // Explicit header for reliability
-                //         ])
-                //         ->attach('attach', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')  // Note: 'attach' is the expected form field name
-                //         ->post($uploadUrl);
+                    //         $uploadResponse = Http::withHeaders([
+                    //             'Authorization' => 'Zoho-oauthtoken ' . $accessToken,  // Explicit header for reliability
+                    //         ])
+                    //         ->attach('attach', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')  // Note: 'attach' is the expected form field name
+                    //         ->post($uploadUrl);
 
-                //         Log::info("Zoho Upload Response: " . $uploadResponse->body());
+                    //         Log::info("Zoho Upload Response: " . $uploadResponse->body());
 
-                //         $data = $uploadResponse->json('data', []);
-                //         $storeName = $data[0]['storeName'] ?? null;  // Correct path: data[0].storeName
+                    //         $data = $uploadResponse->json('data', []);
+                    //         $storeName = $data[0]['storeName'] ?? null;  // Correct path: data[0].storeName
 
-                //         if ($storeName) {
-                //             $attachments[] = ['id' => $storeName];
-                //         } else {
-                //             Log::error("Zoho attachment upload failed or no storeName: " . $uploadResponse->body());
-                //         }
-                //     }
-                // }
+                    //         if ($storeName) {
+                    //             $attachments[] = ['id' => $storeName];
+                    //         } else {
+                    //             Log::error("Zoho attachment upload failed or no storeName: " . $uploadResponse->body());
+                    //         }
+                    //     }
+                    // }
 
 
                     DB::table('zoho_logs')->insert([
@@ -125,7 +125,7 @@ class ZohoEmails
                                     'subject' => $subject,
                                     'content' => $htmlContent,
                                     'mail_format' => 'html',
-                                   // 'attachments' => $attachments,
+                                    // 'attachments' => $attachments,
                                     'org_email' => true
                                 ]
                             ]
@@ -3132,5 +3132,115 @@ class ZohoEmails
         $dataE['zoho_url'] = $url;
         $dataE['response'] = json_encode($rel);
         EmailLog::insertGetId($dataE);
+    }
+
+
+
+    public static function sendWelcomeEmailTest($userId, $password)
+    {
+        $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Welcome Email')->value('setting_value');
+        if ($sendWelcomeEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::with(['services.category', 'services.locations'])->where('id', $userId)->first();
+                if (!empty($user)) {
+                    $services = [];
+                    foreach ($user->services as $s) {
+                        $sl = $s->category->name . ' - ';
+                        foreach ($s->locations as $index => $l) {
+                            if ($index > 0) {
+                                $sl .= ', ';
+                            }
+                            $sl .= $l->miles . ' miles from ' . $l->postcode;
+                        }
+                        array_push($services, $sl);
+                    }
+
+                    $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                    $user->update(['remember_token' => $token]);
+                    $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration_new',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'password' => $password,
+                        'token' => $token,
+                        // 'services' => $services
+                    ])->render();
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = 'Welcome to Localists';
+
+                    $attachments = [];
+                    $pdfPath = public_path('Localists_Lead_Strategies.pdf');
+
+                    if (file_exists($pdfPath)) {
+
+                        $url = "https://www.zohoapis.eu/crm/v3/Lead_Buyer_Registration/$zohoId/Attachments";
+
+                        $uploadResponse = Http::withToken($accessToken)
+                            ->attach('file', fopen($pdfPath, 'r'), 'Localists_Lead_Strategies.pdf')
+                            ->post($url);
+
+                        Log::info("CRM Upload Response: " . $uploadResponse->body());
+
+                        $attachmentId = $uploadResponse->json('data.0.details.id');
+
+                        if ($attachmentId) {
+                            $attachments[] = ['id' => $attachmentId];
+                        } else {
+                            Log::error("CRM attachment upload failed: " . $uploadResponse->body());
+                        }
+                    }
+
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendWelcomeEmail',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'attachments' => $attachments,
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Send Welcome Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+        }
     }
 }
