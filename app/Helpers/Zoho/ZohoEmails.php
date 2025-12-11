@@ -63,22 +63,28 @@ class ZohoEmails
                     $subject = 'Welcome to Localists';
 
                     // --- Attach existing PDF ---
-                    $pdfPath = public_path('Localists_Lead_Strategies.pdf'); // Path to your PDF
+                    $pdfPath = public_path('Localists_Lead_Strategies.pdf');
                     if (!file_exists($pdfPath)) {
                         Log::error("PDF file not found: $pdfPath");
                         return;
                     }
 
-                    $pdfContent = file_get_contents($pdfPath);
-                    $base64Pdf = base64_encode($pdfContent);
+                    // STEP 1: Upload PDF to Zoho (required)
+                    $uploadResponse = Http::withToken($accessToken)
+                        ->attach('file', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')
+                        ->post('https://mail.zoho.com/api/v1/files');
 
-                    // ✅ FIX: Zoho requires "id" and we use a stable ID (not random)
+                    $attachmentId = $uploadResponse->json('data.attachments.0.attachmentId');
+
+                    if (!$attachmentId) {
+                        Log::error("Zoho attachment upload failed: " . $uploadResponse->body());
+                        return;
+                    }
+
+                    // STEP 2: Use attachmentId only
                     $attachments = [
                         [
-                            'id' => md5($pdfContent), // stable unique ID based on file content
-                            'content' => $base64Pdf,
-                            'type' => 'application/pdf',
-                            'name' => 'Localists_Lead_Strategies.pdf'
+                            'id' => $attachmentId
                         ]
                     ];
 
