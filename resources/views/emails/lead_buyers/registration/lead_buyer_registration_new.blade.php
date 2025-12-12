@@ -145,7 +145,7 @@
               <td style="background-color:#edfcf8; border-radius:10px; padding:14px; margin-bottom:20px;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td style="width:36px;"><img src="{{$siteUrl}}/public/images/your-dedicated-account.svg" width="36" height="36" alt="" style="display:block;"></td>
+                    <td style="width:36px;"><img src="{{$siteUrl}}/public/images/your-dedicated-account.png" width="36" height="36" alt="" style="display:block;"></td>
                     <td style="padding-left:10px; color:#00afe3; font-size:16px; font-weight:700;">Your Dedicated Account Manager</td>
                   </tr>
                 </table>
@@ -217,9 +217,9 @@
             <tr>
               <td align="center" style="color:#fff; font-size:12px; font-weight:500; font-family:Inter, sans-serif;">
                 <!-- Company + Email inline -->
-                <img src="{{$siteUrl}}/public/images/globle7745-xeg.svg" width="19" height="19" style="vertical-align:middle;"> &nbsp;Localists.com
+                <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" style="vertical-align:middle;"> &nbsp;Localists.com
                 &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-                <img src="{{$siteUrl}}/public/images/vector7745-xm1q.svg" width="18" height="14" style="vertical-align:middle;"> &nbsp;contact@localists.com
+                <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" style="vertical-align:middle;"> &nbsp;contact@localists.com
               </td>
             </tr>
           </table>
