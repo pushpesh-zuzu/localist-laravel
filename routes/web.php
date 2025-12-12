@@ -198,7 +198,7 @@ Route::get('/test-next-day-expired-emails', [CronController::class, 'sendNextDay
 
 
 Route::get('/zoho/scopes', function () {
-    $scope = ZohoHelper::getnewAccessTokenTest();
+       $scope = ZohoHelper::getnewAccessTokenTest();
 return $scope;
     
 });

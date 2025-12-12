@@ -44,25 +44,16 @@ class ZohoEmails
                         array_push($services, $sl);
                     }
 
-                    // $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
-                    // $user->update(['remember_token' => $token]);
-                    // $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
-                    //     'baseUrl' => config('app.react_base_url'),
-                    //     //'siteUrl' => config('app.url'),
-                    //     'name' => $user->name,
-                    //     'email' => $user->email,
-                    //     'password' => $password,
-                    //     // 'token' => $token,
-                    //     'jobs' => rand(1, 50),
-                    //     'services' => $services
-                    // ])->render();
-                    $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration',  [
+                    $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                    $user->update(['remember_token' => $token]);
+                    $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration_new',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'email' => $user->email,
                         'password' => $password,
-                        'jobs' => rand(1, 50),
-                        'services' => $services
+                        'token' => $token,
+                        // 'services' => $services
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                     $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
@@ -71,35 +62,30 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
-                    //     $attachments = [];
-                    // $pdfPath = public_path('Localists_Lead_Strategies.pdf');
+                    $attachments = [];
+                    $pdfPath = public_path('Localists_Lead_Strategies.pdf');
 
-                    // if (file_exists($pdfPath)) {
-                    //     $accountId = ZohoHelper::getAccountId($accessToken);  // Fetch accountId
-                    //     if (!$accountId) {
-                    //         Log::error('Zoho accountId not found; skipping attachment upload.');
-                    //     } else {
-                    //         $zohoBaseUrl = 'https://mail.zoho.eu';
-                    //         $uploadUrl = $zohoBaseUrl . '/api/accounts/' . $accountId . '/messages/attachments?uploadType=multipart';
+                    if (file_exists($pdfPath)) {
+                       
+                        $uploadResponse = Http::withToken($accessToken)
+                            ->attach('file', fopen($pdfPath, 'r'), 'Localists_Lead_Strategies.pdf')
+                            ->post('https://www.zohoapis.eu/crm/v8/files');
 
-                    //         $uploadResponse = Http::withHeaders([
-                    //             'Authorization' => 'Zoho-oauthtoken ' . $accessToken,  // Explicit header for reliability
-                    //         ])
-                    //         ->attach('attach', file_get_contents($pdfPath), 'Localists_Lead_Strategies.pdf')  // Note: 'attach' is the expected form field name
-                    //         ->post($uploadUrl);
+                      
+                        $attachmentId = $uploadResponse->json('data.0.details.id');
 
-                    //         Log::info("Zoho Upload Response: " . $uploadResponse->body());
+                        if ($attachmentId) {
 
-                    //         $data = $uploadResponse->json('data', []);
-                    //         $storeName = $data[0]['storeName'] ?? null;  // Correct path: data[0].storeName
-
-                    //         if ($storeName) {
-                    //             $attachments[] = ['id' => $storeName];
-                    //         } else {
-                    //             Log::error("Zoho attachment upload failed or no storeName: " . $uploadResponse->body());
-                    //         }
-                    //     }
-                    // }
+                            $attachments = [
+                                [
+                                    'id' => $attachmentId
+                                ]
+                            ];
+                           
+                        } else {
+                            Log::error("CRM attachment upload failed: " . $uploadResponse->body());
+                        }
+                    }
 
 
                     DB::table('zoho_logs')->insert([
@@ -125,7 +111,7 @@ class ZohoEmails
                                     'subject' => $subject,
                                     'content' => $htmlContent,
                                     'mail_format' => 'html',
-                                    // 'attachments' => $attachments,
+                                    'attachments' => $attachments,
                                     'org_email' => true
                                 ]
                             ]
@@ -3176,23 +3162,29 @@ class ZohoEmails
                     $toEmail = $user->email;
                     $subject = 'Welcome to Localists';
 
+
                     $attachments = [];
                     $pdfPath = public_path('Localists_Lead_Strategies.pdf');
 
                     if (file_exists($pdfPath)) {
-
-                        $url1 = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/$zohoId/Attachments";
+                        Log::info("CRM zohoId: " . $zohoId);
 
                         $uploadResponse = Http::withToken($accessToken)
                             ->attach('file', fopen($pdfPath, 'r'), 'Localists_Lead_Strategies.pdf')
-                            ->post($url1);
+                            ->post('https://www.zohoapis.eu/crm/v8/files');
 
                         Log::info("CRM Upload Response: " . $uploadResponse->body());
 
                         $attachmentId = $uploadResponse->json('data.0.details.id');
 
                         if ($attachmentId) {
-                            $attachments[] = ['id' => $attachmentId];
+
+                            $attachments = [
+                                [
+                                    'id' => $attachmentId
+                                ]
+                            ];
+                            Log::info('Attachment Added:', ['attachments' => $attachments]);
                         } else {
                             Log::error("CRM attachment upload failed: " . $uploadResponse->body());
                         }

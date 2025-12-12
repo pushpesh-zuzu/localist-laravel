@@ -14,7 +14,7 @@ class ZohoOAuthTestController extends Controller
         $clientId = '1000.4AU5IDFN2PO9X0S25QX5GJMH1NR0YA';
        
         $redirectUri = 'https://localists.com/admin/zoho/callback';
-        $scopes = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.send_mail.all.CREATE,ZohoMail.attachments.CREATE';
+        $scopes = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.send_mail.all.CREATE,ZohoMail.attachments.CREATE,ZohoCRM.files.CREATE,ZohoCRM.files.READ';
 
         $url = "https://accounts.zoho.eu/oauth/v2/auth?scope={$scopes}&client_id={$clientId}&response_type=code&access_type=offline&redirect_uri={$redirectUri}";
 
