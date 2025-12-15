@@ -40,7 +40,7 @@ class MapController extends Controller
                 'postcodes.latitude as latitude',
                 'postcodes.longitude as longitude'
             )
-            ->where('users.total_credit', '>', 0)
+            ->where('users.total_credit', '>', 10)
             ->whereIn('users.user_type', [1, 3]);
         
         // BUYERS: user_type IN (1,3) who does not have credits and valid postcode
