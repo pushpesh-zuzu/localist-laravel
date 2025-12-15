@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 use App\Helpers\CustomHelper;
 use App\Models\Postcode;
 
@@ -70,7 +71,19 @@ class MapController extends Controller
                 'postcodes.latitude',
                 'postcodes.longitude'
             )
-            ->where('lead_requests.status', '<>', 'hired');
+            ->where('lead_requests.status', '<>', 'hired')
+            ->where('lead_requests.created_at', '>', Carbon::now()->subDays(21)->toDateString()); // do not include leads which are older than 21 days
+        $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
+        $slotFullLeads = DB::table('recommended_leads')
+            ->select('lead_id')
+            ->groupBy('lead_id')
+            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
+            ->pluck('lead_id')
+            ->toArray();
+        if(!empty($slotFullLeads)){
+            $leadsQuery = $leadsQuery->whereNotIn('lead_requests.id', $slotFullLeads); //do not include leads which has 5 slot full
+        }
+        
 
         $creditBuyers = $crediBuyersQuery->get()->toArray();
         $noCreditBuyers = $noCreditBuyersQuery->get()->toArray();
