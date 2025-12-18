@@ -1,117 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Welcome to Localists</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login Email</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f2f2f2;
+      background: #f4f6f8;
+      -webkit-text-size-adjust: none;
+      -ms-text-size-adjust: none;
+      font-family: Inter, Arial, sans-serif;
     }
-    .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+
+    img {
+      border: 0;
+      -ms-interpolation-mode: bicubic;
+      display: block;
     }
-    .header {
-      text-align: center;
-      padding: 20px;
-    }
-    .header img {
-      max-width: 100px;
-    }
-    .image-section img {
-      width: 100%;
-      height: auto;
-    }
-    .content {
-      padding: 20px;
-      color: #333333;
-    }
-    .content h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    .content p {
-      font-size: 16px;
-      line-height: 1.5;
-    }
-    .button {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #1f6bf0;
-      color: #ffffff !important;
+
+    a {
+      color: inherit;
       text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-    }
-    .username {
-      font-weight: bold;
-      color: #1f6bf0;
     }
 
-    .card {
-            background: #ffffff;
-            padding: 32px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            margin-bottom: 20px;
-        }
+    @media screen and (max-width: 620px) {
+      .container {
+        width: 100% !important;
+      }
 
-         .section-header {
-            background-color: #d8edf8;
-            color: #1a588c;
-            padding: 12px 20px;
-            margin: -32px -11px 20px -12px;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-        }
-        .footer {
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-        }
-        a { color: #007bff; }
+      .inner {
+        padding: 18px !important;
+      }
 
-        @media only screen and (max-width: 600px) {
-            .card { padding: 24px 20px !important; }
-            .btn { width: 100% !important; font-size: 16px !important; }
-            h1 { font-size: 20px !important; }
-            .section-header { font-size: 15px !important; padding: 12px 16px !important; }
-        }
+      .cta-box {
+        padding: 18px !important;
+      }
+    }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-       <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height: 50px;">
-    </div>
-    <div class="content">
-      <p>Hi  <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
-               
-      <p>Use the link below to log in to your account </p>
-      <a href="{{ $baseUrl }}/en/gb/login?client_id={{base64_encode($token)}}" style="display: block; background-color: #00afe3; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px; border-radius: 4px; margin-top: 20px; text-align: center;">Log In Now</a>
-    </div>
-    
-    <div class="card">
-                <div class="section-header">Help</div>
-                <p>If you have any questions, please reach out to us at
-                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
-                <p>Kind Regards,<br>Localists Team</p>
-            </div>
 
-            <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
-                {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
-            </div>
-      </div>
-  </div>
+<body>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f6f8">
+    <tr>
+      <td align="center">
+
+        <!-- Main card -->
+        <table class="container" width="600" cellpadding="0" cellspacing="0" border="0"
+          style="width:600px; max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding:16px 0 0;">
+              <table role="presentation" width="500" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td height="40" valign="middle" align="center"
+                    style="height:40px; background-color:#17B5E5; border-radius:5px; padding:0;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" height="40">
+                      <tr>
+                        <td height="40" valign="middle" align="center">
+                          <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists" height="25"
+                            style="display:block; height:25px; max-height:25px;" />
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Spacer above envelope -->
+          <tr>
+            <td height="22" style="font-size:0; line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Envelope image section -->
+          <tr>
+            <td align="center">
+              <img src="{{$siteUrl}}/public/images/envelope.png" alt="Email Illustration" width="200" height="173"
+                style="display:block; margin:0 auto;">
+            </td>
+          </tr>
+
+
+          <!-- Greeting -->
+          <tr>
+            <td align="center" style="padding:1px 28px 8px;">
+              <p style=" font-size:16px; line-height:22px; color:#131838;">
+                Hi, <strong style="color:#131838;">{{ ucfirst($name) }}</strong>,
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA panel -->
+          <tr>
+            <td align="center" style="padding:12px 20px 22px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                style="background:#e8f8fc; border-radius:8px;">
+                <tr>
+                  <td align="center" style="padding:32px 28px 24px;">
+
+                    <!-- Heading -->
+                    <p style=" margin:0 0 22px;  font-size:20px;   line-height:26px;  font-weight:700; color:#253238;font-family:Inter, Arial, sans-serif;">
+                      Click below to log in to your account directly
+                    </p>
+
+                    <!-- Button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#ff9a2b" style=" border-radius:30px; padding:12px 32px; ">
+                          <a href="{{ $baseUrl }}/en/gb/login?client_id={{base64_encode($token)}}" style="display:block;font-size:16px;line-height:20px;font-weight:700;color:#ffffff; text-decoration:none; font-family:Inter, Arial, sans-serif;">
+                            Log In Now
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+
+          <!-- Need Help -->
+          <tr>
+            <td align="center" style="padding:6px 28px 6px;">
+              <p style="margin:0; font-size:16px; line-height:20px; font-weight:700; color:#17B5E5;">
+                Need Help?
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:6px 28px 18px;">
+              <p style="margin:0; font-size:12px; line-height:18px; font-weight:600; color:#131838;">
+                If you have any questions, please reach out to us at
+                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}"
+                  style="color:#17B5E5; text-decoration:none;">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" bgcolor="#131838" style="padding:12px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <!-- Globe -->
+                  <td valign="middle" style="padding-right:6px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt="" style="display:block;">
+                  </td>
+
+                  <!-- Website text -->
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif;">
+                    Localists.com
+                  </td>
+
+                  <!-- Divider -->
+                  <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">
+                    |
+                  </td>
+
+                  <!-- Email icon -->
+                  <td valign="middle" style="padding-right:6px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt="" style="display:block;">
+                  </td>
+
+                  <!-- Email text -->
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif;">
+                    contact@localists.com
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:10px 22px 18px;">
+              <p style="margin:0; font-size:11px; line-height:16px; color:#111637;">
+                Manage your email preferences
+                <a href="{{$baseUrl}}/settings/notifications/e-mail-notification" style="color:#111637; text-decoration:underline;">here</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- End main card -->
+
+      </td>
+    </tr>
+  </table>
+
 </body>
+
 </html>

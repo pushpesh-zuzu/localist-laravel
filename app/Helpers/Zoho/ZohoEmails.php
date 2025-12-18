@@ -2312,6 +2312,7 @@ class ZohoEmails
                 if (!empty($user)) {
                     $htmlView = view('emails.login.login_with_magic_link',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'token' => $token,
                     ])->render();
