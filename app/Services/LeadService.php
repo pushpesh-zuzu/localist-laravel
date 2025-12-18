@@ -150,27 +150,25 @@ class LeadService
                 }
 
                 /** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
+                //** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
                 foreach ($ulMap as $item) {
 
                     if (empty($item['coordinates'])) {
                         continue;
                     }
 
-                    // decode polygon
                     $coords = json_decode($item['coordinates'], true);
-
-                    // your coordinates are stored like [[{lat,lng},{lat,lng}...]]
                     $polygon = $coords[0] ?? $coords;
 
-                    // find postcodes inside polygon
-                    $polygonPostcodes = CustomHelper::getPostcodesWithinPolygon($polygon);
-
-                    // add into OR where like other location types
-                    $query->orWhere(function ($q) use ($item, $polygonPostcodes) {
-                        $q->where('service_id', $item['service_id']);
-                        if (!empty($polygonPostcodes)) {
-                            $q->whereIn('postcode', $polygonPostcodes);
-                        }
+                    $polygonPostcodeQuery = CustomHelper::getPostcodesWithinPolygonQuery($polygon);
+                    $rawSql = $polygonPostcodeQuery->toRawSql();
+                    $query->orWhere(function ($q) use ($item, $rawSql) {
+                        $q->where('lead_requests.service_id', $item['service_id'])
+                        ->whereExists(function ($sq) use ($rawSql) {
+                            $sq->select(DB::raw(1))
+                                ->from(DB::raw("($rawSql) as p"))
+                                ->whereColumn('p.postcode', 'lead_requests.postcode');
+                        });
                     });
                 }
 
@@ -409,30 +407,28 @@ class LeadService
                     });
                 }
 
-                /** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
+                //** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
                 foreach ($ulMap as $item) {
 
                     if (empty($item['coordinates'])) {
                         continue;
                     }
 
-                    // decode polygon
                     $coords = json_decode($item['coordinates'], true);
-
-                    // your coordinates are stored like [[{lat,lng},{lat,lng}...]]
                     $polygon = $coords[0] ?? $coords;
 
-                    // find postcodes inside polygon
-                    $polygonPostcodes = CustomHelper::getPostcodesWithinPolygon($polygon);
-
-                    // add into OR where like other location types
-                    $query->orWhere(function ($q) use ($item, $polygonPostcodes) {
-                        $q->where('service_id', $item['service_id']);
-                        if (!empty($polygonPostcodes)) {
-                            $q->whereIn('postcode', $polygonPostcodes);
-                        }
+                    $polygonPostcodeQuery = CustomHelper::getPostcodesWithinPolygonQuery($polygon);
+                    $rawSql = $polygonPostcodeQuery->toRawSql();
+                    $query->orWhere(function ($q) use ($item, $rawSql) {
+                        $q->where('lead_requests.service_id', $item['service_id'])
+                        ->whereExists(function ($sq) use ($rawSql) {
+                            $sq->select(DB::raw(1))
+                                ->from(DB::raw("($rawSql) as p"))
+                                ->whereColumn('p.postcode', 'lead_requests.postcode');
+                        });
                     });
                 }
+
 
                 //include nation wide services
                 if (!empty($nwServices)) {

@@ -31,61 +31,50 @@ use App\Models\CustomReview;
 class CustomHelper
 {
 
-    public static function getPostcodesWithinPolygon(array $polygon): array
-    {
-        if (empty($polygon)) {
-            return [];
-        }
-
-        // Extract bounding box
-        $latArr = array_column($polygon, 'lat');
-        $lngArr = array_column($polygon, 'lng');
-
-        $minLat = min($latArr);
-        $maxLat = max($latArr);
-        $minLng = min($lngArr);
-        $maxLng = max($lngArr);
-
-        // Get only postcodes inside bounding box
-        $candidates = Postcode::whereBetween('latitude', [$minLat, $maxLat])
-            ->whereBetween('longitude', [$minLng, $maxLng])
-            ->get(['postcode', 'latitude', 'longitude']);
-
-        $inside = [];
-        foreach ($candidates as $pc) {
-            if (self::pointInPolygon($pc->latitude, $pc->longitude, $polygon)) {
-                $inside[] = $pc->postcode;
-            }
-        }
-
-        return $inside;
+    public static function getPostcodesWithinPolygonQuery(array $polygon)
+{
+    if (empty($polygon)) {
+        return null;
     }
 
-    // Standard ray-casting algorithm
-    public static function pointInPolygon($lat, $lng, $polygon): bool
+    $latArr = array_column($polygon, 'lat');
+    $lngArr = array_column($polygon, 'lng');
+
+    $minLat = min($latArr);
+    $maxLat = max($latArr);
+    $minLng = min($lngArr);
+    $maxLng = max($lngArr);
+
+    $wkt = self::polygonToWkt($polygon);
+    $polygonWkt = "POLYGON(($wkt))";
+
+    return DB::table('postcodes')
+        ->select('postcode')
+        ->whereBetween('latitude', [$minLat, $maxLat])
+        ->whereBetween('longitude', [$minLng, $maxLng])
+        ->whereRaw(
+            "MBRContains(ST_GeomFromText(?), POINT(longitude, latitude))",
+            [$polygonWkt]
+        );
+}
+
+
+    public static function polygonToWkt(array $polygon): string
     {
-        $inside = false;
-        $j = count($polygon) - 1;
+        $points = [];
 
-        for ($i = 0; $i < count($polygon); $i++) {
-
-            $xi = $polygon[$i]['lat'];
-            $yi = $polygon[$i]['lng'];
-            $xj = $polygon[$j]['lat'];
-            $yj = $polygon[$j]['lng'];
-
-            $intersect = (($yi > $lng) !== ($yj > $lng)) &&
-                ($lat < (($xj - $xi) * ($lng - $yi) / (($yj - $yi) ?: 1e-9) + $xi));
-
-            if ($intersect) {
-                $inside = !$inside;
-            }
-
-            $j = $i;
+        foreach ($polygon as $p) {
+            $points[] = "{$p['lng']} {$p['lat']}";
         }
 
-        return $inside;
+        // Close polygon if not already closed
+        if ($points[0] !== end($points)) {
+            $points[] = $points[0];
+        }
+
+        return implode(',', $points);
     }
+
 
     
     public static function getAverageRating($user_id)
