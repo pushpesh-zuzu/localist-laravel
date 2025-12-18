@@ -149,6 +149,31 @@ class LeadService
                     });
                 }
 
+                /** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
+                foreach ($ulMap as $item) {
+
+                    if (empty($item['coordinates'])) {
+                        continue;
+                    }
+
+                    // decode polygon
+                    $coords = json_decode($item['coordinates'], true);
+
+                    // your coordinates are stored like [[{lat,lng},{lat,lng}...]]
+                    $polygon = $coords[0] ?? $coords;
+
+                    // find postcodes inside polygon
+                    $polygonPostcodes = CustomHelper::getPostcodesWithinPolygon($polygon);
+
+                    // add into OR where like other location types
+                    $query->orWhere(function ($q) use ($item, $polygonPostcodes) {
+                        $q->where('service_id', $item['service_id']);
+                        if (!empty($polygonPostcodes)) {
+                            $q->whereIn('postcode', $polygonPostcodes);
+                        }
+                    });
+                }
+
                 //include nation wide services
                 if (!empty($nwServices)) {
                     $query->orWhereIn('service_id', $nwServices);
@@ -380,6 +405,31 @@ class LeadService
                         $q->where('service_id', $item['service_id']);
                         if ($radiusPostcodeQuery) {
                             $q->whereIn('postcode', $radiusPostcodeQuery);
+                        }
+                    });
+                }
+
+                /** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
+                foreach ($ulMap as $item) {
+
+                    if (empty($item['coordinates'])) {
+                        continue;
+                    }
+
+                    // decode polygon
+                    $coords = json_decode($item['coordinates'], true);
+
+                    // your coordinates are stored like [[{lat,lng},{lat,lng}...]]
+                    $polygon = $coords[0] ?? $coords;
+
+                    // find postcodes inside polygon
+                    $polygonPostcodes = CustomHelper::getPostcodesWithinPolygon($polygon);
+
+                    // add into OR where like other location types
+                    $query->orWhere(function ($q) use ($item, $polygonPostcodes) {
+                        $q->where('service_id', $item['service_id']);
+                        if (!empty($polygonPostcodes)) {
+                            $q->whereIn('postcode', $polygonPostcodes);
                         }
                     });
                 }
