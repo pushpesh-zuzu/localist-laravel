@@ -67,10 +67,19 @@
           <tr>
             <td style="padding:0;">
               <!-- Header -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <table width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#00afe3">
                 <tr>
-                  <td style="background-color:#00afe3; text-align:center; padding:14px 0; border-radius:5px;">
-                    <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists.com" style="height:25px; display:block; margin:0 auto;">
+                  <td align="center" style="padding:14px 0;">
+                    <table width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;">
+                      <tr>
+                        <td align="center">
+                          <img src="{{$baseUrl}}/assets/localist_logo_1.png"
+                            alt="Localists.com"
+                            height="25"
+                            style="display:block; margin:0 auto;">
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -219,36 +228,53 @@
               <!-- Exclusive Leads Section -->
 
 
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:10px auto; padding:0;">
-                <tr>
-                  <td align="center">
-                    <table role="presentation" width="550" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto; background:#f7f7f7; border-radius:12px;">
-                      <tr>
-                        <!-- LEFT BOX -->
-                        <td width="50%" style="background-color:#00afe3; border-radius:12px 0 0 12px; padding:22px 20px;">
-                          <p style="color:#fff; font-size:12px; font-weight:700; line-height:16px; margin:0 0 10px 0;">
-                            We’d also love to know if you're interested in EXCLUSIVE LEADS a powerful way to secure more jobs with minimal competition.
-                            Please speak to your account manager to find out more information regarding our
-                            <span style="color:#253238;">exclusive leads.</span>
-                          </p>
+              <!-- EXCLUSIVE LEADS SECTION -->
+              <!-- EXCLUSIVE LEADS : 50/50 DESKTOP SAFE -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:10px auto;">
+  <tr>
+    <td align="center">
 
-                          <a href="{{$baseUrl}}/en/gb/contact-us"
-                            style="display:inline-block; padding:8px 18px; background:#252832; color:#fff; font-weight:700; text-decoration:none; border-radius:26px;">
-                            Contact Us
-                          </a>
-                        </td>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+        style="max-width:550px; background:#f7f7f7; border-radius:12px;">
+        <tr>
 
-                        <!-- RIGHT IMAGE -->
-                        <td width="50%" style="border-radius:0 12px 12px 0;">
-                          <img src="{{$siteUrl}}/public/images/contactus.png"
-                            alt="Contact Us"
-                            style="display:block; width:100%; height:auto; max-height:200px; border-radius:0 12px 12px 0;">
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+          <!-- LEFT TEXT (50%) -->
+          <td width="50%" valign="top"
+            style="background-color:#00afe3; padding:22px 20px;
+            border-radius:12px 0 0 12px;">
+
+            <p style="color:#fff; font-size:12px; font-weight:700; line-height:16px; margin:0 0 10px;">
+              We’d also love to know if you're interested in <strong>EXCLUSIVE LEADS</strong>
+              a powerful way to secure more jobs with minimal competition.
+              Please speak to your account manager to find out more information regarding our
+              <span style="color:#253238;">exclusive leads.</span>
+            </p>
+
+            <a href="{{$baseUrl}}/en/gb/contact-us"
+              style="display:inline-block; padding:8px 18px; background:#252832;
+              color:#ffffff; font-weight:700; text-decoration:none; border-radius:26px;">
+              Contact Us
+            </a>
+          </td>
+
+          <!-- RIGHT IMAGE (50%) -->
+          <td width="50%" valign="top"
+            style="border-radius:0 12px 12px 0; background:#ffffff;">
+            <img src="{{$siteUrl}}/public/images/contactus.png"
+              alt="Contact Us"
+              width="100%"
+              style="display:block; width:100%; height:auto;
+              border-radius:0 12px 12px 0;">
+          </td>
+
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+
 
 
 
