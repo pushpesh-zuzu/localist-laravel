@@ -362,6 +362,7 @@
             } catch(e){ console.warn('hideMapLoading error', e); }
         }
 
+
         // Main fetch + render (unchanged)
         async function refreshMap() {
             showMapLoading('Loading map data…'); // show overlay
@@ -398,13 +399,20 @@
                         lat,
                         lng,
                         buyers_with_credit: 0,
+                        credit_profiles: '',
                         buyers_no_credit: 0,
+                        no_credit_profiles: '',
                         leads: 0
                     });
                     const rec = agg.get(key);
                     const credit = Number(b.total_credit) || 0;
-                    if (credit > 0) rec.buyers_with_credit += 1;
-                    else rec.buyers_no_credit += 1;
+                    if (credit > 0) {
+                        rec.buyers_with_credit += 1;
+                        rec.credit_profiles += '<a href="'+b.profile_link+'" target="_blank">'+b.name+'</a>, &nbsp;&nbsp;';
+                    } else {
+                        rec.buyers_no_credit += 1;
+                        rec.no_credit_profiles += '<a href="'+b.profile_link+'" target="_blank">'+b.name+'</a>, &nbsp;&nbsp;';
+                    }
                 });
 
                 (data.leads || []).forEach(l => {
@@ -418,7 +426,9 @@
                         lat,
                         lng,
                         buyers_with_credit: 0,
+                        credit_profiles: '',
                         buyers_no_credit: 0,
+                        no_credit_profiles: '',
                         leads: 0
                     });
                     const rec = agg.get(key);
@@ -429,7 +439,7 @@
                 let addedAny = false;
 
                 for (const [key, rec] of agg.entries()) {
-                    const { lat, lng, postcode, buyers_with_credit, buyers_no_credit, leads } = rec;
+                    const { lat, lng, postcode, buyers_with_credit, credit_profiles, buyers_no_credit, no_credit_profiles, leads } = rec;
 
                     if (buyers_with_credit > 0) {
                         const ico = makeCountDivIcon(buyers_with_credit, 'pin-green', -18);
@@ -438,7 +448,9 @@
                                 <div style="min-width:200px;">
                                     <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
                                     <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
+                                    <strong>Profiles (credit):</strong> ${credit_profiles}<br>
                                     <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
+                                    <strong>Profiles (without credit):</strong> ${no_credit_profiles}<br>
                                     <strong>Leads:</strong> ${leads}
                                 </div>
                             `);
@@ -454,7 +466,9 @@
                                 <div style="min-width:200px;">
                                     <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
                                     <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
+                                    <strong>Profiles (credit):</strong> ${credit_profiles}<br>
                                     <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
+                                    <strong>Profiles (without credit):</strong> ${no_credit_profiles}<br>
                                     <strong>Leads:</strong> ${leads}
                                 </div>
                             `);
@@ -470,7 +484,9 @@
                                 <div style="min-width:200px;">
                                     <strong>Postcode:</strong> ${escapeHtml(postcode || '')}<br>
                                     <strong>Buyers with credit:</strong> ${buyers_with_credit}<br>
+                                    <strong>Profiles (credit):</strong> ${credit_profiles}<br>
                                     <strong>Buyers without credit:</strong> ${buyers_no_credit}<br>
+                                    <strong>Profiles (without credit):</strong> ${no_credit_profiles}<br>
                                     <strong>Leads:</strong> ${leads}
                                 </div>
                             `);
