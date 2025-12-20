@@ -7,53 +7,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     /* MOBILE FIX */
-    @media (max-width: 480px) {
-      .email-body {
-        width: 100% !important;
-        padding: 10px !important;
-      }
-
-      .profile-created,
-      .login-header,
-      .feature-card,
-      .support-card,
-      .request-card,
-      .credit-card,
-      .referral-box,
-      .closing-section,
-      .footer,
-      .exclusive-section,
-      .guide-box {
-        width: 100% !important;
-        max-width: 100% !important;
-      }
-
-      .guide-box {
-        flex-direction: column !important;
-      }
-
-      .guide-left,
-      .guide-right {
+    @media only screen and (max-width: 480px) {
+      .container {
         width: 100% !important;
       }
 
-      .sidebar-img {
+      .right-img {
+        height: 190px !important;
+        /* blue box ke barabar */
+        max-height: 190px !important;
         width: 100% !important;
-        height: auto !important;
-        margin-top: 10px !important;
       }
 
-      .contact-btn {
-        width: 100% !important;
-        max-width: 150px !important;
-        margin: 10px auto 0 !important;
-      }
 
-      .text-section {
-        width: 100% !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-      }
     }
   </style>
 </head>
@@ -63,26 +29,32 @@
   <table width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f9f9fa">
     <tr>
       <td align="center" style="padding:20px 0;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px; max-width:100%; background-color:#f9f9fa; border-collapse:collapse;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style=" background-color:#f9f9fa; border-collapse:collapse;">
           <tr>
             <td style="padding:0;">
               <!-- Header -->
-              <table width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#00afe3">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#00AFE3">
                 <tr>
-                  <td align="center" style="padding:14px 0;">
-                    <table width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;">
-                      <tr>
-                        <td align="center">
+                  <td align="center">
+
+                    <!-- INNER CENTERED CONTENT -->
+                    <table width="600" cellpadding="0" cellspacing="0" border="0">
+                      <tr width="600">
+                        <td align="center" width="600" style="padding:10px 0;">
                           <img src="{{$baseUrl}}/assets/localist_logo_1.png"
-                            alt="Localists.com"
-                            height="25"
-                            style="display:block; margin:0 auto;">
+                            alt="Localists"
+                            height="26"
+                            style="display:block;">
                         </td>
                       </tr>
                     </table>
+
                   </td>
                 </tr>
               </table>
+
+
+
 
               <!-- Greeting -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:20px;">
@@ -228,53 +200,41 @@
               <!-- Exclusive Leads Section -->
 
 
-              <!-- EXCLUSIVE LEADS SECTION -->
-              <!-- EXCLUSIVE LEADS : 50/50 DESKTOP SAFE -->
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:10px auto;">
-  <tr>
-    <td align="center">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:10px auto; padding:0;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" width="550" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto; background:#f7f7f7; border-radius:12px;">
+                      <tr>
+                        <!-- LEFT BOX -->
+                        <td width="50%" style="background-color:#00afe3; border-radius:12px 0 0 12px; padding:22px 20px;">
+                          <p style="color:#fff; font-size:12px; font-weight:700; line-height:16px; margin:0 0 10px 0;">
+                            We’d also love to know if you're interested in EXCLUSIVE LEADS a powerful way to secure more jobs with minimal competition.
+                            Please speak to your account manager to find out more information regarding our
+                            <span style="color:#253238;">exclusive leads.</span>
+                          </p>
 
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
-        style="max-width:550px; background:#f7f7f7; border-radius:12px;">
-        <tr>
+                          <a href="{{$baseUrl}}/en/gb/contact-us"
+                            style="display:inline-block; padding:8px 18px; background:#252832; color:#fff; font-weight:700; text-decoration:none; border-radius:26px;">
+                            Contact Us
+                          </a>
+                        </td>
 
-          <!-- LEFT TEXT (50%) -->
-          <td width="50%" valign="top"
-            style="background-color:#00afe3; padding:22px 20px;
-            border-radius:12px 0 0 12px;">
-
-            <p style="color:#fff; font-size:12px; font-weight:700; line-height:16px; margin:0 0 10px;">
-              We’d also love to know if you're interested in <strong>EXCLUSIVE LEADS</strong>
-              a powerful way to secure more jobs with minimal competition.
-              Please speak to your account manager to find out more information regarding our
-              <span style="color:#253238;">exclusive leads.</span>
-            </p>
-
-            <a href="{{$baseUrl}}/en/gb/contact-us"
-              style="display:inline-block; padding:8px 18px; background:#252832;
-              color:#ffffff; font-weight:700; text-decoration:none; border-radius:26px;">
-              Contact Us
-            </a>
-          </td>
-
-          <!-- RIGHT IMAGE (50%) -->
-          <td width="50%" valign="top"
-            style="border-radius:0 12px 12px 0; background:#ffffff;">
-            <img src="{{$siteUrl}}/public/images/contactus.png"
-              alt="Contact Us"
-              width="100%"
-              style="display:block; width:100%; height:auto;
-              border-radius:0 12px 12px 0;">
-          </td>
-
-        </tr>
-      </table>
-
-    </td>
-  </tr>
-</table>
-
-
+                        <!-- RIGHT IMAGE -->
+                        <td width="50%"
+                          background="{{$siteUrl}}/public/images/contactus.png"
+                          style="
+      background-repeat:no-repeat;
+      background-position:center;
+      background-size:cover;
+      border-radius:0 12px 12px 0;
+    ">
+                          &nbsp;
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
 
 
