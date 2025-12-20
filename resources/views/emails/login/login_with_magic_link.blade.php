@@ -169,9 +169,10 @@
                   </td>
 
                   <!-- Email text -->
-                  <td valign="middle"
-                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif;">
-                    contact@localists.com
+                  <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                    <a href="mailto:contact@localists.com" style="color:#ffffff; text-decoration:none;">
+                      contact@localists.com
+                    </a>
                   </td>
                 </tr>
               </table>

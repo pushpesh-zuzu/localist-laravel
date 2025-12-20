@@ -1,136 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Welcome to Localists</title>
-    <style>
-        body {
-            margin: 0;
-            background-color: #f1f2f4;
-            font-family: 'Lato',Helvetica,Arial,sans-serif;
-            font-size: 18px;
-            font-weight: 510;
-            line-height: 25px;
-            color: #4a4a4a;
-            -webkit-font-smoothing: antialiased;
-        }
-        .wrapper { width: 100%; padding: 32px 0; }
-        .email-container { max-width: 600px; margin: 0 auto; padding: 0 16px; }
-        .logo-container { text-align: center; margin-bottom: 20px; }
-        .logo { max-height: 50px; }
-        .card {
-            background: #ffffff;
-            padding: 32px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            margin-bottom: 20px;
-        }
-        h1 { font-size: 22px; font-weight: 600; color: #333; margin: 0 0 10px; }
-        .highlight { color: #00afe3; margin-bottom: 16px; }
-        p { color: #61696d; }
+  <meta charset="UTF-8">
+  <title>Welcome to Localists</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f9fcfe;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-        /* UPDATED BUTTON FIX */
-        .btn {
-    display: block;
-    max-width: 260px; /* reduced width */
-    width: 100%;
-    text-align: center;
-    background-color: #3399ff;
-    color: #ffffff !important;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 12px 0;
-    border-radius: 4px;
-    /* margin: 12px auto 0 auto; center the button */
-}
+    table {
+      border-collapse: collapse;
+    }
 
- .btn2 {
-    display: block;
-    max-width: 335px; /* reduced width */
-    width: 100%;
-    text-align: center;
-    background-color: #3399ff;
-    color: #ffffff !important;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 12px 0;
-    border-radius: 4px;
-    /* margin: 12px auto 0 auto; center the button */
-}
-        .section-header {
-            background-color: #d8edf8;
-            color: #1a588c;
-            padding: 12px 20px;
-            margin: -32px -32px 20px -32px;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-        }
-        .footer {
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-        }
-        a { color: #007bff; }
+    img {
+      display: block;
+      border: 0;
+      outline: none;
+    }
 
-        @media only screen and (max-width: 600px) {
-            .card { padding: 24px 20px !important; }
-            .btn { width: 100% !important; font-size: 16px !important; }
-            .btn2 { width: 100% !important; font-size: 16px !important; }
-            h1 { font-size: 20px !important; }
-            .section-header { font-size: 15px !important; padding: 12px 16px !important; }
-        }
-    </style>
+    @media only screen and (max-width: 480px) {
+      .container {
+        width: 100% !important;
+      }
+
+      .padding {
+        padding: 15px !important;
+      }
+
+      .btn {
+        font-size: 14px !important;
+        padding: 10px 18px !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="wrapper">
-        <div class="email-container">
 
-            <div class="logo-container">
-                <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localist Logo" class="logo">
-            </div>
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f9fcfe">
+    <tr>
+      <td align="center" style="padding:20px 10px;">
+        <table width="600" class="container" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+          style="border-radius:8px; overflow:hidden;">
+          <tr>
+            <td align="center" style="padding:20px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td bgcolor="#00AFE3" height="40" align="center" style="border-radius:5px;">
+                    <img src="{{$baseUrl}}/assets/localist_logo_1.png" height="26" alt="Localists">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-            <div class="card">                
-                 <p style="text-align:center;">Welcome to Localists, <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
-                <div class="highlight">Your account has been created successfully!</div>
-                <p>You can now log in and start managing your requests and profile.</p>
-            </div>
+          <tr>
+            <td class="padding" align="left" style="padding:20px 20px 20px 40px; font-family:Inter, Arial, sans-serif;">
+              <div style="font-size:16px; color:#252832; font-weight:400;">
+                Welcome to Localists,
+                <span style="font-weight:700;">
+                  {{ ucfirst($name) }},
+                </span>
+              </div>
+              <div style="font-size:13px;
+                color:#252832;
+                padding-top:12px;">
+                Your account has been created successfully!
+              </div>
+            </td>
+          </tr>
+          <!-- LOGIN BOX -->
+          <tr>
+            <td class="padding" style="padding:10px;">
+              <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#e9f7fd" style="border-radius:0px;">
+                <tr>
+                  <td style="padding:20px;">
+                    <div style="font-size:20px; font-weight:800; color:#253238; margin-bottom:12px;">
+                      You can now log in and start managing your requests and profile
+                    </div>
 
-            <div class="card">
-                <div class="section-header">Your Account Details</div>
-                <p>Please use the following credentials to log in:</p>
-                <p>
-                  Email: {{$email}} <br/>
-                  Password: <strong>{{$password}}</strong>
-                </p>
-                <a href="{{$baseUrl}}/en/gb/login" class="btn">Log in to Localists</a>
-            </div>
+                    <div style="font-size:15px; font-weight:700; color:#00afe3; margin-top:12px;">
+                      Your Login Details:
+                    </div>
 
-           <div class="card">
-                <div class="section-header">Your Requests</div>
-                <p style="margin-bottom:20px">Manage your requests from one place. You can request replies from the top 5 lead buyers in one click:</p> <a href="{{ url('/api/email-customer-request-top-five-matches/' . $leadId . '/' . $buyerId) }}" class="btn2">Request Quote From Top 5 Professionals</a>
-            </div>
+                    <div
+                      style="font-size:12px; font-weight:700; color:#00afe3; margin-top:10px;text-decoration:underline;">
+                      Please use the following credentials to log in:
+                    </div>
 
-            <div class="card">
-                <div class="section-header">Manage Your Requests</div>
-                <p style="margin-bottom:0px">Create & manage your requests from <a href="{{$baseUrl}}/buyers/create">My Request Panel</a></p>
-            </div>
+                    <div style="font-size:12px; color:#252832; font-weight:700; margin-top:12px; line-height:20px;">
+                      Username: {{ $email }}<br>
+                      Password: {{ $password }}
+                    </div>
 
-            <div class="card">
-                <div class="section-header">Help</div>
-                <p>If you have any questions, please reach out to us at
-                  <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
-                <p>Kind Regards,<br>Localists Team</p>
-            </div>
+                    <div style="margin-top:12px;">
+                      <a href="{{ $baseUrl }}/en/gb/login?client_id={{ base64_encode($token) }}"
+                        style="font-size:12px; font-weight:700; color:#00afe3; text-decoration:underline;">
+                        Login via Magic Link (one click login)
+                      </a>
+                    </div>
 
-            <div class="footer">
-                Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
-                {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
-            </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- YOUR REQUESTS -->
+          <tr>
+            <td align="center" style="padding:10px 20px;">
+              <div style="font-size:16px; font-weight:800; color:#00afe3;">
+                Your Requests
+              </div>
+            </td>
+          </tr>
 
-        </div>
-    </div>
+          <tr>
+            <td align="center" style="padding:0 60px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#00afe3" style="border-radius:6px;">
+                <tr>
+                  <td align="center"
+                    style="padding:20px 25px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#ffffff; line-height:18px;">
+                    Manage your requests from one place. You can request replies from the top 5 lead buyers in one
+                    click:
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- BUTTON -->
+          <tr>
+            <td align="center" style="padding-bottom:25px; font-size:0; line-height:0;">
+              <a href="{{ url('/api/email-customer-request-top-five-matches/' . $leadId . '/' . $buyerId) }}"
+                style="background:#ff8c2b;color:#ffffff;font-size:15px;font-weight:700;padding:8px 22px; border-radius:30px; text-decoration:none;display:inline-block;line-height:18px;">
+                Request Quote From Top 5 Professionals
+                <img src="{{$siteUrl}}/public/images/rocket.png" width="19" height="19" alt=""
+                  style="display:inline-block; margin-top: 4px; vertical-align:middle; border:0;">
+              </a>
+            </td>
+          </tr>
+
+
+          <!-- MANAGE REQUESTS -->
+          <tr>
+            <td align="center" style="padding:0 20px 20px;">
+              <div style="font-size:14px; font-weight:700; color:#00afe3;">
+                Manage Your Requests
+              </div>
+              <div style="font-size:12px; color:#253238; margin-top:4px;">
+                Create & manage your requests from <a href="{{$baseUrl}}/buyers/create" style="color:#00afe3;">My Request Panel</a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- SUPPORT STRIP -->
+          <tr>
+            <td align="center" bgcolor="#e9f7fd"
+              style="padding:16px; font-family:Inter, Arial, sans-serif;  font-size:14px;  font-weight:700;  color:#253238;line-height:18px;">
+
+              If you have any questions, please reach out to us at
+              <a href="mailto: {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}"
+                style="color:#00afe3; font-size:14px;font-weight:700; text-decoration:none;">
+                 {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
+              </a>
+
+            </td>
+          </tr>
+
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" bgcolor="#131838" style="padding:8px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <!-- Globe -->
+                  <td valign="middle" style="padding-right:6px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt="" style="display:block;">
+                  </td>
+
+                  <!-- Website text -->
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif;">
+                    Localists.com
+                  </td>
+
+                  <!-- Divider -->
+                  <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">
+                    |
+                  </td>
+
+                  <!-- Email icon -->
+                  <td valign="middle" style="padding-right:6px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt="" style="display:block;">
+                  </td>
+
+                  <!-- Email text -->
+                  <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#ffffff; text-decoration:none;">
+                      {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+        <!-- END CONTAINER -->
+
+      </td>
+    </tr>
+  </table>
+
 </body>
+
 </html>

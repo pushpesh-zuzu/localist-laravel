@@ -66,12 +66,12 @@ class ZohoEmails
                     $pdfPath = public_path('Localists_Lead_Strategies.pdf');
 
                     if (file_exists($pdfPath)) {
-                       
+
                         $uploadResponse = Http::withToken($accessToken)
                             ->attach('file', fopen($pdfPath, 'r'), 'Localists_Lead_Strategies.pdf')
                             ->post('https://www.zohoapis.eu/crm/v8/files');
 
-                      
+
                         $attachmentId = $uploadResponse->json('data.0.details.id');
 
                         if ($attachmentId) {
@@ -81,7 +81,6 @@ class ZohoEmails
                                     'id' => $attachmentId
                                 ]
                             ];
-                           
                         } else {
                             Log::error("CRM attachment upload failed: " . $uploadResponse->body());
                         }
@@ -180,15 +179,20 @@ class ZohoEmails
                     ->first();
                 if (!empty($user)) {
 
+                    $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+                    $user->update(['remember_token' => $token]);
+
 
                     $htmlView = view('emails.customers.registration.quote_customer_registration',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'email' => $user->email,
                         'password' => $password,
                         'phone_otp' => $phoneOtp,
                         'leadId' => $lead->id ?? '',
                         'buyerId' => $userId ?? '',
+                        'token' => $token ?? '',
 
 
                     ])->render();
@@ -439,6 +443,7 @@ class ZohoEmails
                     ]);
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_incomplete_registration',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name
                     ])->render();
 

@@ -7,53 +7,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     /* MOBILE FIX */
-    @media (max-width: 480px) {
-      .email-body {
-        width: 100% !important;
-        padding: 10px !important;
-      }
-
-      .profile-created,
-      .login-header,
-      .feature-card,
-      .support-card,
-      .request-card,
-      .credit-card,
-      .referral-box,
-      .closing-section,
-      .footer,
-      .exclusive-section,
-      .guide-box {
-        width: 100% !important;
-        max-width: 100% !important;
-      }
-
-      .guide-box {
-        flex-direction: column !important;
-      }
-
-      .guide-left,
-      .guide-right {
+    @media only screen and (max-width: 480px) {
+      .container {
         width: 100% !important;
       }
 
-      .sidebar-img {
+      .right-img {
+        height: 190px !important;
+        /* blue box ke barabar */
+        max-height: 190px !important;
         width: 100% !important;
-        height: auto !important;
-        margin-top: 10px !important;
       }
 
-      .contact-btn {
-        width: 100% !important;
-        max-width: 150px !important;
-        margin: 10px auto 0 !important;
-      }
 
-      .text-section {
-        width: 100% !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-      }
     }
   </style>
 </head>
@@ -63,17 +29,32 @@
   <table width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f9f9fa">
     <tr>
       <td align="center" style="padding:20px 0;">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px; max-width:100%; background-color:#f9f9fa; border-collapse:collapse;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style=" background-color:#f9f9fa; border-collapse:collapse;">
           <tr>
             <td style="padding:0;">
               <!-- Header -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#00AFE3">
                 <tr>
-                  <td style="background-color:#00afe3; text-align:center; padding:14px 0; border-radius:5px;">
-                    <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists.com" style="height:25px; display:block; margin:0 auto;">
+                  <td align="center">
+
+                    <!-- INNER CENTERED CONTENT -->
+                    <table width="600" cellpadding="0" cellspacing="0" border="0">
+                      <tr width="600">
+                        <td align="center" width="600" style="padding:10px 0;">
+                          <img src="{{$baseUrl}}/assets/localist_logo_1.png"
+                            alt="Localists"
+                            height="26"
+                            style="display:block;">
+                        </td>
+                      </tr>
+                    </table>
+
                   </td>
                 </tr>
               </table>
+
+
+
 
               <!-- Greeting -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:20px;">
@@ -239,10 +220,15 @@
                         </td>
 
                         <!-- RIGHT IMAGE -->
-                        <td width="50%" style="border-radius:0 12px 12px 0;">
-                          <img src="{{$siteUrl}}/public/images/contactus.png"
-                            alt="Contact Us"
-                            style="display:block; width:100%; height:auto; max-height:200px; border-radius:0 12px 12px 0;">
+                        <td width="50%"
+                          background="{{$siteUrl}}/public/images/contactus.png"
+                          style="
+      background-repeat:no-repeat;
+      background-position:center;
+      background-size:cover;
+      border-radius:0 12px 12px 0;
+    ">
+                          &nbsp;
                         </td>
                       </tr>
                     </table>
