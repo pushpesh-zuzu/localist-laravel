@@ -366,6 +366,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.customers.registration.customer_encouragement',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name
                     ])->render();
 

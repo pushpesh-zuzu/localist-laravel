@@ -1,188 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Complete Your Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>Complete Your Registration</title>
     <style>
+        /* Basic resets */
         body {
             margin: 0;
-            background-color: #f1f2f4;
-            font-family: 'Lato', Helvetica, Arial, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
-            margin: auto;
-            background: #ffffff;
-        }
-        .card {
-            background: #ffffff;
-            padding: 24px;
-        }
-        h1 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin: 0 0 10px;
-            text-align: center;
-        }
-        p {
-            font-size: 16px;
-            line-height: 23px;
-            /* color: #4a4a4a; */
-            margin: 0 0 14px;
-        }
-        .highlight {
-            color: #00afe3;
-            margin-bottom: 14px;
-            font-size: 16px;
-            text-align: center;
-        }
-        .section-header {
-            background-color: #d8edf8;
-            color: #1a588c;
-            padding: 12px 18px;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        ul {
-            padding-left: 0;
-            list-style: none;
-        }
-        li {
-            font-size: 16px;
-            margin-bottom: 6px;
-        }
-        .footer {
-            text-align: center;
-            padding: 15px;
-            font-size: 12px;
-            color: #666;
+            padding: 0;
+            background: #f3fbfe;
+            /* slightly softer */
+            -webkit-text-size-adjust: 100%;
         }
 
-        /* MOBILE RESPONSIVE FIX */
-        @media only screen and (max-width: 600px) {
-            .card {
-                padding: 20px !important;
+        table {
+            border-collapse: collapse;
+        }
+
+        img {
+            display: block;
+            border: 0;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        .container {
+            width: 600px;
+            max-width: 600px;
+        }
+
+        /* Typography */
+        .body-text {
+            font-family: Inter, Arial, Helvetica, sans-serif;
+            color: #253238;
+        }
+
+        /* Responsive */
+        @media only screen and (max-width:600px) {
+            .container {
+                width: 100% !important;
+                max-width: 100% !important;
             }
-            h1 {
+
+            .pad-outer {
+                padding-left: 35px !important;
+              
+            }
+
+            .hide-mobile {
+                display: none !important;
+            }
+
+            .benefit-td {
+                display: block;
+                width: 100% !important;
+            }
+
+            .benefit-table {
+                width: 100% !important;
+            }
+
+            .title {
                 font-size: 20px !important;
             }
-            p {
-                font-size: 15px !important;
-            }
-            .mobile-btn {
+
+            .greet {
                 font-size: 16px !important;
-                padding: 14px !important;
             }
+
+            .subtitle {
+                font-size: 14px !important;
+            }
+
+            .cta-link {
+                display: inline-block !important;
+            }
+        }
+
+        /* Small utility classes */
+        .center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: 700;
         }
     </style>
 </head>
 
 <body>
+    <table width="100%" bgcolor="#f3fbfe" cellpadding="0" cellspacing="0">
+        <tr>
+            <td align="center">
+                <table class="container" bgcolor="#ffffff" cellpadding="0" cellspacing="0" style="max-width:600px;  overflow:hidden;">
+                    <tr>
+                        <td align="center" style="padding:20px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td bgcolor="#00AFE3" height="40" align="center" style="border-radius:5px;">
+                                        <img src="{{$baseUrl}}/assets/localist_logo_1.png" height="26" alt="Localists">
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pad-outer body-text" style="padding:14px 48px 22px; color:#253238;">
+                            <div style="font-size:16px; line-height:22px;" class="greet">Hi, <strong style="font-weight:800;">{{ ucfirst($name) }}</strong>,</div>
+                            <div style="height:8px; font-size:0; line-height:0;">&nbsp;</div>
+                            <div style="font-size:13px; font-weight:600; line-height:18px; color:#444; margin-top:4px;">You’re almost there!</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding:0 18px 24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#e9f7fd" style="border-radius:8px;">
+                                <tr>
+                                    <td style="padding:22px 20px 26px;" class="body-text">
+                                        <div class="center title" style="font-size:18px; font-weight:900; color:#253238; line-height:26px;">
+                                            Just one more step to activate your Localists<br>account.
+                                        </div>
+                                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+                                            <tr>
+                                                <td align="center">
+                                                    <table cellpadding="0" cellspacing="0" style="max-width:540px;">
+                                                        <tr>
+                                                            <td bgcolor="#00AFE3" style="padding:12px 18px; border-radius:6px; font-size:12px;  color:#ffffff; text-align:center; line-height:18px;">
+                                                                We noticed you started signing up but didn’t finish. Complete your registration to get access to top local professionals — you're just 1 step away.
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <table width="100%" style="margin-top:14px;">
+                                            <tr>
+                                                <td height="8"></td>
+                                            </tr>
+                                        </table>
+                                        <div class="center" style="font-size:14px; font-weight:800; color:#00AFE3; margin-top:6px;">
+                                            By registering, you can:
+                                        </div>
 
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f1f2f4" style="padding:20px 0;">
-    <tr>
-        <td align="center">
+                                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;">
+                                            <tr>
 
-            <table class="container" cellpadding="0" cellspacing="0">
+                                                <!-- BENEFIT 1 -->
+                                                <td width="33.33%" align="center" valign="top" style="padding:6px 4px;">
+                                                    <img src="{{$siteUrl}}/public/images/group.png" width="64" height="64">
+                                                    <div style="padding-top:8px; font-size:12px; line-height:16px; color:#253238;">
+                                                        Connect with<br>verified local<br>professionals
+                                                    </div>
+                                                </td>
 
-                <!-- LOGO -->
-                <tr>
-                    <td align="center" style="padding: 20px;">
-                        <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists Logo" style="max-width:150px;">
-                    </td>
-                </tr>
+                                                <!-- BENEFIT 2 -->
+                                                <td width="33.33%" align="center" valign="top" style="padding:6px 4px;">
+                                                    <img src="{{$siteUrl}}/public/images/quickly-get.png" width="64" height="64">
+                                                    <div style="padding-top:8px; font-size:12px; line-height:16px; color:#253238;">
+                                                        Quickly get<br>responses to your<br>service requests
+                                                    </div>
+                                                </td>
 
-                <!-- MAIN CARD -->
-                <tr>
-                    <td class="card">
+                                                <!-- BENEFIT 3 -->
+                                                <td width="33.33%" align="center" valign="top" style="padding:6px 4px;">
+                                                    <img src="{{$siteUrl}}/public/images/choose-the-best.png" width="64" height="64">
+                                                    <div style="padding-top:8px; font-size:12px; line-height:16px; color:#253238;">
+                                                        Choose the best<br>provider based on<br>your needs
+                                                    </div>
+                                                </td>
 
-                        <p style="text-align:center;">Hi <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
-                        <p style="text-align:center;">You’re almost there!</p>
+                                            </tr>
+                                        </table>
 
-                        <div class="highlight">Just one more step to activate your Localists account.</div>
 
-                        <p>
-                            We noticed you started signing up but didn’t finish. Complete your registration to get access to top local professionals — you're just 1 step away.
-                        </p>
 
-                        <p>By registering, you can:</p>
+                                        <!-- CTA BUTTON -->
+                                        <table align="center" cellpadding="0" cellspacing="0" style="margin-top:18px;">
+                                            <tr>
+                                                <td bgcolor="#ff9933" style="padding:8px 22px; border-radius:100px;">
+                                                    <a class="cta-link" href="{{$baseUrl}}" style="font-size:15px; font-weight:800; color:#ffffff; text-decoration:none; display:inline-block;">
+                                                        Complete Registration
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
 
-                        <ul>
-                            <li>✅ Connect with verified local professionals</li>
-                            <li>✅ Quickly get responses to your service requests</li>
-                            <li>✅ Choose the best provider based on your needs</li>
-                        </ul>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-                        <!-- BUTTON FIX (Email-Safe Table Structure) -->
-                       <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin-top:20px; width:100%;">
-                        <tr>
-                            <td align="center">
-                                <a 
-                                    href="{{$baseUrl}}"
-                                    style="
-                                        background-color:#00afe3;
-                                        color:#ffffff;
-                                        text-decoration:none;
-                                        font-size:16px;
-                                        font-weight:bold;
-                                        padding:14px 0;
-                                        display:inline-block;
-                                        border-radius:4px;
-                                        width:260px;        /* FIXED BUTTON WIDTH */
-                                        max-width:100%;     /* AUTO-SHRINK ON SMALL SCREENS */
-                                        text-align:center;
-                                        box-sizing:border-box;
-                                    "
-                                >
-                                    Complete Registration
-                                </a>
-                            </td>
-                        </tr>
-                    </table>
+                    <!-- HELP -->
+                    <tr>
+                        <td align="center" style="padding:18px 20px 10px;">
+                            <div class="body-text" style="font-size:12px; font-weight:600; color:#253238; line-height:18px;">
+                                Our team is here to assist you. Email us at <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#00AFE3; text-decoration:none;">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>
+                            </div>
+                        </td>
+                    </tr>
 
-                    </td>
-                </tr>
+                    <!-- EMAIL STRIP -->
+                    <tr>
+                        <td align="center" bgcolor="#e9f7fd" style="padding:16px 30px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#00afe3;">
+                            <span style="display:inline-block; padding-bottom:1px; color:#253238; font-weight:700;">We’re excited to help you grow</span>
+                        </td>
+                    </tr>
 
-                <!-- HELP SECTION -->
-                <tr>
-                    <td style="padding:0;">
+                    <!-- DARK FOOTER -->
+                    <tr>
+                        <td align="center" bgcolor="#131838" style="padding:9px 18px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                <tr>
+                                    <!-- Globe -->
+                                    <td valign="middle" style="padding-right:8px;">
+                                        <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt="" style="display:block;">
+                                    </td>
 
-                        <div class="section-header">Need Help?</div>
+                                    <!-- Website text -->
+                                    <td valign="middle" style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif; padding-right:10px;">
+                                        Localists.com
+                                    </td>
 
-                        <div style="padding:20px;">
-                            <p>
-                                Our team is here to assist you. Email us at
-                                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">
-                                    {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
-                                </a>.
-                            </p>
+                                    <!-- Divider -->
+                                    <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">|</td>
 
-                            <p>We’re excited to help you grow 🚀</p>
-                            <p>Kind Regards,<br>Localists Team</p>
-                        </div>
+                                    <!-- Email icon -->
+                                    <td valign="middle" style="padding-right:8px;">
+                                        <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt="" style="display:block;">
+                                    </td>
 
-                    </td>
-                </tr>
-
-                <!-- FOOTER -->
-                <tr>
-                    <td class="footer">
-                        Manage your email preferences 
-                        <a href="{{$baseUrl}}/user/notification">here</a><br>
-                        {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
-                    </td>
-                </tr>
-
-            </table>
-
-        </td>
-    </tr>
-</table>
-
+                                    <!-- Email text -->
+                                    <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                                        <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#ffffff; text-decoration:none;">
+                                            {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
+
 </html>
