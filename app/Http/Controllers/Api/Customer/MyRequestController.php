@@ -165,7 +165,7 @@ class MyRequestController extends Controller
                 
             });
 
-            return $this->sendResponse('Quote Customer registered Successfully',$rel);
+            return $this->sendResponse('Quote customer registered successfully',$rel);
 
         }else{
 
@@ -303,7 +303,7 @@ class MyRequestController extends Controller
                     app(self::class)->sendOtpDirect($phone, $phoneOtp, $euId);
                 });
             }
-        return $this->sendResponse('Phone Number updated Successfully', $rel);
+        return $this->sendResponse('Phone number updated successfully', $rel);
     }
 
     public function verifyPhoneNumber(Request $request){
@@ -457,7 +457,7 @@ class MyRequestController extends Controller
 
             
             
-            return $this->sendResponse('Phone verified Successfully',$rel);
+            return $this->sendResponse('Phone verified successfully',$rel);
 
         }
         return $this->sendError('Wrong OTP, try again!');
@@ -674,7 +674,7 @@ class MyRequestController extends Controller
             //         ZohoEmails::leadAcceptedMailToSendCustomer($sId, $euId, $leadService);
             //     });
             //  }
-            return $this->sendResponse('Quote Submitted Successfully',$rel);
+            return $this->sendResponse('Quote submitted successfully',$rel);
 
         }
 

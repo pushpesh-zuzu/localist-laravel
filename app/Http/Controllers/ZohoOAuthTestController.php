@@ -11,39 +11,41 @@ class ZohoOAuthTestController extends Controller
     // Step 1: Redirect to Zoho auth URL
     public function authorize()
     {
-        $clientId = '1000.4AU5IDFN2PO9X0S25QX5GJMH1NR0YA';
-       
+        $clientId = '1000.E3TGKUVP6ZJK7ZNZ7K839BOTP4EAWP';
+
         $redirectUri = 'https://localists.com/admin/zoho/callback';
-        $scopes = 'ZohoCRM.modules.ALL,ZohoCRM.settings.ALL,ZohoCRM.send_mail.all.CREATE,ZohoMail.attachments.CREATE,ZohoCRM.files.CREATE,ZohoCRM.files.READ';
+        $scopes = 'ZohoCampaigns.contacts.CREATE,ZohoCampaigns.contacts.READ,ZohoCampaigns.contacts.UPDATE,ZohoCampaigns.lists.READ,ZohoCampaigns.campaigns.CREATE,ZohoCampaigns.campaigns.READ,ZohoCampaigns.campaigns.UPDATE,ZohoCampaigns.reports.READ';
 
         $url = "https://accounts.zoho.eu/oauth/v2/auth?scope={$scopes}&client_id={$clientId}&response_type=code&access_type=offline&redirect_uri={$redirectUri}";
 
         return redirect($url);
     }
 
+
+
     // Step 2: Zoho redirects here with ?code=AUTH_CODE
-     public function callback(Request $request) 
-{
-    $code = $request->get('code');
+    public function callback(Request $request)
+    {
+        $code = $request->get('code');
 
-    $response = Http::asForm()->post('https://accounts.zoho.eu/oauth/v2/token', [
-        'grant_type'    => 'authorization_code',
-        'client_id'     => '1000.4AU5IDFN2PO9X0S25QX5GJMH1NR0YA',
-        'client_secret' => '4090502db26791407f55c70aeb95f188bdaccc0648',
-        'redirect_uri'  => 'https://localists.com/admin/zoho/callback',
-        'code'          => $code,
-    ]);
+        $response = Http::asForm()->post('https://accounts.zoho.eu/oauth/v2/token', [
+            'grant_type'    => 'authorization_code',
+            'client_id'     => '1000.E3TGKUVP6ZJK7ZNZ7K839BOTP4EAWP',
+            'client_secret' => '479e4fe44f4bfc634eb134f913465d881deeb04b2d',
+            'redirect_uri'  => 'https://localists.com/admin/zoho/callback',
+            'code'          => $code,
+        ]);
 
-    return $response->json();
-}
+        return $response->json();
+    }
 
-    
+
 
     // Step 3: Exchange code or refresh token for access token
     public function getAccessToken()
     {
-        $clientId = '1000.4AU5IDFN2PO9X0S25QX5GJMH1NR0YA';
-        $clientSecret = '4090502db26791407f55c70aeb95f188bdaccc0648';
+        $clientId = '1000.E3TGKUVP6ZJK7ZNZ7K839BOTP4EAWP';
+        $clientSecret = '479e4fe44f4bfc634eb134f913465d881deeb04b2d';
         $redirectUri = 'https://localists.com/admin/zoho/callback';
         $refreshToken = env('ZOHO_REFRESH_TOKEN'); // save refresh token after first exchange
 
