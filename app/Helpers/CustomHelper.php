@@ -468,7 +468,7 @@ class CustomHelper
                     $result = $data['result'];
                     return [
                         'valid' => true,
-                        'city' => $result['admin_district'],
+                        'city' => $result['region'], //$result['admin_district'],
                         'region' => $result['region'],
                         'postcode' => $result['postcode'],
                         'formatted_address' => $result['admin_district'] . ', ' . $result['region'] . ', UK',
