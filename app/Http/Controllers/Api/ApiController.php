@@ -36,9 +36,19 @@ use Exception;
 use Illuminate\Container\Attributes\Log as AttributesLog;
 use GuzzleHttp\Client;
 use App\Models\ServiceQuestion;
+use App\Services\LeadService;
 
 class ApiController extends Controller
 {
+
+    public function testNewLeadFunction(Request $request, LeadService $leadService){
+        $baseQuery = $leadService->getSellerLeadsBaseQuery($request->user_id);
+        $leads = $baseQuery->orderBy('id', 'desc')->get()->toArray();
+
+        // echo "<pre>";
+        print_r($leads);
+    }
+
     public function getProgressPercentage(Request $request){
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|integer|exists:categories,id',

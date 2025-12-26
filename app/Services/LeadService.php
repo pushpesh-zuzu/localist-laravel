@@ -351,6 +351,303 @@ class LeadService
         //merge both arrays into one array
         $allServices = array_merge($nwServices, $otherServices);
 
+
+        $leadSlotCount = CustomHelper::setting_value('lead_slot_count', 5);
+        $slotFullLeadIds = DB::table('recommended_leads')
+            ->select('lead_id')
+            ->groupBy('lead_id')
+            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
+            ->pluck('lead_id')
+            ->toArray();
+
+        $baseQuery = LeadRequest::select('lead_requests.*')
+            ->selectRaw(
+                "
+                CASE
+                    WHEN lead_requests.created_at <= ?
+                        OR lead_requests.id IN (" . (count($slotFullLeadIds) ? implode(',', $slotFullLeadIds) : 'NULL') . ")
+                    THEN 1
+                    ELSE 0
+                END AS is_expired
+                ",
+                [Carbon::now()->subDays(21)->toDateString()]
+            )
+            ->with(['customer', 'category'])
+            ->whereHas('customer', function ($query) {
+                $query->where('form_status', 1);
+            })
+            ->where('customer_id', '<>', $user_id) //do not include self request leads
+            
+            //closure condition
+            ->where('status', '!=', 'hired'); // do not include hired leads
+            
+        
+        if ($requestPostcode === null) { //select default condition for location
+            //include locations
+            $baseQuery = $baseQuery->where(function ($query) use ($user_id, $ulDistance, /*$ulTravel,*/ $ulMap, $nwServices) {
+                //for distance type
+
+
+                foreach ($ulDistance as $item) {
+                    // check if request postcode exists in postcode table, if not then get coordinates and save
+                    if (!empty($item['postcode'])) {
+                        $dbPostcode = Postcode::where('postcode', $item['postcode'])->first();
+                        if (empty($dbPostcode)) {
+                            $tempCord = CustomHelper::getCoordinates($item['postcode']);
+                            if (!empty($tempCord)) {
+                                $cordArr = json_decode($tempCord, true);
+                                if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
+                                    Postcode::create([
+                                        'postcode' => $item['postcode'],
+                                        'latitude' => $cordArr['lat'],
+                                        'longitude' => $cordArr['lng'],
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+
+
+                    $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($item['postcode'], $item['miles']);
+
+                    $query->orWhere(function ($q) use ($item, $radiusPostcodeQuery) {
+                        $q->where('service_id', $item['service_id']);
+                        if ($radiusPostcodeQuery) {
+                            $q->whereIn('postcode', $radiusPostcodeQuery);
+                        }
+                    });
+                }
+
+                //** ---------------- NEW: DRAW-ON-MAP LOGIC ---------------- **/
+                foreach ($ulMap as $item) {
+
+                    if (empty($item['coordinates'])) {
+                        continue;
+                    }
+
+                    $coords = json_decode($item['coordinates'], true);
+                    $polygon = $coords[0] ?? $coords;
+
+                    $polygonPostcodeQuery = CustomHelper::getPostcodesWithinPolygonQuery($polygon);
+                    $rawSql = $polygonPostcodeQuery->toRawSql();
+                    $query->orWhere(function ($q) use ($item, $rawSql) {
+                        $q->where('lead_requests.service_id', $item['service_id'])
+                        ->whereExists(function ($sq) use ($rawSql) {
+                            $sq->select(DB::raw(1))
+                                ->from(DB::raw("($rawSql) as p"))
+                                ->whereColumn('p.postcode', 'lead_requests.postcode');
+                        });
+                    });
+                }
+
+
+                //include nation wide services
+                if (!empty($nwServices)) {
+                    $query->orWhereIn('service_id', $nwServices);
+                }
+            });
+        } else {
+
+            $baseQuery = $baseQuery->where(function ($query) use ($allServices, $requestPostcode, $requestMiles, $user_id) {
+                
+                // check if request postcode exists in postcode table, if not then get coordinates and save
+                if (!empty($requestPostcode)) {
+                    $dbPostcode = Postcode::where('postcode', $requestPostcode)->first();
+                    if (empty($dbPostcode)) {
+                        $tempCord = CustomHelper::getCoordinates($requestPostcode);
+                        if (!empty($tempCord)) {
+                            $cordArr = json_decode($tempCord, true);
+                            if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
+                                Postcode::create([
+                                    'postcode' => $requestPostcode,
+                                    'latitude' => $cordArr['lat'],
+                                    'longitude' => $cordArr['lng'],
+                                ]);
+                            }
+                        }
+                    }
+                }
+                $radiusPostcodeQuery = CustomHelper::getPostcodesWithinRadiusQuery($requestPostcode, $requestMiles);
+                foreach ($allServices as $item) {
+
+                    $quesPref = $this->getSellerPreferenceMap($user_id, $item);
+
+                    $query->orWhere(function ($q) use ($item, $radiusPostcodeQuery, $user_id) {
+                        $q->where('service_id', $item);
+                        if ($radiusPostcodeQuery) {
+                            $q->whereIn('postcode', $radiusPostcodeQuery);
+                        }
+                    });
+                }
+            });
+        }
+
+
+        // Exclude saved leads
+        $savedLeadIds = SaveForLater::where('seller_id', $user_id)->pluck('lead_id')->toArray();
+
+        // Exclude self bidded leads from recommended table starts as a bid has been placed
+        $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
+            ->pluck('lead_id')
+            ->toArray();
+
+
+        // Merge both exclusion arrays
+        $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
+        if (!empty($excludedLeadIds)) {
+            if (empty($autobid)) {
+                $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+            }
+        }
+
+
+
+        //apply filters
+        if (!empty($filters['searchName'])) {
+            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
+                $query->whereHas('customer', function ($q) use ($filters) {
+                    $q->where('name', 'like', '%' . $filters['searchName'] . '%');
+                    // ->orWhere('city', 'like', '%' . $searchTerm . '%');
+                })
+                ->orWhereHas('category', function ($q) use ($filters) {
+                    $q->where('name', 'like', '%' . $filters['searchName'] . '%');
+                })
+                ->orWhere('city', 'like', '%' .  $filters['searchName'] . '%')
+                ->orWhere('postcode', 'like', '%' .  $filters['searchName'] . '%')
+                ->orWhere('phone', 'like', '%' .  $filters['searchName'] . '%');
+            });
+        }
+
+        if (!empty($filters['leadType'])) {
+            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
+                if ($filters['leadType'] === 'live') {
+                    $query->where('is_expired', 0);
+                } elseif ($filters['leadType'] === 'expired') {
+                    $query->where('is_expired', 1);
+                }
+                // "all" → no condition
+            });
+        }
+
+
+        if (!empty($filters['spotlightFilter'])) {
+            $splghts = explode(',', $filters['spotlightFilter']);
+            $baseQuery = $baseQuery->where(function ($query) use ($splghts) {
+                foreach ($splghts as $sl) {
+                    $sl = strtolower(trim($sl));
+                    if ($sl === 'urgent requests') {
+                        $query->orWhere('is_urgent', '=', '1');
+                    } elseif ($sl === 'updated requests') {
+                        $query->orWhere('is_updated', '=', '1');
+                    } elseif ($sl === 'has additional details') {
+                        $query->orWhere('has_additional_details', '=', '1');
+                    }
+                }
+            });
+        }
+
+        if (!empty($filters['lead_time'])) {
+            if (strtolower(trim($filters['lead_time'])) === 'today') {
+                $baseQuery = $baseQuery->where(function ($query) {
+                    $query->whereDate('created_at', Carbon::now()->toDateString());
+                });
+            }
+            if (strtolower(trim($filters['lead_time'])) === 'yesterday') {
+                $baseQuery = $baseQuery->where(function ($query) {
+                    $query->whereDate('created_at', Carbon::now()->subDay()->toDateString());
+                });
+            }
+            if (strtolower(trim($filters['lead_time'])) === 'last 2-3 days') {
+                $baseQuery = $baseQuery->where(function ($query) {
+                    $query->whereDate('created_at', '>', Carbon::now()->subDay(3)->toDateString());
+                });
+            }
+            if (strtolower(trim($filters['lead_time'])) === 'last 7 days') {
+                $baseQuery = $baseQuery->where(function ($query) {
+                    $query->whereDate('created_at', '>', Carbon::now()->subDay(7)->toDateString());
+                });
+            }
+            if (strtolower(trim($filters['lead_time'])) === 'last 14+ days') {
+                $baseQuery = $baseQuery->where(function ($query) {
+                    $query->whereDate('created_at', '<', Carbon::now()->subDay(14)->toDateString());
+                });
+            }
+        }
+        if (!empty($filters['services'])) {
+            $sIds = explode(',', $filters['services']);
+            $baseQuery = $baseQuery->where(function ($query) use ($sIds) {
+                $query->whereIn('service_id', $sIds);
+            });
+        }
+
+        if (!empty($filters['creditFilter'])) {
+            $crFs = explode(',', str_replace('Credits', '', $filters['creditFilter']));
+            $creditRanges = [];
+            foreach ($crFs as $crf) {
+                $cc1 = explode('-', str_replace(' ', '', $crf));
+                $creditRanges[] = [min($cc1),  max($cc1)];
+            }
+
+            $baseQuery = $baseQuery->where(function ($query) use ($creditRanges) {
+                foreach ($creditRanges as $range) {
+                    $query->orWhereRaw('CAST(credit_score AS UNSIGNED) BETWEEN ? AND ?', [$range[0], $range[1]]);
+                }
+            });
+        }
+
+
+
+        return $baseQuery;
+    }
+
+    public function getSellerLeadsBaseQueryBackup($user_id, $requestPostcode = null, $requestMiles = null, $filters = [], $autobid = null)
+    {
+        $userServices = UserService::where('user_id', $user_id)->select('service_id')->get();
+        //get all types of locations
+        $ulNationWide = UserServiceLocation::where('user_id', $user_id)->where('nation_wide', '1')->get();
+        $ulDistance = UserServiceLocation::where('user_id', $user_id)->whereIn('type', ['Distance', 'Travel Time'])->get()->toArray();
+        // $ulTravel = UserServiceLocation::where('user_id', $user_id)->where('type', 'Travel Time')->get()->toArray();
+        $ulMap = UserServiceLocation::where('user_id', $user_id)->where('type', 'Draw on Map')->get()->toArray();
+
+        //get Nation Wide services
+        $nwServices = [];
+        foreach ($ulNationWide as $ul) {
+            array_push($nwServices, $ul->service_id);
+        }
+
+        //remove duplicate services from array
+        $nwServices = array_unique($nwServices);
+
+        //remove location if it is nation wide
+        $ulDistance = array_filter($ulDistance, function ($item) use ($nwServices) {
+            return !in_array($item['service_id'], $nwServices);
+        });
+        // $ulTravel = array_filter($ulTravel, function ($item) use ($nwServices) {
+        //     return !in_array($item['service_id'], $nwServices);
+        // });
+        $ulMap = array_filter($ulMap, function ($item) use ($nwServices) {
+            return !in_array($item['service_id'], $nwServices);
+        });
+
+
+        //add other services
+        $otherServices = [];
+        foreach ($ulDistance as $d) {
+            array_push($otherServices, $d['service_id']);
+        }
+        // foreach ($ulTravel as $t) {
+        //     array_push($otherServices, $t['service_id']);
+        // }
+        foreach ($ulMap as $m) {
+            array_push($otherServices, $m['service_id']);
+        }
+
+        //remove duplicate services from array
+        $otherServices = array_unique($otherServices);
+
+        //merge both arrays into one array
+        $allServices = array_merge($nwServices, $otherServices);
+
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);

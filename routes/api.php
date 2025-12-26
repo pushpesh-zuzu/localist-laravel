@@ -45,6 +45,7 @@ Route::get('/test-postcode', function () {
 
 Route::get('/test-function', [MyRequestController::class, 'sendNewLeadRequestAutoBidOff']);
 
+
 // Route::get('/mail-test', [ContactUsController::class, 'sendMailInBackground']);
 Route::get('/mail-test', [ApiController::class, 'mailTest']);
 Route::post('/update-sms-status', [ApiController::class, 'updateSmsStatus']);
@@ -159,6 +160,9 @@ Route::prefix('customer')->group(function () {
 });
 
 Route::prefix('users')->group(function () {
+
+    Route::get('/test-new-lead-function', [ApiController::class, 'testNewLeadFunction']);
+
     //Route::get('/', [UserController::class, 'index']);
     Route::get('/fetch_company_details/{regNumber}', [UserController::class, 'fetch_company_details']);
     Route::post('/questions-answer', [LeadPreferenceController::class, 'questionAnswer']);
