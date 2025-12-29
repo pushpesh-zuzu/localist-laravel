@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\CustomHelper;
 use App\Models\AbandonedUser;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\D7LeadFinderService;
 class CronController extends Controller
 {
     public function onHourlyBasis(Request $request, LeadService $leadService)
@@ -57,12 +57,16 @@ class CronController extends Controller
     public function onMinuteBasis()
     {
 
-        $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
+        $d7Service = app(D7LeadFinderService::class);
+        $d7Response = $d7Service->getSearchSuppliers();
+
+       $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
+                'd7_supplier_summary' => $d7Response,
                 'abandoned_cart_reminder_summary' => $sendAbandonedCartReminderEmail,
             ],
             'timestamp' => now()->toDateTimeString(),

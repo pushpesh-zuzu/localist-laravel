@@ -34,6 +34,7 @@ use App\Models\AutobidStatusLog;
 use App\Models\AbandonedUser;
 use App\Models\SmsLog;
 use App\Models\Postcode;
+use App\Services\D7LeadFinderService;
 use App\Services\LeadService;
 use Exception;
 use GuzzleHttp\Client;
@@ -666,6 +667,12 @@ class MyRequestController extends Controller
             if (!empty($euId)) {
                 CustomHelper::runInBackground(function() use ($euId, $sId) {
                     app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
+                });
+             }
+
+             if (!empty($sId)) {
+                CustomHelper::runInBackground(function() use ($sId) {
+                    app(D7LeadFinderService::class)->fetchSuppliersByLeadId($sId);
                 });
              }
 

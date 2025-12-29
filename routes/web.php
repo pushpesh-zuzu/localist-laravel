@@ -30,6 +30,9 @@ use App\Helpers\Zoho\ZohoHelper;
 use App\Http\Controllers\ZohoOAuthTestController;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\Zoho\ZohoEmails;
+use App\Http\Controllers\d7LeadSupplierController;
+
+
 Route::get('phpinfo', function () {
     phpinfo();
 });
@@ -178,6 +181,13 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::resource('admin-users', AdminUserController::class);
     Route::resource('roles', RoleController::class);
+
+
+    Route::get('d7-lead-supplier', [d7LeadSupplierController::class, 'd7LeadSupplierList'])->name('d7LeadSupplierList');
+
+    Route::get('/d7-lead-supplier-excel', [d7LeadSupplierController::class, 'exportd7LeadSupplierExcel'])->name('d7-lead-supplier.excel');
+
+    Route::get('/d7-lead-supplier-csv', [d7LeadSupplierController::class, 'exportd7LeadSupplierCsv'])->name('d7-lead-supplier.csv');
 });
 
 
@@ -198,9 +208,8 @@ Route::get('/test-next-day-expired-emails', [CronController::class, 'sendNextDay
 
 
 Route::get('/zoho/scopes', function () {
-       $scope = ZohoHelper::getnewAccessTokenTest();
-return $scope;
-    
+    $scope = ZohoHelper::getnewAccessTokenTest();
+    return $scope;
 });
 
 
@@ -209,11 +218,11 @@ Route::get('/zoho/callback', [ZohoOAuthTestController::class, 'callback']);   //
 Route::get('/zoho/access-token', [ZohoOAuthTestController::class, 'getAccessToken']);
 
 Route::get('/zohowelcome-email', function () {
-    $scope = ZohoEmails::sendWelcomeEmailTest('1158','zqQKYVz6');
-return $scope;
-    
+    $scope = ZohoEmails::sendWelcomeEmailTest('1158', 'zqQKYVz6');
+    return $scope;
 });
 
 
+Route::get('/test-zeptomail/{leadId}', [d7LeadSupplierController::class, 'testZeptoMail']);
 
 require __DIR__ . '/auth.php';

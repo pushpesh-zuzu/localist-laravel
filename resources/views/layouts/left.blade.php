@@ -46,7 +46,7 @@
         Roles
       </a>
     </li>
-  @endcan
+    @endcan
 
     {{-- <li class="nav-item">
             <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.index') ? 'active' : '' }}">
@@ -262,6 +262,15 @@
       </a>
     </li>
 
+
+    @can('d7leadsuppliers.viewlist')
+        <li class="nav-item">
+          <a href="{{ route('d7LeadSupplierList') }}" class="nav-link {{ request()->routeIs('d7LeadSupplierList') ? 'active' : '' }}">
+            <i class="fa-solid fa-user nav-icon"></i>
+            D7 Lead Suppliers
+          </a>
+        </li>
+    @endcan
   </ul>
 
 </div>
