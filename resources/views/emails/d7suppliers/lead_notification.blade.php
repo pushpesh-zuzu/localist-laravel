@@ -171,7 +171,7 @@
                                                     <table cellpadding="0" cellspacing="0" role="presentation">
                                                         <tr>
                                                             <td style="padding-right:8px; vertical-align:middle;">
-                                                                <img src="phone-icon.png" width="14" height="14" alt="Call" style="display:block;">
+                                                                <img src="{{$siteUrl}}/public/images/phone-icon.png" width="14" height="14" alt="Call" style="display:block;">
                                                             </td>
                                                             <td style="color:#ffffff; font-weight:bold; font-size:14px; line-height:14px; white-space:nowrap; vertical-align:middle;">
                                                                 <a href="tel:01544303020" style="color:#ffffff; text-decoration:none;">01544 303 020</a>
