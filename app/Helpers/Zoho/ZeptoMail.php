@@ -57,7 +57,7 @@ class ZeptoMail
                             ],
                         ],
                     ],
-                    'subject'  => 'Verfied Local lead Avail - Now',
+                    'subject' => 'New ' . ($keyword ?? 'Service') . ' Lead in your area',
                     'htmlbody' => $htmlContent,
                 ];
 
@@ -74,6 +74,7 @@ class ZeptoMail
                 /// $responseData = [];
                 $supplierResult =  self::addUpdateSuppliers($supplier, $keyword);
 
+                
                 $messageId =  null;
                 $dataE['user_id'] = $supplierResult->id ?? 1;
                 $dataE['from_email'] = $fromEmail;
