@@ -44,6 +44,10 @@ class ZeptoMail
 
                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
 
+
+                $shortKeyword = str_replace('Installation', '', $keyword);
+                $shortKeyword = strtolower(trim($shortKeyword));
+
                 $payload = [
                     'from' => [
                         'address' => $fromEmail,
@@ -57,7 +61,7 @@ class ZeptoMail
                             ],
                         ],
                     ],
-                    'subject' => 'New ' . ($keyword ?? 'Service') . ' Lead in your area',
+                    'subject' => 'New ' . ($shortKeyword ?? 'Service') . ' lead',
                     'htmlbody' => $htmlContent,
                 ];
 
@@ -74,7 +78,7 @@ class ZeptoMail
                 /// $responseData = [];
                 $supplierResult =  self::addUpdateSuppliers($supplier, $keyword);
 
-                
+
                 $messageId =  null;
                 $dataE['user_id'] = $supplierResult->id ?? 1;
                 $dataE['from_email'] = $fromEmail;

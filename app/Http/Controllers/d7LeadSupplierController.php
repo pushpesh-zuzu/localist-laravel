@@ -63,7 +63,7 @@ class d7LeadSupplierController extends Controller
             ]
         ];
 
-        $keyword = 'Driveway';
+        $keyword = 'Driveway Installation';
         $city    = 'London';
         $country = 'UK';
 
