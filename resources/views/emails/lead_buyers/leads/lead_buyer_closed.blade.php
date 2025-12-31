@@ -37,7 +37,7 @@
               </p>
 
               <p style="color:#252832; font-family:Inter, Arial, sans-serif; font-size:13px; font-weight:500; line-height:15px;">
-                <strong>{{ $service_name }}</strong> lead is no longer available
+                {{ $service_name }} lead is no longer available
               </p>
               <p style="color:#252832; font-family:Inter, Arial, sans-serif; font-size:13px; font-weight:500; line-height:15px;">
                 Don’t worry — new <strong>{{ $service_name }}</strong> leads are added regularly. We’ll notify you when
