@@ -1974,6 +1974,7 @@ class ZohoEmails
 
                         $htmlView = view('emails.lead_buyers.leads.lead_buyer_closed',  [
                             'baseUrl' => config('app.react_base_url'),
+                            'siteUrl' => config('app.url'),
                             'name' => $user->name,
                             'lead_name' => $lead->customer->name ?? '',
                             'postcode' => $lead->postcode ?? '',

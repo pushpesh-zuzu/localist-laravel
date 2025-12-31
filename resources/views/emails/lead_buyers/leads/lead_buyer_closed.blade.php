@@ -1,162 +1,218 @@
 <!doctype html>
-<html lang="en">
+<html>
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
   <title>Lead Closed</title>
-  <style>
-    body { margin:0; background-color:#f1f2f4; font-family:"Lato", Helvetica, Arial, sans-serif; color:#4a4a4a; -webkit-font-smoothing:antialiased; }
-    .email-wrap { width:100%; background:#f1f2f4; padding:32px 0; }
-    .email-container { max-width:600px; margin:0 auto; padding:0 16px; box-sizing:border-box; }
-    .logo { max-height:50px; display:block; margin:0 auto 20px; max-width:100%; }
-    .btn { display:inline-block; background:#00afe3; color:#fff !important; text-decoration:none; font-size:14px; font-weight:700; padding:12px 24px; border-radius:4px; font-family:Helvetica, Arial, sans-serif; line-height:1; }
-    h1 { font-size:22px; font-weight:600; color:#333; margin:0 0 8px 0; font-family:Helvetica, Arial, sans-serif; }
-    .highlight { color:#61696d; margin-bottom:12px; margin-top:32px; font-size:15px; font-family:Helvetica, Arial, sans-serif; }
-    p { color:#61696d; margin:0 0 12px 0; font-family:Helvetica, Arial, sans-serif; font-size:15px; line-height:1.5; }
-    a { color:#007bff; }
-    .card { background:#fff; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); padding:20px; margin-bottom:18px; }
-    .section-header { background:#d8edf8; color:#1a588c; padding:12px 16px; font-weight:600; border-top-left-radius:4px; border-top-right-radius:4px; }
-    .muted { color:#9aa1a6; }
-    .lead-meta { margin-top:12px; background:#f5f9fc; padding:12px; border-radius:4px; font-size:15px; }
-    .tag { display:inline-block; padding:5px 10px; margin:4px 4px 4px 0; border-radius:20px; font-size:12px; }
-    @media only screen and (max-width:600px) {
-      .email-container { width:100% !important; padding:0 12px !important; }
-      .btn { font-size:16px !important; padding:12px 20px !important; display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
-      h1 { font-size:20px !important; }
-    }
-  </style>
 </head>
-<body>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-wrap" bgcolor="#f1f2f4">
+
+<body style="margin:0;padding:0;background:#f4f8fb;font-family:Arial,Helvetica,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width:600px; width:100%;">
+      <td align="center" style="padding:30px 10px;">
 
-          <!-- Logo -->
-          <tr>
-            <td style="padding:0 16px 8px 16px; text-align:center;">
-              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" class="logo">
-            </td>
-          </tr>
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
 
-          <!-- Main Card -->
+          <!-- HEADER -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <td align="center" style="padding:20px;">
+              <table width="100%">
                 <tr>
-                  <td style="padding:20px;">                   
-                    <p style="text-align:center;">Hi <strong style="color: #333;">{{ ucfirst($name) }}</strong>,</p>
-                    <div class="highlight" style="text-align:center;"><strong>{{ $service_name }} lead is no longer available</strong></div>
-
-                    <p style="margin-bottom:12px;color:#61696d;">
-                      Don’t worry — new <strong>{{ $service_name }}</strong> leads are added regularly. We’ll notify you when a matching one becomes available.
-                    </p>
-
-                    <!-- tags -->
-                    <div style="margin-bottom:12px;">
-                      @if($phone_verified)<span class="tag" style="background-color:#f39ac3; color:#fff">📞 Verified Phone</span>@endif
-                      @if($has_additional_details)<span class="tag" style="background-color:#e6e6e6; color:#333">📋 Additional details</span>@endif
-                      @if($is_frequent_user)<span class="tag" style="background-color:#a0d8ef">🔁 Frequent user</span>@endif
-                      @if($is_urgent)<span class="tag" style="background-color:#ffd9a6">⏰ Urgent</span>@endif
-                      @if($is_high_hiring)<span class="tag" style="background-color:#d1f7d9">🚀 High hiring</span>@endif
-                    </div>
-
-                    <!-- Contact details -->
-                    <div class="lead-meta" style="margin-top:12px; background:#f5f9fc; padding:12px; border-radius:4px;">
-                      <div style="margin-bottom:8px;"><strong>🏅</strong> {{ $credit_score }} credits</div>
-                      <div style="margin-bottom:6px;"><strong>📍</strong> {{ $postcode }}</div>
-                      <div style="margin-bottom:6px;"><strong>📞</strong> {{ $masked_phone }}</div>
-                      <div><strong>✉️</strong> {{ $masked_email }}</div>
-                    </div>
-
-                    <!-- === BULLETPROOF CTA: keep inside card and aligned left/center/right by changing td align === -->
-
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;">
-                        <tr>
-                            <td align="center">
-                            <table cellpadding="0" cellspacing="0" border="0" align="center">
-                                <tr>
-                                <td style="border-radius:4px; background:#007bff; text-align:center;">
-                                    <a href="{{ $baseUrl }}/sellers/leads"
-                                    style="display:inline-block; padding:12px 24px; font-size:14px; color:#ffffff; text-decoration:none; border-radius:4px; font-family:Arial, sans-serif;">
-                                    See Similar Leads
-                                    </a>
-                                </td>
-                                </tr>
-                            </table>
-                            </td>
-                        </tr>
-                        </table>
-
-                    <!-- === end CTA === -->
-
+                  <td bgcolor="#00AFE3" height="40" align="center" style="border-radius:5px;">
+                    <img src="{{ $baseUrl }}/assets/localist_logo_1.png" height="26" alt="Localists">
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <tr><td style="height:18px; font-size:0; line-height:18px;">&nbsp;</td></tr>
-
-          <!-- Questions & Answers -->
+          <!-- BODY -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden;">
+            <td style="padding:5px 30px;">
+
+              <p style="font-size:16px;margin:0 0 8px;">
+                Hi <strong>{{ ucfirst($name) }}</strong>,
+              </p>
+
+              <p style="color:#252832; font-family:Inter, Arial, sans-serif; font-size:13px; font-weight:500; line-height:15px;">
+                <strong>{{ $service_name }}</strong> lead is no longer available
+              </p>
+              <p style="color:#252832; font-family:Inter, Arial, sans-serif; font-size:13px; font-weight:500; line-height:15px;">
+                Don’t worry — new <strong>{{ $service_name }}</strong> leads are added regularly. We’ll notify you when
+                a matching one becomes available.
+              </p>
+
+
+              <div style="margin-bottom:18px;">
+                @if($phone_verified)
+                <span style="display:inline-block;background:#f39ac3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">📞 Verified Phone</span>
+                @endif
+                @if($has_additional_details)
+                <span style="display:inline-block;background:#e6e6e6;color:#333333;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">📋 Additional Details</span>
+                @endif
+                @if($is_frequent_user)
+                <span style="display:inline-block;background:#a0d8ef;color:#000000;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">🔁 Frequent User</span>
+                @endif
+                @if($is_urgent)
+                <span style="display:inline-block;background:#ffd9a6;color:#000000;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">⏰ Urgent</span>
+                @endif
+                @if($is_high_hiring)
+                <span style="display:inline-block;background:#d1f7d9;color:#000000;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">🚀 High Hiring</span>
+                @endif
+              </div>
+
+              
+
+              <!-- NEW LEAD -->
+              <!-- <div style="text-align:center;margin-bottom:18px;">
+                <strong style="font-size:18px;">&#127919; New Lead Unlocked</strong>
+              </div> -->
+
+              <!-- LEAD DETAILS -->
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td class="section-header" style="background:#d8edf8; color:#1a588c; padding:12px 16px; font-weight:600;">
-                    Details
+                  <td style="padding:10px;border-radius:8px;background:#f1f9ff;">
+                    <strong>🏅</strong> {{ $credit_score }} credits
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:16px;">
-                    @if(!empty($questionsAndAnswers))
+                  <td height="8"></td>
+                </tr>
+                <tr>
+                  <td style="padding:10px;border-radius:8px;background:#f6f6f6;">
+                    <strong>📍</strong> {{ $postcode }}
+                  </td>
+                </tr>
+                <tr>
+                  <td height="8"></td>
+                </tr>
+                <tr>
+                  <td style="padding:10px;border-radius:8px;background:#fff4e9;">
+                    <strong>📞</strong> {{ $masked_phone }}
+                  </td>
+                </tr>
+                <tr>
+                  <td height="8"></td>
+                </tr>
+                <tr>
+                  <td style="padding:10px;border-radius:8px;background:#eef3ff;">
+                    <strong>✉️</strong> {{ $masked_email }}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <div style="text-align:center;margin:28px 0;">
+                <a href="{{ $baseUrl }}/sellers/leads" style="background:#66FF0D;color:#253238;text-decoration:none;
+                   padding:12px 22px;border-radius:30px;font-size:15px;
+                   font-weight:bold;display:inline-block;">
+                  See Similar Leads
+                </a>
+              </div>
+
+              <!-- CUSTOMER REQUIREMENTS -->
+               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                <tr>
+                  <td>
+                    <div style="font-size:16px;font-weight:800;color:#253238;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e3f1f8;">
+                      📝 Customer Requirements
+                    </div>
+
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4fbff;border-radius:14px;padding:24px;font-family:Arial, sans-serif;">
+                      @if(!empty($questionsAndAnswers))
                       @foreach ($questionsAndAnswers as $qa)
-                        <p style="margin:8px 0 4px 0;"><strong>{{ $qa['question'] }}</strong></p>
-                        <p style="margin:0 0 12px 0;">{{ $qa['answer'] }}</p>
+
+                      <tr>
+                        <td style="font-size:15px;color:#5c6f7b;font-weight:600;padding-bottom:8px;">
+                          {{ $qa['question'] }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:16px;color:#ff7a00;font-weight:700;padding-bottom:18px;">
+                          {{ $qa['answer'] }}
+                        </td>
+                      </tr>
+                      @if(!$loop->last)
+                      <tr>
+                        <td style="border-bottom:1px solid #dceef7; padding-bottom:1px;"></td>
+                      </tr>
+                      <tr>
+                        <td height="14"></td>
+                      </tr>
+                      @endif
                       @endforeach
-                    @else
-                      <p class="muted">No additional details provided.</p>
-                    @endif
+                      @else
+                      <tr>
+                        <td style="font-size:16px;color:#ff7a00;font-weight:700;padding-bottom:18px;">
+                          No additional details provided.
+                        </td>
+                      </tr>
+                      <tr>
+                        <td height="14"></td>
+                      </tr>
+                      @endif
+                    </table>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-
-          <tr><td style="height:18px; font-size:0; line-height:18px;">&nbsp;</td></tr>
-
-          <!-- Need Help -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden;">
+            <td align="center" style="padding:18px 20px;">
+              <div style="font-size:16px; font-weight:800; color:#00AFE3;">
+                Need Help?
+              </div>
+              <div style="font-size:12px; font-weight:600; color:#253238; line-height:18px;">
+                Our team is here to help you make the most of Localists.<br>
+                Email us at
+                <a href="mailto:contact@localists.com" style="color:#00AFE3; text-decoration:none;">
+                  contact@localists.com
+                </a>
+              </div>
+            </td>
+          </tr>
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" bgcolor="#131838" style="padding:9px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
                 <tr>
-                  <td class="section-header" style="background:#d8edf8; color:#1a588c; padding:12px 16px; font-weight:600;">
-                    Need Help?
+                  <!-- Globe -->
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt=""
+                      style="display:block;">
                   </td>
-                </tr>
-                <tr>
-                  <td style="padding:16px;">
-                    <p class="muted">Email us at <a href="mailto:{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}">{{ \App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com') }}</a>.</p>
-                  <p><br>Kind Regards,<br>Localists Team</p>
+
+                  <!-- Website text -->
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif; padding-right:10px;">
+                    Localists.com
+                  </td>
+
+                  <!-- Divider -->
+                  <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">|</td>
+
+                  <!-- Email icon -->
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt=""
+                      style="display:block;">
+                  </td>
+
+                  <!-- Email text -->
+                  <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                    <a href="mailto:contact@localists.com" style="color:#ffffff; text-decoration:none;">
+                      contact@localists.com
+                    </a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-
-          <tr><td style="height:18px; font-size:0; line-height:18px;">&nbsp;</td></tr>
-
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="padding:0 16px 40px 16px; font-family:Helvetica, Arial, sans-serif; color:#666; font-size:13px;">
-              Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification">here</a>.<br>
-              {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
-            </td>
-          </tr>
-
         </table>
       </td>
     </tr>
   </table>
 </body>
+
 </html>

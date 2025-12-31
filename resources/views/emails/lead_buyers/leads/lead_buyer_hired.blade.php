@@ -115,7 +115,7 @@
                     </div>
 
                     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4fbff;border-radius:14px;padding:24px;font-family:Arial, sans-serif;">
-                    
+
                       @if(!empty($questionsAndAnswers))
                       @foreach ($questionsAndAnswers as $qa)
 
@@ -129,12 +129,14 @@
                           {{ $qa['answer'] }}
                         </td>
                       </tr>
+                      @if(!$loop->last)
                       <tr>
                         <td style="border-bottom:1px solid #dceef7; padding-bottom:1px;"></td>
                       </tr>
                       <tr>
                         <td height="14"></td>
                       </tr>
+                      @endif
                       @endforeach
                       @else
                       <tr>
@@ -144,7 +146,7 @@
                       </tr>
                       <tr>
                         <td height="14"></td>
-                      </tr>                      
+                      </tr>
                       @endif
 
                     </table>
