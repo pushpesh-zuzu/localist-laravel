@@ -1,91 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Boost Your Sales with Auto-Buy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <style>
-    /* Base */
     body {
       margin: 0;
-      background-color: #f1f2f4;
-      font-family: 'Lato', Helvetica, Arial, sans-serif;
-      font-size: 18px;
-      line-height: 25px;
-      color: #4a4a4a;
-      -webkit-font-smoothing: antialiased;
-    }
-    img { border:0; }
-    a { color: #007bff; }
-
-    /* Button (inline on desktop; larger tap target on mobile) */
-    .btn {
-      display: inline-block;
-      background-color: #00afe3;
-      color: #ffffff !important;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 10px 18px;
-      border-radius: 4px;
-      -webkit-text-size-adjust: none;
+      padding: 0;
+      background: #f3fbfe;
+      -webkit-text-size-adjust: 100%;
     }
 
-    h1 { font-size:22px; font-weight:600; color:#333; margin:0 0 10px 0; text-align:center; font-family:Helvetica, Arial, sans-serif; }
-    p { color:#4a4a4a; margin:0 0 12px 0; font-size:15px; line-height:1.5; font-family:Helvetica, Arial, sans-serif; }
-    .highlight { color:#00afe3; margin-bottom:16px;}
+    table {
+      border-collapse: collapse;
+    }
+
+    img {
+      display: block;
+      border: 0;
+      outline: none;
+    }
+
+    .container {
+      width: 600px;
+      max-width: 600px;
+    }
+
+    .body-text {
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      color: #253238;
+    }
 
     @media only screen and (max-width:600px) {
-      .email-container { width:100% !important; padding:0 12px !important; }
-      .card-td { padding:20px !important; } /* smaller padding on mobile */
-      .btn { font-size:16px !important; padding:12px 20px !important; } /* larger tap target but still inline */
-      h1 { font-size:20px !important; }
+      .container {
+        width: 100% !important;
+      }
+    }
+
+    .center {
+      text-align: center;
     }
   </style>
 </head>
+
 <body>
-  <!-- Outer wrapper (bgcolor for Yahoo) -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f2f4" role="presentation">
+  <table width="100%" bgcolor="#f3fbfe">
     <tr>
       <td align="center">
 
-        <!-- Center column -->
-        <table width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" role="presentation" style="max-width:600px; width:100%;">
+        <table class="container" bgcolor="#ffffff">
+          <!-- HEADER -->
           <tr>
-            <td style="padding:28px 16px 8px 16px; text-align:center;">
-              <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height:50px; margin:0 auto;">
+            <td align="center" style="padding:20px;">
+              <table width="100%">
+                <tr>
+                  <td bgcolor="#00AFE3" height="40" align="center" style="border-radius:5px;">
+                    <img src="{{$baseUrl}}/assets/localist_logo_1.png" height="26" alt="Localists">
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Promo card -->
+          <!-- GREETING -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" role="presentation" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden;">
+            <td style="padding:14px 36px;">
+              <div style="font-size:16px;">Hi, <strong>{{ ucfirst($name) }}</strong>,</div>
+              <div style="font-size:13px; font-weight:500; margin-top:10px;line-height:15px;">
+                Ready to unlock more sales?
+              </div>
+            </td>
+          </tr>
+
+          <!-- AUTO BID CARD -->
+          <tr>
+            <td align="center" style="padding:0 18px 24px;">
+              <table width="100%" bgcolor="#e9f7fd" style="border-radius:8px;">
                 <tr>
-                  <td class="card-td" style="padding:32px; font-family:Helvetica, Arial, sans-serif; color:#4a4a4a;">
-                    
-                    <p style="text-align:center;font-size: 18px;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
-                    
-                    <p style="text-align:center; margin-top:8px;">Ready to unlock more sales?</p>
+                  <td style="padding:22px;">
+                    <div
+                      style="text-align:center; font-size:18px; font-weight:900; color:#253238; line-height:26px; margin:0;">
+                      Auto Bid is helping Localists sellers increase<br>sales by up to 35%!
+                    </div>
 
-                    <div class="highlight">Auto Bid is helping Localists sellers increase sales by up to <strong>35%</strong>!</div>
+                    <!-- SUBTITLE -->
+                    <div
+                      style="text-align:center; font-size:12px; font-weight:600;color:#00AFE3;  line-height:18px; margin:8px 0 0 0;">
+                      Right now, Auto Bid is turned off on your account — which means you<br>
+                      might be
+                      missing out on top leads.
+                    </div>
 
-                    <p>Right now, Auto Bid is turned <strong>off</strong> on your account — which means you might be missing out on top leads.</p>
 
-                    <p>Sellers using Auto Bid get:</p>
-                    <ul style="margin:0 0 12px 18px; color:#4a4a4a;list-style:none;line-height: 28px;">
-                      <li style="margin-bottom: 6px;">✅ Up to 35% more sales</li>
-                      <li style="margin-bottom: 6px;">✅ Faster conversions with automatic matching</li>
-                      <li style="margin-bottom: 6px;">✅ Hands-free lead purchases 24/7</li>
-                    </ul>
+                    <!-- BENEFITS TITLE -->
+                    <div class="center"
+                      style="font-size:14px; font-weight:800; color:#253238; margin-top:14px;">
+                      Sellers using Auto Bid get:
+                    </div>
 
-                    <p>Don't miss out on high-intent customers. Enable Auto Bid and let Localists do the work for you!</p>
-
-                    <!-- Button with padded TD so it doesn't hug edges on mobile -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:18px;">
+                    <!-- BENEFITS ICONS -->
+                    <table width="100%" style="margin-top:18px;">
                       <tr>
-                        <td align="center" style="padding:0 16px;">
-                          <a href="{{$baseUrl}}/settings/billing/my-credits" class="btn" style="display:inline-block;">Enable Auto Bid Now</a>
+                        <!-- BENEFIT 1 -->
+                        <td align="center" valign="top" style="padding:6px 4px;">
+                          <img src="{{$siteUrl}}/public/images/more-sales.png" width="64" height="64" alt="More Sales">
+                          <div
+                            style="font-size:12px; line-height:16px; color:#253238; margin-top:6px;">
+                            Up to 35% more<br />sales
+                          </div>
+                        </td>
+
+                        <!-- BENEFIT 2 -->
+                        <td align="center" valign="top" style="padding:6px 4px;">
+                          <img src="{{$siteUrl}}/public/images/faster-conversions.png" width="64" height="64"
+                            alt="Faster Conversions">
+                          <div
+                            style="font-size:12px; line-height:16px; color:#253238; margin-top:6px;">
+                            Faster conversions<br />with automatic<br />matching
+                          </div>
+                        </td>
+
+                        <!-- BENEFIT 3 -->
+                        <td align="center" valign="top" style="padding:6px 4px;">
+                          <img src="{{$siteUrl}}/public/images/hands-free-lead.png" width="64" height="64"
+                            alt="Hands-Free Lead">
+                          <div
+                            style="font-size:12px; line-height:16px; color:#253238; margin-top:6px;">
+                            Hands-free lead<br />purchases 24/7
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- SUPPORTING LINE -->
+                    <div class="center"
+                      style="font-size:12px; font-weight:700; color:#00AFE3; margin-top:14px;">
+                      Don’t miss out on high-intent customers. Enable Auto<br> Bid and let
+                      Localists
+                      do the work for you!
+                    </div>
+
+                    <!-- ORANGE CTA BUTTON -->
+                    <table align="center" style="margin-top:18px;">
+                      <tr>
+                        <td bgcolor="#ff9933" style="padding:10px 26px; border-radius:100px;">
+                          <a href="{{$baseUrl}}/settings/billing/my-credits"
+                            style="color:#ffffff; font-weight:800; text-decoration:none; display:inline-block;">
+                            Enable Auto Bid Now
+                          </a>
                         </td>
                       </tr>
                     </table>
@@ -96,76 +161,123 @@
             </td>
           </tr>
 
-          <tr><td style="height:16px; line-height:16px; font-size:0;">&nbsp;</td></tr>
 
-          <!-- How Auto-Bid Works card -->
+          <!-- HOW IT WORKS -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" role="presentation" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden;">
+            <td align="center" style="padding:0px 0 10px;">
+              <div style="font-size:16px; font-weight:800; color:#00AFE3;">
+                How Auto Bid Works
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:0 15px 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#00AFE3"
+                style="border-radius:8px; max-width:500px; margin:0 auto;">
                 <tr>
-                  <td bgcolor="#d8edf8" style="padding:12px 20px; color:#1a588c; font-weight:500; font-family:Helvetica, Arial, sans-serif;">
-                    How Auto Bid Works
+                  <td align="center"
+                    style="padding:20px 25px 10px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#ffffff; line-height:18px;">
+                    Once enabled, Auto Bid uses your service filters to automatically
+                    secure matching leads the moment they come in. No need to log in, no missed
+                    opportunities.
                   </td>
                 </tr>
                 <tr>
-                  <td class="card-td" style="padding:32px; font-family:Helvetica, Arial, sans-serif; color:#4a4a4a;">
-                    <p style="margin-top:0;">Once enabled, Auto Bid uses your service filters to automatically secure matching leads the moment they come in. No need to log in, no missed opportunities.</p>
-                    <p>Just add credits and let the system keep your business ahead of the competition — even while you're offline.</p>
-
-                    <!-- Secondary CTA -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:16px;">
+                  <td align="center"
+                    style="padding:0 25px 18px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#ffffff; line-height:18px;">
+                    Just add credits and let the system keep your business
+                    ahead of the competition — even while you're offline.
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-bottom:20px;">
+                    <table cellpadding="0" cellspacing="0">
                       <tr>
-                        <td align="center" style="padding:0 16px;">
-                          <a href="{{$baseUrl}}/settings/billing/my-credits" class="btn" style="background-color:#28c199; display:inline-block;">Contact Lead Now</a>
+                        <td bgcolor="#66FF0D"
+                          style="padding:8px 22px; border-radius:100px; text-align:center;">
+                          <a href="{{$baseUrl}}/settings/billing/my-credits"
+                            style="font-size:15px; font-weight:800; color:#253238; text-decoration:none; display:inline-block;">
+                            Contact Lead Now
+                          </a>
                         </td>
                       </tr>
                     </table>
-
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <tr><td style="height:16px; line-height:16px; font-size:0;">&nbsp;</td></tr>
 
-          <!-- Need Help card -->
+          <!-- NEED HELP -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" role="presentation" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04); overflow:hidden;">
-                <tr>
-                  <td bgcolor="#d8edf8" style="padding:12px 20px; color:#1a588c; font-weight:500; font-family:Helvetica, Arial, sans-serif;">
-                    Need Help?
-                  </td>
-                </tr>
-                <tr>
-                  <td class="card-td" style="padding:32px; font-family:Helvetica, Arial, sans-serif; color:#4a4a4a;">
-                    <p style="margin-top:0;">Our team is here to help you make the most of Localists. Email us at
-                      <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.
-                    </p>
-                    <p>Let’s grow your business together 🚀</p>
-                     <p>Kind Regards,<br>Localists Team</p>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" style="padding:18px 20px;">
+              <div style="font-size:16px; font-weight:800; color:#00AFE3;">
+                Need Help?
+              </div>
+              <div style="font-size:12px; font-weight:600; color:#253238; line-height:18px;">
+                Our team is here to help you make the most of Localists.<br>
+                Email us at
+                <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}"
+                  style="color:#00AFE3; text-decoration:none;">
+                   {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
+                </a>
+              </div>
             </td>
           </tr>
 
-          <tr><td style="height:20px; line-height:20px; font-size:0;">&nbsp;</td></tr>
 
-          <!-- Footer -->
+          <!-- STRIP -->
           <tr>
-            <td align="center" style="padding:0 16px 40px 16px; font-family:Helvetica, Arial, sans-serif; color:#666; font-size:13px;">
-              Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
-              {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
+            <td align="center" bgcolor="#e9f7fd" style="padding:16px; font-weight:700;">
+              Let’s grow your business together
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" bgcolor="#131838" style="padding:9px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <!-- Globe -->
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt="" style="display:block;">
+                  </td>
+
+                  <!-- Website text -->
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif; padding-right:10px;">
+                    Localists.com
+                  </td>
+
+                  <!-- Divider -->
+                  <td valign="middle"
+                    style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">|</td>
+
+                  <!-- Email icon -->
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt="" style="display:block;">
+                  </td>
+
+                  <!-- Email text -->
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                    <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}"
+                      style="color:#ffffff; text-decoration:none;">
+                      {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
         </table>
-        <!-- end center column -->
 
       </td>
     </tr>
   </table>
 </body>
+
 </html>
