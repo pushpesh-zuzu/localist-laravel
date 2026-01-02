@@ -21,9 +21,12 @@ use App\Http\Controllers\Api\PagesController;
 use App\Http\Controllers\ContactUsController;
 use App\Http\Controllers\Api\Google\GoogleController;
 use App\Http\Controllers\Api\OctoparseController;
+use App\Http\Controllers\Api\Facebook\Forms\DrivewayInstallationForm;
 
 // use App\Http\Controllers\Api\ZohoController;
 
+
+Route::post('get-facebook-leads-driveway-installation-from',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFrom']);
 
 
 Route::get('/user', function (Request $request) {
