@@ -89,6 +89,13 @@ class CreditScorePredictor{
                 }
                 $rel = ceil($tRel);
 
+                if($servie_id == 43 || $servie_id == 49 || $servie_id == 51){
+                    // increase by 30%
+                    $tRel = number_format(($rel * 1.30), 5);
+                    $rel = ceil($tRel);
+                }
+
+
             }else{
                 print_r($output);
             }
