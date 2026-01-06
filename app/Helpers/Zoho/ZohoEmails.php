@@ -1501,7 +1501,8 @@ class ZohoEmails
             'baseUrl' => config('app.react_base_url'),
             'siteUrl' => config('app.url'),
             'name' => $user->name ? explode(' ', trim($user->name))[0] : '',
-            'leads' => $groupedLeadsData
+            'leads' => $groupedLeadsData,
+            'totalCredit' => $user->total_credit
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);

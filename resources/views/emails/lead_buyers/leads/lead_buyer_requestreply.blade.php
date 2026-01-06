@@ -463,7 +463,7 @@
                   <tr>
                     <td style="padding:14px 18px 0 18px;
                font-size:12px;color:#253238;line-height:18px;">
-                      You currently have <strong>0 credits</strong> in your account.
+                      You currently have <strong>{{ isset($totalCredit) ? $totalCredit : 0 }} credits</strong> in your account.
                       To start receiving quality leads and allow our system to auto-bid on your behalf,
                       please purchase credits now.
                     </td>
