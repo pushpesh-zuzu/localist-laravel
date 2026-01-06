@@ -1510,7 +1510,7 @@ class ZohoEmails
 
         $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
         $toEmail = $user->email;
-        $subject = 'You Have New Leads – Reply Promptly';
+        $subject = 'You Have Got a New Lead – RESPOND NOW!';
 
         DB::table('zoho_logs')->insert([
             'url' => $url,

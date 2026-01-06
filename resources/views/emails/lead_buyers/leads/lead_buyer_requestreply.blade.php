@@ -27,18 +27,17 @@
 
               <!-- Welcome text -->
               <p style="font-size:16px;color:#253238;margin:0 0 4px;">
-                Welcome back, <strong>{{ ucfirst($name) }}</strong>,
+                <strong>{{ ucfirst($name) }}</strong> You Have a New Lead
               </p>
 
               <!-- Lead received text -->
               <p style="color:#00AFE3;font-size:12px;font-weight:700;margin:10 0 10px;">
-                You've received new lead request(s)
+               You've received a new lead request
               </p>
 
               <!-- Description -->
               <p style="font-size:12px;color:#253238;line-height:18px;font-weight:500;margin:0 0 16px;">
-                We found leads that match your services and locations — check them below and respond quickly to secure
-                the work.
+               The customer below has requested a quote from you - respond quickly to secure the work.
               </p>
 
               <!-- Button -->
