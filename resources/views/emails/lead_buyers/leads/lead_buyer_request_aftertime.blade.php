@@ -1,125 +1,299 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>New Lead Matched for You</title>
-  <style>
-    body { margin: 0; background-color: #f1f2f4; font-family: "Lato", Helvetica, Arial, sans-serif; font-size: 15px; line-height: 24px; color: #4a4a4a; -webkit-font-smoothing: antialiased }
-    .email-wrap { width: 100%; background-color: #f1f2f4; padding: 32px 0 }
-    .email-container { max-width: 600px; margin: 0 auto; padding: 0 16px; box-sizing: border-box }
-    .logo { max-height: 50px; display: block; margin: 0 auto 20px auto }
-    .btn { display: inline-block; background-color: #3399ff; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: 700; padding: 10px 18px; border-radius: 4px }
-    h1 { font-size: 22px; font-weight: 600; color: #333333; margin: 0 0 8px 0; font-family: Helvetica, Arial, sans-serif }
-    .highlight { color: #00afe3; margin-bottom: 12px; font-size: 15px; font-family: Helvetica, Arial, sans-serif }
-    p { color: #61696d; margin: 0 0 12px 0; font-family: Helvetica, Arial, sans-serif }
-    a { color: #007bff }
-    .card { background: #ffffff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 20px; margin-bottom: 18px }
-    .section-header { background-color: #d8edf8; color: #1a588c; padding: 12px 16px; font-weight: 600; border-top-left-radius: 4px; border-top-right-radius: 4px }
-    .muted { color: #9aa1a6 }
-    .lead-meta { margin-top: 12px; background-color: #f5f9fc; padding: 12px; border-radius: 4px; font-size: 15px }
-    .tag { display:inline-block; padding:5px 10px; margin:4px 4px 4px 0; border-radius:20px; font-size:12px }
-    del { color: #9aa1a6; margin-right:6px }
-    @media only screen and (max-width: 600px) {.email-container { width: 100% !important; padding: 0 12px !important } .btn { font-size: 16px !important; padding: 12px 20px !important } h1 { font-size: 20px !important } }
-  </style>
 </head>
-<body>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-wrap">
+<body style="margin:0;padding:0;background:#f4f8fb;font-family:Inter,Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" class="email-container">
-
-          <!-- Logo -->
+      <td align="center" style="padding:30px 10px;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
           <tr>
-            <td style="padding:0 16px 8px 16px; text-align:center">
-              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" class="logo">
+            <td align="center" style="padding:20px;">
+              <table width="100%">
+                <tr>
+                  <td bgcolor="#00AFE3" height="40" align="center" style="border-radius:5px;">
+                    <img src="{{ $baseUrl }}/assets/localist_logo_1.png" height="26" alt="Localists">
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Main Card -->
+          <!-- BODY -->
           <tr>
-            <td>
-              <div class="card">
-              
-                 <p style="text-align:center;font-size: 18px;">Hi <strong style="color: #333333;">{{ ucfirst($name) }}</strong>,</p>
-                <div class="highlight" style="text-align:center">You've got a new lead!</div>
+            <td style="padding:5px 30px;">
 
-                <p style="margin-bottom:12px; color:#61696d;"><strong>{{ $lead_name }}</strong> is looking for <strong>{{ $service_name }}</strong>.</p>
+              <p style="font-size:16px;margin:0 0 8px;">
+                Hi <strong>{{ ucfirst($name) }}</strong>,
+              </p>
 
-                @if($step == 3)
-                  <p style="color:#61696d;margin-bottom:12px">Great news — this lead has been specially discounted for a limited time. Grab it before the offer expires.</p>
+              <p style="color:#253238;font-size:14px;line-height: 30px;">
+                You've got a new lead!<br>
+                <strong>{{ $lead_name }}</strong> is looking for <strong>{{ $service_name }}</strong>.
+              </p>
+
+              @if($step == 3)
+              <p style="color:#253238;font-size:14px;line-height: 25px;">
+                Great news — this lead has been specially discounted for a limited time. Grab it before the offer expires.
+              </p>
+
+              @endif
+              <!-- LEAD TAGS WITH IMAGES INSTEAD OF EMOJIS -->
+              <div style="margin-bottom:18px;">
+                @if($phone_verified)
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/phonetop.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">Verified Phone
+                </span>
                 @endif
+                @if($has_additional_details)
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/document.png" width="14" height="14"
+                    style="vertical-align:middle;margin-right:4px;">Additional details
+                </span>
+                @endif
+                @if($is_frequent_user)
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/star.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">Frequent
+                  user
+                </span>
+                @endif
+                @if($is_urgent)
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/warning.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">Urgent
+                </span>
+                @endif
+                @if($is_high_hiring)
+                <span
+                  style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/user-check.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">High
+                  hiring
+                </span>
+                @endif
+              </div>
 
-                <!-- tags -->
-                <div style="text-align:center; margin-bottom:12px">
-                  @if($phone_verified)<span class="tag" style="background-color:#f39ac3; color:#fff">📞 Verified Phone</span>@endif
-                  @if($has_additional_details)<span class="tag" style="background-color:#e6e6e6; color:#333">📋 Additional details</span>@endif
-                  @if($is_frequent_user)<span class="tag" style="background-color:#a0d8ef">🔁 Frequent user</span>@endif
-                  @if($is_urgent)<span class="tag" style="background-color:#ffd9a6">⏰ Urgent</span>@endif
-                  @if($is_high_hiring)<span class="tag" style="background-color:#d1f7d9">🚀 High hiring</span>@endif
-                </div>
+              <!-- LEAD DETAILS WITH BUTTON INSIDE -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                <tr>
+                  <td style="background:rgba(227, 246, 252, 0.5); border-radius:10px; padding:17px 25px;">
 
-                <!-- Contact Details -->
-                <div class="lead-meta">
-                  <div style="margin-bottom:8px">
-                    @if($step == 3)
-                      <strong>🏅</strong> <del>{{ $old_credit_score }}</del> <strong>{{ $credit_score }}</strong> credits to respond
+                    <!-- Credits White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:10px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/credits.png" width="26" height="26" alt="Credits">
+                              </td>
+                              <td valign="middle"
+                                style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+
+
+                                @if($step == 3)
+                                <del>{{ $old_credit_score }}</del> {{ $credit_score }}  credits to respond
+                                @else
+                                {{ $credit_score }} credits to respond
+                                @endif
+
+
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Location White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:10px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/location.png" width="26" height="26" alt="Location">
+                              </td>
+                              <td valign="middle" style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $postcode }}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Phone White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:10px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/phone.png" width="26" height="26" alt="Phone">
+                              </td>
+                              <td valign="middle" style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $masked_phone }}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Email White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:20px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/email.png" width="26" height="26" alt="Email">
+                              </td>
+                              <td valign="middle" style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $masked_email }}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- CTA BUTTON INSIDE BLUE BOX -->
+
+
+
+                    @if($hasEnoughCredits)
+
+                    <div style="text-align:center;">
+                      <a href="{{ $baseUrl }}/sellers/leads" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                        Contact Lead Now
+                      </a>
+                    </div>
+
+
                     @else
-                      <strong>🏅</strong> <strong>{{ $credit_score }}</strong> credits to respond
+
+                    <div style="text-align:center;">
+                      <a href="{{ $baseUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                        Contact Lead Now
+                      </a>
+                    </div>
+
                     @endif
-                  </div>
 
-                  <div style="margin-bottom:6px"><strong>📍</strong> {{ $postcode }}</div>
-                  <div style="margin-bottom:6px"><strong>📞</strong> {{ $masked_phone }}</div>
-                  <div><strong>✉️</strong> {{ $masked_email }}</div>
-                </div>
+                  </td>
+                </tr>
+              </table>
 
-                <!-- CTA -->
-                <div style="margin-top:16px; text-align:center">
-                  @if($hasEnoughCredits)
-                    <a href="{{ $baseUrl }}/sellers/leads" class="btn">Contact Lead Now</a>
-                  @else
-                    <a href="{{ $baseUrl }}/settings/billing/my-credits" class="btn">Contact Lead Now</a>
-                  @endif
-                </div>
+              <!-- DETAILS SECTION -->
+              @if(!empty($questionsAndAnswers))
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="margin-top:18px; font-family:Arial, sans-serif;">
+                <tr>
+                  <td>
 
+                    <!-- Blue header bar -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td bgcolor="#00AFE3"
+                          style="padding:10px 14px; border-radius:2px 2px 0 0; font-weight:700; color:#ffffff; font-size:16px;">
+                          Details
+                        </td>
+                      </tr>
+                      <!-- small white gap under the blue bar -->
+                      <tr>
+                        <td style="background:#ffffff; height:10px; line-height:10px; font-size:1px;">&nbsp;</td>
+                      </tr>
+                    </table>
+
+                    <!-- Details content (card) -->
+                    <table width="100%" cellpadding="10" cellspacing="0" role="presentation"
+                      style="background:#ffffff;">
+
+
+                      @foreach ($questionsAndAnswers as $qa)
+                      <tr>
+                        <td style="font-size:14px;color:#253238;font-weight:700;padding-bottom:4px;">
+                          {{ $qa['question'] }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:12px;">
+                          <div style="font-size:14px;color:#00AFE3;font-weight:600;">
+                            {{ $qa['answer'] }}
+                          </div>
+                          @if(!$loop->last)
+                          <div style="width:50%;border-bottom:1px solid #E3F6FC;margin-top:6px;"></div>
+                          @endif
+
+                        </td>
+                      </tr>
+                      @endforeach
+
+
+
+                    </table>
+
+
+                    <!-- pronounced white space after the whole details block -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td height="20" style="line-height:20px; font-size:1px;">&nbsp;</td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+              @endif
+            </td>
+          </tr>
+
+          <!-- HELP SECTION -->
+          <tr>
+            <td align="center" style="padding:20px 30px; background:rgba(227, 246, 252, 0.5); border-radius:8px;">
+              <div style="font-size:16px; font-weight:800; color:#253238; margin-bottom:8px; text-align:center;">
+                Need Help?
+              </div>
+              <div style="font-size:12px; font-weight:600; color:#253238; line-height:18px; text-align:center;">
+                Email us at:
+                <a href="mailto:contact@localists.com" style="color:#00AFE3; text-decoration:none;">
+                  contact@localists.com
+                </a>
               </div>
             </td>
           </tr>
 
-          <!-- Questions & Answers -->
+          <!-- FOOTER -->
           <tr>
-            <td>
-              <div class="card">
-                <div class="section-header">Details</div>
-                <div style="padding:16px">
-                  @foreach ($questionsAndAnswers as $qa)
-                    <p style="margin:8px 0 4px 0"><strong>{{ $qa['question'] }}</strong></p>
-                    <p style="margin:0 0 12px 0">{{ $qa['answer'] }}</p>
-                  @endforeach
-                </div>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Need Help -->
-          <tr>
-            <td>
-              <div class="card">
-                <div class="section-header">Need Help?</div>
-                <div style="padding:16px">
-                  <p class="muted">Email us at <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>.</p>
-                  <p>Kind Regards,<br>Localists Team</p>
-                </div>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td align="center" style="padding: 20px; font-size: 13px; color: #666666;">
-              Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification" style="color: #007bff;">here</a>.<br>
-              {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
+            <td align="center" bgcolor="#131838" style="padding:9px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt=""
+                      style="display:block;">
+                  </td>
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif; padding-right:10px;">
+                    Localists.com
+                  </td>
+                  <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">|</td>
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt=""
+                      style="display:block;">
+                  </td>
+                  <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                    <a href="mailto:contact@localists.com" style="color:#ffffff; text-decoration:none;">
+                      contact@localists.com
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -127,5 +301,7 @@
       </td>
     </tr>
   </table>
+
 </body>
+
 </html>

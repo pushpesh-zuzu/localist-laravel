@@ -1,197 +1,222 @@
+<!doctype html>
 <html>
 
 <head>
   <meta charset="UTF-8">
-  <meta content="width=device-width" name="viewport">
-  <style>
-    body {
-      margin: 0;
-      background-color: #f1f2f4;
-      font-family: "Lato", Helvetica, Arial, sans-serif;
-      font-size: 18px;
-            font-weight: 510;
-            line-height: 25px;
-      line-height: 1.6;
-      color: #4a4a4a;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .email-wrap {
-      width: 100%;
-      background-color: #f1f2f4;
-      padding: 32px 0;
-    }
-
-    .email-container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    .logo {
-      max-height: 50px;
-      display: block;
-      margin: 0 auto 20px auto;
-    }
-
-    h1 {
-      font-size: 22px;
-      font-weight: 600;
-      color: #333;
-      margin: 0 0 10px 0;
-    }
-
-    .highlight {
-      color: #00afe3;
-      margin-bottom: 16px;
-      font-size: 15px;
-    }
-
-    p {
-      color: #61696d;
-      margin: 0 0 12px 0;
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    a {
-      color: #007bff;
-      text-decoration: none;
-    }
-
-    .btn {
-      display: inline-block;
-      background-color: #3399ff;
-      color: #fff !important;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: bold;
-      padding: 10px 18px;
-      border-radius: 4px;
-    }
-
-    @media only screen and (max-width: 600px) {
-      .email-container {
-        width: 100% !important;
-        padding: 0 12px !important;
-      }
-
-      h1 {
-        font-size: 20px !important;
-      }
-
-      .btn {
-        font-size: 16px !important;
-        padding: 12px 20px !important;
-      }
-    }
-  </style>
+  <title>You've Purchased a Lead</title>
 </head>
 
-<body>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" class="email-wrap" bgcolor="#f1f2f4">
+<body style="margin:0;padding:0;background:#f4f8fb;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width:600px; width:100%">
+      <td align="center" style="padding:30px 10px;">
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
           <tr>
-            <td style="padding:0 16px 8px 16px; text-align:center">
-              <img src="{{$baseUrl}}/assets/localist_logo_1.png" alt="Localists Logo" class="logo">
+            <td align="center" style="padding:20px;">
+              <table width="100%">
+                <tr>
+                  <td bgcolor="#00AFE3" height="40" align="center" style="border-radius:5px;">
+                    <img src="{{$baseUrl}}/assets/localist_logo_1.png" height="26" alt="Localists">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:10px 30px 2px;">
+              <p style="margin:0;font-size:13px;color:#253238;">
+                Dear <strong>{{ ucfirst($name) }}</strong>,
+              </p>
             </td>
           </tr>
 
+          <!-- THANK YOU TEXT -->
           <tr>
-            <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+            <td align="center" style="padding:0 30px 14px;">
+              <p style="margin:0;font-size:18px;font-weight:800;color:#00AFE3;letter-spacing:0.3px;line-height: 35px;">
+                Thank you for your payment.
+              </p>
+            </td>
+          </tr>
+
+
+          <!-- INVOICE DETAILS SECTION -->
+          <tr>
+            <td align="center" style="padding:10px 10px;">
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="max-width:520px;background:#EAF8FC;border-radius:12px;">
+
+                <!-- Header -->
                 <tr>
-                  <td style="padding:20px">
-                    <h1>Your Invoice from Localists</h1>
-                    <div class="highlight">Invoice #{{$invoice_number}} | Dated {{date('d/m/Y',strtotime($created_at))}}</div>
-                    <p>Dear <strong>{{ $name }}</strong>,</p>
-                    <p>Thank you for your payment. Below are the details of your invoice for your records.</p>
+                  <td align="center" style="background:#00AFE3;padding:12px 20px;border-radius:12px 12px 0 0;      font-size:14px;font-weight:800;color:#ffffff;line-height:20px;">
+                    Below are the details of your invoice for your records.
+                  </td>
+                </tr>
 
-                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                <!-- Content -->
+                <tr>
+                  <td style="padding:18px 22px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
 
-                    <!-- Invoice Summary -->
-                    <table style="width:100%; border-collapse: collapse; font-size:15px;">
+                      <!-- Row -->
                       <tr>
-                        <td style="color:#6de1a7; font-size:18px;">Invoice Date:</td>
-                        <td style="text-align:right;">{{date('d/m/Y',strtotime($created_at))}}</td>
+                        <td style="font-size:14px;color:#00AFE3;font-weight:700;line-height:22px;">
+                          {{$details}}:
+                        </td>
+                        <td align="right" style="font-size:14px;color:#253238;font-weight:700;line-height:22px;">
+                          &pound;{{$amount}}
+                        </td>
                       </tr>
+
                       <tr>
-                        <td style="color:#6de1a7; font-size:18px;">Invoice Number:</td>
-                        <td style="text-align:right;">{{$invoice_number}}</td>
+                        <td height="6"></td>
                       </tr>
+
                       <tr>
-                        <td style="color:#6de1a7; font-size:18px;">Status:</td>
-                        <td style="text-align:right;"><strong style="color:#6de1a7;">PAID</strong></td>
+                        <td style="font-size:14px;color:#00AFE3;line-height:22px;font-weight:500;">
+                          Invoice Date:
+                        </td>
+                        <td align="right" style="font-size:14px;color:#253238;line-height:22px;font-weight:500;">
+                          {{date('d/m/Y',strtotime($created_at))}}
+                        </td>
                       </tr>
+
+
+                      <tr>
+                        <td height="6"></td>
+                      </tr>
+
+                      <tr>
+                        <td style="font-size:14px;color:#00AFE3;line-height:22px;font-weight:500;">
+                          Invoice Number:
+                        </td>
+                        <td align="right" style="font-size:14px;color:#253238;line-height:22px;font-weight:500;">
+                          {{$invoice_number}}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td height="6"></td>
+                      </tr>
+
+                      <tr>
+                        <td style="font-size:14px;color:#00AFE3;line-height:22px;font-weight:500;">
+                          Status:
+                        </td>
+                        <td align="right" style="font-family:Inter, Arial, sans-serif; font-size:14px;     font-weight:800;  /* Extra Bold */   line-height:15px;  color:#00AFE3;">
+                          PAID
+                        </td>
+                      </tr>
+
+                      <!-- Divider -->
+                      <tr>
+                        <td colspan="2" style="padding:14px 0;">
+                          <div style="height:1px;background:#CDEEF7;"></div>
+                        </td>
+                      </tr>
+
+                      <!-- Totals -->
+                      <!-- Subtotal / VAT / Total Section -->
+                      <tr>
+                        <td
+                          style="font-family:Inter, Arial, sans-serif;font-size:14px;color:#253238;line-height:20px;font-weight:500;">
+                          Subtotal:
+                        </td>
+                        <td align="right"
+                          style="font-family:Inter, Arial, sans-serif;font-size:14px;color:#253238;line-height:20px;font-weight:500;">
+                          &pound;{{$amount}}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td height="6"></td>
+                      </tr>
+
+                      <tr>
+                        <td
+                          style="font-family:Inter, Arial, sans-serif;font-size:14px;color:#253238;line-height:20px;font-weight:500;">
+                          VAT (20%):
+                        </td>
+                        <td align="right"
+                          style="font-family:Inter, Arial, sans-serif;font-size:14px;color:#253238;line-height:20px;font-weight:500;">
+                          &pound;{{$vat}}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td height="8"></td>
+                      </tr>
+
+                      <tr>
+                        <td
+                          style="font-family:Inter, Arial, sans-serif;font-size:14px;color:#253238;line-height:22px;font-weight:800;">
+                          Total:
+                        </td>
+                        <td align="right"
+                          style="font-family:Inter, Arial, sans-serif;font-size:14px;color:#253238;line-height:22px;font-weight:800;">
+                          &pound;{{$total_amount}}
+                        </td>
+                      </tr>
+
+
                     </table>
-
-                    <!-- Invoice Details -->
-                    <table style="width:100%; margin-top:30px; border-collapse: collapse; font-size:16px;">
-                      <thead>
-                        <tr style="border-bottom:2px solid #ddd;">
-                          <th style="padding:5px 0;">DETAILS</th>
-                          <th style="padding:10px 0;">PERIOD</th>
-                          <th style="padding:10px 0; text-align:right;">PRICE</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr style="text-align:center;border-bottom:1px solid #eee;">
-                          <td style="padding:10px 0;">{{$details}}</td>
-                          <td style="padding:10px 0;">{{ $period }}</td>
-                          <td style="padding:10px 0; text-align:right;">&pound;{{$amount}}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <!-- Summary -->
-                    <div style="margin-top:30px; font-size:16px;">
-                      <div style="display:flex; justify-content:space-between;">
-                        <span>Subtotal</span>
-                        <span>&pound;{{$amount}}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; margin-top:5px;">
-                        <span>VAT (20%)</span>
-                        <span>&pound;{{$vat}}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; margin-top:5px; font-weight:bold;">
-                        <span>Total</span>
-                        <span>&pound;{{$total_amount}}</span>
-                      </div>
-                    </div>
-
-                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-
-                    <p style="margin-top:12px">You can also call our customer support team at
-                      <a>
-                        {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
-                      </a>.
-                    </p>
-
-                    <p>Kind Regards,<br>Localists Team</p>
-
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <tr>
-            <td style="height:18px; font-size:0; line-height:18px">&nbsp;</td>
-          </tr>
 
-          <!-- Footer -->
+
+          <!-- HELP SECTION -->
           <tr>
-            <td align="center" style="padding:0 16px 40px 16px; font-family:Helvetica, Arial, sans-serif; color:rgb(102, 102, 102); font-size:13px">
-              Manage your email preferences <a href="{{$baseUrl}}/settings/notifications/e-mail-notification">here</a>.<br>
-              {{\App\Helpers\CustomHelper::setting_value('website_address','')}}
+            <td align="center" style="padding:20px 30px; background:rgba(227, 246, 252, 0.5); border-radius:8px;">
+              <div style="font-size:16px; font-weight:800; color:#253238; margin-bottom:8px; text-align:center;">
+                Need Help?
+              </div>
+              <div style="font-size:12px; font-weight:600; color:#253238; line-height:18px; text-align:center;">
+                Email us at:
+                <a href="mailto:contact@localists.com" style="color:#00AFE3; text-decoration:none;">
+                  contact@localists.com
+                </a>
+              </div>
             </td>
           </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" bgcolor="#131838" style="padding:9px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt=""
+                      style="display:block;">
+                  </td>
+                  <td valign="middle"
+                    style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif; padding-right:10px;">
+                    Localists.com
+                  </td>
+                  <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">|</td>
+                  <td valign="middle" style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt=""
+                      style="display:block;">
+                  </td>
+                  <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
+                    <a href="mailto:contact@localists.com" style="color:#ffffff; text-decoration:none;">
+                      contact@localists.com
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
         </table>
       </td>
     </tr>
   </table>
+
 </body>
 
 </html>

@@ -1054,6 +1054,8 @@ class LeadService
             ->select(
                 'users.id',
                 'users.name',
+                'users.email',
+                'users.phone',
                 'users.profile_image',
                 'users.total_credit',
                 'users.avg_rating',

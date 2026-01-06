@@ -6,16 +6,12 @@
   <title>Lead Closed</title>
 </head>
 
-<body style="margin:0;padding:0;background:#f4f8fb;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background:#f4f8fb;font-family:Inter,Arial,Helvetica,sans-serif;">
 
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center" style="padding:30px 10px;">
-
-        <table width="600" cellpadding="0" cellspacing="0"
-          style="background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-
-          <!-- HEADER -->
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
           <tr>
             <td align="center" style="padding:20px;">
               <table width="100%">
@@ -44,162 +40,229 @@
                 a matching one becomes available.
               </p>
 
-
+              <!-- LEAD TAGS WITH IMAGES INSTEAD OF EMOJIS -->
               <div style="margin-bottom:18px;">
                 @if($phone_verified)
-                <span style="display:inline-block;background:#f39ac3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">📞 Verified Phone</span>
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/phonetop.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">Verified Phone
+                </span>
                 @endif
                 @if($has_additional_details)
-                <span style="display:inline-block;background:#e6e6e6;color:#333333;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">📋 Additional Details</span>
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/document.png" width="14" height="14"
+                    style="vertical-align:middle;margin-right:4px;">Additional details
+                </span>
                 @endif
                 @if($is_frequent_user)
-                <span style="display:inline-block;background:#a0d8ef;color:#000000;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">🔁 Frequent User</span>
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/star.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">Frequent
+                  user
+                </span>
                 @endif
                 @if($is_urgent)
-                <span style="display:inline-block;background:#ffd9a6;color:#000000;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">⏰ Urgent</span>
+                <span style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/warning.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">Urgent
+                </span>
                 @endif
                 @if($is_high_hiring)
-                <span style="display:inline-block;background:#d1f7d9;color:#000000;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">🚀 High Hiring</span>
+                <span
+                  style="display:inline-block;background:#00AFE3;color:#ffffff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:14px;margin:0 6px 6px 0;">
+                  <img src="{{$siteUrl}}/public/images/icons/user-check.png" width="14" height="14" style="vertical-align:middle;margin-right:4px;">High
+                  hiring
+                </span>
                 @endif
               </div>
 
-              
+              <!-- LEAD DETAILS WITH BUTTON INSIDE -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                <tr>
+                  <td style="background:rgba(227, 246, 252, 0.5); border-radius:10px; padding:17px 25px;">
 
-              <!-- NEW LEAD -->
-              <!-- <div style="text-align:center;margin-bottom:18px;">
-                <strong style="font-size:18px;">&#127919; New Lead Unlocked</strong>
-              </div> -->
+                    <!-- Credits White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:10px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/credits.png" width="26" height="26" alt="Credits">
+                              </td>
+                              <td valign="middle"
+                                style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $credit_score }} credits
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
 
-              <!-- LEAD DETAILS -->
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding:10px;border-radius:8px;background:#f1f9ff;">
-                    <strong>🏅</strong> {{ $credit_score }} credits
-                  </td>
-                </tr>
-                <tr>
-                  <td height="8"></td>
-                </tr>
-                <tr>
-                  <td style="padding:10px;border-radius:8px;background:#f6f6f6;">
-                    <strong>📍</strong> {{ $postcode }}
-                  </td>
-                </tr>
-                <tr>
-                  <td height="8"></td>
-                </tr>
-                <tr>
-                  <td style="padding:10px;border-radius:8px;background:#fff4e9;">
-                    <strong>📞</strong> {{ $masked_phone }}
-                  </td>
-                </tr>
-                <tr>
-                  <td height="8"></td>
-                </tr>
-                <tr>
-                  <td style="padding:10px;border-radius:8px;background:#eef3ff;">
-                    <strong>✉️</strong> {{ $masked_email }}
+                    <!-- Location White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:10px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/location.png" width="26" height="26" alt="Location">
+                              </td>
+                              <td valign="middle" style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $postcode }}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Phone White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:10px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/phone.png" width="26" height="26" alt="Phone">
+                              </td>
+                              <td valign="middle" style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $masked_phone }}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Email White Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0"
+                      style="background:#ffffff; border-radius:4px; margin-bottom:20px;">
+                      <tr>
+                        <td style="padding:8px 12px;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="30" valign="middle">
+                                <img src="{{$siteUrl}}/public/images/icons/email.png" width="26" height="26" alt="Email">
+                              </td>
+                              <td valign="middle" style="padding-left:6px; font-weight:600; font-size:14px; color:#253238;">
+                                {{ $masked_email }}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- CTA BUTTON INSIDE BLUE BOX -->
+                    <div style="text-align:center;">
+                      <a href="{{ $baseUrl }}/sellers/leads" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                        See Similar Leads
+                      </a>
+                    </div>
+
                   </td>
                 </tr>
               </table>
 
-              <!-- CTA -->
-              <div style="text-align:center;margin:28px 0;">
-                <a href="{{ $baseUrl }}/sellers/leads" style="background:#66FF0D;color:#253238;text-decoration:none;
-                   padding:12px 22px;border-radius:30px;font-size:15px;
-                   font-weight:bold;display:inline-block;">
-                  See Similar Leads
-                </a>
-              </div>
-
-              <!-- CUSTOMER REQUIREMENTS -->
-               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+              <!-- DETAILS SECTION -->
+              @if(!empty($questionsAndAnswers))
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="margin-top:18px; font-family:Arial, sans-serif;">
                 <tr>
                   <td>
-                    <div style="font-size:16px;font-weight:800;color:#253238;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e3f1f8;">
-                      📝 Customer Requirements
-                    </div>
 
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4fbff;border-radius:14px;padding:24px;font-family:Arial, sans-serif;">
-                      @if(!empty($questionsAndAnswers))
-                      @foreach ($questionsAndAnswers as $qa)
-
+                    <!-- Blue header bar -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                       <tr>
-                        <td style="font-size:15px;color:#5c6f7b;font-weight:600;padding-bottom:8px;">
+                        <td bgcolor="#00AFE3"
+                          style="padding:10px 14px; border-radius:2px 2px 0 0; font-weight:700; color:#ffffff; font-size:16px;">
+                          Details
+                        </td>
+                      </tr>
+                      <!-- small white gap under the blue bar -->
+                      <tr>
+                        <td style="background:#ffffff; height:10px; line-height:10px; font-size:1px;">&nbsp;</td>
+                      </tr>
+                    </table>
+
+                    <!-- Details content (card) -->
+                    <table width="100%" cellpadding="10" cellspacing="0" role="presentation"
+                      style="background:#ffffff;">
+
+
+                      @foreach ($questionsAndAnswers as $qa)
+                      <tr>
+                        <td style="font-size:14px;color:#253238;font-weight:700;padding-bottom:4px;">
                           {{ $qa['question'] }}
                         </td>
                       </tr>
                       <tr>
-                        <td style="font-size:16px;color:#ff7a00;font-weight:700;padding-bottom:18px;">
-                          {{ $qa['answer'] }}
+                        <td style="padding-bottom:12px;">
+                          <div style="font-size:14px;color:#00AFE3;font-weight:600;">
+                            {{ $qa['answer'] }}
+                          </div>
+                          @if(!$loop->last)
+                          <div style="width:50%;border-bottom:1px solid #E3F6FC;margin-top:6px;"></div>
+                          @endif
+
                         </td>
                       </tr>
-                      @if(!$loop->last)
-                      <tr>
-                        <td style="border-bottom:1px solid #dceef7; padding-bottom:1px;"></td>
-                      </tr>
-                      <tr>
-                        <td height="14"></td>
-                      </tr>
-                      @endif
                       @endforeach
-                      @else
-                      <tr>
-                        <td style="font-size:16px;color:#ff7a00;font-weight:700;padding-bottom:18px;">
-                          No additional details provided.
-                        </td>
-                      </tr>
-                      <tr>
-                        <td height="14"></td>
-                      </tr>
-                      @endif
+
+
+
                     </table>
+
+
+                    <!-- pronounced white space after the whole details block -->
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td height="20" style="line-height:20px; font-size:1px;">&nbsp;</td>
+                      </tr>
+                    </table>
+
                   </td>
                 </tr>
               </table>
+              @endif
             </td>
           </tr>
+
+          <!-- HELP SECTION -->
           <tr>
-            <td align="center" style="padding:18px 20px;">
-              <div style="font-size:16px; font-weight:800; color:#00AFE3;">
+            <td align="center" style="padding:20px 30px; background:rgba(227, 246, 252, 0.5); border-radius:8px;">
+              <div style="font-size:16px; font-weight:800; color:#253238; margin-bottom:8px; text-align:center;">
                 Need Help?
               </div>
-              <div style="font-size:12px; font-weight:600; color:#253238; line-height:18px;">
-                Our team is here to help you make the most of Localists.<br>
-                Email us at
+              <div style="font-size:12px; font-weight:600; color:#253238; line-height:18px; text-align:center;">
+                Email us at:
                 <a href="mailto:contact@localists.com" style="color:#00AFE3; text-decoration:none;">
                   contact@localists.com
                 </a>
               </div>
             </td>
           </tr>
+
           <!-- FOOTER -->
           <tr>
             <td align="center" bgcolor="#131838" style="padding:9px 18px;">
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
                 <tr>
-                  <!-- Globe -->
                   <td valign="middle" style="padding-right:8px;">
                     <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" alt=""
                       style="display:block;">
                   </td>
-
-                  <!-- Website text -->
                   <td valign="middle"
                     style="font-size:13px; line-height:18px; color:#ffffff; font-family:Inter, Arial, sans-serif; padding-right:10px;">
                     Localists.com
                   </td>
-
-                  <!-- Divider -->
                   <td valign="middle" style="padding:0 10px; font-size:13px; line-height:18px; color:#ffffff;">|</td>
-
-                  <!-- Email icon -->
                   <td valign="middle" style="padding-right:8px;">
                     <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" alt=""
                       style="display:block;">
                   </td>
-
-                  <!-- Email text -->
                   <td valign="middle" style="font-size:13px; line-height:18px; font-family:Inter, Arial, sans-serif;">
                     <a href="mailto:contact@localists.com" style="color:#ffffff; text-decoration:none;">
                       contact@localists.com
@@ -209,10 +272,12 @@
               </table>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
   </table>
+
 </body>
 
 </html>

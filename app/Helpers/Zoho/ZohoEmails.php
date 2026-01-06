@@ -536,6 +536,7 @@ class ZohoEmails
 
     //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_request',  [
     //                     'baseUrl' => config('app.react_base_url'),
+    //  'siteUrl' => config('app.url'),
     //                     'name' => $user->name,
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
@@ -668,6 +669,7 @@ class ZohoEmails
         // Email view for multiple leads
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
             'baseUrl' => config('app.react_base_url'),
+            'siteUrl' => config('app.url'),
             'name' => $user->name,
             'leadDetailsList' => $formattedLeads,
         ])->render();
@@ -792,6 +794,7 @@ class ZohoEmails
 
     //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough',  [
     //                     'baseUrl' => config('app.react_base_url'),
+    //                 'siteUrl' => config('app.url'),
     //                     'name' => $user->name,
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
@@ -930,6 +933,7 @@ class ZohoEmails
 
             $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough', [
                 'baseUrl' => config('app.react_base_url'),
+                'siteUrl' => config('app.url'),
                 'name' => $user->name,
                 'leadDetailsList' => $leadDetailsList,
             ])->render();
@@ -1090,6 +1094,7 @@ class ZohoEmails
 
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
             'baseUrl' => config('app.react_base_url'),
+            'siteUrl' => config('app.url'),
             'name' => $user->name,
             'leadDetailsList' => $leadViews,
         ])->render();
@@ -1494,6 +1499,7 @@ class ZohoEmails
         // Render single email with all leads grouped
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply', [
             'baseUrl' => config('app.react_base_url'),
+            'siteUrl' => config('app.url'),
             'name' => $user->name ? explode(' ', trim($user->name))[0] : '',
             'leads' => $groupedLeadsData
         ])->render();
@@ -1588,6 +1594,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_aftertime',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
@@ -1690,6 +1697,7 @@ class ZohoEmails
                 if (!empty($user)) {
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => (int) ($totalCreditSum / $totalLeadCount),
@@ -1775,6 +1783,7 @@ class ZohoEmails
                 if (!empty($user)) {
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => (int) ($totalCreditSum / $totalLeadCount),
@@ -1865,6 +1874,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_status_update',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'service' => $lead->category->name ?? '',
                         'seller_id' => $rlead->seller_id,
@@ -2113,7 +2123,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
-                    $subject = 'You have purchased a new lead!';
+                    $subject = 'You Have Purchased a New Lead!';
 
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
@@ -2193,6 +2203,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_pool_of_7_lead_buyer',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
@@ -2670,6 +2681,7 @@ class ZohoEmails
                     $invoices = Invoice::where('id', $invId)->first();
                     $htmlView = view('emails.lead_buyers.invoice.lead_buyer_plan_invoice',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'email' => $user->email,
                         'invoice_number' => $invoices->invoice_number,
@@ -3242,6 +3254,96 @@ class ZohoEmails
                     $dataE['response'] = json_encode($rel);
                     EmailLog::insertGetId($dataE);
                 }
+            }
+        }
+    }
+
+
+
+
+    public static function sendLeadInfoToLocallistSalesPerson($userId, $sId, $sellers)
+    {
+        $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Lead Info To Localists Sales Person')->value('setting_value');
+
+        if ($sendWelcomeEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+
+                $lead = LeadRequest::with(['category', 'customer'])->find($sId);
+
+                $serviceName  = optional($lead->category)->name;
+                $postCode  = $lead->postcode;
+                $credit_score  = $lead->credit_score;
+
+                $htmlView = view('emails.send_lead_info_to_locallist_sales_person',  [
+                    'baseUrl' => config('app.react_base_url'),
+                    'siteUrl' => config('app.url'),
+                    'serviceName' => $serviceName,
+                    'postCode' => $postCode,
+                    'CreditValue' => $credit_score,
+                    'sellers' => $sellers,
+                ])->render();
+                $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+
+                $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+
+                $subject = "New Lead Matched on Localists" . ($serviceName ? " - $serviceName" : '');
+
+                DB::table('zoho_logs')->insert([
+                    'url' => $url,
+                    'function_name' => 'sendLeadInfoToLocallistSalesPerson',
+                    'ipaddress' => request()->ip(),
+                    'created_at' => now(),
+                ]);
+
+
+
+                $toEmails = CustomHelper::setting_value('localists_sales_person_emails', '');
+                $toArray = collect(explode(',', $toEmails))
+                    ->filter()
+                    ->map(fn($email) => ['email' => trim($email)])
+                    ->toArray();
+
+                // Fetch comma-separated "CC" emails from settings
+                $ccEmails = CustomHelper::setting_value('localists_sales_person_cc_emails', '');
+                $ccArray = collect(explode(',', $ccEmails))
+                    ->filter()
+                    ->map(fn($email) => ['email' => trim($email)])
+                    ->toArray();
+
+                $response = Http::withToken($accessToken)->post($url, [
+                    'data' => [[
+                        'from' => [
+                            'email' => $fromEmail,
+                            'user_name' => CustomHelper::setting_value(
+                                'zoho_default_from_name',
+                                'Localists.com'
+                            )
+                        ],
+                        'to' => $toArray,
+                        'cc' => $ccArray,
+                        'subject' => $subject,
+                        'content' => $htmlContent,
+                        'mail_format' => 'html',
+                        'org_email' => true
+                    ]]
+                ]);
+
+
+                $rel = self::getZohoMailResponse($response);
+                $dataE['user_id'] = $userId;
+                $dataE['from_email'] = $fromEmail;
+                $dataE['to_email'] = 'michael.marshall@localists.com';
+                $dataE['message_id'] = $rel['message_id'];
+                $dataE['subject'] = $subject;
+                $dataE['setting_name'] = 'Send Lead Info To Localists Sales Person';
+                $dataE['content'] = $htmlContent;
+                $dataE['zoho_url'] = $url;
+                $dataE['response'] = json_encode($rel);
+                EmailLog::insertGetId($dataE);
             }
         }
     }

@@ -46,6 +46,7 @@ use App\Models\EmailLog;
 use App\Models\EmailSetting;
 use App\Models\NotificationSetting;
 use App\Http\Controllers\Api\RecommendedLeadsController;
+use App\Http\Controllers\Api\LeadPreferenceController;
 class UserController extends Controller
 {
 
@@ -1014,6 +1015,23 @@ class UserController extends Controller
         $data['created_at'] = date('Y-m-d H:i:s');
 
         ActivityLog::insertGetId($data);
+
+
+         $log = html_entity_decode($log, ENT_QUOTES, 'UTF-8');
+        // dd($log);
+        if ($log === 'Contact made with Buyer & Quote Provided (hired)') {
+
+
+            $hireRequest = new Request([
+                'lead_id' => $lead_id,
+                'user_id' => $seller_id
+            ]);
+
+            /** @var LeadPreferenceController $leadPreference */
+            $leadPreference = app(LeadPreferenceController::class);
+
+            $leadPreference->addHiredLeads($hireRequest);
+        }
         $baseUrl = CustomHelper::setting_value('react_base_url', config('app.react_base_url'));
         return redirect($baseUrl .'sellers/leads/my-responses');
     }
