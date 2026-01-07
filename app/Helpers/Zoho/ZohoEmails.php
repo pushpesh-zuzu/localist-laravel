@@ -3266,10 +3266,21 @@ class ZohoEmails
     {
         $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Lead Info To Localists Sales Person')->value('setting_value');
 
+        $alreadySent = EmailLog::where('setting_name', 'Send Lead Info To Localists Sales Person')
+            ->where('lead_id', $sId)
+            ->exists();
+
+        if ($alreadySent) {
+            return; // already sent for this lead
+        }
+
+
+
         if ($sendWelcomeEmail) {
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
 
+            $quoteOwnerName = Self::getQuoteOwnerName($zohoId);
             if (!empty($zohoId)) {
 
                 $lead = LeadRequest::with(['category', 'customer'])->find($sId);
@@ -3285,6 +3296,7 @@ class ZohoEmails
                     'postCode' => $postCode,
                     'CreditValue' => $credit_score,
                     'sellers' => $sellers,
+                    'quoteOwnerName' => $quoteOwnerName ?? '',
                 ])->render();
                 $htmlContent = (new CssToInlineStyles())->convert($htmlView);
                 $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
@@ -3338,6 +3350,7 @@ class ZohoEmails
                 $dataE['user_id'] = $userId;
                 $dataE['from_email'] = $fromEmail;
                 $dataE['to_email'] = 'michael.marshall@localists.com';
+                $dataE['lead_id'] = $sId ?? null;
                 $dataE['message_id'] = $rel['message_id'];
                 $dataE['subject'] = $subject;
                 $dataE['setting_name'] = 'Send Lead Info To Localists Sales Person';
@@ -3347,5 +3360,39 @@ class ZohoEmails
                 EmailLog::insertGetId($dataE);
             }
         }
+    }
+
+
+
+    public static function getQuoteOwnerName($zohoId)
+    {
+
+        
+
+        $accessToken = ZohoHelper::getAccessToken();
+        $url = "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}";
+
+        $response = Http::withToken($accessToken)->get($url);
+
+        // Log request + response (debug purpose)
+        Log::info('Zoho Quote Customer API', [
+            'url' => $url,
+            'zoho_id' => $zohoId,
+            'status' => $response->status(),
+            'response' => $response->json(),
+        ]);
+
+        if ($response->successful()) {
+            return data_get($response->json(), 'data.0.Owner.name');
+        }
+
+        // Log error response
+        Log::error('Zoho Quote Customer API Failed', [
+            'zoho_id' => $zohoId,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
+        return null;
     }
 }

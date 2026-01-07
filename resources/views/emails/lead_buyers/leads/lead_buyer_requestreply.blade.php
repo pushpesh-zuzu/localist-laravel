@@ -61,7 +61,7 @@
                 <tr>
                   <td style="background:rgba(227, 246, 252, 0.5); border-radius:10px; padding:17px 25px;">
                     <p style="margin:0 0 16px;font-size:15px;font-weight:700;color:#253238;">
-                      {{ $lead['lead_name'] }} requested a reply for <strong>{{ $lead['service_name'] }}</strong>
+                      {{ ucfirst($lead['lead_name']) }} requested a reply for <strong>{{ $lead['service_name'] }}</strong>
                     </p>
                     <!-- LEAD TAGS WITH IMAGES INSTEAD OF EMOJIS -->
 
