@@ -659,10 +659,10 @@ class MyRequestController extends Controller
                 }
                 
                   $sellersforMail = $leadService->getAllSellers($lead,null,2);
-                  if(!empty($sellersforMail['response']['sellers'])){
-                    $allSellers = $sellersforMail['response']['sellers'];
+                  
+                    $allSellers = $sellersforMail['response']['sellers'] ?? [];
                     ZohoEmails::sendLeadInfoToLocallistSalesPerson($euId, $sId, $allSellers);
-                   }
+                  
                 //Auto bid related emails
                 app(self::class)->sendNewLeadRequestAutoBidOff();
                 app(self::class)->sendLeadEmailCreditEnough();
