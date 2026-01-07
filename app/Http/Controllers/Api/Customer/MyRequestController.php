@@ -656,13 +656,8 @@ class MyRequestController extends Controller
                     foreach($sortedSellers as $seller){
                         ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                     }
-                }
-                
-                  $sellersforMail = $leadService->getAllSellers($lead,null,2);
-                  
-                    $allSellers = $sellersforMail['response']['sellers'] ?? [];
-                    ZohoEmails::sendLeadInfoToLocallistSalesPerson($euId, $sId, $allSellers);
-                  
+                }                
+                                  
                 //Auto bid related emails
                 app(self::class)->sendNewLeadRequestAutoBidOff();
                 app(self::class)->sendLeadEmailCreditEnough();
@@ -680,6 +675,18 @@ class MyRequestController extends Controller
                     app(D7LeadFinderService::class)->fetchSuppliersByLeadId($sId);
                 });
              }
+
+              CustomHelper::runInBackground(function() use ($euId, $sId, $leadService) {
+
+                    $lead = LeadRequest::find($sId);
+
+                    $sellersForMail = $leadService->getAllSellers($lead, null, 2);
+                    $allSellers = $sellersForMail['response']['sellers'] ?? [];
+
+                    // Send email even if $allSellers is empty
+                    ZohoEmails::sendLeadInfoToLocallistSalesPerson($euId, $sId, $allSellers);
+
+                });
 
             //  if (!empty($euId)) {
             //     CustomHelper::runInBackground(function() use ($sId, $euId, $leadService) {
