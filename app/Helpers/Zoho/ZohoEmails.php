@@ -2708,6 +2708,7 @@ class ZohoEmails
                         'created_at' => now(),
                     ]);
 
+                    $bccEmail = 'Michael.marshall@localists.com';
                     $response = Http::withToken($accessToken)
                         ->post($url, [
                             'data' => [
@@ -2719,6 +2720,11 @@ class ZohoEmails
                                     'to' => [
                                         [
                                             'email' => $toEmail
+                                        ]
+                                    ],
+                                    'bcc' => [
+                                        [
+                                            'email' =>  $bccEmail // Your single BCC email here
                                         ]
                                     ],
                                     'subject' => $subject,
@@ -3368,7 +3374,7 @@ class ZohoEmails
     public static function getQuoteOwnerName($zohoId)
     {
 
-        
+
 
         $accessToken = ZohoHelper::getAccessToken();
         $url = "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}";
