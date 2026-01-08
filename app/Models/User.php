@@ -251,4 +251,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(PlanHistory::class, 'user_id');
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }

@@ -113,7 +113,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="3" align="center"
+                                        <td colspan="4" align="center"
                                             style="border:1px solid #e5e7eb;font-size:13px;color:#999;">
                                             No suppliers matched for this lead.
                                         </td>

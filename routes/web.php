@@ -30,8 +30,9 @@ use App\Helpers\Zoho\ZohoHelper;
 use App\Http\Controllers\ZohoOAuthTestController;
 use Illuminate\Support\Facades\Http;
 use App\Helpers\Zoho\ZohoEmails;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\d7LeadSupplierController;
-
+use App\Http\Controllers\PurchaseInvoiceHistoryController;
 
 Route::get('phpinfo', function () {
     phpinfo();
@@ -184,10 +185,14 @@ Route::middleware('auth:admin')->group(function () {
 
 
     Route::get('d7-lead-supplier', [d7LeadSupplierController::class, 'd7LeadSupplierList'])->name('d7LeadSupplierList');
-
     Route::get('/d7-lead-supplier-excel', [d7LeadSupplierController::class, 'exportd7LeadSupplierExcel'])->name('d7-lead-supplier.excel');
-
     Route::get('/d7-lead-supplier-csv', [d7LeadSupplierController::class, 'exportd7LeadSupplierCsv'])->name('d7-lead-supplier.csv');
+
+
+Route::get('purchase-invoice-history', [PurchaseInvoiceHistoryController::class, 'purchaseInvoiceHistoryList'])->name('purchase.invoice.history');
+ Route::post('/admin-download-invoice', [PaymentController::class, 'downloadInvoice'])->name('plan.download-invoice');;
+    
+
 });
 
 

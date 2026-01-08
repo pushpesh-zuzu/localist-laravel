@@ -3095,6 +3095,7 @@ class ZohoEmails
         $htmlView = view('emails.customers.notify-new-professional-postcode', [
             'baseUrl' => config('app.react_base_url'),
             'appURL' => config('app.url'),
+            'siteUrl' => config('app.url'),
             'customerName' => $customerName ?? '',
             'serviceName' => $serviceName ?? '',
             'postCode' => $postCode,

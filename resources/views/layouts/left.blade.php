@@ -182,6 +182,17 @@
       </a>
     </li>
     @endcan
+
+     @can('invoicehistory.viewlist')
+    <li class="nav-item">
+      <a href="{{ route('purchase.invoice.history') }}" class="nav-link {{ request()->routeIs('purchase.invoice.history') ? 'active' : '' }}">
+        <i class="fa-solid fa-file-invoice-dollar nav-icon"></i>
+        {{ __('Purchase Invoice History') }}
+      </a>
+    </li>
+    @endcan
+
+    
     @can('blog.viewlist')
     <li class="nav-item">
       <a href="{{ route('blogs.index') }}" class="nav-link {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
