@@ -54,10 +54,10 @@ class DrivewayInstallationForm extends Controller
         $serviceId = 51;
 
         $questions = $this->getFacebookQuestions($request, $serviceId);
-        $name = $payload['payload']['data']['full name'];
-        $email = $payload['payload']['data']['email'];
-        $phone = $payload['payload']['data']['phone_number'];
-        $postcode = $payload['payload']['data']['post_code'];
+        $name = $payload['data']['full name'];
+        $email = $payload['data']['email'];
+        $phone = $payload['data']['phone_number'];
+        $postcode = $payload['data']['post_code'];
 
         $vc = CustomHelper::getCityNameFromPostcode($postcode);
         $city = $vc['valid'] ? $vc['city'] : 'N/A';
