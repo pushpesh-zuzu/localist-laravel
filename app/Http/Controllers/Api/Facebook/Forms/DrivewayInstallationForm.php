@@ -182,11 +182,17 @@ class DrivewayInstallationForm extends Controller
     {
         
 
-        /**
-         * Facebook sends flattened question/answer pairs here.
-         * This is the ONLY reliable structure to use.
-         */
-        $facebookFields = collect($payload['payload']['mappable_field_data'] ?? []);
+        // If coming from internal call
+        if (isset($payload['payload']['mappable_field_data'])) {
+            $facebookFields = collect($payload['payload']['mappable_field_data']);
+        }
+        // If coming from Make (Facebook)
+        elseif (isset($payload['mappable_field_data'])) {
+            $facebookFields = collect($payload['mappable_field_data']);
+        }
+        else {
+            $facebookFields = collect();
+        }
 
         /**
          * Explicitly exclude non-question fields.
