@@ -58,6 +58,9 @@ class ZohoQuoteCustomers
                 if ($type) {
                     AbandonedUser::where('id', $userId)
                         ->update(['zoho_record_id' => $zohoRecordId]);
+                }else{
+                    User::where('id', $userId)
+                        ->update(['zoho_record_id' => $zohoRecordId]);
                 }
             }
         } catch (\Throwable $e) {

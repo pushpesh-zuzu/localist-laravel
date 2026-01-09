@@ -39,7 +39,6 @@ use App\Services\D7LeadFinderService;
 use App\Services\LeadService;
 use Exception;
 use GuzzleHttp\Client;
-
 use Illuminate\Container\Attributes\Log as AttributesLog;
 
 use App\Http\Controllers\Api\Customer\MyRequestController;
@@ -47,7 +46,12 @@ use App\Http\Controllers\Api\Customer\MyRequestController;
 
 class DrivewayInstallationForm extends Controller
 {
-
+    public function tt(Request $request){
+        $accessToken = ZohoHelper::getAccessToken();
+        $userId = User::where('email','test-lead-new-14@test.com')->value('id');
+        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+        print_r('zohoId: ' .$zohoId);
+    }
 
     public function getFacebookLeadsDrivewayInstallationFrom(Request $request, LeadService $leadService){
         $payload   = $request->all();

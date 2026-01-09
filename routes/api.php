@@ -28,6 +28,8 @@ use App\Http\Controllers\Api\Facebook\Forms\DrivewayInstallationForm;
 
 Route::post('get-facebook-leads-driveway-installation-from',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFrom']);
 
+Route::post('get-facebook-leads-tt',[DrivewayInstallationForm::class,'tt']);
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
