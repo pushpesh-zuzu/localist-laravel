@@ -1356,7 +1356,7 @@ class CronController extends Controller
 
         $totalEmailsSent = 0;
 
-        LeadRequest::whereIn('status', ['new', 'pending'])
+        LeadRequest::whereIn('status', ['pending'])
             ->whereHas('recommendedLeads')
             ->where('created_at', '<=', now()->subDays(3))
             ->whereNull('deleted_at')
