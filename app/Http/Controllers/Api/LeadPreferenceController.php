@@ -686,7 +686,8 @@ class LeadPreferenceController extends Controller
 
         $activityname = $buyerName . ' updated status to hired';
         $isActivity = self::getActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname);
-
+          $statusUpdate = false;
+          //dd($lead->status);
         if($lead->status != 'hired'){
             LeadRequest::where('id',$aVals['lead_id'])->update([
                 'status'=>'hired',

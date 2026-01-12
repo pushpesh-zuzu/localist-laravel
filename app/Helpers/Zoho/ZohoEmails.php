@@ -365,10 +365,16 @@ class ZohoEmails
                 if (!empty($user)) {
 
 
-                    $htmlView = view('emails.customers.registration.customer_encouragement',  [
+                    $emailsSentCount = EmailLog::where('setting_name', 'Send Abandoned Encouragement Email')->count();
+                    // Use first template if count is even, second if odd
+                    $variant = $emailsSentCount % 2 === 0 ? 'even' : 'odd';
+
+                    $htmlView = view('emails.customers.registration.customer_encouragement', [
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
-                        'name' => $user->name
+                        'name' => $user->name,
+                        'variant' => $variant,
+                        'serviceName' => $serviceName ?? '',
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -3293,6 +3299,7 @@ class ZohoEmails
                 $lead = LeadRequest::with(['category', 'customer'])->find($sId);
 
                 $serviceName  = optional($lead->category)->name;
+                $customerName  = optional($lead->customer)->name;
                 $postCode  = $lead->postcode;
                 $credit_score  = $lead->credit_score;
 
@@ -3302,6 +3309,7 @@ class ZohoEmails
                     'serviceName' => $serviceName,
                     'postCode' => $postCode,
                     'CreditValue' => $credit_score,
+                    'customerName' => $customerName,
                     'sellers' => $sellers,
                     'quoteOwnerName' => $quoteOwnerName ?? '',
                 ])->render();
@@ -3401,5 +3409,169 @@ class ZohoEmails
         ]);
 
         return null;
+    }
+
+
+    public static function sendLeadRequestHiredStatusEmailToCustomer($leadId, $sellers, $nextStep)
+    {
+        $sendEmail = EmailSetting::where('setting_name', 'Lead Request Hired Status Email to Customer')
+            ->value('setting_value');
+
+        if (!$sendEmail) {
+            return;
+        }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            Log::error('Zoho access token not available while sending Reviews Hired Lead Buyer.');
+            return;
+        }
+
+        $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+
+        $serviceName  = optional($lead->category)->name;
+        $customerName  = optional($lead->customer)->name;
+        $customerEmail = optional($lead->customer)->email;
+        $customerId    = optional($lead->customer)->id;
+
+        if (!$customerEmail) {
+            Log::error("Customer email missing for lead {$leadId}");
+            return;
+        }
+
+        if ($nextStep == '4') {
+           $subject = "Your {$serviceName} quote request has been closed";
+        } else {
+            $subject = "Update your quote request in one click";
+        }
+
+
+        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
+        if (empty($zohoId)) {
+            return;
+        }
+        $htmlView = view('emails.customers.notify-lead-request-hired-status', [
+            'baseUrl' => config('app.react_base_url'),
+            'siteUrl' => config('app.url'),
+            'leadId' => $leadId ?? '',
+            'customerName' => $customerName ?? '',
+            'customerId' => $customerId ?? '',
+            'serviceName' => $serviceName ?? '',
+            'sellers' => $sellers,
+            'nextStep' => $nextStep,
+
+        ])->render();
+
+        $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+
+        $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+        $fromName  = CustomHelper::setting_value('zoho_default_from_name', 'Localists.com');
+
+        DB::table('zoho_logs')->insert([
+            'url' => $url,
+            'function_name' => 'sendLeadRequestHiredStatusEmailToCustomer',
+            'ipaddress' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [[
+                'from' => [
+                    'email' => $fromEmail,
+                    'user_name' => $fromName
+                ],
+                'to' => [['email' => $customerEmail]],
+                'subject' => $subject,
+                'content' => $htmlContent,
+                'mail_format' => 'html',
+                'org_email' => true
+            ]]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+        $messageId = $rel['message_id'] ?? null;
+        $dataE['user_id'] = $customerId;
+        $dataE['from_email'] = $fromEmail;
+        $dataE['to_email'] = $customerEmail;
+        $dataE['lead_id'] = $leadId ?? null;
+        $dataE['message_id'] = $messageId;
+        $dataE['subject'] = $subject;
+        $dataE['setting_name'] = 'Lead Request Hired Status Email to Customer';
+        $dataE['content'] = $htmlContent;
+        $dataE['step'] = $nextStep;
+        $dataE['zoho_url'] = $url;
+        $dataE['response'] = json_encode($rel);
+        EmailLog::insertGetId($dataE);
+    }
+
+
+    public static function sendLeadBuyerLowCreditEmail($userId)
+    {
+        $sendEmail = EmailSetting::where('setting_name', 'Lead Buyer Credit Below Fifty Email')->value('setting_value');
+        if ($sendEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::where('id', $userId)->first();
+                if (!empty($user)) {
+
+                    $htmlView = view('emails.lead_buyers.leads.lead_buyer_low_credit_alert',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
+                        'name' => $user->name,
+                        'email' => $user->email,
+                    ])->render();
+
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = 'Don’t miss new Local leads — credits running low';
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'sendLeadBuyerLowCreditEmail',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Lead Buyer Credit Below Fifty Email';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+        }
     }
 }

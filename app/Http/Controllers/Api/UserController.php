@@ -1118,5 +1118,42 @@ public function emailRequestTopFiveMatches($lead_id, $buyer_id, Request $request
     }
 }
 
+ public function customerUpdateLeadStatus(Request $request, $lead_id, $seller_id, $buyer_id, $status)
+    {
+        try {
+
+            $request->merge([
+                'lead_id'   => $lead_id,
+                'seller_id' => $seller_id,
+                'user_id'    => $buyer_id,
+            ]);
+
+
+            $leadPreferenceController = new LeadPreferenceController();
+
+
+            $submitResult = $leadPreferenceController->submitLeads($request);
+            $submitData = $submitResult->getData(true);
+
+
+
+            if (($submitData['success'] ?? false) === false) {
+                return $this->redirectToReactError($submitData['errors'] ?? $submitData['message'] ?? 'Lead status update failed');
+            }
+
+
+            return $this->redirectToReactSuccess($submitData['message'] ?? 'Request submited sucessfully');
+        } catch (\Exception $e) {
+
+            Log::error('Error in customerUpdateLeadStatus: ' . $e->getMessage(), [
+                'lead_id'   => $lead_id,
+                'seller_id' => $seller_id,
+                'buyer_id'  => $buyer_id,
+                'status'    => $status
+            ]);
+
+            return $this->redirectToReactError('Something went wrong: ' . $e->getMessage());
+        }
+    }
 
 }

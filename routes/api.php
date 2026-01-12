@@ -60,6 +60,7 @@ Route::post('/contact-us', [ContactUsController::class, 'store']);
 
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
 Route::get('email-customer-request-top-five-matches/{lead_id}/{buyer_id}', [UserController::class, 'emailRequestTopFiveMatches']);
+Route::get('customer-lead-status-update/{lead_id}/{seller_id?}/{customer_id}/{status}', [UserController::class, 'customerUpdateLeadStatus']);
 
 
 

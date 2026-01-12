@@ -18,6 +18,7 @@ use App\Helpers\CustomHelper;
 use App\Models\AbandonedUser;
 use Illuminate\Support\Facades\Log;
 use App\Services\D7LeadFinderService;
+
 class CronController extends Controller
 {
     public function onHourlyBasis(Request $request, LeadService $leadService)
@@ -60,7 +61,7 @@ class CronController extends Controller
         $d7Service = app(D7LeadFinderService::class);
         $d7Response = $d7Service->getSearchSuppliers();
 
-       $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
+        $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
 
         return response()->json([
             'status' => 'success',
@@ -82,9 +83,11 @@ class CronController extends Controller
         $newLeadAfter5days = $this->checkCreditAfter5Days();
 
         $sendNextDayExpiredQuoteEmail = $this->sendNextDayExpiredQuoteEmail();
-       $sendNewProPostcodeEmail = $this->sendnotifyCustomerNewProfessionalinPostcodeEmail();
-        
+        $sendNewProPostcodeEmail = $this->sendnotifyCustomerNewProfessionalinPostcodeEmail();
+        $sendLeadRequestStatusEmailToCustomer = $this->sendLeadRequestStatusEmailToCustomer();
+         $sendCreditBelowFiftyEmail = $this->sendCreditBelowFiftyEmail();
 
+        
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
@@ -92,7 +95,9 @@ class CronController extends Controller
                 'new_lead_after_7_days' => $newLeadAfter7days,
                 'new_lead_after_5_days' => $newLeadAfter5days,
                 'next_day_expired_quote_email' => $sendNextDayExpiredQuoteEmail,
-                'pro_available_postcode_email' => $sendNewProPostcodeEmail
+                'pro_available_postcode_email' => $sendNewProPostcodeEmail,
+                'sendLeadRequestStatusEmailToCustomer' => $sendLeadRequestStatusEmailToCustomer,
+                'sendCreditBelowFiftyEmail' => $sendCreditBelowFiftyEmail
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -1253,9 +1258,6 @@ class CronController extends Controller
     }
 
 
-
-
-
     public function sendnotifyCustomerNewProfessionalinPostcodeEmail()
     {
         $batchSize = 500;
@@ -1323,11 +1325,10 @@ class CronController extends Controller
 
                         if ($sellerCount > 0) {
 
-                            ZohoEmails::notifyCustomerNewProfessionalinPostcode($lead->id);                            
+                            ZohoEmails::notifyCustomerNewProfessionalinPostcode($lead->id);
 
                             $totalEmailsSent++;
                         }
-
                     } catch (\Throwable $e) {
                         Log::error("Error sending 24hr seller email for Lead ID {$lead->id}: {$e->getMessage()}");
                         continue;
@@ -1341,5 +1342,161 @@ class CronController extends Controller
             'timestamp' => now()->toDateTimeString(),
         ]);
     }
-   
+
+
+    public function sendLeadRequestStatusEmailToCustomer()
+    {
+        $batchSize = 500;
+        $emailSchedule = [
+            1 => 3,
+            2 => 7,
+            3 => 10,
+            4 => 14,
+        ];
+
+        $totalEmailsSent = 0;
+
+        LeadRequest::whereIn('status', ['new', 'pending'])
+            ->whereHas('recommendedLeads')
+            ->where('created_at', '<=', now()->subDays(3))
+            ->whereNull('deleted_at')
+            ->whereHas('customer', function ($query) {
+                $query->whereNotNull('zoho_record_id')
+                    ->whereNull('deleted_at');
+            })
+            ->orderBy('id')
+            ->chunk($batchSize, function ($leads) use (&$totalEmailsSent, $emailSchedule) {
+
+                foreach ($leads as $lead) {
+
+                    try {
+
+                        $lastStep = EmailLog::where('user_id', $lead->customer_id)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'Lead Request Hired Status Email to Customer')
+                            ->max('step');
+
+                        $lastEmailDate = EmailLog::where('user_id', $lead->customer_id)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'Lead Request Hired Status Email to Customer')
+                            ->max('created_at');
+
+                        $nextStep = $lastStep ? $lastStep + 1 : 1;
+
+
+                        if ($nextStep > 4) {
+                            continue;
+                        }
+
+                        $requiredDays = $emailSchedule[$nextStep];
+
+                        $nextEligibleDate = $lastEmailDate
+                            ? \Carbon\Carbon::parse($lastEmailDate)->addDays($requiredDays)
+                            : $lead->created_at->addDays($requiredDays);
+
+                        if (now()->lt($nextEligibleDate)) {
+                            continue;
+                        }
+
+                        $bids = RecommendedLead::where('buyer_id', $lead->customer_id)
+                            ->where('lead_id', $lead->id)
+                            ->orderBy('distance', 'ASC')
+                            ->get();
+
+                        if ($bids->isEmpty()) {
+                            continue;
+                        }
+
+                        $sellerIds = $bids->pluck('seller_id')->unique();
+
+                        $sellers = User::whereIn('id', $sellerIds)->get();
+
+                        if ($sellers->isEmpty()) {
+                            continue;
+                        }
+
+                        ZohoEmails::sendLeadRequestHiredStatusEmailToCustomer($lead->id, $sellers, $nextStep);
+
+                        $totalEmailsSent++;
+                       
+                    } catch (\Throwable $e) {
+                        Log::error(
+                            "Lead email error | Lead ID {$lead->id} | {$e->getMessage()}"
+                        );
+                    }
+                }
+            });
+
+        return response()->json([
+            'status'        => 'success',
+            'emails_sent'  => $totalEmailsSent,
+            'timestamp'    => now()->toDateTimeString(),
+        ]);
+    }
+
+
+   public function sendCreditBelowFiftyEmail()
+{
+   // dd('ashish');
+    $batchSize = 500;
+    $totalEmailsSent = 0;
+
+    User::where('user_type', 1)
+        ->where('form_status', 1)
+        ->where('total_credit', '<', 50)  // Current credit below 50
+        ->whereNotNull('email')
+        ->whereNotNull('zoho_record_id')
+        ->whereNull('deleted_at')
+        ->orderBy('id', 'DESC')
+        ->chunk($batchSize, function ($users) use (&$totalEmailsSent) {
+
+            foreach ($users as $user) {
+                try {
+
+                    // Last time credit was purchased (recovery point)
+                    $lastRecoveredAt = DB::table('purchase_histories')
+                        ->where('user_id', $user->id)
+                        ->where('payment_type', 0)   // 0 = credit added
+                        ->orderBy('created_at', 'DESC')
+                        ->value('created_at');
+
+                    //  Emails sent after last recovery
+                    $emailQuery = EmailLog::where('user_id', $user->id)
+                        ->where('setting_name', 'Lead Buyer Credit Below Fifty Email');
+
+                    if ($lastRecoveredAt) {
+                        $emailQuery->where('created_at', '>', $lastRecoveredAt);
+                    }
+
+                    $emailsSentCount = $emailQuery->count();
+
+                    // Stop after 3 emails
+                    if ($emailsSentCount >= 3) {
+                        continue;
+                    }
+
+                    // Weekly gap check
+                    $lastEmailAt = $emailQuery->orderBy('created_at', 'DESC')->value('created_at');
+                    if ($lastEmailAt && now()->diffInDays($lastEmailAt) < 7) {
+                        continue;
+                    }
+
+                    
+                    ZohoEmails::sendLeadBuyerLowCreditEmail($user->id);
+                    $totalEmailsSent++;
+                   return false;
+                } catch (\Throwable $e) {
+                    Log::error("Failed to send low credit email for user {$user->id}: {$e->getMessage()}");
+                    continue;
+                }
+            }
+        });
+
+    return response()->json([
+        'status' => 'success',
+        'emails_sent' => $totalEmailsSent,
+        'timestamp' => now()->toDateTimeString(),
+    ]);
+}
+
 }

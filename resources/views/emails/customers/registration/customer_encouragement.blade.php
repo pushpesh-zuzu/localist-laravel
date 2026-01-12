@@ -47,7 +47,7 @@
 
             .pad-outer {
                 padding-left: 35px !important;
-              
+
             }
 
             .hide-mobile {
@@ -120,7 +120,11 @@
                                 <tr>
                                     <td style="padding:22px 20px 26px;" class="body-text">
                                         <div class="center title" style="font-size:18px; font-weight:900; color:#253238; line-height:26px;">
+                                            @if($variant === 'even')
                                             Just one more step to activate your Localists<br>account.
+                                            @else
+                                            Just one more step to complete your free quote<br> request.
+                                            @endif
                                         </div>
                                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
                                             <tr>
@@ -128,7 +132,18 @@
                                                     <table cellpadding="0" cellspacing="0" style="max-width:540px;">
                                                         <tr>
                                                             <td bgcolor="#00AFE3" style="padding:12px 18px; border-radius:6px; font-size:12px;  color:#ffffff; text-align:center; line-height:18px;">
+                                                                @if($variant === 'even')
                                                                 We noticed you started signing up but didn’t finish. Complete your registration to get access to top local professionals — you're just 1 step away.
+
+                                                                @else
+
+                                                                We noticed you started requesting a quote for {{ $serviceName ?? 'a service' }}, but didn’t finish.
+                                                                Complete your free quote request now to receive responses from top local professionals — you’re just 1 step away.
+
+                                                                @endif
+
+
+
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -141,7 +156,11 @@
                                             </tr>
                                         </table>
                                         <div class="center" style="font-size:14px; font-weight:800; color:#00AFE3; margin-top:6px;">
+                                            @if($variant === 'even')
                                             By registering, you can:
+                                            @else
+                                            By completing your free quote request, you can:
+                                            @endif
                                         </div>
 
                                         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;">
@@ -181,7 +200,11 @@
                                             <tr>
                                                 <td bgcolor="#ff9933" style="padding:8px 22px; border-radius:100px;">
                                                     <a class="cta-link" href="{{$baseUrl}}" style="font-size:15px; font-weight:800; color:#ffffff; text-decoration:none; display:inline-block;">
+                                                        @if($variant === 'even')
                                                         Complete Registration
+                                                        @else
+                                                        Complete My Free Quote Request
+                                                        @endif
                                                     </a>
                                                 </td>
                                             </tr>
@@ -197,7 +220,15 @@
                     <tr>
                         <td align="center" style="padding:18px 20px 10px;">
                             <div class="body-text" style="font-size:12px; font-weight:600; color:#253238; line-height:18px;">
+
+                                @if($variant === 'even')
                                 Our team is here to assist you. Email us at <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#00AFE3; text-decoration:none;">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>
+                                @else
+                                Our team is here to help. <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#00AFE3; text-decoration:none;">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>
+                                @endif
+
+
+
                             </div>
                         </td>
                     </tr>
@@ -205,7 +236,17 @@
                     <!-- EMAIL STRIP -->
                     <tr>
                         <td align="center" bgcolor="#e9f7fd" style="padding:16px 30px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#00afe3;">
-                            <span style="display:inline-block; padding-bottom:1px; color:#253238; font-weight:700;">We’re excited to help you grow</span>
+                            <span style="display:inline-block; padding-bottom:1px; color:#253238; font-weight:700;">
+
+
+                                @if($variant === 'even')
+                                We’re excited to help you grow
+                                @else
+                                We’re excited to help you find the right professional.
+
+                                @endif
+
+                            </span>
                         </td>
                     </tr>
 

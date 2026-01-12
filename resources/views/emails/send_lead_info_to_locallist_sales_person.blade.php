@@ -38,6 +38,15 @@
 
                                 <tr>
                                     <td style="font-size:14px;color:#555;padding-bottom:8px;">
+                                        <strong>Quote Customer Name:</strong>
+                                    </td>
+                                    <td style="font-size:14px;color:#222;padding-bottom:8px;">
+                                        {{ ucfirst($customerName) ?? 'N/A' }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="font-size:14px;color:#555;padding-bottom:8px;">
                                         <strong>Postcode:</strong>
                                     </td>
                                     <td style="font-size:14px;color:#222;padding-bottom:8px;">

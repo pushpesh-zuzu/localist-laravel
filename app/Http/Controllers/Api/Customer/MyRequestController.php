@@ -676,17 +676,18 @@ class MyRequestController extends Controller
                 });
              }
 
-              CustomHelper::runInBackground(function() use ($euId, $sId, $leadService) {
+              CustomHelper::runInBackground(function () use ($euId, $sId, $leadService) {
 
-                    $lead = LeadRequest::find($sId);
+                $lead = LeadRequest::find($sId);
 
-                    $sellersForMail = $leadService->getAllSellers($lead, null, 2);
-                    $allSellers = $sellersForMail['response']['sellers'] ?? [];
+                $sellersForMail = $leadService->getAllSellers($lead, null, 2);
+                $allSellers = collect($sellersForMail['response']['sellers'] ?? [])
+                    ->sortByDesc('total_credit')   // highest credit first
+                    ->values();
 
-                    // Send email even if $allSellers is empty
-                    ZohoEmails::sendLeadInfoToLocallistSalesPerson($euId, $sId, $allSellers);
-
-                });
+                // Send email even if $allSellers is empty
+                ZohoEmails::sendLeadInfoToLocallistSalesPerson($euId, $sId, $allSellers);
+            });
 
             //  if (!empty($euId)) {
             //     CustomHelper::runInBackground(function() use ($sId, $euId, $leadService) {
