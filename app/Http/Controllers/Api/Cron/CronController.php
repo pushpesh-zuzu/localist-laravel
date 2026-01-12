@@ -1484,7 +1484,7 @@ class CronController extends Controller
                     
                     ZohoEmails::sendLeadBuyerLowCreditEmail($user->id);
                     $totalEmailsSent++;
-                   return false;
+                  
                 } catch (\Throwable $e) {
                     Log::error("Failed to send low credit email for user {$user->id}: {$e->getMessage()}");
                     continue;
