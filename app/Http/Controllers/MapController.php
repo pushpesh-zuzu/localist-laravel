@@ -36,6 +36,7 @@ class MapController extends Controller
             ->select(
                 'users.id as id',
                 'users.name as name',
+                'users.city as city',
                 'users.zipcode as zipcode',
                 'users.total_credit as total_credit',
                 'postcodes.latitude as latitude',
@@ -51,6 +52,7 @@ class MapController extends Controller
             ->select(
                 'users.id as id',
                 'users.name as name',
+                'users.city as city',
                 'users.zipcode as zipcode',
                 'users.total_credit as total_credit',
                 'postcodes.latitude as latitude',
@@ -65,6 +67,7 @@ class MapController extends Controller
             ->join('users', 'lead_requests.customer_id', '=', 'users.id') // INNER JOIN as in your SQL
             ->leftJoin('postcodes', 'lead_requests.postcode', '=', 'postcodes.postcode')
             ->select(
+                'users.name',
                 'lead_requests.id',
                 'lead_requests.city',
                 'lead_requests.postcode',
@@ -195,5 +198,84 @@ class MapController extends Controller
             );
         }
     }
+
+
+    public function exportCsv(Request $request)
+    {
+        // Reuse existing data logic
+        $response = $this->data($request)->getData(true);
+
+        $filename = 'service_map_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ];
+
+        return response()->stream(function () use ($response) {
+            $out = fopen('php://output', 'w');
+
+            // ---- CSV HEADER ----
+            fputcsv($out, [
+                'Type',                // credit_buyer | no_credit_buyer | lead
+                'ID',
+                'Name',
+                'City',
+                'Postcode',
+                'Total Credit',
+                'Latitude',
+                'Longitude',
+                'Profile Link',
+            ]);
+
+            // ---- CREDIT BUYERS ----
+            foreach ($response['crediBuyers'] ?? [] as $b) {
+                fputcsv($out, [
+                    'credit_buyer',
+                    $b['id'] ?? '',
+                    $b['name'] ?? '',
+                    $b['city'] ?? '',
+                    $b['zipcode'] ?? '',
+                    $b['total_credit'] ?? '',
+                    $b['latitude'] ?? '',
+                    $b['longitude'] ?? '',
+                    $b['profile_link'] ?? '',
+                ]);
+            }
+
+            // ---- NO CREDIT BUYERS ----
+            foreach ($response['noCreditBuyers'] ?? [] as $b) {
+                fputcsv($out, [
+                    'no_credit_buyer',
+                    $b['id'] ?? '',
+                    $b['name'] ?? '',
+                    $b['city'] ?? '',
+                    $b['zipcode'] ?? '',
+                    $b['total_credit'] ?? '0',
+                    $b['latitude'] ?? '',
+                    $b['longitude'] ?? '',
+                    $b['profile_link'] ?? '',
+                ]);
+            }
+
+            // ---- LEADS ----
+            foreach ($response['leads'] ?? [] as $l) {
+                fputcsv($out, [
+                    'lead',
+                    $l['id'] ?? '',
+                    $l['name'] ?? '',
+                    $l['city'] ?? '',
+                    $l['postcode'] ?? '',
+                    '',
+                    $l['latitude'] ?? '',
+                    $l['longitude'] ?? '',
+                    '',
+                ]);
+            }
+
+            fclose($out);
+        }, 200, $headers);
+    }
+
 
 }

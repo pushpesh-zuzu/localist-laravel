@@ -180,20 +180,29 @@
 
     <div class="card mb-4">
        <div class="card-body" style="padding: 0px !important; ">
-            <div class="row" style="padding:10px;">
-                <div class="col-md-4">
+            <div class="row align-items-center" style="padding:10px;">
+                <div class="col-md-3">
                     <strong>Buyer with credit:</strong>
                     <span id="buyer-with-credit-count"></span>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <strong>Buyer without credit:</strong>
                     <span id="buyer-without-credit-count"></span>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <strong>Lead:</strong>
                     <span id="lead-count"></span>
                 </div>
+                <div class="col-md-3 text-end">
+                    <a href="{{ route('service-map.export') }}"
+                    class="btn btn-sm btn-outline-primary"
+                    target="_blank"
+                    title="Export service map data as CSV">
+                        ⬇ Export CSV
+                    </a>
+                </div>
             </div>
+
             <div class="row">
                 <div class="col-md-12">
                     <div id="map" style="height:700px; position:relative;">

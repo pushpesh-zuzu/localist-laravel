@@ -117,6 +117,7 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::get('/service-map', [MapController::class, 'index'])->name('service-map.index');
     Route::get('/service-map/data', [MapController::class, 'data'])->name('service-map.data');
+    Route::get('/service-map/export', [MapController::class, 'exportCsv'])->name('service-map.export');
 
     Route::resource('sectors', SectorController::class);
 
