@@ -29,8 +29,8 @@ class D7LeadFinderService
     {
         try {
 
-           $sendEmail = EmailSetting::where('setting_name', 'D7 Supplier Send Mail')
-            ->value('setting_value');
+            $sendEmail = EmailSetting::where('setting_name', 'D7 Supplier Send Mail')
+                ->value('setting_value');
 
             if (!$sendEmail) {
                 return null;
@@ -164,6 +164,11 @@ class D7LeadFinderService
             ->where('created_at', '<', now()->subMinutes(5))
             ->get();
 
+        $skipEmails = [
+            'willpulford@ravenstonegardenservices.com',
+            'darren@newhomeimprovement.gro',
+        ];
+
         foreach ($searches as $search) {
             try {
                 $response = Http::timeout(15)->get("{$this->baseUrl}/results/", [
@@ -174,12 +179,24 @@ class D7LeadFinderService
                 $response->throw();
                 $suppliers = $response->json();
 
+              
                 if (empty($suppliers)) {
                     $search->update(['status' => 'completed']);
                     continue;
                 } else {
                     // Lock search
                     $search->update(['status' => 'processing']);
+                }
+
+                $suppliers = array_filter($suppliers, function ($supplier) use ($skipEmails) {
+                    return isset($supplier['email']) && !in_array(strtolower($supplier['email']), $skipEmails);
+                });
+                
+               
+                if (empty($suppliers)) {
+                    // If all suppliers are skipped, mark search as completed
+                    $search->update(['status' => 'completed']);
+                    continue;
                 }
 
                 $leadRequest = LeadRequest::with(['customer', 'category'])->find($search->lead_id);
@@ -192,11 +209,7 @@ class D7LeadFinderService
                     ])
                     ->toArray();
 
-                // $suppliers1 = [
-                //     ['name' => 'Dummy Supplier 1', 'email' => 'ashishg@zuzucodes.com', 'phone' => '1234567890'],
-                //     ['name' => 'Dummy Supplier 2', 'email' => 'abuzer@zuzucodes.com', 'phone' => '0987654321'],
 
-                // ];
 
                 // 🔹 Batch size = 10 suppliers per job
                 $batches = array_chunk($suppliers, 10);
