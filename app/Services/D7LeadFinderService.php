@@ -38,6 +38,22 @@ class D7LeadFinderService
 
             $leadRequest = LeadRequest::with(['customer', 'category'])->find($leadId);
 
+
+            $customerName  = strtolower($leadRequest->customer->name ?? '');
+            $customerEmail = strtolower($leadRequest->customer->email ?? '');
+
+            if (str_contains($customerName, 'test') ||   str_contains($customerEmail, 'test')) {
+                Log::info('D7 Search skipped for test/testing customer', [
+                    'lead_id' => $leadId,
+                    'name'    => $customerName,
+                    'email'   => $customerEmail,
+                ]);
+
+                return null;
+            }
+
+
+
             if (!$leadRequest) {
                 Log::warning('D7 Lead not found', ['lead_id' => $leadId]);
                 return null;
@@ -167,6 +183,9 @@ class D7LeadFinderService
         $skipEmails = [
             'willpulford@ravenstonegardenservices.com',
             'darren@newhomeimprovement.gro',
+            'Newgardenhomecompany.com',
+            'Newdrivewaycompany.com',
+            'Newhomeimprovement.com',
         ];
 
         foreach ($searches as $search) {
@@ -179,7 +198,7 @@ class D7LeadFinderService
                 $response->throw();
                 $suppliers = $response->json();
 
-              
+
                 if (empty($suppliers)) {
                     $search->update(['status' => 'completed']);
                     continue;
@@ -191,8 +210,8 @@ class D7LeadFinderService
                 $suppliers = array_filter($suppliers, function ($supplier) use ($skipEmails) {
                     return isset($supplier['email']) && !in_array(strtolower($supplier['email']), $skipEmails);
                 });
-                
-               
+
+
                 if (empty($suppliers)) {
                     // If all suppliers are skipped, mark search as completed
                     $search->update(['status' => 'completed']);

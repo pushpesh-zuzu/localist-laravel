@@ -180,6 +180,8 @@
                 </tr>
               </table>
 
+              @endforeach
+
               <!-- DETAILS SECTION -->
              
             </td>

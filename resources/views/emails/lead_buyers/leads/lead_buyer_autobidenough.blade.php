@@ -226,6 +226,8 @@
                 </tr>
               </table>
              @endif
+
+             @endforeach
             </td>
           </tr>
           <!-- HELP SECTION -->

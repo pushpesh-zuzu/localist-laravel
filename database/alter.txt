@@ -142,3 +142,10 @@ INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `crea
 INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Purchase Invoice History List', 'invoicehistory.viewlist', 'View List', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
 
 INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Purchase Invoice History List', 'invoicehistory.downloadinvoice', 'Download Invoice', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
+
+
+
+
+ALTER TABLE d7_lead_suppliers
+ADD COLUMN mail_sent TINYINT(1) NOT NULL DEFAULT 0 AFTER email,
+ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER mail_sent;
