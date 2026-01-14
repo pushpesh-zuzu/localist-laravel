@@ -46,10 +46,11 @@ table {
           <img src="{{ public_path('images/localist_logo.png') }}" width="150">
         </td>
         <td align="right" style="font-size:14px;color:#777;">
-          <strong>Localist Global Limited</strong><br>
-          9th Floor, 3 Sheldon Square<br>
-          London, W2 6HY<br>
-          020 3697 0237
+          <strong>Internet Media Group Ltd</strong><br>
+          Honeycomb South<br>
+          Chester Business Park<br>
+          Chester, CH4 9QJ<br>
+          VAT Number: <strong>486847329</strong>
         </td>
       </tr>
     </table>
