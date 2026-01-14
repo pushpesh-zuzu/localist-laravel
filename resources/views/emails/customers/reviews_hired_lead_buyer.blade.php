@@ -1,116 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
   <meta charset="UTF-8">
-  <meta content="width=device-width,initial-scale=1.0" name="viewport">
-  <title>Recommended Pros</title>
-  <style>
-    /* Email-safe resets */
-   body {
-            margin: 0;
-            background-color: #f1f2f4;
-            font-family: 'Lato',Helvetica,Arial,sans-serif;
-            font-size: 18px;
-            font-weight: 510;
-            line-height: 25px;
-            color: #4a4a4a;
-            -webkit-font-smoothing: antialiased;
-        }
-    table{border-collapse:collapse !important;}
-    img{border:0;display:block;height:auto;line-height:100%;outline:none;text-decoration:none;max-width:100%;}
-    .ExternalClass{width:100%}.ExternalClass *{line-height:100%}
-    /* Mobile */
-    @media only screen and (max-width:600px){
-      .email-container{width:100% !important;padding:0 12px !important;}
-      .card-pad{padding:16px !important;}
-      .stack{display:block !important;width:100% !important;}
-      .right{text-align:left !important;}
-      p {
-      font-size: 15px !important;
-      line-height: 22px !important;
-    }
-    }
-     .btn {
-    display: block;
-    max-width: 260px; /* reduced width */
-    width: 100%;
-    text-align: center;
-    background-color: #3399ff;
-    color: #ffffff !important;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 12px 0;
-    border-radius: 4px;
-    margin: 12px auto 0 auto; /* center the button */
-}
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Localists – Leave Your Feedback</title>
 </head>
-<body style="margin:0;padding:0;background:#f1f2f4;">
-  <!-- Outer wrapper -->
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f2f4">
+
+<body style="margin:0;padding:0;background:#f4f8fb;font-family:Inter,Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f8fb">
     <tr>
-      <td align="center">
+      <td align="center" style="padding:30px 10px;">
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
 
-        <!-- Center column -->
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width:600px;width:100%;margin:0 auto;font-family:'Lato',Helvetica,Arial,sans-serif;">
-
-          <!-- Logo -->
+          <!-- HEADER -->
           <tr>
-            <td align="center" style="padding:16px;">
-              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" alt="Localists Logo" style="max-height:45px;margin:0 auto;">
+            <td bgcolor="#00AFE3" align="center" style="padding:16px;">
+              <img src="{{ $baseUrl }}/assets/localist_logo_1.png" height="30" alt="Localists"
+                style="display:block;">
             </td>
           </tr>
 
-          <!-- Main card -->
-           <tr>
-            <td style="padding:25px 30px;color:#333;">
-             <p>Hi <strong style="color: #333;">{{ ucfirst($customerName) }}</strong>,</p>
-              
-              <p style="margin:0 0 12px;">    
-             
-                 We hope your <b>{{ ucfirst($serviceName) }}</b> went smoothly.
-                 
-              </p>
-              <p style="margin:0 0 20px;">
-               We’d love to hear about your experience with <b>{{ ucfirst($sellerName) }}</b>, the professional you hired  on Localists.
-              </p>
-              <p style="margin:0 0 20px;">
-                Your quick feedback helps us improve our service.
-              </p>
-
-              <p style="margin:0;text-align:center;">
-                <a href="{{ $reviewUrl }}" 
-                   class="btn">
-                  Leave Your Feedback
-                </a>
-              </p>
-            </td>
-          </tr>
-
-          <!-- Help strip -->
+          <!-- CONTENT -->
           <tr>
-            <td style="padding:10px 16px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#d8edf8" style="border-radius:6px;">
+            <td style="padding:30px 40px 30px;">
+
+              <p style="margin:0 0 14px;font-size:16px;color:#253238;">
+                Hi, <strong>{{ ucfirst($customerName) }}</strong>,
+              </p>
+
+              <p style="margin:0 0 14px;font-size:14px;color:#253238;line-height:1.6;">
+                We hope your <strong>{{ ucfirst($serviceName) }}</strong> went smoothly.
+              </p>
+
+              <p style="margin:0 0 24px;font-size:14px;color:#253238;line-height:1.6;">
+                We’d love to hear about your experience with
+                <strong>{{ ucfirst($sellerName) }}</strong>, the professional you hired on Localists.
+              </p>
+
+              <!-- FEEDBACK BOX -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#E3F6FC;border-radius:14px;">
                 <tr>
-                  <td style="padding:19px 16px;">
-                    <p style="margin-top:12px">You can also call our customer support team at
-                      <a>
-                        {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
-                      </a>.
+                  <td align="center" style="padding:26px;">
+
+                    <p style="margin:0 0 18px;font-size:18px;font-weight:700;color:#253238;text-align:center;">
+                      Your quick feedback helps us improve our service.
                     </p>
 
-                    <p>Kind Regards,<br>Localists Team</p>
+                    <!-- BUTTON -->
+                    <table cellpadding="0" cellspacing="0" align="center">
+                      <tr>
+                        <td bgcolor="#FF9933" style="border-radius:30px;padding:10px 26px;">
+                          <a href="{{ $reviewUrl }}"
+                            style="color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;display:inline-block;font-family:Inter, Arial, Helvetica, sans-serif;">
+                            Leave Your Feedback
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- HELP -->
+          <tr>
+            <td align="center" bgcolor="#E9F6FB" style="padding:18px 16px;">
+
+              <p
+                style=" margin:0 0 4px; font-family:Inter, Arial, Helvetica, sans-serif;  font-size:15px;   font-weight:500;  color:#253238; line-height:1.4;  text-align:center;">
+                You can also call our customer support team at
+              </p>
+
+              <p
+                style="margin:0;font-family:Inter, Arial, Helvetica, sans-serif;font-size:15px;font-weight:600;line-height:1.4;text-align:center;">
+                <a href="mailto:contact@localists.com" style="color:#00AFE3;text-decoration:underline;font-weight:600;">
+                  contact@localists.com
+                </a>
+              </p>
+
+            </td>
+          </tr>
+
+
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" bgcolor="#131838" style="padding:12px 18px;">
+              <table cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <td style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="18" height="18"
+                      style="display:block;">
+                  </td>
+                  <td style="font-size:13px;color:#ffffff;padding-right:10px;">
+                    Localists.com
+                  </td>
+                  <td style="padding:0 10px;color:#ffffff;">|</td>
+                  <td style="padding-right:8px;">
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14"
+                      style="display:block;">
+                  </td>
+                  <td style="font-size:13px;">
+                    <a href="mailto:contact@localists.com" style="color:#ffffff;text-decoration:none;">
+                      contact@localists.com
+                    </a>
                   </td>
                 </tr>
               </table>
             </td>
-          </tr>         
+          </tr>
 
         </table>
-
       </td>
     </tr>
   </table>
 </body>
+
 </html>

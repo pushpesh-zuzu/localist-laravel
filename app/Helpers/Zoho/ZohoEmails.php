@@ -2898,6 +2898,7 @@ class ZohoEmails
 
         $htmlView = view('emails.customers.reviews_hired_lead_buyer', [
             'baseUrl' => config('app.react_base_url'),
+            'siteUrl' => config('app.url'),
             'customerName' => $customerName ?? '',
             'sellerName' => $seller->name ?? '',
             'serviceName' => $categoryName ?? '',
@@ -3284,10 +3285,24 @@ class ZohoEmails
             ->exists();
 
         if ($alreadySent) {
-            return; // already sent for this lead
+            return; 
         }
 
+        $lead = LeadRequest::with(['category', 'customer'])->find($sId);
 
+        if (!$lead || !$lead->customer) {
+            Log::warning('Lead or customer not found while sending sales email', [
+                'lead_id' => $sId,
+            ]);
+            return;
+        }
+
+        $customerName  = strtolower($lead->customer->name ?? '');
+        $customerEmail = strtolower($lead->customer->email ?? '');
+
+        if (str_contains($customerName, 'test') || str_contains($customerEmail, 'test')) {
+            return;
+        }
 
         if ($sendWelcomeEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -3295,8 +3310,6 @@ class ZohoEmails
 
             $quoteOwnerName = Self::getQuoteOwnerName($zohoId);
             if (!empty($zohoId)) {
-
-                $lead = LeadRequest::with(['category', 'customer'])->find($sId);
 
                 $serviceName  = optional($lead->category)->name;
                 $customerName  = optional($lead->customer)->name;
@@ -3440,7 +3453,7 @@ class ZohoEmails
         }
 
         if ($nextStep == '4') {
-           $subject = "Your {$serviceName} quote request has been closed";
+            $subject = "Your {$serviceName} quote request has been closed";
         } else {
             $subject = "Update your quote request in one click";
         }
