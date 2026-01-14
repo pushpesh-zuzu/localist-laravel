@@ -1057,7 +1057,7 @@ class CronController extends Controller
     public  function sendNextDayExpiredQuoteEmail()
     {
         $batchSize = 500;
-        $expirationDays = 21;
+        $expirationDays = CustomHelper::setting_value("close_leads_after_days", 14);
         $dayAfterExpiry = 1;
         $totalUnsentLeadEmails = 0;
 

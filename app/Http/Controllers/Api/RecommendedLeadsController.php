@@ -228,7 +228,7 @@ class RecommendedLeadsController extends Controller
     public function closeLeads(Request $request, LeadService $leadService){
         // unpause auto bid after 7 days
         $this->unpauseAutobidAfter7Days();
-        //close leads after 21 days
+        //close leads after n days
         $this->leadCloseAfter21Days();
 
 
@@ -332,9 +332,10 @@ class RecommendedLeadsController extends Controller
 
 
     public function leadCloseAfter21Days(){
+        $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
         $leadsToClose = LeadRequest::where('status', 0)
             ->where('closed_status', 0)
-            ->where('created_at', '<', Carbon::now()->subDays(21)->toDateString())
+            ->where('created_at', '<', Carbon::now()->subDays($closeLeadsAfterDays)->toDateString())
             ->get();
 
         foreach ($leadsToClose as $lead) {

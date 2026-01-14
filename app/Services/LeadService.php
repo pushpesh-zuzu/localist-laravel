@@ -110,6 +110,7 @@ class LeadService
             return LeadRequest::whereRaw('0 = 1'); // empty builder
         }
 
+        $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
@@ -119,7 +120,7 @@ class LeadService
 
             //closure condition
             ->where('status', '!=', 'hired') // do not include hired leads
-            ->where('created_at', '>', Carbon::now()->subDays(21)->toDateString()); // do not include leads which are older than 21 days
+            ->where('created_at', '>', Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()); // do not include leads which are older than n days
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         $slotFullLeads = DB::table('recommended_leads')
             ->select('lead_id')
@@ -352,6 +353,7 @@ class LeadService
         $allServices = array_merge($nwServices, $otherServices);
 
 
+        $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
         $leadSlotCount = CustomHelper::setting_value('lead_slot_count', 5);
         $slotFullLeadIds = DB::table('recommended_leads')
             ->select('lead_id')
@@ -370,7 +372,7 @@ class LeadService
                     ELSE 0
                 END AS is_expired
                 ",
-                [Carbon::now()->subDays(21)->toDateString()]
+                [Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()]
             )
             ->with(['customer', 'category'])
             ->whereHas('customer', function ($query) {
@@ -648,6 +650,7 @@ class LeadService
         //merge both arrays into one array
         $allServices = array_merge($nwServices, $otherServices);
 
+        $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
         $baseQuery = LeadRequest::with(['customer', 'category'])
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
@@ -656,7 +659,7 @@ class LeadService
 
             //closure condition
             ->where('status', '!=', 'hired') // do not include hired leads
-            ->where('created_at', '>', Carbon::now()->subDays(21)->toDateString()); // do not include leads which are older than 21 days
+            ->where('created_at', '>', Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()); // do not include leads which are older than n days
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         $slotFullLeads = DB::table('recommended_leads')
             ->select('lead_id')
