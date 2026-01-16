@@ -58,6 +58,7 @@
 
             <div class="col-md-4"><b>Entry URL: </b> {{ $aRows->entry_url ?? '' }}</div>
             <div class="col-md-4"><b>User IP Address: </b> {{ $aRows->user_ip_address ?? '' }}</div>
+            <div class="col-md-4"><b>Source: </b> {{ $aRows->utm_source ?? '' }}</div>
           </div>
 
 
