@@ -77,7 +77,7 @@ class D7LeadFinderService
             ]);
 
             if (!$searchResponse->successful()) {
-                
+
                 return null;
             }
 
@@ -176,6 +176,10 @@ class D7LeadFinderService
             'Newgardenhomecompany.com',
             'Newdrivewaycompany.com',
             'Newhomeimprovement.com',
+            'willpulford@ravenstonegardenservices.com',
+            'ravenstonegardenservices.com',
+            'contact@ravenstonegardenservices.com',
+            'ravenstonegardenservices.com',
         ];
 
         foreach ($searches as $search) {
@@ -280,11 +284,11 @@ class D7LeadFinderService
             }
 
             $email = strtolower($supplier['email']);
-           
+
             $existing = D7LeadSupplier::where('email', $email)->first();
 
             if ($existing && $existing->is_subscribed == 0) {
-                continue; 
+                continue;
             }
 
             $data = [
