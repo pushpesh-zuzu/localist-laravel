@@ -58,6 +58,10 @@ class DrivewayInstallationForm extends Controller
         $serviceId = 51;
 
         $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
+
+        // echo "<pre>";
+        // print_r($fbArray);
+        // exit;
         
         if(!empty($fbArray['questions']) && !empty($fbArray['info'])){
             $questions = json_encode($fbArray['questions']);
@@ -193,146 +197,150 @@ class DrivewayInstallationForm extends Controller
     }
     
     private function getFacebookQuestionsInfoArray($payload, $serviceId)
-    {
-        /**
-         * Determine source of Facebook fields:
-         * - From internal call (payload.payload.mappable_field_data)
-         * - From Make.com webhook (payload.mappable_field_data)
-         */
-        if (isset($payload['payload']['mappable_field_data'])) {
-            $facebookFields = collect($payload['payload']['mappable_field_data']);
-        } elseif (isset($payload['mappable_field_data'])) {
-            $facebookFields = collect($payload['mappable_field_data']);
-        } else {
-            $facebookFields = collect();
-        }
-
-        /**
-         * Map Facebook meta fields → info keys
-         * These should NOT appear in questions.
-         */
-        $infoFieldMap = [
-            'email'        => 'email',
-            'full name'    => 'full_name',
-            'phone_number' => 'phone',
-            'post_code'    => 'postcode',
-        ];
-
-        /**
-         * Fetch all service questions for this category.
-         * These define canonical question text and answer options.
-         */
-        $serviceQuestions = ServiceQuestion::where('category', $serviceId)->get();
-
-        /**
-         * Normalize text to a comparable slug
-         * - lowercase
-         * - remove punctuation
-         * - underscore separated
-         */
-        $normalize = fn ($text) =>
-            Str::slug(
-                strtolower(preg_replace('/[^\w\s]/', '', $text)),
-                '_'
-            );
-
-        /**
-         * Extract meaningful keywords from a slug.
-         * Removes filler words (length <= 2).
-         */
-        $keywords = function (string $slug) {
-            return collect(explode('_', $slug))
-                ->reject(fn ($word) => strlen($word) <= 2)
-                ->values();
-        };
-
-        $questions = [];
-        $info = [];
-
-        foreach ($facebookFields as $fbField) {
-
-            /**
-             * 1️⃣ Handle META / CONTACT fields → info[]
-             */
-            if (array_key_exists($fbField['name'], $infoFieldMap)) {
-                $info[$infoFieldMap[$fbField['name']]] =
-                    is_array($fbField['value'])
-                        ? $fbField['value']
-                        : trim($fbField['value']);
-
-                continue;
-            }
-
-            /**
-             * 2️⃣ Handle SERVICE QUESTIONS
-             */
-            $fbQuestionSlug = $normalize($fbField['name']);
-            $fbAnswerSlug   = $normalize($fbField['value']);
-
-            foreach ($serviceQuestions as $sq) {
-
-                $serviceQuestionSlug = $normalize($sq->questions);
-
-                /**
-                 * QUESTION MATCHING STRATEGY
-                 * Match based on keyword overlap (paraphrase-safe).
-                 * If 3 or more meaningful words overlap → same question.
-                 */
-                $fbWords      = $keywords($fbQuestionSlug);
-                $serviceWords = $keywords($serviceQuestionSlug);
-
-                $questionMatches = $fbWords
-                    ->intersect($serviceWords)
-                    ->count() >= 3;
-
-                if (! $questionMatches) {
-                    continue;
-                }
-
-                /**
-                 * Decode service answer options (canonical answers).
-                 */
-                $answers = json_decode($sq->answer, true) ?? [];
-                $matchedAnswer = null;
-
-                /**
-                 * Try exact answer match against service options.
-                 */
-                foreach ($answers as $option) {
-                    if ($normalize($option['option']) === $fbAnswerSlug) {
-                        $matchedAnswer = $option['option']; // preserve original casing
-                        break;
-                    }
-                }
-
-                /**
-                 * Fallback:
-                 * If no option matched, format Facebook value cleanly.
-                 */
-                if ($matchedAnswer === null) {
-                    $matchedAnswer = ucwords(str_replace('_', ' ', $fbField['value']));
-                }
-
-                /**
-                 * Add to questions output.
-                 */
-                $questions[] = [
-                    'ques' => $sq->questions,
-                    'ans'  => $matchedAnswer,
-                ];
-
-                break; // stop after first successful match
-            }
-        }
-
-        /**
-         * Final structured payload
-         */
-        return [
-            'questions' => $questions,
-            'info'      => $info,
-        ];
+{
+    // Handle Request or array
+    if ($payload instanceof \Illuminate\Http\Request) {
+        $payload = $payload->all();
     }
+
+    /**
+     * Resolve Facebook fields
+     */
+    if (isset($payload['payload']['mappable_field_data'])) {
+        $facebookFields = collect($payload['payload']['mappable_field_data']);
+    } elseif (isset($payload['mappable_field_data'])) {
+        $facebookFields = collect($payload['mappable_field_data']);
+    } else {
+        $facebookFields = collect();
+    }
+
+    /**
+     * Meta → info mapping
+     */
+    $infoFieldMap = [
+        'email'        => 'email',
+        'full name'    => 'full_name',
+        'phone_number' => 'phone',
+        'post_code'    => 'postcode',
+    ];
+
+    /**
+     * Load service questions
+     */
+    $serviceQuestions = ServiceQuestion::where('category', $serviceId)->get();
+
+    /**
+     * Normalize helper
+     */
+    $normalize = fn ($text) =>
+        Str::slug(
+            strtolower(preg_replace('/[^\w\s]/', '', $text)),
+            '_'
+        );
+
+    /**
+     * Build service question lookup
+     */
+    $serviceQuestionMap = [];
+    foreach ($serviceQuestions as $sq) {
+        $serviceQuestionMap[$normalize($sq->questions)] = $sq;
+    }
+
+    $questions = [];
+    $info = [];
+    $usedServiceQuestionIds = [];
+
+    foreach ($facebookFields as $fbField) {
+
+        /**
+         * 1️⃣ Handle info fields
+         */
+        if (array_key_exists($fbField['name'], $infoFieldMap)) {
+            $info[$infoFieldMap[$fbField['name']]] = trim($fbField['value']);
+            continue;
+        }
+
+        $fbQuestionSlug = $normalize($fbField['name']);
+        $fbAnswerSlug   = $normalize($fbField['value']);
+
+        $matchedServiceQuestion = null;
+
+        /**
+         * 2️⃣ Try strict match first
+         */
+        foreach ($serviceQuestionMap as $serviceSlug => $sq) {
+            if (
+                ! in_array($sq->id, $usedServiceQuestionIds, true) &&
+                $fbQuestionSlug === $serviceSlug
+            ) {
+                $matchedServiceQuestion = $sq;
+                break;
+            }
+        }
+
+        /**
+         * 3️⃣ Try safe fallback match
+         */
+        if (! $matchedServiceQuestion) {
+            foreach ($serviceQuestionMap as $serviceSlug => $sq) {
+                if (
+                    ! in_array($sq->id, $usedServiceQuestionIds, true) &&
+                    (
+                        str_contains($fbQuestionSlug, $serviceSlug) ||
+                        str_contains($serviceSlug, $fbQuestionSlug)
+                    )
+                ) {
+                    $matchedServiceQuestion = $sq;
+                    break;
+                }
+            }
+        }
+
+        /**
+         * 4️⃣ Resolve question + answer
+         */
+        if ($matchedServiceQuestion) {
+
+            // Map answer via service options
+            $answers = json_decode($matchedServiceQuestion->answer, true) ?? [];
+            $matchedAnswer = null;
+
+            foreach ($answers as $option) {
+                if ($normalize($option['option']) === $fbAnswerSlug) {
+                    $matchedAnswer = $option['option'];
+                    break;
+                }
+            }
+
+            if ($matchedAnswer === null) {
+                $matchedAnswer = ucfirst(str_replace('_', ' ', $fbField['value']));
+            }
+
+            $questions[] = [
+                'ques' => $matchedServiceQuestion->questions,
+                'ans'  => $matchedAnswer,
+            ];
+
+            $usedServiceQuestionIds[] = $matchedServiceQuestion->id;
+
+        } else {
+            /**
+             * 5️⃣ NO MATCH → include Facebook question as-is
+             */
+            $questions[] = [
+                'ques' => ucfirst(str_replace('_', ' ', rtrim($fbField['name'], '?'))) ."?",
+                'ans'  => ucfirst(str_replace('_', ' ', $fbField['value'])),
+            ];
+        }
+    }
+
+    return [
+        'questions' => $questions,
+        'info'      => $info,
+    ];
+}
+
+
 
 
 
