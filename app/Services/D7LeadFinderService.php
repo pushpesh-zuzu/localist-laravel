@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\RequestException;
 use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZeptoMail;
+use App\Models\D7LeadSupplier;
 use App\Models\D7SearchLog;
 use App\Models\EmailSetting;
 
@@ -37,8 +38,6 @@ class D7LeadFinderService
             }
 
             $leadRequest = LeadRequest::with(['customer', 'category'])->find($leadId);
-
-
             $customerName  = strtolower($leadRequest->customer->name ?? '');
             $customerEmail = strtolower($leadRequest->customer->email ?? '');
 
@@ -48,11 +47,8 @@ class D7LeadFinderService
                     'name'    => $customerName,
                     'email'   => $customerEmail,
                 ]);
-
                 return null;
             }
-
-
 
             if (!$leadRequest) {
                 Log::warning('D7 Lead not found', ['lead_id' => $leadId]);
@@ -65,7 +61,6 @@ class D7LeadFinderService
             $country = strtoupper($country ?: $this->defaultCountry);
 
             if ($keyword === '' || $city === '') {
-
                 Log::warning('D7 Missing keyword or city', [
                     'lead_id' => $leadId,
                     'keyword' => $keyword,
@@ -73,7 +68,6 @@ class D7LeadFinderService
                 ]);
                 return null;
             }
-
 
             $searchResponse = Http::timeout(10)->retry(2, 200)->get("{$this->baseUrl}/search/", [
                 'keyword'  => $keyword,
@@ -83,11 +77,7 @@ class D7LeadFinderService
             ]);
 
             if (!$searchResponse->successful()) {
-                Log::error('D7 Search HTTP Error', [
-                    'lead_id' => $leadId,
-                    'status'  => $searchResponse->status(),
-                    'body'    => $searchResponse->body(),
-                ]);
+                
                 return null;
             }
 
@@ -190,6 +180,9 @@ class D7LeadFinderService
 
         foreach ($searches as $search) {
             try {
+
+                $search->update(['status' => 'processing']);
+
                 $response = Http::timeout(15)->get("{$this->baseUrl}/results/", [
                     'id'  => $search->search_id,
                     'key' => $this->apiKey,
@@ -198,27 +191,35 @@ class D7LeadFinderService
                 $response->throw();
                 $suppliers = $response->json();
 
-
                 if (empty($suppliers)) {
-                    $search->update(['status' => 'completed']);
-                    continue;
-                } else {
-                    // Lock search
-                    $search->update(['status' => 'processing']);
-                }
-
-                $suppliers = array_filter($suppliers, function ($supplier) use ($skipEmails) {
-                    return isset($supplier['email']) && !in_array(strtolower($supplier['email']), $skipEmails);
-                });
-
-
-                if (empty($suppliers)) {
-                    // If all suppliers are skipped, mark search as completed
                     $search->update(['status' => 'completed']);
                     continue;
                 }
 
-                $leadRequest = LeadRequest::with(['customer', 'category'])->find($search->lead_id);
+                self::addUpdateSuppliers($suppliers, $search->keyword);
+
+                $dbSuppliers = D7LeadSupplier::where('lead_service', $search->keyword)
+                    ->whereNotNull('email')
+                    ->where('mail_sent', 0)
+                    ->where('is_subscribed', 1)
+                    ->where(function ($q) use ($skipEmails) {
+                        foreach ($skipEmails as $skip) {
+                            if (str_contains($skip, '@')) {
+                                $q->where('email', '!=', strtolower($skip));
+                            } else {
+                                $q->where('email', 'NOT LIKE', '%@' . strtolower($skip));
+                            }
+                        }
+                    })
+                    ->get();
+
+                if ($dbSuppliers->isEmpty()) {
+                    $search->update(['status' => 'completed']);
+                    continue;
+                }
+
+                $leadRequest = LeadRequest::with(['customer', 'category'])
+                    ->find($search->lead_id);
 
                 $questionsAndAnswers = collect(json_decode($leadRequest->arrayed_questions, true))
                     ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
@@ -228,38 +229,27 @@ class D7LeadFinderService
                     ])
                     ->toArray();
 
-
-
-                // 🔹 Batch size = 10 suppliers per job
-                $batches = array_chunk($suppliers, 10);
+                // suppliers (10 per batch)
+                $batches = $dbSuppliers->chunk(10);
 
                 foreach ($batches as $index => $batch) {
-                    if (!empty($batch)) {
-                        CustomHelper::runInBackground(function () use ($batch, $search, $questionsAndAnswers, $batches, $index) {
-                            app(ZeptoMail::class)->sendMailToD7Supplier(
-                                $batch,
-                                $search->keyword,
-                                $search->city,
-                                $search->country,
-                                $search->lead_id,
-                                $questionsAndAnswers,
-                            );
 
-                            if ($index + 1 === count($batches)) {
-                                D7SearchLog::find($search->id)->update(['status' => 'completed']);
-                            }
-                        });
-                    }
+                    $batchArray = $batch->toArray();
+                    $searchId = $search->id;
+                    $keyword = $search->keyword;
+                    $city = $search->city;
+                    $country = $search->country;
+                    $leadId = $search->lead_id;
+                    $isLastBatch = $index + 1 === $batches->count();
+
+                    CustomHelper::runInBackground(function () use ($batchArray, $searchId, $keyword, $city, $country, $leadId, $questionsAndAnswers, $isLastBatch) {
+                        app(ZeptoMail::class)->sendMailToD7Supplier($batchArray, $keyword, $city, $country, $leadId, $questionsAndAnswers);
+
+                        if ($isLastBatch) {
+                            D7SearchLog::where('id', $searchId)->update(['status' => 'completed']);
+                        }
+                    });
                 }
-
-                Log::info('D7 Results API Success', [
-                    'search_id'     => $search->search_id,
-                    'keyword'       => $search->keyword,
-                    'city'          => $search->city,
-                    'country'       => $search->country,
-                    'total_records' => count($suppliers),
-                    'total_batches' => count($batches),
-                ]);
             } catch (\Throwable $e) {
 
                 $search->update(['status' => 'failed']);
@@ -270,8 +260,66 @@ class D7LeadFinderService
                     'city'      => $search->city,
                     'country'   => $search->country,
                     'message'   => $e->getMessage(),
+                    'file'      => $e->getFile(),   // 👈 exact file
+                    'line'      => $e->getLine(),   // 👈 exact line
+                    'trace'     => collect($e->getTrace())->take(5)->toArray(), // 👈 first 5 stack calls
                 ]);
             }
+        }
+    }
+
+
+
+
+    public static function addUpdateSuppliers(array $suppliers, $keyword)
+    {
+        foreach ($suppliers as $supplier) {
+
+            if (empty($supplier['email'])) {
+                continue;
+            }
+
+            $email = strtolower($supplier['email']);
+           
+            $existing = D7LeadSupplier::where('email', $email)->first();
+
+            if ($existing && $existing->is_subscribed == 0) {
+                continue; 
+            }
+
+            $data = [
+                'name'                  => $supplier['name'] ?? null,
+                'phone'                 => $supplier['phone'] ?? null,
+                'website'               => $supplier['website'] ?? null,
+                'category'              => $supplier['category'] ?? null,
+
+                'address1'              => $supplier['address1'] ?? null,
+                'address2'              => $supplier['address2'] ?? null,
+                'region'                => $supplier['region'] ?? null,
+                'zip'                   => $supplier['zip'] ?? null,
+                'country'               => $supplier['country'] ?? null,
+
+                'google_stars'          => $supplier['google_stars'] ?? 0,
+                'google_review_count'   => $supplier['google_review_count'] ?? 0,
+
+                'instagram_followers'   => $supplier['instagram_followers'] ?? 0,
+                'instagram_follows'     => $supplier['instagram_follows'] ?? 0,
+                'instagram_media_count' => $supplier['instagram_media_count'] ?? 0,
+
+                'facebook_url'          => $supplier['facebook_url'] ?? null,
+                'instagram_url'         => $supplier['instagram_url'] ?? null,
+                'linkedin_url'          => $supplier['linkedin_url'] ?? null,
+
+                'lead_service'          => $keyword,
+                'mail_sent'             => 0,
+            ];
+
+            $data = array_filter($data, fn($v) => $v !== null && $v !== '');
+
+            D7LeadSupplier::updateOrCreate(
+                ['email' => $email],
+                $data
+            );
         }
     }
 }

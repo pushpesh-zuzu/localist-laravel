@@ -33,6 +33,7 @@ use App\Helpers\Zoho\ZohoEmails;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\d7LeadSupplierController;
 use App\Http\Controllers\PurchaseInvoiceHistoryController;
+use App\Services\D7LeadFinderService;
 
 Route::get('phpinfo', function () {
     phpinfo();
@@ -231,7 +232,10 @@ Route::get('/zohowelcome-email', function () {
     $scope = ZohoEmails::sendWelcomeEmailTest('1158', 'zqQKYVz6');
     return $scope;
 });
-
+Route::get('/testd7-lead-buyer', function () {
+    $d7Service = app(D7LeadFinderService::class);
+    $d7Response = $d7Service->getSearchSuppliers();
+});
 
 Route::get('/test-zeptomail/{leadId}', [d7LeadSupplierController::class, 'testZeptoMail']);
 

@@ -47,6 +47,8 @@ use App\Models\EmailSetting;
 use App\Models\NotificationSetting;
 use App\Http\Controllers\Api\RecommendedLeadsController;
 use App\Http\Controllers\Api\LeadPreferenceController;
+use App\Models\D7LeadSupplier;
+
 class UserController extends Controller
 {
 
@@ -715,6 +717,7 @@ class UserController extends Controller
         if(empty($user)){
             return $this->sendError('Given email not found!');
         }
+        
         $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
         $user->update(['remember_token' => $token]);
 
@@ -1155,5 +1158,54 @@ public function emailRequestTopFiveMatches($lead_id, $buyer_id, Request $request
             return $this->redirectToReactError('Something went wrong: ' . $e->getMessage());
         }
     }
+
+   public function unsubscribeStatusUpdate($userId ,$type)
+{
+     
+    try {
+
+        if (!$userId) {
+            return $this->redirectToReactError('Invalid unsubscribe request.');
+        }
+
+        if ($type === 'd7supplier') {
+
+            $updated = D7LeadSupplier::where('id', $userId)
+                ->where('is_subscribed', 1)
+                ->update([
+                    'is_subscribed' => 0,
+                ]);
+
+        }else if ($type === 'abandonedUser') {
+
+            $updated = AbandonedUser::where('id', $userId)
+                ->where('is_subscribed', 1)
+                ->update([
+                    'is_subscribed' => 0,
+                ]);
+
+        }  else {
+
+            $updated = User::where('id', $userId)
+                ->where('is_subscribed', 1)
+                ->update([
+                    'is_subscribed' => 0,
+                ]);
+        }
+
+        if (!$updated) {
+            return $this->redirectToReactError('You are already unsubscribed.');
+        }
+
+        return $this->redirectToReactSuccess('You have been unsubscribed successfully.');
+
+    } catch (\Exception $e) {
+
+        
+
+        return $this->redirectToReactError('Something went wrong.');
+    }
+}
+
 
 }

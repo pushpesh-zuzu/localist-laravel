@@ -89,7 +89,8 @@ class User extends Authenticatable
         'utm_source',
         'utm_medium',
         'entry_url',
-        'user_ip_address'
+        'user_ip_address',
+        'is_subscribed'
     ];
 
     /**
@@ -255,5 +256,12 @@ class User extends Authenticatable
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public static function isUserSubscribed($userId)
+    {
+        return self::where('id', $userId)
+            ->where('is_subscribed', 1)
+            ->exists();
     }
 }

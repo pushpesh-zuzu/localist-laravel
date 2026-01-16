@@ -149,3 +149,16 @@ INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `crea
 ALTER TABLE d7_lead_suppliers
 ADD COLUMN mail_sent TINYINT(1) NOT NULL DEFAULT 0 AFTER email,
 ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER mail_sent;
+
+UPDATE d7_lead_suppliers
+SET mail_sent = 1;
+
+
+
+ALTER TABLE users 
+
+ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER user_ip_address;
+
+ALTER TABLE abandoned_users 
+
+ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER zoho_abandoned_quote_request_id

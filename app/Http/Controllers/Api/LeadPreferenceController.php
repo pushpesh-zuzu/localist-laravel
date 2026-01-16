@@ -629,11 +629,11 @@ class LeadPreferenceController extends Controller
             }
 
             if($statusUpdate){
-                CustomHelper::runInBackground(function() use ($sellerId, $recommendedId,$leadId,$buyerId) {
+                CustomHelper::runInBackground(function() use ($sellerId, $recommendedId,$leadId) {
 	                app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
                     // ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
                     ZohoEmails::newLeadHiredEmail($leadId,$sellerId);
-                   // ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId,$buyerId);
+                    ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId);
                 });
 
                 $requestLeadId = $lead->id ?? null;
@@ -713,9 +713,9 @@ class LeadPreferenceController extends Controller
         }
 
         if($statusUpdate){
-            CustomHelper::runInBackground(function() use ($sellerId,$leadId,$buyerId) {
+            CustomHelper::runInBackground(function() use ($sellerId,$leadId) {
                 ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
-              //  ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId,$buyerId);
+                ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId);
 		    });
 
             $requestLeadId = $lead->id ?? null;

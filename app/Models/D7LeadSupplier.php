@@ -36,7 +36,9 @@ class D7LeadSupplier extends Model
         'facebook_url',
         'instagram_url',
         'linkedin_url',
-        'lead_service'
+        'lead_service',
+        'mail_sent',
+        'is_subscribed'
     ];
 
     protected $casts = [

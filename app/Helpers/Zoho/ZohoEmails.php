@@ -24,6 +24,11 @@ class ZohoEmails
 
     public static function sendWelcomeEmail($userId, $password)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
+
         $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Welcome Email')->value('setting_value');
         if ($sendWelcomeEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -53,6 +58,7 @@ class ZohoEmails
                         'email' => $user->email,
                         'password' => $password,
                         'token' => $token,
+                        'userId' => $user->id ?? '',
                         // 'services' => $services
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -165,6 +171,11 @@ class ZohoEmails
 
     public static function sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
+
         $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Welcome Email For Customer')->value('setting_value');
 
         if ($sendWelcomeEmail) {
@@ -193,7 +204,7 @@ class ZohoEmails
                         'leadId' => $lead->id ?? '',
                         'buyerId' => $userId ?? '',
                         'token' => $token ?? '',
-
+                        'userId' => $user->id ?? '',
 
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -278,7 +289,10 @@ class ZohoEmails
 
     public static function sendEncouragementEmail($userId)
     {
-
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendEncouragementEmail = EmailSetting::where('setting_name', 'Send Autobid Encouragement Email')->value('setting_value');
 
         if ($sendEncouragementEmail) {
@@ -295,7 +309,8 @@ class ZohoEmails
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_encouragement',  [
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
-                        'name' => $user->name
+                        'name' => $user->name,
+                        'userId' => $user->id ?? '',
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -352,6 +367,11 @@ class ZohoEmails
     public static function sendAbandonedEncouragementEmail($userId, $serviceName = null)
     {
 
+        // Unsubscribed
+        if (!AbandonedUser::isAbandonedUserSubscribed($userId)) {
+            return;
+        }
+
         $sendEncouragementEmail = EmailSetting::where('setting_name', 'Send Abandoned Encouragement Email')->value('setting_value');
 
         if ($sendEncouragementEmail) {
@@ -364,8 +384,8 @@ class ZohoEmails
 
                 if (!empty($user)) {
 
-
                     $emailsSentCount = EmailLog::where('setting_name', 'Send Abandoned Encouragement Email')->count();
+
                     // Use first template if count is even, second if odd
                     $variant = $emailsSentCount % 2 === 0 ? 'even' : 'odd';
 
@@ -375,6 +395,7 @@ class ZohoEmails
                         'name' => $user->name,
                         'variant' => $variant,
                         'serviceName' => $serviceName ?? '',
+                        'userId' => $user->id ?? '',
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -432,6 +453,11 @@ class ZohoEmails
     public static function sendIncompleteRegistrationEmail($userId)
     {
 
+        // Unsubscribed
+        if (!AbandonedUser::isAbandonedUserSubscribed($userId)) {
+            return;
+        }
+
         $sendIncompleteRegEmail = EmailSetting::where('setting_name', 'Send Incomplete Registration Email')->value('setting_value');
 
         if ($sendIncompleteRegEmail) {
@@ -452,7 +478,8 @@ class ZohoEmails
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_incomplete_registration',  [
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
-                        'name' => $user->name
+                        'name' => $user->name,
+                        'userId' => $user->id ?? '',
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -544,6 +571,7 @@ class ZohoEmails
     //                     'baseUrl' => config('app.react_base_url'),
     //  'siteUrl' => config('app.url'),
     //                     'name' => $user->name,
+    //                       'userId' => $user->id ?? '',
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
     //                     'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
@@ -619,6 +647,10 @@ class ZohoEmails
 
     public static function sendLeadNotBidMultiple($userId, $leads)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         if (empty($leads)) return;
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead-Auto Bid Disable (Check Credit)')->value('setting_value');
@@ -677,6 +709,7 @@ class ZohoEmails
             'baseUrl' => config('app.react_base_url'),
             'siteUrl' => config('app.url'),
             'name' => $user->name,
+            'userId' => $user->id ?? '',
             'leadDetailsList' => $formattedLeads,
         ])->render();
 
@@ -889,6 +922,11 @@ class ZohoEmails
 
         foreach ($sellerLeadMap as $userId => $leadIds) {
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
+            if (!User::isUserSubscribed($userId)) {
+                continue; // skip this user
+            }
+
             if (empty($zohoId)) continue;
 
             $user = User::where('id', $userId)->first();
@@ -941,6 +979,7 @@ class ZohoEmails
                 'baseUrl' => config('app.react_base_url'),
                 'siteUrl' => config('app.url'),
                 'name' => $user->name,
+                'userId' => $user->id ?? '',
                 'leadDetailsList' => $leadDetailsList,
             ])->render();
 
@@ -1032,6 +1071,10 @@ class ZohoEmails
 
     public static function sendGroupedLeadEmailBidNotEnough($userId, $leads)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
 
         if (empty($leads) || empty($userId)) {
             return;
@@ -1102,6 +1145,7 @@ class ZohoEmails
             'baseUrl' => config('app.react_base_url'),
             'siteUrl' => config('app.url'),
             'name' => $user->name,
+            'userId' => $user->id ?? '',
             'leadDetailsList' => $leadViews,
         ])->render();
 
@@ -1162,6 +1206,11 @@ class ZohoEmails
 
     public static function sendGroupedLeadDetails($userId, $leads)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
+
         if (empty($leads) || empty($userId)) {
             return;
         }
@@ -1231,6 +1280,7 @@ class ZohoEmails
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_grouped_leads', [
             'baseUrl'         => config('app.react_base_url'),
             'name'            => $user->name,
+            'userId'          => $user->id ?? '',
             'leadDetailsList' => $leadViews,
         ])->render();
 
@@ -1379,6 +1429,7 @@ class ZohoEmails
     //                 $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply',  [
     //                     'baseUrl' => config('app.react_base_url'),
     //                     'name' => $user->name,
+    //                       'userId' => $user->id ?? '',
     //                     'lead_name' => $lead->customer->name ?? '',
     //                     'postcode' => $lead->postcode ?? '',
     //                     'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
@@ -1455,6 +1506,11 @@ class ZohoEmails
 
     public static function sendGroupedRequestReplyLeads($userId, $leadIds)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
+
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead - Request Reply')->value('setting_value');
 
         if (!$sendLeadRequestEmail || empty($leadIds)) return;
@@ -1507,6 +1563,7 @@ class ZohoEmails
             'baseUrl' => config('app.react_base_url'),
             'siteUrl' => config('app.url'),
             'name' => $user->name ? explode(' ', trim($user->name))[0] : '',
+            'userId' => $user->id ?? '',
             'leads' => $groupedLeadsData,
             'totalCredit' => $user->total_credit
         ])->render();
@@ -1569,7 +1626,10 @@ class ZohoEmails
 
     public static function unsoldLeadEmail($data)
     {
-
+        // Unsubscribed
+        if (!User::isUserSubscribed($data['userId'])) {
+            return;
+        }
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $data['setting_name'])->value('setting_value');
 
         if ($sendLeadRequestEmail) {
@@ -1603,6 +1663,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
@@ -1684,9 +1745,10 @@ class ZohoEmails
 
     public static function sendLeadsAfterDays($userId, $leadData, $settingValue)
     {
-
-
-
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $settingValue)->value('setting_value');
 
         if ($sendLeadRequestEmail) {
@@ -1706,6 +1768,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => (int) ($totalCreditSum / $totalLeadCount),
                         'leadDataList' => $leadDataList,
@@ -1772,6 +1835,10 @@ class ZohoEmails
     public static function creditsAfter5Days($userId, $leadData, $settingValue)
     {
 
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $settingValue)->value('setting_value');
 
         if ($sendLeadRequestEmail) {
@@ -1792,6 +1859,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'total_count' => $totalLeadCount,
                         'total_credt_sum' => (int) ($totalCreditSum / $totalLeadCount),
                         'leadDataList' => $leadDataList,
@@ -1860,8 +1928,13 @@ class ZohoEmails
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $setting_name)->value('setting_value');
         if ($sendLeadRequestEmail) {
             $userId = $rlead->seller_id;
+            // Unsubscribed
+            if (!User::isUserSubscribed($userId)) {
+                return;
+            }
             $accessToken = ZohoHelper::getAccessToken();
             $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+
 
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
@@ -1883,6 +1956,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'service' => $lead->category->name ?? '',
                         'seller_id' => $rlead->seller_id,
                         'buyer_id' => $rlead->buyer_id,
@@ -1962,6 +2036,10 @@ class ZohoEmails
 
         foreach ($allSellers as $user) {
             $userId = $user->seller_id;
+
+            if (!User::isUserSubscribed($userId)) {
+                continue; // skip this user
+            }
             $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId, 'buyer_email_customer_closing_leads', 'buyer', 'email');
 
             if ($sendLeadRequestEmail && $sendEmailSettings) {
@@ -1993,6 +2071,7 @@ class ZohoEmails
                             'baseUrl' => config('app.react_base_url'),
                             'siteUrl' => config('app.url'),
                             'name' => $user->name,
+                            'userId' => $user->id ?? '',
                             'lead_name' => $lead->customer->name ?? '',
                             'postcode' => $lead->postcode ?? '',
                             'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
@@ -2077,6 +2156,10 @@ class ZohoEmails
 
     public static function newLeadHiredEmail($leadId, $userId)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Lead Buyer - New Lead Hired (Email Notification)')->value('setting_value');
         $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId, 'buyer_email_customer_hiring_me', 'buyer', 'email');
@@ -2109,6 +2192,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
                         'phone' => $lead->customer?->phone ?? 'N/A',
@@ -2183,6 +2267,10 @@ class ZohoEmails
 
     public static function newLeadPoolOf7LeadBuyerEmail($leadId, $userId)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'New Lead Pool of 7 Lead Buyer')->value('setting_value');
         $sendEmailSettings = CustomHelper::getSingleNotificationSetting($userId, 'buyer_email_new_lead', 'buyer', 'email');
         if ($sendLeadRequestEmail && $sendEmailSettings) {
@@ -2212,6 +2300,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'lead_name' => $lead->customer->name ?? '',
                         'postcode' => $lead->postcode ?? '',
                         'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 2) . str_repeat('*', strlen($lead->customer->phone) - 2) : 'N/A',
@@ -2323,7 +2412,7 @@ class ZohoEmails
 
     public static function sendLoginMagicLinkEmail($user, $token)
     {
-
+        
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send Login Magic Link')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
@@ -2341,7 +2430,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
-                        'token' => $token,
+                        'token' => $token,                       
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -2537,6 +2626,10 @@ class ZohoEmails
 
     public static function unsoldLeadEmailAfter12hrs($data)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($data['userId'])) {
+            return;
+        }
 
         $sendLeadRequestEmail = EmailSetting::where('setting_name', $data['setting_name'])->value('setting_value');
 
@@ -2550,13 +2643,10 @@ class ZohoEmails
 
                 if (!empty($user)) {
 
-
                     $lead = LeadRequest::with([
                         'category',
                         'customer'
-                    ])
-                        ->where('id', $data['leadId'])
-                        ->first();
+                    ])->where('id', $data['leadId'])->first();
 
                     $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
                         ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
@@ -2570,6 +2660,7 @@ class ZohoEmails
                     $htmlView = view('emails.customers.unsold12hrs',  [
                         'baseUrl' => config('app.react_base_url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'lead_name' => $lead->customer->name ?? '',
                         'service_name' => $lead->category->name,
                         'postcode' => $lead->postcode ?? '',
@@ -2677,6 +2768,10 @@ class ZohoEmails
 
     public static function sendPlanInvoiceEmail($userId, $invId)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Plan Invoice Email')->value('setting_value');
         if ($sendWelcomeEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -2690,6 +2785,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id,
                         'email' => $user->email,
                         'invoice_number' => $invoices->invoice_number,
                         'details'       => $invoices->details,
@@ -2763,6 +2859,10 @@ class ZohoEmails
     public static function sendNextDayExpiredQuoteEmail($data)
     {
 
+        // Unsubscribed
+        if (!User::isUserSubscribed($data['userId'])) {
+            return;
+        }
         $sendEmail = EmailSetting::where('setting_name', 'Next Day Expired Quote Email')->value('setting_value');
 
         if ($sendEmail) {
@@ -2782,6 +2882,7 @@ class ZohoEmails
                         'serviceName' => $data['serviceName'] ?? '',
                         'leadId' => $data['leadId'],
                         'token' => $data['token'],
+                        'userId' => $user->id ?? '',
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -2844,8 +2945,9 @@ class ZohoEmails
 
 
 
-    public static function reviewsForHiredLeadBuyer($leadId, $sellerId, $buyerId)
+    public static function reviewsForHiredLeadBuyer($leadId, $sellerId)
     {
+        
         $sendEmail = EmailSetting::where('setting_name', 'Reviews Hired Lead Buyer')
             ->value('setting_value');
 
@@ -2872,6 +2974,11 @@ class ZohoEmails
         $customerName  = optional($lead->customer)->name;
         $customerEmail = optional($lead->customer)->email;
         $customerId    = optional($lead->customer)->id;
+
+        // Unsubscribed
+        if (!User::isUserSubscribed($customerId)) {
+            return;
+        }
 
         if (!$customerEmail) {
             Log::error("Customer email missing for lead {$leadId}");
@@ -2904,6 +3011,7 @@ class ZohoEmails
             'serviceName' => $categoryName ?? '',
             'reviewUrl' => $reviewUrl ?? '',
             'leadId' => $leadId,
+            'userId' => $customerId ?? '',
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -3013,6 +3121,11 @@ class ZohoEmails
 
         $subject = "Lead Accepted";
 
+        // Unsubscribed
+        if (!User::isUserSubscribed($customerId)) {
+            return;
+        }
+
         $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $customerId);
         if (empty($zohoId)) {
             return;
@@ -3094,6 +3207,11 @@ class ZohoEmails
         $customerEmail = optional($lead->customer)->email;
         $customerId    = optional($lead->customer)->id;
 
+        // Unsubscribed
+        if (!User::isUserSubscribed($customerId)) {
+            return;
+        }
+
         if (!$customerEmail) {
             Log::error("Customer email missing for lead {$leadId}");
             return;
@@ -3112,6 +3230,7 @@ class ZohoEmails
             'customerName' => $customerName ?? '',
             'serviceName' => $serviceName ?? '',
             'postCode' => $postCode,
+            'userId' => $customerId ?? '',
 
         ])->render();
 
@@ -3161,6 +3280,10 @@ class ZohoEmails
 
     public static function sendWelcomeEmailTest($userId, $password)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendWelcomeEmail = EmailSetting::where('setting_name', 'Send Welcome Email')->value('setting_value');
         if ($sendWelcomeEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -3190,6 +3313,7 @@ class ZohoEmails
                         'email' => $user->email,
                         'password' => $password,
                         'token' => $token,
+                        'userId' => $user->id ?? '',
                         // 'services' => $services
                     ])->render();
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -3285,7 +3409,7 @@ class ZohoEmails
             ->exists();
 
         if ($alreadySent) {
-            return; 
+            return;
         }
 
         $lead = LeadRequest::with(['category', 'customer'])->find($sId);
@@ -3394,33 +3518,16 @@ class ZohoEmails
 
     public static function getQuoteOwnerName($zohoId)
     {
-
-
-
         $accessToken = ZohoHelper::getAccessToken();
         $url = "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}";
 
         $response = Http::withToken($accessToken)->get($url);
 
-        // Log request + response (debug purpose)
-        Log::info('Zoho Quote Customer API', [
-            'url' => $url,
-            'zoho_id' => $zohoId,
-            'status' => $response->status(),
-            'response' => $response->json(),
-        ]);
-
-        if ($response->successful()) {
+         if ($response->successful()) {
             return data_get($response->json(), 'data.0.Owner.name');
         }
 
-        // Log error response
-        Log::error('Zoho Quote Customer API Failed', [
-            'zoho_id' => $zohoId,
-            'status' => $response->status(),
-            'body' => $response->body(),
-        ]);
-
+        
         return null;
     }
 
@@ -3447,6 +3554,10 @@ class ZohoEmails
         $customerEmail = optional($lead->customer)->email;
         $customerId    = optional($lead->customer)->id;
 
+        // Unsubscribed
+        if (!User::isUserSubscribed($customerId)) {
+            return;
+        }
         if (!$customerEmail) {
             Log::error("Customer email missing for lead {$leadId}");
             return;
@@ -3521,6 +3632,10 @@ class ZohoEmails
 
     public static function sendLeadBuyerLowCreditEmail($userId)
     {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
         $sendEmail = EmailSetting::where('setting_name', 'Lead Buyer Credit Below Fifty Email')->value('setting_value');
         if ($sendEmail) {
             $accessToken = ZohoHelper::getAccessToken();
@@ -3534,6 +3649,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
+                        'userId' => $user->id ?? '',
                         'email' => $user->email,
                     ])->render();
 

@@ -32,12 +32,12 @@
 
               <!-- Lead received text -->
               <p style="color:#00AFE3;font-size:12px;font-weight:700;margin:10 0 10px;">
-               You've received a new lead request
+                You've received a new lead request
               </p>
 
               <!-- Description -->
               <p style="font-size:12px;color:#253238;line-height:18px;font-weight:500;margin:0 0 16px;">
-               The customer below has requested a quote from you - respond quickly to secure the work.
+                The customer below has requested a quote from you - respond quickly to secure the work.
               </p>
 
               <!-- Button -->
@@ -257,16 +257,9 @@
                 </tr>
               </table>
               @endif
-
               @endforeach
-
-
               <!-- INFO + IMPORTANT PAGES SECTION -->
               <table width="100%" cellpadding="0" cellspacing="0">
-
-
-                <!-- DETAILS INFO CARD -->
-
                 <tr>
                   <td bgcolor="#00AFE3"
                     style="padding:10px 14px; border-radius:2px 2px 0 0; font-weight:700; color:#ffffff; font-size:16px;">
@@ -277,7 +270,6 @@
                 <tr>
                   <td style="background:#ffffff; height:10px; line-height:10px; font-size:1px;">&nbsp;</td>
                 </tr>
-
 
                 <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
                   style="background:#E3F6FC;border-radius:12px;">
@@ -349,11 +341,6 @@
                       </table>
                     </td>
                   </tr>
-
-
-
-
-
                   <tr>
                     <td style="padding:14px 16px;">
                       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
@@ -395,12 +382,7 @@
                       </table>
                     </td>
                   </tr>
-
-
                 </table>
-
-                <!-- Item 1 -->
-
 
                 <table width="100%" cellpadding="0" cellspacing="0"
                   style="margin-top:18px;background:#ffffff;border-radius:12px;">
@@ -460,8 +442,7 @@
 
                   <!-- TEXT -->
                   <tr>
-                    <td style="padding:14px 18px 0 18px;
-               font-size:12px;color:#253238;line-height:18px;">
+                    <td style="padding:14px 18px 0 18px; font-size:12px;color:#253238;line-height:18px;">
                       You currently have <strong>{{ isset($totalCredit) ? $totalCredit : 0 }} credits</strong> in your account.
                       To start receiving quality leads and allow our system to auto-bid on your behalf,
                       please purchase credits now.
@@ -526,7 +507,17 @@
               </table>
             </td>
           </tr>
-
+          <tr>
+            <td align="center" style="padding:12px 16px; background:#f4f6f8;">
+              <p style="margin:0; font-size:11px; line-height:16px; color:#6b7280; text-align:center;">
+                Click here to
+                <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}"
+                  style="color:#00AFE3; text-decoration:underline;font-weight:600;">
+                  unsubscribe
+                </a> and we will remove you from our emailing list.
+              </p>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>

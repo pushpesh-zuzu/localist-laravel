@@ -221,7 +221,7 @@
                 Email us at
                 <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}"
                   style="color:#00AFE3; text-decoration:none;">
-                   {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
+                  {{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}
                 </a>
               </div>
             </td>
@@ -272,7 +272,17 @@
               </table>
             </td>
           </tr>
-
+          <tr>
+            <td align="center" style="padding:12px 16px; background:#f4f6f8;">
+              <p style="margin:0; font-size:11px; line-height:16px; color:#6b7280; text-align:center;">
+                Click here to
+                <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}"
+                  style="color:#00AFE3; text-decoration:underline;font-weight:600;">
+                  unsubscribe
+                </a> and we will remove you from our emailing list.
+              </p>
+            </td>
+          </tr>
         </table>
 
       </td>

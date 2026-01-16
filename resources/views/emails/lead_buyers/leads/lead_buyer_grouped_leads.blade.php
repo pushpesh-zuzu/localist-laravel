@@ -193,12 +193,26 @@
           </tr>
 
           <!-- footer -->
-          <tr>
+          <!-- <tr>
             <td align="center" style="padding:12px;font-size:12px;color:#888;">
               Manage your email preferences <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification">here</a>.<br>
               {{ \App\Helpers\CustomHelper::setting_value('website_address','') }}
             </td>
+          </tr> -->
+
+          <tr>
+            <td align="center" style="padding:12px;font-size:12px;color:#888;">
+              <p style="margin:0; font-size:11px; line-height:16px; color:#111637;">
+                Manage your email preferences
+                <a href="{{ $baseUrl }}/settings/notifications/e-mail-notification"
+                  style="color:#111637; text-decoration:underline;">here</a>
+                or, click here to 
+                <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}"
+                  style="color:#00AFE3; text-decoration:underline;font-weight:600;">unsubscribe</a> and we will remove you from our emailing list.
+              </p>
+            </td>
           </tr>
+          
 
         </table>
       </td>

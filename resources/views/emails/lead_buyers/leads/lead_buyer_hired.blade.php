@@ -307,14 +307,7 @@
                       style="background:#EDFCF8;border-radius:12px;margin-bottom:14px;">
                       <tr>
                         <td style="padding:14px 16px;">
-
-
-
-
-
-
-                          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                            <tr>
+                          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">                            <tr>
                               <td valign="middle" style="padding:0; font-size:0; line-height:0;">
                                 <img src="{{$siteUrl}}/public/images/icons/strategy.png" width="24" height="24"
                                   style="display:inline-block;vertical-align:middle;border:0;outline:none;margin:0;">
@@ -331,13 +324,6 @@
                               </td>
                             </tr>
                           </table>
-
-
-
-
-
-
-
                           <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
                             style="margin-top: 10px;">
                             <tr>
@@ -423,9 +409,6 @@
                 </tr>
               </table>
 
-
-
-
             </td>
           </tr>
 
@@ -469,6 +452,18 @@
                   </td>
                 </tr>
               </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:12px 16px; background:#f4f6f8;">
+              <p style="margin:0; font-size:11px; line-height:16px; color:#6b7280; text-align:center;">
+                Click here to 
+                <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}"
+                  style="color:#00AFE3; text-decoration:underline;font-weight:600;">
+                  unsubscribe
+                </a>  and we will remove you from our emailing list.
+              </p>
             </td>
           </tr>
 

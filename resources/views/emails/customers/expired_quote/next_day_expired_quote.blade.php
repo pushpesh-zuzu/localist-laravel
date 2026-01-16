@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -8,10 +9,10 @@
 </head>
 
 <body style="margin:0;padding:0;background:#f5f8fa;font-family:'Poppins',Arial,sans-serif;">
-    
+
     <!-- Main Container -->
     <div style="max-width:600px;margin:0 auto;background:#ffffff;">
-        
+
         <!-- HERO SECTION -->
         <div style="display:flex;align-items:flex-start;">
             <!-- LEFT TEXT -->
@@ -23,7 +24,7 @@
                     YOUR PROJECT?
                 </h1>
             </div>
-            
+
             <!-- RIGHT IMAGE -->
             <div style="width: 50%; text-align:right;">
                 <img src="{{ $baseUrl }}/assets/mask-group.png" alt="localists" width="280" style="display:block;margin-left:auto;max-width:100%;">
@@ -33,7 +34,7 @@
         <!-- MESSAGE SECTION -->
         <div style="padding:0px 40px 20px 40px;">
             <p style="margin:0 0 12px 0;font-weight:600;font-size:16px;color:#001b35;">
-               Hi {{ ucfirst($customerName ?? 'Customer') }},
+                Hi {{ ucfirst($customerName ?? 'Customer') }},
             </p>
 
             <div style="display:inline-block;background:#10a37f;color:#ffffff;padding:10px 16px;border-radius:6px;font-weight:600;margin-bottom:16px;">
@@ -60,7 +61,7 @@
                         <p style="font-size:12px;font-weight:800;line-height:16px;margin:0;">through Localists</p>
                     </div>
                 </div>
-                
+
                 <!-- Choice 2 -->
                 <div style="position:relative;background:#ffffff;border-radius:10px;width:140px;height:84px;text-align:center;color:#0d1b3d;font-weight:600;">
                     <img src="{{ $baseUrl }}/assets/icon2.png" style="position:absolute;left:50%;top:-10px;transform:translateX(-50%);height:41px;width:41px;" alt="icon">
@@ -69,7 +70,7 @@
                         <p style="font-size:12px;font-weight:800;line-height:16px;margin:0;">relist my quote</p>
                     </div>
                 </div>
-                
+
                 <!-- Choice 3 -->
                 <div style="position:relative;background:#ffffff;border-radius:10px;width:140px;height:84px;text-align:center;color:#0d1b3d;font-weight:600;">
                     <img src="{{ $baseUrl }}/assets/icon3.png" style="position:absolute;left:50%;top:-10px;transform:translateX(-50%);height:41px;width:41px;" alt="icon">
@@ -100,11 +101,18 @@
         <div style="background:#0d1b3d;color:#ffffff;text-align:center;padding:14px;font-size:14px;">
             <img src="{{ $baseUrl }}/assets/globe.png" alt="Localists" width="16" style="vertical-align:middle;margin-right:6px;">
             <a href="{{ $baseUrl }}" style="color:#ffffff;text-decoration:none;">localists.com</a>
-            &nbsp;  &nbsp;
+            &nbsp; &nbsp;
             <img src="{{ $baseUrl }}/assets/email.png" alt="Email Icon" width="16" style="vertical-align:middle;margin-right:6px;">
             <a href="mailto:{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}" style="color:#ffffff;text-decoration:none;">{{\App\Helpers\CustomHelper::setting_value('website_email','contact@localists.com')}}</a>
         </div>
+        <p style="margin:12px 0 0 0;font-size:12px;color:#001b35;text-align:center">
+            Click here to 
+            <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}" style="color:#00AFE3;text-decoration:underline;font-weight:600;">
+                unsubscribe
+            </a>  and we will remove you from our emailing list.
+        </p>
     </div>
 
 </body>
+
 </html>
