@@ -67,7 +67,7 @@ class DrivewayInstallationForm extends Controller
             $questions = json_encode($fbArray['questions']);
             $name = $fbArray['info']['full_name'];
             $email = $fbArray['info']['email'];
-            $phone = $fbArray['info']['phone'];
+            $phone = $fbArray['info']['phone_number'];
             $postcode = $fbArray['info']['postcode'];
 
             $vc = CustomHelper::getCityNameFromPostcode($postcode);
@@ -219,9 +219,9 @@ class DrivewayInstallationForm extends Controller
      */
     $infoFieldMap = [
         'email'        => 'email',
-        'full name'    => 'full_name',
-        'phone_number' => 'phone',
-        'post_code'    => 'postcode',
+        'full_name'    => 'full_name',
+        'phone_number' => 'phone_number',
+        'postcode'    => 'postcode',
     ];
 
     /**
