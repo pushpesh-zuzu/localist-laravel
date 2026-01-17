@@ -68,7 +68,7 @@ class DrivewayInstallationForm extends Controller
             $name = $fbArray['info']['full_name'];
             $email = $fbArray['info']['email'];
             $phone = $fbArray['info']['phone_number'];
-            $postcode = $fbArray['info']['postcode'];
+            $postcode = $fbArray['info']['post_code'];
 
             $vc = CustomHelper::getCityNameFromPostcode($postcode);
             $city = $vc['valid'] ? $vc['city'] : 'N/A';
@@ -221,7 +221,7 @@ class DrivewayInstallationForm extends Controller
         'email'        => 'email',
         'full_name'    => 'full_name',
         'phone_number' => 'phone_number',
-        'postcode'    => 'postcode',
+        'post_code'    => 'post_code',
     ];
 
     /**
