@@ -27,7 +27,7 @@
             <td style="padding:30px 40px 30px;">
 
               <p style="margin:0 0 14px;font-size:16px;color:#253238;">
-                Hi, <strong>{{ ucfirst($name) }}</strong>,
+                Hi <strong>{{ ucfirst($name) }}</strong>,
               </p>
 
               <p style="margin:0 0 14px;font-size:14px;color:#253238;line-height:1.6;">

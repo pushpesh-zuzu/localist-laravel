@@ -90,7 +90,7 @@
           <tr>
             <td align="center" style="padding:1px 28px 8px;">
               <p style=" font-size:16px; line-height:22px; color:#131838;">
-                Hi, <strong style="color:#131838;">{{ ucfirst($name) }}</strong>,
+                Hi <strong style="color:#131838;">{{ ucfirst($name) }}</strong>,
               </p>
             </td>
           </tr>

@@ -109,7 +109,7 @@
                     </tr>
                     <tr>
                         <td class="pad-outer body-text" style="padding:14px 48px 22px; color:#253238;">
-                            <div style="font-size:16px; line-height:22px;" class="greet">Hi, <strong style="font-weight:800;">{{ ucfirst($name) }}</strong>,</div>
+                            <div style="font-size:16px; line-height:22px;" class="greet">Hi  <strong style="font-weight:800;">{{ ucfirst($name) }}</strong>,</div>
                             <div style="height:8px; font-size:0; line-height:0;">&nbsp;</div>
                             <div style="font-size:13px; font-weight:600; line-height:18px; color:#444; margin-top:4px;">You’re almost there!</div>
                         </td>

@@ -27,7 +27,7 @@
                     <tr>
                         <td style="padding:15px 40px 10px;color:#253238;">
                             <p style="margin:0 0 12px;font-size:18px;">
-                                Hi, <strong>{{ ucfirst($customerName) }}</strong>,
+                                Hi <strong>{{ ucfirst($customerName) }}</strong>,
                             </p>
 
                             <p style="margin:0 0 18px;font-size:15px;line-height:1.5;">

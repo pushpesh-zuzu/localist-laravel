@@ -47,7 +47,7 @@
           <tr>
             <td style="padding:10px 50px; font-family:Inter,Arial,sans-serif; color:#253238;">
               <div style="font-size:16px; line-height:22px;">
-                Hi, <strong>{{ ucfirst($name) }}</strong>,
+                Hi <strong>{{ ucfirst($name) }}</strong>,
               </div>
               <div style="height:8px; font-size:0; line-height:0;">&nbsp;</div>
               <div style="font-size:12px; font-weight:500; line-height:16px;    margin-bottom: 8px;">

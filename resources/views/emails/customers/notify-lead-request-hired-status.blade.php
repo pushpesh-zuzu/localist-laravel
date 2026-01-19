@@ -29,7 +29,7 @@
                         <td style="padding:30px 40px 20px;">
 
                             <p style="margin:0 0 12px;font-size:16px;color:#253238;">
-                                Welcome back, <strong>{{ ucfirst($customerName) }}</strong>,
+                                Welcome back <strong>{{ ucfirst($customerName) }}</strong>,
                             </p>
 
                             <p style="margin:0 0 12px;font-size:14px;color:#00AFE3;font-weight:700;">

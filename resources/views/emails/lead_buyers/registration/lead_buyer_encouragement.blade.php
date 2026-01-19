@@ -68,7 +68,7 @@
           <!-- GREETING -->
           <tr>
             <td style="padding:14px 36px;">
-              <div style="font-size:16px;">Hi, <strong>{{ ucfirst($name) }}</strong>,</div>
+              <div style="font-size:16px;">Hi <strong>{{ ucfirst($name) }}</strong>,</div>
               <div style="font-size:13px; font-weight:500; margin-top:10px;line-height:15px;">
                 Ready to unlock more sales?
               </div>

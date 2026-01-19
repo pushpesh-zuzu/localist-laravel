@@ -62,7 +62,7 @@
           <tr>
             <td class="padding" align="left" style="padding:20px 20px 20px 40px; font-family:Inter, Arial, sans-serif;">
               <div style="font-size:16px; color:#252832; font-weight:400;">
-                Welcome to Localists,
+                Welcome to Localists 
                 <span style="font-weight:700;">
                   {{ ucfirst($name) }},
                 </span>
