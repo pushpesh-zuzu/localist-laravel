@@ -85,9 +85,9 @@ class CronController extends Controller
         $sendNextDayExpiredQuoteEmail = $this->sendNextDayExpiredQuoteEmail();
         $sendNewProPostcodeEmail = $this->sendnotifyCustomerNewProfessionalinPostcodeEmail();
         $sendLeadRequestStatusEmailToCustomer = $this->sendLeadRequestStatusEmailToCustomer();
-         $sendCreditBelowFiftyEmail = $this->sendCreditBelowFiftyEmail();
+        $sendCreditBelowFiftyEmail = $this->sendCreditBelowFiftyEmail();
 
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
@@ -1418,7 +1418,6 @@ class CronController extends Controller
                         ZohoEmails::sendLeadRequestHiredStatusEmailToCustomer($lead->id, $sellers, $nextStep);
 
                         $totalEmailsSent++;
-                       
                     } catch (\Throwable $e) {
                         Log::error(
                             "Lead email error | Lead ID {$lead->id} | {$e->getMessage()}"
@@ -1435,68 +1434,75 @@ class CronController extends Controller
     }
 
 
-   public function sendCreditBelowFiftyEmail()
-{
-   // dd('ashish');
-    $batchSize = 500;
-    $totalEmailsSent = 0;
+    public function sendCreditBelowFiftyEmail()
+    {
+      
+        $batchSize = 500;
+        $totalEmailsSent = 0;
 
-    User::where('user_type', 1)
-        ->where('form_status', 1)
-        ->where('total_credit', '<', 50)  // Current credit below 50
-        ->whereNotNull('email')
-        ->whereNotNull('zoho_record_id')
-        ->whereNull('deleted_at')
-        ->orderBy('id', 'DESC')
-        ->chunk($batchSize, function ($users) use (&$totalEmailsSent) {
+        User::where('user_type', 1)
+            ->where('form_status', 1)
+            ->where('total_credit', '<', 50)  // Current credit below 50
+            ->whereNotNull('email')
+            ->whereNotNull('zoho_record_id')
+            ->whereNull('deleted_at')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('plan_histories')
+                    ->whereColumn('plan_histories.user_id', 'users.id')
+                    ->where('plan_histories.price', '>', 0)
+                    ->whereNull('plan_histories.deleted_at');
+            })
+            ->orderBy('id', 'DESC')
+            ->chunk($batchSize, function ($users) use (&$totalEmailsSent) {
 
-            foreach ($users as $user) {
-                try {
+                foreach ($users as $user) {
+                    try {
 
-                    // Last time credit was purchased (recovery point)
-                    $lastRecoveredAt = DB::table('purchase_histories')
-                        ->where('user_id', $user->id)
-                        ->where('payment_type', 0)   // 0 = credit added
-                        ->orderBy('created_at', 'DESC')
-                        ->value('created_at');
+                       
+                        // Last time credit was purchased (recovery point)
+                        $lastRecoveredAt = DB::table('plan_histories')
+                            ->where('user_id', $user->id)
+                            ->where('price', '>', 0)          // paid only
+                            ->whereNull('deleted_at')          // active only
+                            ->orderBy('created_at', 'DESC')
+                            ->value('created_at');
 
-                    //  Emails sent after last recovery
-                    $emailQuery = EmailLog::where('user_id', $user->id)
-                        ->where('setting_name', 'Lead Buyer Credit Below Fifty Email');
+                        //  Emails sent after last recovery
+                        $emailQuery = EmailLog::where('user_id', $user->id)
+                            ->where('setting_name', 'Lead Buyer Credit Below Fifty Email');
 
-                    if ($lastRecoveredAt) {
-                        $emailQuery->where('created_at', '>', $lastRecoveredAt);
-                    }
+                        if ($lastRecoveredAt) {
+                            $emailQuery->where('created_at', '>', $lastRecoveredAt);
+                        }
 
-                    $emailsSentCount = $emailQuery->count();
+                        $emailsSentCount = $emailQuery->count();
 
-                    // Stop after 3 emails
-                    if ($emailsSentCount >= 3) {
+                        // Stop after 3 emails
+                        if ($emailsSentCount >= 3) {
+                            continue;
+                        }
+
+                        // Weekly gap check
+                        $lastEmailAt = $emailQuery->orderBy('created_at', 'DESC')->value('created_at');
+                        if ($lastEmailAt && now()->diffInDays($lastEmailAt) < 7) {
+                            continue;
+                        }
+
+
+                         ZohoEmails::sendLeadBuyerLowCreditEmail($user->id);
+                        $totalEmailsSent++;
+                    } catch (\Throwable $e) {
+                        Log::error("Failed to send low credit email for user {$user->id}: {$e->getMessage()}");
                         continue;
                     }
-
-                    // Weekly gap check
-                    $lastEmailAt = $emailQuery->orderBy('created_at', 'DESC')->value('created_at');
-                    if ($lastEmailAt && now()->diffInDays($lastEmailAt) < 7) {
-                        continue;
-                    }
-
-                    
-                    ZohoEmails::sendLeadBuyerLowCreditEmail($user->id);
-                    $totalEmailsSent++;
-                  
-                } catch (\Throwable $e) {
-                    Log::error("Failed to send low credit email for user {$user->id}: {$e->getMessage()}");
-                    continue;
                 }
-            }
-        });
+            });
 
-    return response()->json([
-        'status' => 'success',
-        'emails_sent' => $totalEmailsSent,
-        'timestamp' => now()->toDateTimeString(),
-    ]);
-}
-
+        return response()->json([
+            'status' => 'success',
+            'emails_sent' => $totalEmailsSent,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
 }

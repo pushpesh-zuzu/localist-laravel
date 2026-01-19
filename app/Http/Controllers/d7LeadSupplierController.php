@@ -50,14 +50,15 @@ class d7LeadSupplierController extends Controller
 
 
     public function testZeptoMail($leadId)
-    {
-       
+    {       
         $suppliers = [
             [
+                'id' => '1',
                 'email' => 'ashishg@zuzucodes.com',
                 'name'  => 'Test',
             ],
             [
+                'id' => '2',
                 'email' => 'abuzer@zuzucodes.com',
                 'name'  => 'New Supplier',
             ]
