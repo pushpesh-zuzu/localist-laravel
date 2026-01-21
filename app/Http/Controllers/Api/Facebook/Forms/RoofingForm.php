@@ -53,9 +53,9 @@ class RoofingForm extends Controller
 
         $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
 
-        echo "<pre>";
-        print_r($fbArray);
-        exit;
+        // echo "<pre>";
+        // print_r($fbArray);
+        // exit;
         
         if(!empty($fbArray['questions']) && !empty($fbArray['info'])){
             $questions = json_encode($fbArray['questions']);
