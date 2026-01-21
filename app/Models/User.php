@@ -90,7 +90,8 @@ class User extends Authenticatable
         'utm_medium',
         'entry_url',
         'user_ip_address',
-        'is_subscribed'
+        'is_subscribed',
+        'platform_source'
     ];
 
     /**

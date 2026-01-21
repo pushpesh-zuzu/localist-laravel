@@ -127,6 +127,10 @@ class MyRequestController extends Controller
             $dataUser['msclickid'] = $request->msclickid;
             $dataUser['entry_url'] = $request->entry_url ?? null;
              $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
+
+            $dataUser['utm_source'] = $request->utm_source;
+            $dataUser['utm_medium'] = $request->utm_medium ?? null;
+            $dataUser['platform_source'] = $request->platform_source ?? null;
             //for
 
             $dataUser['password'] = Hash::make($password);
@@ -207,6 +211,11 @@ class MyRequestController extends Controller
             $dataUser['keyword'] = $request->keyword;
              $dataUser['entry_url'] = $request->entry_url ?? null;
              $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
+
+             $dataUser['utm_source'] = $request->utm_source;
+            $dataUser['utm_medium'] = $request->utm_medium ?? null;
+            $dataUser['platform_source'] = $request->platform_source ?? null;
+
             $dataUser['created_at'] = date('Y-m-d H:i:s');
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
@@ -356,6 +365,9 @@ class MyRequestController extends Controller
             $nuData['msclickid'] = $abUser->msclickid;
             $nuData['entry_url'] = $abUser->entry_url ?? null;
             $nuData['user_ip_address'] = $abUser->user_ip_address ?? null;
+            $nuData['utm_source'] = $abUser->utm_source;
+            $nuData['utm_medium'] = $abUser->utm_medium ?? null;
+            $nuData['platform_source'] = $abUser->platform_source ?? null;
             $nuData['password'] = Hash::make($password);
             $nuData['user_type'] = 2;
             $nuData['active_status'] = 2;

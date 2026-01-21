@@ -25,6 +25,7 @@
               <th>Que/Ans</th>
               <th>Additional Dtails</th>
               <th>Hired User</th>
+              <th>Final Price and Unit</th>
             </thead>
             <tbody>
 
@@ -120,6 +121,11 @@
             data: 'hired_to',
             name: 'hired_to'
           },
+          {
+            data: 'price_unit',
+            name: 'price_unit'
+          },
+          
 
         ],
         dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',

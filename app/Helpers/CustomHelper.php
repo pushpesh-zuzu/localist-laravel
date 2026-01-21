@@ -783,20 +783,24 @@ class CustomHelper
             }
 
 
+            
             if (!$paymentSuccess) {
+
                 PurchaseHistory::insertGetId([
                     'user_id'        => $userId,
-                    'purchase_date'  => now()->toDateString(),
-                    'price'          => $amount,
-                    'credits'        => $credits,
-                    'details'        => $detail,
-                    'payment_type'   => 0, // CREDIT attempt failed
+                    'purchase_date'  => now()->toDateString(),                  
+                    'price'          => $planHistory->total_amount ?? $planHistory->price,
+                    'credits'        => $planHistory->credits,                   
+                    'details'        => $planHistory->plan_name . ' ' . $planHistory->credits . ' Auto top-up failed',
+                    'payment_type'   => 0, // auto-topup
                     'status'         => 2, // failed
-                    'error_response' => 'Payment failed on all cards',
+                    'error_response' => $lastError ?: 'Payment failed on all cards',
                     'created_at'     => now(),
                     'updated_at'     => now(),
                 ]);
             }
+            
+           
 
             return $debitTransactionId;
         } catch (\Throwable $e) {

@@ -162,3 +162,12 @@ ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER user_ip_address;
 ALTER TABLE abandoned_users 
 
 ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER zoho_abandoned_quote_request_id
+
+
+
+
+
+
+ALTER TABLE `abandoned_users` ADD `platform_source` VARCHAR(255) NULL AFTER `utm_medium`;
+
+ALTER TABLE `users` ADD `platform_source` VARCHAR(255) NULL AFTER `utm_medium`;

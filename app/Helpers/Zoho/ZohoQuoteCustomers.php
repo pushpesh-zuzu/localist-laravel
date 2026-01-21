@@ -179,6 +179,9 @@ class ZohoQuoteCustomers
                 'MS_Click_Id'         => $user->msclickid ?? '',
                 'User_IP_Address'    => $user->user_ip_address ?? '',
                 'Entry_URL'         => $user->entry_url ?? '',
+                'Utm Source'    =>     $user->utm_source ?? '',
+                'Utm Medium'         => $user->utm_medium ?? '',
+                'Platform Source'         => $user->platform_source ?? '',
                 'registration_type' => $user->form_status == 1 ? 'completed' : 'abandoned',
                 'created_at'        => $formatted
             ]],

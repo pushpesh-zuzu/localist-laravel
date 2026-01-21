@@ -90,7 +90,8 @@ class AbandonedUser extends Authenticatable
         'entry_url',
         'user_ip_address',
         'zoho_abandoned_quote_request_id',
-        'is_subscribed'
+        'is_subscribed',
+        'platform_source'
     ];
 
     /**
