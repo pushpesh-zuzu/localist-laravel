@@ -692,7 +692,7 @@ class CustomHelper
                 // }
                 try {
 
-                    $planPrice = floatval(str_replace(',', '', $planHistory->price));
+                    $planPrice = floatval(str_replace(',', '', $planHistory->total_amount));
                     $amountInPence = (int) round($planPrice * 100);
 
                     $paymentIntent = PaymentIntent::create([
