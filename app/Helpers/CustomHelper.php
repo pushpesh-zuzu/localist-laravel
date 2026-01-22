@@ -32,31 +32,31 @@ class CustomHelper
 {
 
     public static function getPostcodesWithinPolygonQuery(array $polygon)
-{
-    if (empty($polygon)) {
-        return null;
+    {
+        if (empty($polygon)) {
+            return null;
+        }
+
+        $latArr = array_column($polygon, 'lat');
+        $lngArr = array_column($polygon, 'lng');
+
+        $minLat = min($latArr);
+        $maxLat = max($latArr);
+        $minLng = min($lngArr);
+        $maxLng = max($lngArr);
+
+        $wkt = self::polygonToWkt($polygon);
+        $polygonWkt = "POLYGON(($wkt))";
+
+        return DB::table('postcodes')
+            ->select('postcode')
+            ->whereBetween('latitude', [$minLat, $maxLat])
+            ->whereBetween('longitude', [$minLng, $maxLng])
+            ->whereRaw(
+                "MBRContains(ST_GeomFromText(?), POINT(longitude, latitude))",
+                [$polygonWkt]
+            );
     }
-
-    $latArr = array_column($polygon, 'lat');
-    $lngArr = array_column($polygon, 'lng');
-
-    $minLat = min($latArr);
-    $maxLat = max($latArr);
-    $minLng = min($lngArr);
-    $maxLng = max($lngArr);
-
-    $wkt = self::polygonToWkt($polygon);
-    $polygonWkt = "POLYGON(($wkt))";
-
-    return DB::table('postcodes')
-        ->select('postcode')
-        ->whereBetween('latitude', [$minLat, $maxLat])
-        ->whereBetween('longitude', [$minLng, $maxLng])
-        ->whereRaw(
-            "MBRContains(ST_GeomFromText(?), POINT(longitude, latitude))",
-            [$polygonWkt]
-        );
-}
 
 
     public static function polygonToWkt(array $polygon): string
@@ -76,7 +76,7 @@ class CustomHelper
     }
 
 
-    
+
     public static function getAverageRating($user_id)
     {
         $localists_reviews = Review::where('user_id', $user_id)->where('source', 'localists')->count();
@@ -161,19 +161,19 @@ class CustomHelper
                         <td>' . ($d['status'] ? 'Active' : 'Inactive') . '</td>
                         <td>';
 
-                        if (auth()->user()->can('sector.subsectoredit')) {
-                           echo ' <a href="' . route('sectors.edit', $d['id']) . '" title="Edit"><i class="fas fa-edit"></i></a> &nbsp';
-                        }
-                           if (auth()->user()->can('sector.subsectordelete')) {
-                           echo '  <a href="javascript:void(0);" onclick="event.preventDefault(); if(confirm(\'Are you sure to delete?\')) document.getElementById(\'' . $deleteFormId . '\').submit();" title="Delete">
+                if (auth()->user()->can('sector.subsectoredit')) {
+                    echo ' <a href="' . route('sectors.edit', $d['id']) . '" title="Edit"><i class="fas fa-edit"></i></a> &nbsp';
+                }
+                if (auth()->user()->can('sector.subsectordelete')) {
+                    echo '  <a href="javascript:void(0);" onclick="event.preventDefault(); if(confirm(\'Are you sure to delete?\')) document.getElementById(\'' . $deleteFormId . '\').submit();" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </a>
 
                             <form id="' . $deleteFormId . '" action="' . route('sectors.destroy', $d['id']) . '" method="POST" style="display: none;">
                                 ' . method_field('DELETE') . csrf_field() . '
                             </form>';
-                            }
-                       echo  '</td>
+                }
+                echo  '</td>
                     </tr>';
 
                 // Recursive call
@@ -535,8 +535,8 @@ class CustomHelper
                 'formatted_address' => $result['formatted_address'],
                 'source' => 'google'
             ];
-
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
         /** --------------------------------------------
          *  3. If everything fails
@@ -724,7 +724,7 @@ class CustomHelper
                         ]);
 
                         $details = $planHistory->plan_name . ' ' . $planHistory->credits . " Auto top-up credits purchased";
-                      
+
                         $transactionId = PurchaseHistory::insertGetId([
                             'user_id'        => $userId,
                             'purchase_date'  => now()->toDateString(),
@@ -765,11 +765,20 @@ class CustomHelper
 
                         $invId = Invoice::insertGetId($dataInv);
 
+                        if ($transactionId) {
+                            CustomHelper::runInBackground(function () use ($userId, $transactionId) {
+                                app(ZohoFinance::class)->integratePurchaseHistory($userId, $transactionId);
+                            });
+                        }
+
+
                         if ($invId) {
                             CustomHelper::runInBackground(function () use ($userId, $invId) {
                                 ZohoEmails::sendPlanInvoiceEmail($userId, $invId);
                             });
                         }
+
+                        
                         $paymentSuccess = true;
                         break;
                     }
@@ -783,14 +792,14 @@ class CustomHelper
             }
 
 
-            
+
             if (!$paymentSuccess) {
 
                 PurchaseHistory::insertGetId([
                     'user_id'        => $userId,
-                    'purchase_date'  => now()->toDateString(),                  
+                    'purchase_date'  => now()->toDateString(),
                     'price'          => $planHistory->total_amount ?? $planHistory->price,
-                    'credits'        => $planHistory->credits,                   
+                    'credits'        => $planHistory->credits,
                     'details'        => $planHistory->plan_name . ' ' . $planHistory->credits . ' Auto top-up failed',
                     'payment_type'   => 0, // auto-topup
                     'status'         => 2, // failed
@@ -799,8 +808,8 @@ class CustomHelper
                     'updated_at'     => now(),
                 ]);
             }
-            
-           
+
+
 
             return $debitTransactionId;
         } catch (\Throwable $e) {
