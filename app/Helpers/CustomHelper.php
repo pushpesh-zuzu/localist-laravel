@@ -692,6 +692,9 @@ class CustomHelper
                 // }
                 try {
 
+                    $details = $planHistory->plan_name . ' ' . $planHistory->credits . " Auto top-up credits purchased";
+
+
                     $planPrice = floatval(str_replace(',', '', $planHistory->total_amount));
                     $amountInPence = (int) round($planPrice * 100);
 
@@ -702,7 +705,7 @@ class CustomHelper
                         'confirm'        => true,
                         'off_session'    => true,
                         'customer'       => $user->stripe_customer_id ?? null,
-                        'description'    => $detail,
+                        'description'    => $details,
                     ]);
 
                     if ($paymentIntent->status === 'succeeded') {
@@ -723,7 +726,6 @@ class CustomHelper
                             'updated_at'   => now(),
                         ]);
 
-                        $details = $planHistory->plan_name . ' ' . $planHistory->credits . " Auto top-up credits purchased";
 
                         $transactionId = PurchaseHistory::insertGetId([
                             'user_id'        => $userId,
@@ -778,7 +780,7 @@ class CustomHelper
                             });
                         }
 
-                        
+
                         $paymentSuccess = true;
                         break;
                     }
