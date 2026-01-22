@@ -23,12 +23,14 @@ use App\Http\Controllers\Api\Google\GoogleController;
 use App\Http\Controllers\Api\OctoparseController;
 use App\Http\Controllers\Api\Facebook\Forms\DrivewayInstallationForm;
 use App\Http\Controllers\Api\Facebook\Forms\RoofingForm;
+use App\Http\Controllers\Api\Facebook\Forms\FenceAndGateForm;
 
 // use App\Http\Controllers\Api\ZohoController;
 
 
 Route::post('get-facebook-leads-driveway-installation-from',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFrom']);
 Route::post('get-facebook-leads-roofing-from',[RoofingForm::class,'getFacebookLeadsRoofingFrom']);
+Route::post('get-facebook-leads-fence-and-gate-from',[FenceAndGateForm::class,'getFacebookLeadsFenceAndGateForm']);
 
 Route::post('get-facebook-leads-tt',[DrivewayInstallationForm::class,'tt']);
 
