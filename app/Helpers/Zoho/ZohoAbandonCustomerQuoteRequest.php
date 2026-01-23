@@ -146,6 +146,7 @@ class ZohoAbandonCustomerQuoteRequest
                 'Quote_Customer_Lookup'        => $lookUpId,
                 'City'                         => $user->city,
                 'Name'                         => $user->name,
+                'Quote_Request_Email'          => $user->email ?? '',
                 'Credit_Score'                 => $creditScore,
                 'Zipcode'                      => $user->zipcode,
                 'Service'                      => $service,

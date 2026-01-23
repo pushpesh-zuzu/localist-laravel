@@ -24,7 +24,7 @@ class d7LeadSupplierController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('created_at', function ($user) {
-                    return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
+                    return Carbon::parse($user->created_at)->format('d/m/Y h:i a');
                 })
                 ->rawColumns(['created_at'])
                 ->make(true);
