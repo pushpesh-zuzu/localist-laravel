@@ -194,13 +194,13 @@ class BuyerListExport implements FromCollection, WithHeadings, WithMapping, With
 
         if ($isComplete) {
             $row[] = $user->lastLogin?->login_at
-                ? Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i A')
+                ? Carbon::parse($user->lastLogin->login_at)->format('d/m/Y h:i A')
                 : '';
         }
 
         // Created Date
         $row[] = $user->created_at
-            ? Carbon::parse($user->created_at)->format('m/d/Y h:i A')
+            ? Carbon::parse($user->created_at)->format('d/m/Y h:i A')
             : '';
 
         // Status

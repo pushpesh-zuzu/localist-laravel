@@ -89,6 +89,7 @@ class ZohoQuoteRequest
         $lookUpId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
         $userName = User::find($userId)->name;
         $customerName = User::find($leadRequests->customer_id)->name;
+        $customerEmail = User::find($leadRequests->customer_id)->email;
         $service = Category::find($leadRequests->service_id)->name;
         $creditScore = $leadRequests->credit_score;
 
@@ -115,6 +116,7 @@ class ZohoQuoteRequest
                 'Quote_Customer_Lookup'        => $lookUpId,
                 'City'                         => $leadRequests->city,
                 'Name'                         => $customerName,
+                'Quote_Request_Email'          => $customerEmail,
                 'Credit_Score'                 => $creditScore,
                 'Zipcode'                      => $leadRequests->postcode,
                 'Service'                      => $service,

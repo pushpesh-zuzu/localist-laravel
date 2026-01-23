@@ -26,7 +26,7 @@
           <tr>
             <th scope="row">{{ $aKey+1 }}</th>
             <td class="text-center">{{ $aRow->plan_name }}</td>
-            <td class="text-center">{{ \Carbon\Carbon::parse($aRow->created_at)->format('m/d/Y h:i a') }}</td>
+            <td class="text-center">{{ \Carbon\Carbon::parse($aRow->created_at)->format('d/m/Y h:i a') }}</td>
             <td class="text-center">{{ $aRow->price }}</td>
             <!-- <td class="text-center">{{ $aRow->users->total_credit }}</td> -->
             <td class="text-center">{{ $aRow->credits }}</td>

@@ -47,7 +47,7 @@ class RequestListController extends Controller
                     return $item->category_name ?: 'N/A';
                 })
                 ->editColumn('created_at', function ($item) {
-                    return date('m/d/Y h:i A', strtotime($item->created_at));
+                    return date('d/m/Y h:i A', strtotime($item->created_at));
                 })
                 ->editColumn('questions', function ($item) {
                     $output = "";

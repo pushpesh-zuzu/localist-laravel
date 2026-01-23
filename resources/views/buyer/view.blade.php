@@ -135,7 +135,7 @@
                 <td style="text-align:center;">{{ $aRow->credit_score }}</td>
 
                 <td>{{ $aRow->status }}</td>
-                <td>{{ date('m/d/Y h:i a', strtotime($aRow->created_at)) }}</td>
+                <td>{{ date('d/m/Y h:i a', strtotime($aRow->created_at)) }}</td>
                 <td style="text-align:center;"> 
                    @can('quotecustomers.viewjobpostedlist')
                   <a href="{{ route('buyer.leadDetails',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>

@@ -21,7 +21,7 @@
                             <tr>
                             <td style="text-align:center;">{{ $aRow->ip ?? '' }}</td>
                             <td style="text-align:center;">{{ $aRow->user_agent ?? '' }}</td>
-                            <td style="text-align:center;">{{ $aRow->login_at ?? '' }}</td>
+                            <td style="text-align:center;">{{ $aRow->login_at ? \Carbon\Carbon::parse($aRow->login_at)->format('d/m/Y h:i A') : '' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -44,9 +44,7 @@
               <th scope="col" width="20px;">#</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
-              <th scope="col">Total Credit</th>
-              <!-- <th scope="col">Entry URL</th>
-              <th scope="col">User IP</th> -->
+              <th scope="col">Total Credit</th>              
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
                <th>Zoho Status</th>
@@ -60,12 +58,9 @@
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
               <td class="text text-center">{{ $aRow->total_credit  }}</td>
-               <!-- <td style="word-break: break-all; max-width: 200px;">
-                {{ $aRow->entry_url ?? '' }}
-              </td>
-              <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
+             
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
-              <!-- <td>{{ $aRow->user_type == 1 ? 'Seller' : 'Seller, Buyer' }}</td> -->
+              
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
                 <td>{{ $aRow->zoho_record_id  ? 'Inserted'     : 'Not-inserted'; }}</td>
               <td>
@@ -76,9 +71,7 @@
                     </a>
                 @endif
                @endcan
-                <!-- <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn"></i></a>
-                <a href="{{ route('seller.services',$aRow->id) }}" class="text text-primary"><i class="bi bi-person-lines-fill"></i></a>
-                <a href="{{ route('seller.creditPlans',$aRow->id) }}" class="text text-primary"><i class="bi bi-list-task nav-icon"></i></a> -->
+              
                 @can('leadbuyers.incomplete-view-details')
                 <a href="{{ route('seller.show.custom',['type' => 'abandoned', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View"> <i class="bi bi-eye"></i></a>
                 @endcan
@@ -113,7 +106,7 @@
         title: 'Lead Buyers - Incomplete List',
         className: "buttons-excel btn btn-success btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))', // Exclude "Action" column (7th column)
+          columns: ':not(:eq(7))', // Exclude "Action" column (7th column)
           modifier: {
             order: 'index',
             page: 'all',
@@ -129,7 +122,7 @@
         title: 'Lead Buyers - Incomplete List',
         className: "buttons-csv btn btn-info btn-sm",
         exportOptions: {
-          columns: ':not(:eq(6))',
+          columns: ':not(:eq(7))',
           modifier: {
             order: 'index',
             page: 'all',

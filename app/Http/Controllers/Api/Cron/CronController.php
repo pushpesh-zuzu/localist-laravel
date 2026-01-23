@@ -1436,7 +1436,7 @@ class CronController extends Controller
 
     public function sendCreditBelowFiftyEmail()
     {
-      
+
         $batchSize = 500;
         $totalEmailsSent = 0;
 
@@ -1459,7 +1459,7 @@ class CronController extends Controller
                 foreach ($users as $user) {
                     try {
 
-                       
+
                         // Last time credit was purchased (recovery point)
                         $lastRecoveredAt = DB::table('plan_histories')
                             ->where('user_id', $user->id)
@@ -1490,10 +1490,89 @@ class CronController extends Controller
                         }
 
 
-                         ZohoEmails::sendLeadBuyerLowCreditEmail($user->id);
+                        ZohoEmails::sendLeadBuyerLowCreditEmail($user->id);
                         $totalEmailsSent++;
                     } catch (\Throwable $e) {
                         Log::error("Failed to send low credit email for user {$user->id}: {$e->getMessage()}");
+                        continue;
+                    }
+                }
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'emails_sent' => $totalEmailsSent,
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    }
+
+
+    public function sendNotifyCustomerRequestRepliesReminderEmail()
+    {
+        $batchSize = 500;
+
+        $hoursAgo = 6;       // email delay
+        $recentHours = 24;
+        $totalEmailsSent = 0;
+
+        LeadRequest::with(['customer', 'category'])
+            ->where('status', 'new') // or != 'purchased' if needed
+            ->whereDoesntHave('recommendedLeads')
+            ->where('created_at', '>=', now()->subHours($recentHours)) // only recent leads
+            ->where('created_at', '<=', now()->subHours($hoursAgo))
+            ->whereNull('deleted_at')
+
+            //  ONLY FIRST LEAD PER CUSTOMER
+            ->whereIn('id', function ($query) use ($recentHours) {
+                $query->selectRaw('MIN(id)')
+                    ->from('lead_requests')
+                    ->whereNull('deleted_at')
+                    ->where('status', 'new')
+                    ->where('created_at', '>=', now()->subHours($recentHours)) // 🔥 IMPORTANT
+                    ->groupBy('customer_id');
+            })
+
+            ->whereHas('customer', function ($query) {
+                $query->whereNotNull('zoho_record_id')
+                    ->whereNull('deleted_at');
+            })
+            ->orderBy('id')
+            ->chunk($batchSize, function ($leads) use (&$totalEmailsSent) {
+
+                foreach ($leads as $lead) {
+
+                    try {
+
+                        $customer = $lead->customer;
+
+                        if (!$customer || empty($customer->email)) {
+                            continue;
+                        }
+
+                        $alreadySent = EmailLog::where('user_id', $customer->id)
+                            ->where('lead_id', $lead->id)
+                            ->where('setting_name', 'Notify Customer Request Replies Reminder')
+                            ->exists();
+
+                        if ($alreadySent) {
+                            continue;
+                        }
+
+                        // Customer must have completed form
+                        $user = User::where('email', $customer->email)
+                            ->where('form_status', '1')
+                            ->first();
+
+                        if (!$user) {
+                            continue;
+                        }
+
+                        ZohoEmails::notifyCustomerRequestRepliesReminder($user->id, $lead->id);
+
+                        $totalEmailsSent++;
+                        return false;
+                    } catch (\Throwable $e) {
+                        Log::error("Error sending 6hr customer email for Lead ID {$lead->id}: {$e->getMessage()}");
                         continue;
                     }
                 }

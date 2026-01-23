@@ -125,7 +125,7 @@ $userServices = $user->services->map(function ($service) use ($user) {
             $user->email,
             $user->total_credit ?? 0,
             $user->total_credits_bought ?? 0,
-            $user->lastLogin?->login_at ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i a') : '',
+            $user->lastLogin?->login_at ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('d/m/Y h:i a') : '',
             (string) $sellerTotalHired ?? 0,
             (string) $sellerTotalBid ?? 0,
             url(config('app.react_base_url') . '/view-profile/' . 
@@ -133,7 +133,7 @@ $userServices = $user->services->map(function ($service) use ($user) {
             '/' . $user->id),           
             $userServices,           
             optional($user->serviceLocations->first())->miles ?? 'N/A',
-            $user->created_at ? $user->created_at->format('d-m-Y') : '',
+            $user->created_at ? $user->created_at->format('d/m/Y') : '',
             $totalReviews,
             $averageRating,
             $user->company_website ?? '',

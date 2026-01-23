@@ -77,7 +77,7 @@ $('#dataTable').DataTable({
             title: 'Lead Buyers',
             className: "buttons-excel btn btn-success btn-sm",
             exportOptions: {
-                columns: ':not(:eq(4))', // Exclude "Action" column (7th column)
+                columns: ':not(:eq(7))', // Exclude "Action" column (7th column)
                 modifier: {
                     order: 'index',
                     page: 'all',
@@ -91,7 +91,7 @@ $('#dataTable').DataTable({
             title: 'Lead Buyers',
             className: "buttons-csv btn btn-info btn-sm",
             exportOptions: {
-                columns: ':not(:eq(4))',
+                columns: ':not(:eq(7))',
                 modifier: {
                     order: 'index',
                     page: 'all',

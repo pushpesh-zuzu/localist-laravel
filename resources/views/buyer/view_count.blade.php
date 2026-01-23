@@ -28,7 +28,7 @@
                     <td>{{ $row['ip_address'] }}</td>
                     <td class="text-center">{{ $row['visitors_count'] }}</td>
                     <td class="text-center">{{ $row['random_count'] }}</td>
-                    <td>{{ $row['date'] }}</td>
+                    <td>{{ $row['date'] ? \Carbon\Carbon::parse($row['date'])->format('d/m/Y') : '' }} </td>
                 </tr>
                 @endforeach
             </tbody>

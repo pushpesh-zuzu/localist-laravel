@@ -36,7 +36,7 @@ class d7LeadSupplierListExport implements
             $supplier->zip ?? '',
             $supplier->website ?? '',
             $supplier->created_at
-                ? Carbon::parse($supplier->created_at)->format('m/d/Y h:i A')
+                ? Carbon::parse($supplier->created_at)->format('d/m/Y h:i A')
                 : '',
         ];
     }

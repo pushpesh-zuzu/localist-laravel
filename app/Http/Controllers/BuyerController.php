@@ -84,7 +84,7 @@ class BuyerController extends Controller
                     }
                 })
                 ->addColumn('date', function ($user) {
-                    return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
+                    return Carbon::parse($user->created_at)->format('d/m/Y h:i a');
                 })->filterColumn('date', function ($query, $keyword) {
                     try {
                         $date = Carbon::parse($keyword)->format('Y-m-d');
@@ -95,13 +95,13 @@ class BuyerController extends Controller
 
                 ->addColumn('last_login', function ($user) {
                     return $user->lastLogin?->login_at
-                        ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('m/d/Y h:i A')
+                        ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('d/m/Y h:i A')
                         : '';
                 })
                 ->filterColumn('last_login', function ($query, $keyword) {
                     // Try: Full datetime search
                     try {
-                        $parsed = Carbon::createFromFormat('m/d/Y h:i A', $keyword);
+                        $parsed = Carbon::createFromFormat('d/m/Y h:i A', $keyword);
                         return $query->whereHas('lastLogin', function ($q) use ($parsed) {
                             $q->whereDate('login_at', $parsed->toDateString());
                         });
@@ -110,7 +110,7 @@ class BuyerController extends Controller
 
                     // Try: Date only search
                     try {
-                        $parsed = Carbon::createFromFormat('m/d/Y', $keyword);
+                        $parsed = Carbon::createFromFormat('d/m/Y', $keyword);
                         return $query->whereHas('lastLogin', function ($q) use ($parsed) {
                             $q->whereDate('login_at', $parsed->toDateString());
                         });
@@ -314,7 +314,7 @@ class BuyerController extends Controller
                     }
                 })
                 ->addColumn('date', function ($user) {
-                    return Carbon::parse($user->created_at)->format('m/d/Y h:i a');
+                    return Carbon::parse($user->created_at)->format('d/m/Y h:i a');
                 })->filterColumn('date', function ($query, $keyword) {
                     try {
                         $date = Carbon::parse($keyword)->format('Y-m-d');

@@ -3703,4 +3703,84 @@ class ZohoEmails
             }
         }
     }
+
+
+    public static function notifyCustomerRequestRepliesReminder($userId, $leadId)
+    {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
+
+        $sendWelcomeEmail = EmailSetting::where('setting_name', 'Notify Customer Request Replies Reminder')->value('setting_value');
+
+        if ($sendWelcomeEmail) {
+            $accessToken = ZohoHelper::getAccessToken();
+            $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
+
+            if (!empty($zohoId)) {
+                $user = User::where('id', $userId)->first();
+              
+                if (!empty($user)) {
+
+                    $htmlView = view('emails.customers.request_replies_reminder',  [
+                        'baseUrl' => config('app.react_base_url'),
+                        'siteUrl' => config('app.url'),
+                        'name' => $user->name,                                           
+                        'leadId' => $leadId ?? '',
+                        'buyerId' => $userId ?? '',                        
+                        'userId' => $user->id ?? '',
+
+                    ])->render();
+                    $htmlContent = (new CssToInlineStyles())->convert($htmlView);
+                    $url = ZohoHelper::getSetting(ZohoHelper::EMAIL_QUOTE_CUSTOMERS_API_URL, $zohoId);
+
+                    $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
+                    $toEmail = $user->email;
+                    $subject = 'Get Responses from the Top 5 Professionals Today';
+
+                    DB::table('zoho_logs')->insert([
+                        'url' => $url,
+                        'function_name' => 'notifyCustomerRequestRepliesReminder',
+                        'ipaddress' => request()->ip(),
+                        'created_at' => now(),
+                    ]);
+
+                    $response = Http::withToken($accessToken)
+                        ->post($url, [
+                            'data' => [
+                                [
+                                    'from' => [
+                                        'email' => $fromEmail,
+                                        'user_name' => CustomHelper::setting_value('zoho_default_from_name', 'Localists.com') // Change to your preferred display name
+                                    ],
+                                    'to' => [
+                                        [
+                                            'email' => $toEmail
+                                        ]
+                                    ],
+                                    'subject' => $subject,
+                                    'content' => $htmlContent,
+                                    'mail_format' => 'html',
+                                    'org_email' => true
+                                ]
+                            ]
+                        ]);
+
+                    $rel = self::getZohoMailResponse($response);
+                    $dataE['user_id'] = $user->id;
+                    $dataE['from_email'] = $fromEmail;
+                    $dataE['to_email'] = $toEmail;
+                    $dataE['message_id'] = $rel['message_id'];
+                    $dataE['subject'] = $subject;
+                    $dataE['setting_name'] = 'Notify Customer Request Replies Reminder';
+                    $dataE['content'] = $htmlContent;
+                    $dataE['zoho_url'] = $url;
+                    $dataE['response'] = json_encode($rel);
+                    EmailLog::insertGetId($dataE);
+                }
+            }
+        }
+        
+    }
 }

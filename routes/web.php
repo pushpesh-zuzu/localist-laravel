@@ -216,7 +216,7 @@ Route::get('/test-next-day-expired-emails', [CronController::class, 'sendNextDay
 Route::get('/test-customer-lead-status', [CronController::class, 'sendLeadRequestStatusEmailToCustomer']);
 Route::get('/test-customer-credit-below', [CronController::class, 'sendCreditBelowFiftyEmail']);
 Route::get('/test-customer-abandoned', [CronController::class, 'sendAbandonedCartReminderEmails']);
-
+Route::get('/test-customer-reminder', [CronController::class, 'sendNotifyCustomerRequestRepliesReminderEmail']);
 
 Route::get('/zoho/scopes', function () {
     $scope = ZohoHelper::getnewAccessTokenTest();

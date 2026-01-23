@@ -205,7 +205,7 @@ class MapController extends Controller
         // Reuse existing data logic
         $response = $this->data($request)->getData(true);
 
-        $filename = 'service_map_' . now()->format('Y-m-d_H-i-s') . '.csv';
+        $filename = 'service_map_' . now()->format('d-m-Y_H-i-s') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv',
