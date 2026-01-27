@@ -3737,7 +3737,7 @@ class ZohoEmails
 
                     $fromEmail = CustomHelper::setting_value('zoho_default_from_email', 'info@localistscustomers.com');
                     $toEmail = $user->email;
-                    $subject = 'Get Responses from the Top 5 Professionals Today';
+                    $subject = 'Hear Back Faster from Top Professionals Near You Today';
 
                     DB::table('zoho_logs')->insert([
                         'url' => $url,
@@ -3770,6 +3770,7 @@ class ZohoEmails
                     $rel = self::getZohoMailResponse($response);
                     $dataE['user_id'] = $user->id;
                     $dataE['from_email'] = $fromEmail;
+                    $dataE['lead_id'] = $leadId ?? null;
                     $dataE['to_email'] = $toEmail;
                     $dataE['message_id'] = $rel['message_id'];
                     $dataE['subject'] = $subject;

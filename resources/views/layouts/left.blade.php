@@ -67,7 +67,7 @@
     <li class="nav-group" aria-expanded="false">
       <a class="nav-link nav-group-toggle" href="#">
         <i class="fa-solid fa-user nav-icon"></i> {{ __('Lead Buyers') }}</a>
-      <ul class="nav-group-items compact" style="height: 120px;">
+      <ul class="nav-group-items compact" style="height: 170px;">
 
         @can('leadbuyers.incomplete-viewlist')
         <li class="nav-item">
@@ -85,6 +85,17 @@
           </a>
         </li>
         @endcan
+
+
+         @can('leadbuyers.allloginhistorylist')
+        <li class="nav-item">
+          <a href="{{ route('seller.allloginhistorylist') }}" class="nav-link {{ request()->routeIs('seller.allloginhistorylist') ? 'active' : '' }}">
+            <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+            {{ __('Login History') }}
+          </a>
+        </li>
+         @endcan
+
         @can('leadbuyerscontact.viewlist')
         <li class="nav-item">
           <a href="{{ route('seller.contact_form') }}" class="nav-link {{ request()->routeIs('seller.contact_form') ? 'active' : '' }}">
@@ -93,6 +104,8 @@
           </a>
         </li>
         @endcan
+
+
 
       </ul>
     </li>
@@ -183,7 +196,7 @@
     </li>
     @endcan
 
-     @can('invoicehistory.viewlist')
+    @can('invoicehistory.viewlist')
     <li class="nav-item">
       <a href="{{ route('purchase.invoice.history') }}" class="nav-link {{ request()->routeIs('purchase.invoice.history') ? 'active' : '' }}">
         <i class="fa-solid fa-file-invoice-dollar nav-icon"></i>
@@ -192,7 +205,7 @@
     </li>
     @endcan
 
-    
+
     @can('blog.viewlist')
     <li class="nav-item">
       <a href="{{ route('blogs.index') }}" class="nav-link {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
@@ -275,12 +288,12 @@
 
 
     @can('d7leadsuppliers.viewlist')
-        <li class="nav-item">
-          <a href="{{ route('d7LeadSupplierList') }}" class="nav-link {{ request()->routeIs('d7LeadSupplierList') ? 'active' : '' }}">
-            <i class="fa-solid fa-user nav-icon"></i>
-            D7 Lead Suppliers
-          </a>
-        </li>
+    <li class="nav-item">
+      <a href="{{ route('d7LeadSupplierList') }}" class="nav-link {{ request()->routeIs('d7LeadSupplierList') ? 'active' : '' }}">
+        <i class="fa-solid fa-user nav-icon"></i>
+        D7 Lead Suppliers
+      </a>
+    </li>
     @endcan
   </ul>
 

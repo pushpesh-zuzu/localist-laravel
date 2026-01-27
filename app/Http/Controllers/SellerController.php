@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\LoginHistoryListExport;
 use Illuminate\Http\Request;
 use App\Models\UserServiceLocation;
 use App\Models\UserAccreditation;
@@ -34,6 +35,8 @@ use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoFinance;
 use App\Helpers\Zoho\ZohoPurchasedLeads;
 use App\Helpers\Zoho\ZohoQuoteRequest;
+use Yajra\Datatables\Datatables;
+use Carbon\Carbon;
 
 class SellerController extends Controller
 {
@@ -528,14 +531,14 @@ class SellerController extends Controller
                 // 🔥 Main integration (non-abandoned)
                 app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
 
-                
+
                 $services = UserService::where('user_id', $userId)->get();
                 if ($services->isNotEmpty()) {
                     CustomHelper::runInBackground(function () use ($userId, $services) {
                         $zohoService = app(ZohoService::class);
 
-                        foreach ($services as $service) {                           
-                             if ($service->zoho_service_id === null || $service->zoho_service_id === '') {
+                        foreach ($services as $service) {
+                            if ($service->zoho_service_id === null || $service->zoho_service_id === '') {
                                 // Create new Zoho record
                                 $zohoService->integrateService($userId, [$service->id]);
                             } else {
@@ -590,7 +593,7 @@ class SellerController extends Controller
                     ->toArray();
 
                 if (!empty($serviceIds)) {
-                    CustomHelper::runInBackground(function () use ($userId, $serviceIds) {                      
+                    CustomHelper::runInBackground(function () use ($userId, $serviceIds) {
 
                         $zohoQA = app(ZohoQuestionAnswer::class);
 
@@ -674,5 +677,120 @@ class SellerController extends Controller
 
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
+    }
+
+    public function allLoginHistoryList(Request $request)
+    {
+        if ($request->ajax()) {
+
+            $query = LoginHistory::query()
+                ->select(
+                    'users.id as user_id',
+                    'users.name',
+                    'users.email',
+                    DB::raw('COUNT(login_histories.id) as total_logins'),
+                    DB::raw('MIN(login_histories.login_at) as first_login'),
+                    DB::raw('MAX(login_histories.login_at) as last_login'),
+                    DB::raw('(SELECT lh.ip FROM login_histories lh WHERE lh.user_id = users.id ORDER BY lh.login_at DESC LIMIT 1) as last_ip'),
+                    DB::raw('(SELECT lh.user_agent FROM login_histories lh WHERE lh.user_id = users.id ORDER BY lh.login_at DESC LIMIT 1) as last_device')
+                )
+                ->join('users', 'users.id', '=', 'login_histories.user_id')
+                ->whereNull('users.deleted_at')
+                ->whereIn('users.user_type', [1])
+                ->where('users.form_status', 1)
+                ->where(function ($q) {
+                    $q->whereNull('users.name')
+                        ->orWhere('users.name', 'not like', '%test%');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('users.email')
+                        ->orWhere('users.email', 'not like', '%test%');
+                })
+                ->groupBy('users.id', 'users.name', 'users.email')
+                ->orderBy('last_login', 'DESC');
+
+            // Date filter on login history
+            if ($request->from_date && $request->to_date) {
+                $query->whereBetween('login_histories.login_at', [
+                    $request->from_date . ' 00:00:00',
+                    $request->to_date . ' 23:59:59',
+                ]);
+            }
+            
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('last_ip', function ($row) {
+                    return $row->last_ip ?? '';
+                })
+                ->addColumn('last_device', function ($row) {
+                    return $row->last_device ?? '';
+                })
+                ->addColumn('first_login_time', function ($row) {
+                    return $row->first_login ? Carbon::parse($row->first_login)->format('d/m/Y h:i A') : '';
+                })
+                ->addColumn('last_login_time', function ($row) {
+                    return $row->last_login ? Carbon::parse($row->last_login)->format('d/m/Y h:i A') : '';
+                })
+                ->addColumn('total_logins_count', function ($row) {
+                    return $row->total_logins;
+                })
+
+
+                ->filterColumn('last_ip', function ($query, $keyword) {
+                    $query->whereRaw("EXISTS (
+                    SELECT 1 FROM login_histories lh
+                    WHERE lh.user_id = users.id
+                    AND lh.ip LIKE ?
+                    ORDER BY lh.login_at DESC
+                    LIMIT 1
+                )", ["%{$keyword}%"]);
+                })
+                ->filterColumn('last_device', function ($query, $keyword) {
+                    $query->whereRaw("EXISTS (
+                    SELECT 1 FROM login_histories lh
+                    WHERE lh.user_id = users.id
+                    AND lh.user_agent LIKE ?
+                    ORDER BY lh.login_at DESC
+                    LIMIT 1
+                )", ["%{$keyword}%"]);
+                })
+
+                ->filterColumn('first_login_time', function ($query, $keyword) {
+                    $query->whereRaw("DATE_FORMAT(login_histories.login_at, '%d/%m/%Y %h:%i %p') LIKE ?", ["%{$keyword}%"]);
+                })
+                ->filterColumn('last_login_time', function ($query, $keyword) {
+                    $query->whereRaw("DATE_FORMAT(login_histories.login_at, '%d/%m/%Y %h:%i %p') LIKE ?", ["%{$keyword}%"]);
+                })
+
+                ->make(true);
+        }
+
+        return view('seller.all_seller_login_history');
+    }
+
+
+    public function exportLoginHistoryExcel(Request $request)
+    {
+        $fromDate = $request->start_date ?? null;
+        $toDate = $request->end_date ?? null;
+        $search = $request->search ?? null;
+        $userType =  $request->userType;
+
+        $fileName = 'Lead Buyers Login History List' . '.xlsx';
+
+        return Excel::download(new LoginHistoryListExport($fromDate, $toDate, $search, $userType), $fileName);
+    }
+
+    public function exportLoginHistoryCsv(Request $request)
+    {
+        $fromDate = $request->start_date ?? null;
+        $toDate = $request->end_date ?? null;
+        $search = $request->search ?? null;
+        $userType =  $request->userType;
+
+        $fileName = 'Lead Buyers Login History List' . '.csv';
+        
+        return Excel::download(new LoginHistoryListExport($fromDate, $toDate, $search, $userType), $fileName);
     }
 }

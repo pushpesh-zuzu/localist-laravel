@@ -161,17 +161,14 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('credit-plans/{userid}', [SellerController::class, 'creditPlans'])->name('seller.creditPlans');
     Route::get('seller-bids/{userid}', [SellerController::class, 'sellerBids'])->name('seller.sellerBids');
     Route::get('seller-login/{userid}', [SellerController::class, 'sellerLogin'])->name('seller.sellerLogin');
+    Route::get('seller-login-history-list', [SellerController::class, 'allLoginHistoryList'])->name('seller.allloginhistorylist');
+    Route::get('/export-login-history-excel', [SellerController::class, 'exportLoginHistoryExcel'])->name('export.login.history.excel');
+    Route::get('/export-login-history-csv', [SellerController::class, 'exportLoginHistoryCsv'])->name('export.login.history.csv');
     Route::get('seller-accreditations/{userid}', [SellerController::class, 'sellerAccreditations'])->name('seller.sellerAccreditations');
     Route::get('seller-profile-services/{userid}', [SellerController::class, 'sellerProfileServices'])->name('seller.sellerProfileServices');
-    Route::get('/export-seller-excel', [SellerController::class, 'exportCompleteSellerExcel'])
-        ->name('export.com.seller.excel');
-
-    Route::get('/export-com-seller-csv', [SellerController::class, 'exportCompleteSellerCsv'])
-        ->name('export.com.seller.csv');
-
-    Route::get('/zoho/seller/send/{type}/{id}', [SellerController::class, 'sellerSendToZoho'])
-        ->name('zoho.seller.send');
-
+    Route::get('/export-seller-excel', [SellerController::class, 'exportCompleteSellerExcel'])->name('export.com.seller.excel');
+    Route::get('/export-com-seller-csv', [SellerController::class, 'exportCompleteSellerCsv'])->name('export.com.seller.csv');
+    Route::get('/zoho/seller/send/{type}/{id}', [SellerController::class, 'sellerSendToZoho'])->name('zoho.seller.send');
     Route::get('suggested-questions/{userid}', [SellerController::class, 'suggestedQuestions'])->name('seller.suggestedQuestions');
     Route::resource('servicequestion', ServiceQuestionsController::class);
     Route::POST('servicequestion/add-more-option', [ServiceQuestionsController::class, 'addMoreOption']);
@@ -191,10 +188,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/d7-lead-supplier-csv', [d7LeadSupplierController::class, 'exportd7LeadSupplierCsv'])->name('d7-lead-supplier.csv');
 
 
-Route::get('purchase-invoice-history', [PurchaseInvoiceHistoryController::class, 'purchaseInvoiceHistoryList'])->name('purchase.invoice.history');
- Route::post('/admin-download-invoice', [PaymentController::class, 'downloadInvoice'])->name('plan.download-invoice');;
-    
-
+    Route::get('purchase-invoice-history', [PurchaseInvoiceHistoryController::class, 'purchaseInvoiceHistoryList'])->name('purchase.invoice.history');
+    Route::post('/admin-download-invoice', [PaymentController::class, 'downloadInvoice'])->name('plan.download-invoice');;
 });
 
 

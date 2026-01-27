@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Welcome to Localists</title>
+  <title>Request Replies Reminder - Localists</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -60,9 +60,9 @@
           </tr>
 
           <tr>
-            <td class="padding" align="left" style="padding:20px 20px 20px 40px; font-family:Inter, Arial, sans-serif;">
+            <td class="padding" align="left" style="padding:20px 20px 10px 40px; font-family:Inter, Arial, sans-serif;">
               <div style="font-size:16px; color:#252832; font-weight:400;">
-               Hi
+                Hi
                 <span style="font-weight:700;">
                   {{ ucfirst($name) }},
                 </span>
@@ -70,18 +70,32 @@
               <div style="font-size:13px;
                 color:#252832;
                 padding-top:12px;">
-                Want to speed things up? Requesting replies lets the top 5 available professionals know you’re ready to hear from them.
+                Requesting replies lets the top professionals know you're ready to hear from them.
               </div>
             </td>
           </tr>
-          <!-- LOGIN BOX -->
-         
+
           <!-- YOUR REQUESTS -->
+
+
+
           <tr>
-            <td align="center" style="padding:10px 20px;">
-              <div style="font-size:16px; font-weight:800; color:#00afe3;">
+            <td align="center" style="padding:6px 20px 0; line-height:1;">
+              <div style="font-size:16px; font-weight:800;  color:#00afe3;   margin:0;   padding:0;     line-height:1.2;    display:inline-block; ">
                 Your Requests
               </div>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 20px 6px">
+              <a href="{{ url('/api/email-customer-request-top-five-matches/' . $leadId . '/' . $buyerId) }}"
+                target="_blank"
+                style="display:inline-block; text-decoration:none; line-height:0;">
+                <img src="{{$siteUrl}}/public/images/click-here.png"
+                  alt="Hear Back Faster"
+                  width="390"
+                  style="display:block;width:390px;max-width:100%;height:auto;margin:0;padding:0;border:0;outline:none;text-decoration:none;">
+              </a>
             </td>
           </tr>
 
@@ -90,32 +104,21 @@
               <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#00afe3" style="border-radius:6px;">
                 <tr>
                   <td align="center"
-                    style="padding:20px 25px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#ffffff; line-height:18px;">
-                    Manage your requests from one place. You can request replies from the top 5 lead buyers in one
-                    click:
+                    style="padding:15px 25px; font-family:Inter,Arial,sans-serif; font-size:12px; font-weight:700; color:#ffffff; line-height:18px;">
+                    You can request replies from local professionals in one click.
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           <!-- BUTTON -->
-          <tr>
-            <td align="center" style="padding-bottom:25px; font-size:0; line-height:0;">
-              <a href="{{ url('/api/email-customer-request-top-five-matches/' . $leadId . '/' . $buyerId) }}"
-                style="background:#ff8c2b;color:#ffffff;font-size:15px;font-weight:700;padding:8px 22px; border-radius:30px; text-decoration:none;display:inline-block;line-height:18px;">
-                Request Quote From Top 5 Professionals
-                <img src="{{$siteUrl}}/public/images/rocket.png" width="19" height="19" alt=""
-                  style="display:inline-block; margin-top: 4px; vertical-align:middle; border:0;">
-              </a>
-            </td>
-          </tr>
 
 
           <!-- MANAGE REQUESTS -->
           <tr>
             <td align="center" style="padding:0 20px 20px;">
               <div style="font-size:14px; font-weight:700; color:#00afe3;">
-                 Manage everything from your Request Panel.
+                Manage everything from your Request Panel.
               </div>
               <div style="font-size:12px; color:#253238; margin-top:4px;">
                 Create & manage your requests from <a href="{{$baseUrl}}/buyers/create" style="color:#00afe3;">My Request Panel</a>
@@ -177,7 +180,7 @@
           <tr>
             <td align="center" style="padding:12px 16px; background:#f4f6f8;">
               <p style="margin:0; font-size:11px; line-height:16px; color:#6b7280; text-align:center;">
-               Click here to 
+                Click here to
                 <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}"
                   style="color:#00AFE3; text-decoration:underline; font-weight:600;">
                   unsubscribe

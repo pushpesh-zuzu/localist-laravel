@@ -171,3 +171,7 @@ ADD COLUMN is_subscribed TINYINT(1) NOT NULL DEFAULT 1 AFTER zoho_abandoned_quot
 ALTER TABLE `abandoned_users` ADD `platform_source` VARCHAR(255) NULL AFTER `utm_medium`;
 
 ALTER TABLE `users` ADD `platform_source` VARCHAR(255) NULL AFTER `utm_medium`;
+
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Lead Buyers Complete List', 'leadbuyers.allloginhistorylist', 'All Login History List', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16'), (NULL, 'Lead Buyers Complete List', 'leadbuyers.allloginhistory-excelexport', 'Login History Excel Export', 'admin', NULL, NULL), (NULL, 'Lead Buyers Complete List', 'leadbuyers.allloginhistory-csvexport', 'Login History Csv Export', 'admin', NULL, NULL);

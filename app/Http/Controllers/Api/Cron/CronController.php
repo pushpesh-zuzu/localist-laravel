@@ -63,12 +63,15 @@ class CronController extends Controller
 
         $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
 
+        $customerReplyReminderEmail = $this->sendNotifyCustomerRequestRepliesReminderEmail();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
                 'd7_supplier_summary' => $d7Response,
                 'abandoned_cart_reminder_summary' => $sendAbandonedCartReminderEmail,
+                'customerReplyReminderEmail' => $customerReplyReminderEmail,
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -1569,8 +1572,9 @@ class CronController extends Controller
 
                         ZohoEmails::notifyCustomerRequestRepliesReminder($user->id, $lead->id);
 
+                       
                         $totalEmailsSent++;
-                        return false;
+                      
                     } catch (\Throwable $e) {
                         Log::error("Error sending 6hr customer email for Lead ID {$lead->id}: {$e->getMessage()}");
                         continue;
