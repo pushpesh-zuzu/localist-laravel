@@ -13,6 +13,12 @@ class RunCallableJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+     public $timeout = 1200;
+
+    // 🔁 Retry max 3 times if failed
+     public $tries = 5;
+
+
     protected $callable;
 
     /**

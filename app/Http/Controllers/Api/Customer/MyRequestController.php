@@ -7,7 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Log, Mail, Validator
+    Auth,
+    Hash,
+    DB,
+    Log,
+    Mail,
+    Validator
 };
 use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Str;
@@ -41,64 +46,66 @@ use GuzzleHttp\Client;
 
 class MyRequestController extends Controller
 {
-    public function test(){
+    public function test()
+    {
         return "hello world";
     }
 
-    public function getSubmittedRequestList(Request $request){
+    public function getSubmittedRequestList(Request $request)
+    {
         $user_id = $request->user_id;
 
-        $list = LeadRequest::with(['customer','category'])->where('customer_id',$user_id)->get();
+        $list = LeadRequest::with(['customer', 'category'])->where('customer_id', $user_id)->get();
 
-        return $this->sendResponse('Submitted Quotes',$list);
-
+        return $this->sendResponse('Submitted Quotes', $list);
     }
 
-    public function getSubmittedRequestInfo(Request $request){
+    public function getSubmittedRequestInfo(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'request_id' => 'required|integer|exists:lead_requests,id',
-          ], [
+        ], [
             'image_file.required' => 'Location Postcode is required.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
-        $info = LeadRequest::with(['customer','category'])->where('id',$request->request_id)->get();
-        return $this->sendResponse('Quotation Information',$info);
-
+        $info = LeadRequest::with(['customer', 'category'])->where('id', $request->request_id)->get();
+        return $this->sendResponse('Quotation Information', $info);
     }
 
-    public  function registerQuoteCustomer(Request $request){
+    public  function registerQuoteCustomer(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'form_status' => 'required'
-            ], [
+        ], [
             'form_status.required' => 'Form status is required.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
-        if($request->form_status == "1"){
+        if ($request->form_status == "1") {
             $validator2 = Validator::make($request->all(), [
                 'name' => 'required',
                 'email' => 'required|unique:users,email',
                 'phone' => 'sometimes'
-              ], [
+            ], [
                 'name.required' => 'Name is required.',
                 'email.required' => 'Email is required.',
                 'email.unique' => 'Email already exists.',
                 'phone.required' => 'Phone is required.'
             ]);
 
-            if($validator2->fails()){
+            if ($validator2->fails()) {
                 return $this->sendError($validator2->errors());
             }
             $euId = "";
             $token = "";
-            $password =Str::random(8);
-            $euidInsert=0;
+            $password = Str::random(8);
+            $euidInsert = 0;
             $phoneOtp = 0;
 
             $dataUser['name'] = $request->name;
@@ -126,7 +133,7 @@ class MyRequestController extends Controller
             $dataUser['targetid'] = $request->targetid;
             $dataUser['msclickid'] = $request->msclickid;
             $dataUser['entry_url'] = $request->entry_url ?? null;
-             $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
+            $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
 
             $dataUser['utm_source'] = $request->utm_source;
             $dataUser['utm_medium'] = $request->utm_medium ?? null;
@@ -146,7 +153,7 @@ class MyRequestController extends Controller
             $euId = AbandonedUser::insertGetId($dataUser);
 
 
-            $user = AbandonedUser::where('id',$euId)->first();
+            $user = AbandonedUser::where('id', $euId)->first();
 
             $rel['user_id'] = $euId;
             $rel['postcode'] = $request->postcode;
@@ -155,40 +162,35 @@ class MyRequestController extends Controller
             $rel['active_status'] = $user->active_status;
             $rel['phone'] = $user->phone;
 
-            $phone=$user->phone;
+            $phone = $user->phone;
 
 
-            CustomHelper::runInBackground(function() use ($euId, $rel,$phone,$phoneOtp) {
+            CustomHelper::runInBackground(function () use ($euId, $rel, $phone, $phoneOtp) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
                 app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
-                if($phone){
-                    app(self::class)->sendOtpDirect($phone,$phoneOtp,$euId);
+                if ($phone) {
+                    app(self::class)->sendOtpDirect($phone, $phoneOtp, $euId);
                 }
-
-
-                
-                
             });
 
-            return $this->sendResponse('Quote customer registered successfully',$rel);
+            return $this->sendResponse('Quote customer registered successfully', $rel);
+        } else {
 
-        }else{
-
-            if(!empty($request->email)){
-                $euId = User::where('email',$request->email)->value('id');
-                if(!empty($euId)){
+            if (!empty($request->email)) {
+                $euId = User::where('email', $request->email)->value('id');
+                if (!empty($euId)) {
                     return $this->sendResponse('Abandoned Quote Customer already exists');
                 }
 
-                $euId2 = AbandonedUser::where('email',$request->email)->value('id');
-                if(!empty($euId2)){
+                $euId2 = AbandonedUser::where('email', $request->email)->value('id');
+                if (!empty($euId2)) {
                     return $this->sendResponse('Abandoned Quote Customer already exists');
                 }
             }
             $dataUser['name'] = $request->name;
             $dataUser['email'] = $request->email;
             // $dataUser['phone'] = $request->phone;
-             if (isset($request->phone) && !empty($request->phone)) {
+            if (isset($request->phone) && !empty($request->phone)) {
                 $cleanPhone = preg_replace('/\s+/', '', $request->phone); // remove spaces
                 if (strpos($cleanPhone, '+44') !== 0) {
                     $cleanPhone = ltrim($cleanPhone, '0');
@@ -209,10 +211,10 @@ class MyRequestController extends Controller
             $dataUser['campaignid'] = $request->campaignid;
             $dataUser['gclid'] = $request->gclid;
             $dataUser['keyword'] = $request->keyword;
-             $dataUser['entry_url'] = $request->entry_url ?? null;
-             $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
+            $dataUser['entry_url'] = $request->entry_url ?? null;
+            $dataUser['user_ip_address'] = $request->user_ip_address ?? null;
 
-             $dataUser['utm_source'] = $request->utm_source;
+            $dataUser['utm_source'] = $request->utm_source;
             $dataUser['utm_medium'] = $request->utm_medium ?? null;
             $dataUser['platform_source'] = $request->platform_source ?? null;
 
@@ -220,13 +222,13 @@ class MyRequestController extends Controller
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
             $euId = AbandonedUser::insertGetId($dataUser);
 
-        // 1) Quote Customer Integration
-            CustomHelper::runInBackground(function() use ($euId) {
+            // 1) Quote Customer Integration
+            CustomHelper::runInBackground(function () use ($euId) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
             });
 
             // 2) Abandon Quote Request Integration
-            CustomHelper::runInBackground(function() use ($euId) {
+            CustomHelper::runInBackground(function () use ($euId) {
                 app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
             });
 
@@ -235,19 +237,18 @@ class MyRequestController extends Controller
             //     app(self::class)->sendEncouragementEmail(['userId' => $euId]);
             // });
             return $this->sendResponse('Abandoned Quote Customer');
-            
         }
 
         // check if request postcode exists in postcode table, if not then get coordinates and save
         $reqPostcode = $request->postcode;
-        if(!empty($reqPostcode)){
-            CustomHelper::runInBackground(function() use ($reqPostcode) {
+        if (!empty($reqPostcode)) {
+            CustomHelper::runInBackground(function () use ($reqPostcode) {
                 $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
-                if(empty($dbPostcode)){
+                if (empty($dbPostcode)) {
                     $tempCord = CustomHelper::getCoordinates($reqPostcode);
-                    if(!empty($tempCord)){
+                    if (!empty($tempCord)) {
                         $cordArr = json_decode($tempCord, true);
-                        if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                        if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
                             Postcode::insertGetId([
                                 'postcode' => $reqPostcode,
                                 'latitude' => $cordArr['lat'],
@@ -255,21 +256,21 @@ class MyRequestController extends Controller
                             ]);
                         }
                     }
-                }                
+                }
             });
         }
-
     }
 
-    public  function updateRegisterPhoneNumber(Request $request){
+    public  function updateRegisterPhoneNumber(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:abandoned_users,id',
             'phone' => 'required'
-            ], [
+        ], [
             'phone.required' => 'Phone number is required.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -282,72 +283,73 @@ class MyRequestController extends Controller
             $cleanPhone = preg_replace('/\s+/', '', $request->phone); // remove spaces
             if (strpos($cleanPhone, '+44') !== 0) {
                 $cleanPhone = ltrim($cleanPhone, '0');
-                $dataUser['phone'] = '+44' . $cleanPhone;                
+                $dataUser['phone'] = '+44' . $cleanPhone;
             } else {
                 $dataUser['phone'] = $cleanPhone;
             }
             $phone = $dataUser['phone'];
         }
 
-        
+
         $rel['phone'] = $dataUser['phone'];
         $rel['user_id'] = $euId;
 
         $dataUser['updated_at'] = date('Y-m-d H:i:s');
 
-        AbandonedUser::where('id',$request->user_id)->update($dataUser);
+        AbandonedUser::where('id', $request->user_id)->update($dataUser);
 
-                // 1) Zoho Quote Customer
-            CustomHelper::runInBackground(function() use ($euId) {
-                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+        // 1) Zoho Quote Customer
+        CustomHelper::runInBackground(function () use ($euId) {
+            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($euId, 'abandon');
+        });
+
+        // 2) Abandon Quote Request
+        CustomHelper::runInBackground(function () use ($euId) {
+            app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
+        });
+
+        // 3) Send OTP (only if phone exists)
+        if ($phone) {
+            CustomHelper::runInBackground(function () use ($phone, $phoneOtp, $euId) {
+                app(self::class)->sendOtpDirect($phone, $phoneOtp, $euId);
             });
-
-            // 2) Abandon Quote Request
-            CustomHelper::runInBackground(function() use ($euId) {
-                app(ZohoAbandonCustomerQuoteRequest::class)->integrateAbandonQuoteRequest($euId);
-            });
-
-            // 3) Send OTP (only if phone exists)
-            if ($phone) {
-                CustomHelper::runInBackground(function() use ($phone, $phoneOtp, $euId) {
-                    app(self::class)->sendOtpDirect($phone, $phoneOtp, $euId);
-                });
-            }
+        }
         return $this->sendResponse('Phone number updated successfully', $rel);
     }
 
-    public function verifyPhoneNumber(Request $request){
+    public function verifyPhoneNumber(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|integer|exists:abandoned_users,id',
             'otp' => 'required',
             'no_otp' => 'sometimes'
-          ], [
+        ], [
             'image_file.required' => 'Location Postcode is required.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
-        $abUser1 = AbandonedUser::where('id',$request->user_id)->first();
-        if(empty($abUser1->phone)){
-            if(!empty($request->phone)){
+        $abUser1 = AbandonedUser::where('id', $request->user_id)->first();
+        if (empty($abUser1->phone)) {
+            if (!empty($request->phone)) {
                 $phData['phone'] = $request->phone;
                 $phData['updated_at'] = date('y-m-d H:i:s');
-                AbandonedUser::where('id',$request->user_id)->update($phData);
-            }        
+                AbandonedUser::where('id', $request->user_id)->update($phData);
+            }
         }
-        
 
-        $abUser = AbandonedUser::where('id',$request->user_id)->first();
+
+        $abUser = AbandonedUser::where('id', $request->user_id)->first();
         $cOtp = $abUser->otp;
         $otp = $request->otp;
 
-        if(!empty($request->no_otp) && $request->no_otp == "1"){
+        if (!empty($request->no_otp) && $request->no_otp == "1") {
             $otp = $cOtp;
         }
 
-        if($cOtp == $otp){
-            $password =Str::random(8);
+        if ($cOtp == $otp) {
+            $password = Str::random(8);
             $nuData['name'] = $abUser->name;
             $nuData['email'] = $abUser->email;
             $nuData['phone'] = $abUser->phone;
@@ -380,12 +382,12 @@ class MyRequestController extends Controller
 
             $phoneOtp = $abUser->otp;
             $zohoAbandonedQuoteId = $abUser->zoho_abandoned_quote_request_id ?? null;
-           $abUserId = $abUser->id ?? null;
-            if(!empty($euId)){
+            $abUserId = $abUser->id ?? null;
+            if (!empty($euId)) {
 
                 UserDetail::create([
                     'user_id'  => $euId,
-                    'is_autobid'  =>1,
+                    'is_autobid'  => 1,
                     'billing_contact_name' => $nuData['name'],
                     'billing_phone' => $nuData['phone'],
                     'billing_vat_register' => 1,
@@ -401,35 +403,34 @@ class MyRequestController extends Controller
                     [
                         'user_id'   => $euId,
                         'noti_name' => 'customer_email_change_in_request',
-                        'noti_value'=> 1,
+                        'noti_value' => 1,
                         'user_type' => 'customer',
                         'noti_type' => 'email',
-                        'created_at'=> $now,
-                        'updated_at'=> $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ],
                     [
                         'user_id'   => $euId,
                         'noti_name' => 'customer_email_reminder_to_reply',
-                        'noti_value'=> 1,
+                        'noti_value' => 1,
                         'user_type' => 'customer',
                         'noti_type' => 'email',
-                        'created_at'=> $now,
-                        'updated_at'=> $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ],
                     [
                         'user_id'   => $euId,
                         'noti_name' => 'customer_email_update_about_new_feature',
-                        'noti_value'=> 1,
+                        'noti_value' => 1,
                         'user_type' => 'customer',
                         'noti_type' => 'email',
-                        'created_at'=> $now,
-                        'updated_at'=> $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ],
                 ]);
-
             }
 
-            $user = User::where('id',$euId)->first();
+            $user = User::where('id', $euId)->first();
             //dd($user);
             $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
             $user->update(['remember_token' => $token]);
@@ -450,73 +451,73 @@ class MyRequestController extends Controller
             $rel['nation_wide'] = $user->nation_wide;
 
 
-            CustomHelper::runInBackground(function() use ($zohoAbandonedQuoteId, $abUserId) {
+            CustomHelper::runInBackground(function () use ($zohoAbandonedQuoteId, $abUserId) {
                 if ($zohoAbandonedQuoteId && $abUserId) {
                     app(ZohoAbandonCustomerQuoteRequest::class)->deleteAbandonedQuoteRequest($zohoAbandonedQuoteId, $abUserId);
                 }
             });
 
-                        // 1) Integrate Quote Customer
-            CustomHelper::runInBackground(function() use ($userId) {
+            // 1) Integrate Quote Customer
+            CustomHelper::runInBackground(function () use ($userId) {
                 app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId);
             });
 
             // 2) Send Welcome Email IF form_status = 1
             if ($user->form_status == 1) {
-                CustomHelper::runInBackground(function() use ($userId, $password, $phoneOtp) {
+                CustomHelper::runInBackground(function () use ($userId, $password, $phoneOtp) {
                     ZohoEmails::sendWelcomeEmailQuoteCustomer($userId, $password, $phoneOtp);
                 });
             }
 
-            
-            
-            return $this->sendResponse('Phone verified successfully',$rel);
 
+
+            return $this->sendResponse('Phone verified successfully', $rel);
         }
         return $this->sendError('Wrong OTP, try again!');
     }
 
-    public function createNewRequest(Request $request, LeadService $leadService){
+    public function createNewRequest(Request $request, LeadService $leadService)
+    {
 
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|integer|exists:categories,id',
             'postcode' => 'required',
             'questions' => 'required',
             'phone' => 'required',
-            ], [
+        ], [
             'postcode.required' => 'Location Postcode is required.',
             'service_id.exists' => 'Provided service id does not exists.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
         //take bearer token and extract user id from token
         $token = $request->bearerToken();
         if (!$token) {
-            return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+            return response()->json(['error' => 'Unauthorized', 'message' => 'Token is missing.'], 401);
         }
         $accessToken = PersonalAccessToken::findToken($token);
         if (!$accessToken) {
-            return response()->json(['error' => 'Unauthorized','message' => 'Invalid token.'], 401);
+            return response()->json(['error' => 'Unauthorized', 'message' => 'Invalid token.'], 401);
         }
         // Extract user_id from token abilities
         $euId = $accessToken->abilities['user_id'] ?? null;
         if (!$euId) {
-            return response()->json(['error' => 'Unauthorized','message' => 'Token is missing.'], 401);
+            return response()->json(['error' => 'Unauthorized', 'message' => 'Token is missing.'], 401);
         }
 
         // check if request postcode exists in postcode table, if not then get coordinates and save
         $reqPostcode = $request->postcode;
-        if(!empty($reqPostcode)){
-            CustomHelper::runInBackground(function() use ($reqPostcode) {
+        if (!empty($reqPostcode)) {
+            CustomHelper::runInBackground(function () use ($reqPostcode) {
                 $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
-                if(empty($dbPostcode)){
+                if (empty($dbPostcode)) {
                     $tempCord = CustomHelper::getCoordinates($reqPostcode);
-                    if(!empty($tempCord)){
+                    if (!empty($tempCord)) {
                         $cordArr = json_decode($tempCord, true);
-                        if(!empty($cordArr['lat']) && !empty($cordArr['lng'])){
+                        if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
                             Postcode::insertGetId([
                                 'postcode' => $reqPostcode,
                                 'latitude' => $cordArr['lat'],
@@ -524,11 +525,11 @@ class MyRequestController extends Controller
                             ]);
                         }
                     }
-                }                
+                }
             });
         }
 
-        $serviceId =$request->service_id;
+        $serviceId = $request->service_id;
         $data['customer_id'] = $euId;
         $data['service_id'] = $serviceId;
         $data['city'] = $request->city;
@@ -537,7 +538,7 @@ class MyRequestController extends Controller
         // remove null from question
         $jQuestions = $request->questions;
         $decodedQ = json_decode($jQuestions, true);
-        $filtered = array_filter($decodedQ, function($item) {
+        $filtered = array_filter($decodedQ, function ($item) {
             return !is_null($item);
         });
         $filtered = array_values($filtered);
@@ -547,7 +548,7 @@ class MyRequestController extends Controller
         $arrQuesD = json_decode($request->questions, true);
         $arrQues = [];
         foreach ($arrQuesD as $aq) {
-            if(!empty($aq)){
+            if (!empty($aq)) {
                 $temp['ques'] = $aq['ques'];
                 $temp['ans'] = array_map('trim', explode(',', $aq['ans']));
                 $arrQues[] = $temp;
@@ -557,18 +558,18 @@ class MyRequestController extends Controller
 
         $data['phone'] = $request->phone;
 
-        $data['recevive_online'] = !empty($request->recevive_online)? $request->recevive_online : '0';
+        $data['recevive_online'] = !empty($request->recevive_online) ? $request->recevive_online : '0';
 
 
         $data['created_at'] = date('y-m-d H:i:s');
         $data['updated_at'] = date('y-m-d H:i:s');
 
         //evaluate Lead Badges
-        $userPhoneVerified = User::where('id',$euId)->value('phone_verified');
+        $userPhoneVerified = User::where('id', $euId)->value('phone_verified');
         $data['is_phone_verified'] = $userPhoneVerified ? 1 : 0;
 
-        $leadCount = LeadRequest::where('customer_id',$euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
-        $data['is_frequent_user'] = $leadCount > 0 ? 1: 0;
+        $leadCount = LeadRequest::where('customer_id', $euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
+        $data['is_frequent_user'] = $leadCount > 0 ? 1 : 0;
 
         $patternHighHiring = "/\b(ready to hire|definitely going to hire)\b/i";
         $data['is_high_hiring'] = preg_match($patternHighHiring, $request->questions) ? 1 : 0;
@@ -577,31 +578,31 @@ class MyRequestController extends Controller
         $data['is_urgent'] = preg_match($patternUrgent, $request->questions) ? 1 : 0;
         //end evaluate Lead Badges
 
-        $creditScoreModel = Category::where('id',$serviceId)->value('credit_score_model');
+        $creditScoreModel = Category::where('id', $serviceId)->value('credit_score_model');
 
-        if($creditScoreModel === 'python'){
-            $predict['Location'] = $request->city .', ' . strtoupper($request->postcode);
+        if ($creditScoreModel === 'python') {
+            $predict['Location'] = $request->city . ', ' . strtoupper($request->postcode);
             $predict['Urgent'] = $data['is_urgent'];
             $predict['High'] = $data['is_high_hiring'];
             $predict['Verified'] = $data['is_phone_verified'];
             $predict['Frequent'] = $data['is_frequent_user'];
 
-            $data['credit_score'] = CreditScore::getCreditScoreFromPython($data['service_id'],$predict,$request->questions);
-        }else{
+            $data['credit_score'] = CreditScore::getCreditScoreFromPython($data['service_id'], $predict, $request->questions);
+        } else {
             //laravel based credit score prediction
-            $data['credit_score'] = CreditScore::getCreditScoreFromLaravel($data['service_id'],$request->questions);
+            $data['credit_score'] = CreditScore::getCreditScoreFromLaravel($data['service_id'], $request->questions);
         }
 
-        if(!empty($request->details)){
+        if (!empty($request->details)) {
             $data['details'] = $request->details;
         }
-        if(!empty($request->images)){
+        if (!empty($request->images)) {
             $data['images'] = $request->images;
         }
-        if(!empty($request->professional_letin)){
+        if (!empty($request->professional_letin)) {
             $data['professional_letin'] = $request->professional_letin;
         }
-        
+
 
         // echo "<pre>";
         // $data['credit_scoremodel'] = $creditScoreModel;
@@ -609,13 +610,13 @@ class MyRequestController extends Controller
         // exit;
 
         $sId = 0;
-        if($data['credit_score'] > 0){
+        if ($data['credit_score'] > 0) {
             $leadDetails = LeadRequest::create($data);
             $sId = $leadDetails->id;
         }
 
-        if($sId){
-            $fUser = User::where('id',$euId)->first();
+        if ($sId) {
+            $fUser = User::where('id', $euId)->first();
             $rel['user_id'] = $euId;
 
             $rel['user_type'] = $fUser->user_type;
@@ -632,7 +633,15 @@ class MyRequestController extends Controller
             $rel['nation_wide'] = $fUser->nation_wide;
             $rel['request_id'] = $sId;
 
-            CustomHelper::runInBackground(function() use ($euId, $rel, $sId, $leadService, $fUser) {
+
+            if (!empty($euId)) {
+                CustomHelper::runInBackground(function () use ($euId, $sId) {
+                    app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId, $sId);
+                });
+            }
+
+
+            CustomHelper::runInBackground(function () use ($euId, $rel, $sId, $leadService, $fUser) {
                 User::where('form_status', 1)
                     ->whereIn('user_type', [1, 3])
                     ->select('id')
@@ -656,39 +665,35 @@ class MyRequestController extends Controller
                         }
                     });
 
-              
+
                 // app(ZohoCustomerQuestionAnswer::class)->integrateServiceQa($euId,$sId);
                 $lead = LeadRequest::find($sId);
                 $sellers = $leadService->getAllSellers($lead);
-                if(!empty($sellers['response']['sellers'])){
+                if (!empty($sellers['response']['sellers'])) {
                     $sortedSellers = $sellers['response']['sellers']
                         ->sortByDesc('total_credit')
                         ->values()
                         ->take(7);
-                    foreach($sortedSellers as $seller){
+                    foreach ($sortedSellers as $seller) {
                         ZohoEmails::newLeadPoolOf7LeadBuyerEmail($sId, $seller->user_id);
                     }
-                }                
-                                  
+                }
+
                 //Auto bid related emails
                 app(self::class)->sendNewLeadRequestAutoBidOff();
                 app(self::class)->sendLeadEmailCreditEnough();
                 // app(self::class)->sendLeadEmailCreditNotEnough();
             });
 
-            if (!empty($euId)) {
-                CustomHelper::runInBackground(function() use ($euId, $sId) {
-                    app(ZohoQuoteRequest::class)->integrateQuoteRequest($euId,$sId);
-                });
-             }
 
-             if (!empty($sId)) {
-                CustomHelper::runInBackground(function() use ($sId) {
+
+            if (!empty($sId)) {
+                CustomHelper::runInBackground(function () use ($sId) {
                     app(D7LeadFinderService::class)->fetchSuppliersByLeadId($sId);
                 });
-             }
+            }
 
-              CustomHelper::runInBackground(function () use ($euId, $sId, $leadService) {
+            CustomHelper::runInBackground(function () use ($euId, $sId, $leadService) {
 
                 $lead = LeadRequest::find($sId);
 
@@ -706,11 +711,10 @@ class MyRequestController extends Controller
             //         ZohoEmails::leadAcceptedMailToSendCustomer($sId, $euId, $leadService);
             //     });
             //  }
-            return $this->sendResponse('Quote submitted successfully',$rel);
-
+            return $this->sendResponse('Quote submitted successfully', $rel);
         }
 
-       return $this->sendError('Something went wrong, try again!');
+        return $this->sendError('Something went wrong, try again!');
     }
 
     public function sendEncouragementEmail($request)
@@ -718,8 +722,8 @@ class MyRequestController extends Controller
         $userId = $request['userId'];
         $sentCount = 0;
         $users = AbandonedUser::whereNotNull('zoho_record_id')
-            ->where('id',$userId)
-            ->where('form_status',0)
+            ->where('id', $userId)
+            ->where('form_status', 0)
 
             // ->with(['details', 'emailLogs' => function ($q) {
             //     $q->where('setting_name', 'Send Autobid Encouragement Email')
@@ -727,9 +731,9 @@ class MyRequestController extends Controller
             // }])
             ->get();
 
-      $user = AbandonedUser::find($userId);
+        $user = AbandonedUser::find($userId);
 
-    // only send if email is NOT NULL
+        // only send if email is NOT NULL
         if (!empty($user->email)) {
             ZohoEmails::sendAbandonedEncouragementEmail($userId);
         }
@@ -760,7 +764,7 @@ class MyRequestController extends Controller
             ->chunk(1000, function ($sellersChunk) use ($leadPref, &$totalUnsentLeadEmails) {
 
                 foreach ($sellersChunk as $seller) {
-                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id,null,null,null,'Autobid');
+                    $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id, null, null, null, 'Autobid');
                     $allLeads = $baseQuery->orderBy('id', 'desc')->limit(1)->get();
 
                     $filteredLeads = $leadPref->leadsAccordingTOSellerPref($seller->id, $allLeads);
@@ -780,17 +784,16 @@ class MyRequestController extends Controller
 
                     if (!empty($finalLeads)) {
                         // Send one email with all leads
-                        $result=ZohoEmails::sendLeadNotBidMultiple($seller->id, $finalLeads);
+                        $result = ZohoEmails::sendLeadNotBidMultiple($seller->id, $finalLeads);
 
-                         Log::info('Zoho Email for autobidoff request', [
+                        Log::info('Zoho Email for autobidoff request', [
                             'user_id' => $seller->id,
                             'response' => $result,
                         ]);
 
                         // Log each lead to avoid re-sending later
 
-                         $totalUnsentLeadEmails++;
-
+                        $totalUnsentLeadEmails++;
                     }
                 }
             });
@@ -905,15 +908,15 @@ class MyRequestController extends Controller
                         // Check if email was already sent today for this seller
 
 
-                            // Send one email for all leads
-                            $result=ZohoEmails::sendGroupedLeadEmailBidNotEnough($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
-                            $totalUnsentLeadEmails++;
+                        // Send one email for all leads
+                        $result = ZohoEmails::sendGroupedLeadEmailBidNotEnough($seller->id, $finalLeads->pluck('id')->toArray()); // you must implement this
+                        $totalUnsentLeadEmails++;
 
-                            Log::info('Zoho Email for bid-not-enough leads', [
-                                'user_id' => $seller->id,
-                                'response' => $result,
-                            ]);
-                            // Log one entry per seller to avoid re-sending
+                        Log::info('Zoho Email for bid-not-enough leads', [
+                            'user_id' => $seller->id,
+                            'response' => $result,
+                        ]);
+                        // Log one entry per seller to avoid re-sending
 
                     }
                 }
@@ -929,61 +932,63 @@ class MyRequestController extends Controller
     }
 
 
-    public function addImageToSubmittedRequest(Request $request){
+    public function addImageToSubmittedRequest(Request $request)
+    {
         $user_id = $request->user_id;
 
         $validator = Validator::make($request->all(), [
             'request_id' => 'required|integer|exists:lead_requests,id',
             'image_file' => 'required|mimes:jpeg,jpg,png',
-          ], [
+        ], [
             'image_file.required' => 'Image is required.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
-        if($request->hasfile('image_file')){
+        if ($request->hasfile('image_file')) {
 
             $dir = 'public/images/customer/leads';
-            $single_img=$request->file('image_file');
-            $file_name = "img_" .time() ."." .$single_img->getClientOriginalExtension();
+            $single_img = $request->file('image_file');
+            $file_name = "img_" . time() . "." . $single_img->getClientOriginalExtension();
             $single_img->move($dir, $file_name);
 
-            $prevImages = LeadRequest::where('id',$request->request_id)->value('images');
+            $prevImages = LeadRequest::where('id', $request->request_id)->value('images');
             $prevImages .= !empty($prevImages) ? ';' : '';
 
 
-            $data['images'] = $prevImages. $dir .'/' .$file_name;
+            $data['images'] = $prevImages . $dir . '/' . $file_name;
             $data['updated_at'] = date('y-m-d H:i:s');
-            LeadRequest::where('id',$request->request_id)->update($data);
+            LeadRequest::where('id', $request->request_id)->update($data);
             return $this->sendResponse('Image Uploaded');
         }
 
         return $this->sendError('Something went wrong, try again!');
     }
 
-    public function addDetailsToRequest(Request $request){
+    public function addDetailsToRequest(Request $request)
+    {
         $user_id = $request->user_id;
         $leadRequestId = $request->request_id;
         $validator = Validator::make($request->all(), [
             'request_id' => 'required|integer|exists:lead_requests,id',
-          ], [
+        ], [
             'image_file.required' => 'Location Postcode is required.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
         $data['details'] = $request->details;
-        $data['professional_letin'] = !empty($request->professional_letin)? $request->professional_letin : '0';
+        $data['professional_letin'] = !empty($request->professional_letin) ? $request->professional_letin : '0';
         $data['has_additional_details'] = !empty($request->details) ? '1' : '0';
-        $sId = LeadRequest::where('id',$leadRequestId)->update($data);
+        $sId = LeadRequest::where('id', $leadRequestId)->update($data);
 
-        if($sId){
+        if ($sId) {
 
-            CustomHelper::runInBackground(function() use ($user_id, $leadRequestId) {
-                app(ZohoQuoteRequest::class)->integrateQuoteRequest($user_id,$leadRequestId);
+            CustomHelper::runInBackground(function () use ($user_id, $leadRequestId) {
+                app(ZohoQuoteRequest::class)->integrateQuoteRequest($user_id, $leadRequestId);
             });
             return $this->sendResponse('Details Added');
         }
@@ -992,14 +997,15 @@ class MyRequestController extends Controller
     }
 
 
-    public function checkParagraphQuality(Request $request){
+    public function checkParagraphQuality(Request $request)
+    {
 
         $validator = Validator::make($request->all(), [
             'text' => 'required',
-          ], [
+        ], [
             'text.required' => 'Text is required for checking the quality score.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -1012,7 +1018,7 @@ class MyRequestController extends Controller
 
         $data = $response->json();
 
-        if(!empty($data)){
+        if (!empty($data)) {
 
             $baseScore = 100;
             $errorCount = count($data['matches']);
@@ -1032,10 +1038,10 @@ class MyRequestController extends Controller
             // $rel['error_count'] = $errorCount;
             $rel['text'] = $text;
             $rel['quality_score'] = $qualityScore;
-            return $this->sendResponse('Quality Details',$rel);
+            return $this->sendResponse('Quality Details', $rel);
         }
 
-        return $this->sendError('Something went wrong, try again!',$data);
+        return $this->sendError('Something went wrong, try again!', $data);
     }
 
 
@@ -1153,17 +1159,13 @@ class MyRequestController extends Controller
                 'sms_log_id'    => $smsLog->id,
                 'send_response' => $sendBody
             ], 200);
-
         } catch (Exception $e) {
             Log::error('sendOtpDirect error: ' . $e->getMessage(), [
-                'to' => $toNumber, 'quoteId' => $quoteId, 'otp' => $otpCode
+                'to' => $toNumber,
+                'quoteId' => $quoteId,
+                'otp' => $otpCode
             ]);
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
-
-
-
-
 }
