@@ -189,6 +189,7 @@ class BuyerListExport implements FromCollection, WithHeadings, WithMapping, With
             $user->msclickid ?? '',
             $user->entry_url ?? '',
             $user->user_ip_address ?? '',
+            $user->utm_source ?? '',
         ];
 
 
@@ -230,6 +231,7 @@ class BuyerListExport implements FromCollection, WithHeadings, WithMapping, With
             'MS Click Id',
             'Entry URL',
             'User IP Address',
+            'Source',
         ];
 
         if ($isComplete) {

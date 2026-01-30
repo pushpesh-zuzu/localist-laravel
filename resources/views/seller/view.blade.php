@@ -182,27 +182,27 @@
                 <tbody>
                 <tr>
                   <td style="width: 200px;">Contact Name</td>
-                  <td>{{ optional($aRows->userDetails)->billing_contact_name ?? '' }}</td>
+                  <td>{{ optional($aRows->details)->billing_contact_name ?? '' }}</td>
                 </tr>
                 <tr>
                   <td>Address1</td>
-                  <td>{{ optional($aRows->userDetails)->billing_address1 ?? '' }}</td>
+                  <td>{{ optional($aRows->details)->billing_address1 ?? '' }}</td>
                 </tr>
                 <tr>
                   <td>Address2</td>
-                  <td>{{ optional($aRows->userDetails)->billing_address2 ?? '' }}</td>
+                  <td>{{ optional($aRows->details)->billing_address2 ?? '' }}</td>
                 </tr>
                 <tr>
                   <td>City</td>
-                  <td>{{ optional($aRows->userDetails)->billing_city ?? '' }}</td>
+                  <td>{{ optional($aRows->details)->billing_city ?? '' }}</td>
                 </tr>
                 <tr>
                   <td>Postcode</td>
-                  <td>{{ optional($aRows->userDetails)->billing_postcode ?? '' }}</td>
+                  <td>{{ optional($aRows->details)->billing_postcode ?? '' }}</td>
                 </tr>
                 <tr>
                   <td>Mobile</td>
-                  <td>{{ optional($aRows->userDetails)->billing_phone ?? '' }}</td>
+                  <td>{{ optional($aRows->details)->billing_phone ?? '' }}</td>
                 </tr>
                 </tbody>
               </table>
@@ -219,31 +219,31 @@
                 <tbody>
                 <tr>
                   <td style="width: 200px;">Youtube Link</td>
-                  <td>{{ optional($aRows->userDetails)->company_youtube_link ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->company_youtube_link ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td>Facebook</td>
-                  <td>{{ optional($aRows->userDetails)->fb_link ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->fb_link ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td>Twitter</td>
-                  <td>{{ optional($aRows->userDetails)->twitter_link ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->twitter_link ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td>TikTok</td>
-                  <td>{{ optional($aRows->userDetails)->tiktok_link ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->tiktok_link ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td>Instagram</td>
-                  <td>{{ optional($aRows->userDetails)->insta_link ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->insta_link ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td>Linkedin</td>
-                  <td>{{ optional($aRows->userDetails)->linkedin_link ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->linkedin_link ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td>Extra Links</td>
-                  <td>{{ optional($aRows->userDetails)->extra_links ?? 'N/A' }}</td>
+                  <td>{{ optional($aRows->details)->extra_links ?? 'N/A' }}</td>
                 </tr>
                 
                 <tr>
@@ -258,7 +258,7 @@
                   <td>Company Photos</td>
                   <td>
                     @php
-                        $photos = explode(',', optional($aRows->userDetails)->company_photos);
+                        $photos = explode(',', optional($aRows->details)->company_photos);
                     @endphp
                     @if (!empty($photos))
                       @foreach ($photos as $photo)
