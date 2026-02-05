@@ -259,9 +259,9 @@ class CustomHelper
     }
 
 
-    public static function getCurrentAutobidBatch(int $userId): ?array
+    public static function getCurrentAutobidBatch(int $userId, $batchHourLimit): ?array
     {
-        // Get the most recent status log
+        // Latest autobid status
         $latestLog = DB::table('autobid_status_logs')
             ->where('user_id', $userId)
             ->orderBy('id', 'desc')
@@ -271,7 +271,7 @@ class CustomHelper
             return null; // Autobid is currently OFF or paused
         }
 
-        // Now get the most recent time it was turned ON or resumed BEFORE any pause/disable
+        // Last enabled/resumed time
         $log = DB::table('autobid_status_logs')
             ->where('user_id', $userId)
             ->whereIn('action', ['enabled', 'resumed'])
@@ -281,20 +281,21 @@ class CustomHelper
 
         $activeSince = Carbon::parse($log->created_at);
 
-        // Calculate current batch
-        $today = Carbon::today();
-        $daysSinceStart = $activeSince->diffInDays($today);
-        $batchNumber = intdiv($daysSinceStart, 7); // 0-based
+        $secondsSinceStart = $activeSince->diffInSeconds(Carbon::now());
+        $batchDurationSeconds = $batchHourLimit * 3600;
 
-        $batchStart = $activeSince->copy()->addDays($batchNumber * 7);
-        $batchEnd = $batchStart->copy()->addDays(6);
+        $batchNumber = intdiv($secondsSinceStart, $batchDurationSeconds);
+
+        $batchStart = $activeSince->copy()->addSeconds($batchNumber * $batchDurationSeconds);
+        $batchEnd   = $batchStart->copy()->addSeconds($batchDurationSeconds)->subSecond();
 
         return [
-            'start' => $batchStart->format('Y-m-d'),
-            'end' => $batchEnd->format('Y-m-d'),
+            'start' => $batchStart->format('Y-m-d H:i:s'),
+            'end' => $batchEnd->format('Y-m-d H:i:s'),
             'batch_number' => $batchNumber + 1
         ];
     }
+
 
 
     public static function numberToWords($number)
