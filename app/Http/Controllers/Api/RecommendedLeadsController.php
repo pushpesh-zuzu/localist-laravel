@@ -232,29 +232,12 @@ class RecommendedLeadsController extends Controller
         $this->leadCloseAfter21Days();
 
 
-        // -----------------------------------------------------------------------------
-        // AUTOBID ENGINE
-        // -----------------------------------------------------------------------------
-        // This logic places AUTO bids only (manual bids are NOT restricted by this code)
-        //
-        // Client rules enforced here:
-        // 1) Max X AUTO bids per lead (quote request)
-        // 2) Max Y AUTO bids per seller per day (implemented as rolling N-hour batch)
-        // 3) Limits are configurable globally and overridable per seller
-        // -----------------------------------------------------------------------------
-
-        
-        // Delay autobid execution until lead is at least N minutes old
+        //start getting auto bid leads
+        //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
-
-        // Number of days after plan purchase before autobidding is allowed for a seller
-        $autoBidAfterPlanPurchseDays = CustomHelper::setting_value("autobid_after_plan_purchase_days", 7);
-        
-        // Fetch leads eligible for autobidding:
-        // - Lead is open
-        // - Autobid is enabled for the lead
-        // - Lead owner form is completed
-        // - Lead is older than the autobid delay window
+        //variable to atke count after how manys of plan purchase leads autobid should start
+        $afterPlanPurchseDays = CustomHelper::setting_value("after_plan_purchase_days", 7);
+        //get Leads which are created N munites before and not closed and autobid is open for that lead
         $leads = LeadRequest::join('users', 'users.id', '=', 'lead_requests.customer_id')
             ->where('lead_requests.closed_status', 0)
             ->where('lead_requests.should_autobid', 1)
@@ -263,113 +246,52 @@ class RecommendedLeadsController extends Controller
             ->select('lead_requests.*') // important so you only get lead fields back
             ->get();
 
-        // Maximum AUTO bids allowed per lead (quote request)
-        $autobidPerLeadLimit = CustomHelper::setting_value("autobid_per_lead_limit", 3);
-        
-        // Maximum AUTO bids allowed per seller per batch (default per day)
-        $autobidPerSellerLimit = CustomHelper::setting_value("autobid_per_seller_limit", 2);
+        $autobidLimit = CustomHelper::setting_value("autobid_limit", 3);
         foreach($leads as $lead){
-            // Get all sellers eligible to bid for this lead
-            $sellers = $leadService->getAllSellers($lead);            
+            $sellerInserted = 0;
+
+            $sellers = $leadService->getAllSellers($lead);
 
             if(!empty($sellers['response']['sellers'])){
                 foreach($sellers['response']['sellers'] as $s){
-                    
-                    // -----------------------------------------------------------------
-                    // PER-LEAD AUTOBID LIMIT CHECK
-                    // -----------------------------------------------------------------
-                    // Count AUTO bids already placed for this lead.
-                    // Manual bids and request replies are intentionally excluded.
-                    //
-                    // NOTE:
-                    // This count is recalculated for EACH seller to ensure that
-                    // once the lead-level autobid limit is reached, no further
-                    // autobids are placed during the same cron run.
-                    // -----------------------------------------------------------------
-                    $leadAutobidCount = $count = \DB::table('recommended_leads')
-                        ->where('lead_id', $lead->id)
-                        ->where('purchase_type', 'Autobid')
-                        ->count();
-                    if($leadAutobidCount < $autobidPerLeadLimit){
+                    $leadCreatedAt = Carbon::parse($lead->created_at);
+                    $sellerRegisteredAt = Carbon::parse($s->user_created_time);
 
-                        $leadCreatedAt = Carbon::parse($lead->created_at);
-                        $sellerRegisteredAt = Carbon::parse($s->user_created_time);
+                    //check plan purchase days
+                    $invoice = Invoice::where('user_id', $s->id)->first();
+                    if(!empty($invoice)){
+                        $planPurchaseDate = Carbon::parse($invoice->created_at);
 
-                        // Seller must purchase a plan to be eligible for autobidding
-                        $invoice = Invoice::where('user_id', $s->id)->first();
-                        if(!empty($invoice)){
+                        //start autobid process only if current date id more than afterPlanPurchseDays of plan purchase date and lead created date is greater than seller registered date
+                        if(
+                            $leadCreatedAt->greaterThan($sellerRegisteredAt) 
+                            &&
+                            Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($afterPlanPurchseDays))
+                        ){
+                            $batch = CustomHelper::getCurrentAutobidBatch($s->id);
 
-                            // -----------------------------------------------------------------
-                            // Seller eligibility conditions:
-                            // 1) Seller account must predate the lead
-                            // 2) Seller must have an active plan older than the configured
-                            //    autobid-after-purchase window
-                            // -----------------------------------------------------------------
-                            
-                            $planPurchaseDate = Carbon::parse($invoice->created_at);
+                            if(!empty($batch)){
+                                $dateStart = Carbon::parse($batch['start'])->startOfDay();
+                                $dateEnd   = Carbon::parse($batch['end'])->endOfDay();
+                                $count = \DB::table('recommended_leads')
+                                    ->where('seller_id', $s->id)
+                                    ->where('purchase_type', 'Autobid')
+                                    ->whereBetween('created_at', [$dateStart, $dateEnd])
+                                    ->count();
 
-                            //start autobid process only if current date id more than autoBidAfterPlanPurchseDays of plan purchase date and lead created date is greater than seller registered date
-                            if(
-                                $leadCreatedAt->greaterThan($sellerRegisteredAt) 
-                                &&
-                                Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($autoBidAfterPlanPurchseDays))
-                            ){
-                                // Default per-seller autobid limit and batch duration
-                                $autobidLimit = $autobidPerSellerLimit;
-                                $batchHourLimit = CustomHelper::setting_value("autobid_batch_hour_limit", 24);                           
-                                
-                                // Load seller-specific overrides, if present
-                                $userDetail = UserDetail::where('user_id', $s->id)->first();
-                                
-                                if(!empty($userDetail)){
-
-                                    //get seller specific autobid limit, if seller specific autobid limit is not there use general autobid limit
-                                    $sellerAutobidLimit = $userDetail->autobid_limit;
-                                    if(!empty($sellerAutobidLimit) && $sellerAutobidLimit > 0){
-                                        $autobidLimit = $sellerAutobidLimit;
-                                    }
-
-                                    //check per seller wise bactch hour, if seller batch hour is presenet then use general batch hour limit setting
-                                    $sellerBatchHourLimit = $userDetail->autobid_batch_hour_limit;
-                                    if(!empty($sellerBatchHourLimit) && $sellerBatchHourLimit > 0){
-                                        $batchHourLimit = $sellerBatchHourLimit;
-                                    }
-                                }
-                                
-                                // -----------------------------------------------------------------
-                                // PER-SELLER PER-BATCH AUTOBID LIMIT CHECK
-                                // -----------------------------------------------------------------
-                                // Batch is a rolling time window (not calendar day).
-                                // Default: 24 hours, configurable globally and per seller.
-                                // -----------------------------------------------------------------        
-                                $batch = CustomHelper::getCurrentAutobidBatch($s->id, $batchHourLimit);
-                                if(!empty($batch)){
-                                    $dateStart = Carbon::parse($batch['start']);
-                                    $dateEnd   = Carbon::parse($batch['end']);
-
-                                    // Count AUTO bids placed by this seller in the current batch
-                                    $sellerAutobidCount = \DB::table('recommended_leads')
-                                        ->where('seller_id', $s->id)
-                                        ->where('purchase_type', 'Autobid')
-                                        ->whereBetween('created_at', [$dateStart, $dateEnd])
-                                        ->count();
-
-                                    if($sellerAutobidCount < $autobidLimit){
-                                        // Place AUTO bid
-                                        $request->replace($request->only(['abc']));
-                                        $request['bidtype'] = 'autobid';
-                                        $request['lead_id'] = $lead->id;
-                                        $request['service_id'] = $lead->service_id;
-                                        $request['distance'] = $s->distance;
-                                        $request['seller_id'] = $s->id;
-                                        $request['user_id'] = $lead->customer_id;
-                                        $this->addManualBid($request, $leadService);
-                                    }
+                                if($count < $autobidLimit){
+                                    $request->replace($request->only(['abc']));
+                                    $request['bidtype'] = 'autobid';
+                                    $request['lead_id'] = $lead->id;
+                                    $request['service_id'] = $lead->service_id;
+                                    $request['distance'] = $s->distance;
+                                    $request['seller_id'] = $s->id;
+                                    $request['user_id'] = $lead->customer_id;
+                                    $this->addManualBid($request, $leadService);
                                 }
                             }
                         }
                     }
-
                     
                 }
             }
