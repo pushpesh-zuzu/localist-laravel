@@ -384,6 +384,8 @@ class SellerController extends Controller
         ]);
     }
 
+    
+
 
     public function sellerSaveCustomReview(Request $request)
     {
@@ -484,6 +486,54 @@ class SellerController extends Controller
             'success' => true,
             'message' => 'Credit updated successfully!',
             'new_credit' => $user->total_credit
+        ]);
+    }
+
+
+    public function getAutobidSettings($userId)
+    {
+        $user = UserDetail::where('user_id', $userId)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'autobid_limit' => $user->autobid_limit,
+                'autobid_batch_hour_limit' => $user->autobid_batch_hour_limit
+            ]
+        ]);
+    }
+
+    public function updateAutobidSettings(Request $request)
+    {
+        if (!auth()->user()->can('leadbuyers.add-credit')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('User does not have the right permissions.'),
+            ], 403);
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'autobid_limit' => 'required|numeric|min:0',
+            'autobid_batch_hour_limit' => 'required|numeric|min:0',
+        ]);
+
+        $user = UserDetail::where('user_id', $request->user_id)->first();
+        $user->autobid_limit = $request->autobid_limit;
+        $user->autobid_batch_hour_limit = $request->autobid_batch_hour_limit;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Autobid settings updated successfully!',
+            'data' => [
+                'autobid_limit' => $user->autobid_limit,
+                'autobid_batch_hour_limit' => $user->autobid_batch_hour_limit
+            ]
         ]);
     }
 

@@ -152,6 +152,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('seller/custom-reviews/save', [SellerController::class, 'sellerSaveCustomReview'])->name('seller.save.custom.review');
     Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
     Route::post('/seller/add-credit', [SellerController::class, 'addCredit'])->name('seller.addCredit');
+    Route::get('/seller/get-autobid-settings/{user}', [SellerController::class, 'getAutobidSettings'])->name('seller.getAutobidSettings');
+    Route::post('/seller/update-autobid-settings', [SellerController::class, 'updateAutobidSettings'])->name('seller.updateAutobidSettings');
     Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show.custom');
     Route::get('seller-complete-list', [SellerController::class, 'index'])->name('seller.complete');
     Route::get('seller-contact-form', [SellerController::class, 'contactForm'])->name('seller.contact_form');

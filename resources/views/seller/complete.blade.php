@@ -85,6 +85,12 @@
                   title="Add Credit">
                   <i class="bi bi-plus-circle"></i>
                 </a>
+                <a href="javascript:void(0)"
+                  class="text text-success view-autobid-setting"
+                  data-user-id="{{ $aRow->id }}"
+                  title="Autobid Setting">
+                  <i class="bi bi-gear"></i>
+                </a>
                 @endcan
                 @can('leadbuyers.bids')
                 <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
@@ -156,6 +162,52 @@
           </div>
           <div class="modal-footer">
             <button type="submit" class="btn btn-primary">Update Credit</button>
+            <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="modal fade" id="autobidSettingsModal" tabindex="-1" aria-labelledby="autobidSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="autobidSettingsForm">
+        @csrf
+        <input type="hidden" id="autobid_settings_user_id" name="autobid_settings_user_id">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="autobidSettingsModalLabel">Update Lead Buyer Autobid Settings</h5>
+            <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+                <div class="col-md-12">
+                  <p id="autobidSettingsMessage"></p>
+                </div>
+              <div class="col-md-12">
+                <label class="form-label mb-3"><strong>Autobid Limit:<strong></label>
+                <span id="cur_autobid_limit" class="badge bg-primary fs-6 ms-1">0</span>
+              </div>
+              <div class="col-md-12">
+                <label class="form-label mb-3"><strong>Autobid Batch Hour Limit:<strong></label>
+                <span id="cur_autobid_batch_hour_limit" class="badge bg-primary fs-6 ms-1">0</span>
+              </div>
+            </div>
+            <hr />
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="autobid_limit" class="form-label">Autobid Limit</label>
+                <input type="number" class="form-control" id="autobid_limit" name="autobid_limit" required min="0">
+              </div>
+              <div class="col-md-12">
+                <label for="autobid_batch_hour_limit" class="form-label">Autobid Batch Hour Limit</label>
+                <input type="number" class="form-control" id="autobid_batch_hour_limit" name="autobid_batch_hour_limit" required min="0">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Update Settings</button>
             <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
           </div>
         </div>
@@ -363,6 +415,122 @@
           } else {
             // Other server errors
             $('#creditMessage').html(
+              `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
+            );
+          }
+        }
+      });
+    });
+
+    $(document).on("click", ".view-autobid-setting", function() {
+      let autobidSettingsUserId = $(this).data("user-id");
+      let baseUrl = $("#_url").val();
+      $("#autobid_settings_user_id").val('');
+      $("#cur_autobid_limit").text('');
+      $("#cur_autobid_batch_hour_limit").text('');
+      $('#autobidSettingsMessage').html('');
+      $.ajax({
+        url: baseUrl + "/seller/get-autobid-settings/" + autobidSettingsUserId, // Route to get user credit
+        type: "GET",
+        success: function(res) {
+          if (res.success) {
+            let curAutobitLimit = res.data.autobid_limit > 0 ? res.data.autobid_limit : 'Global';
+            let curAutobidBatchHourLimit = res.data.autobid_batch_hour_limit > 0 ? res.data.autobid_batch_hour_limit + ' hr(s)': 'Global';
+            $("#autobid_settings_user_id").val(autobidSettingsUserId);
+            $("#cur_autobid_limit").text(curAutobitLimit);
+            $("#cur_autobid_batch_hour_limit").text(curAutobidBatchHourLimit);
+            $("#autobid_limit").val("");
+            $("#autobid_batch_hour_limit").val("");
+            var autobidSettingsModalEl = document.getElementById("autobidSettingsModal");
+            var autobidSettingsModal = new coreui.Modal(autobidSettingsModalEl);
+            autobidSettingsModal.show();
+          } else {
+            alert(res.message || "Failed to fetch user autobid settings.");
+          }
+        },
+        error: function(xhr) {
+          alert("Server error. Please try again.");
+        },
+        complete: function() {
+          $("#loader").fadeOut();
+        }
+      });
+    });
+
+    $('#autobidSettingsForm').submit(function(e) {
+      e.preventDefault();
+
+      let autobidSettingsUserId = $('#autobid_settings_user_id').val();
+      let autobidLimit = $('#autobid_limit').val();
+      let autobidBatchHourLimit = $('#autobid_batch_hour_limit').val();
+
+
+      $('#autobidSettingsMessage').html('');
+      $('#autobid_limit').removeClass('is-invalid');
+      $('#autobid_batch_hour_limit').removeClass('is-invalid');
+      $('#addAutobidLimitError').remove();
+      $('#addAutobidBatchHourLimitError').remove();
+
+
+      if (!autobidSettingsUserId) {
+        $('#autobidSettingsMessage').html(
+          `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
+        );
+        return;
+      }
+
+      $.ajax({
+        url: "{{ route('seller.updateAutobidSettings') }}",
+        type: "POST",
+        data: {
+          _token: $('input[name=_token]').val(),
+          user_id: autobidSettingsUserId,
+          autobid_limit: autobidLimit,
+          autobid_batch_hour_limit: autobidBatchHourLimit,
+        },
+        success: function(response) {
+          if (response.success) {
+            $('#autobidSettingsMessage').html(
+              `<div class="alert alert-success">${response.message || 'Autobid settings updated successfully!'}</div>`
+            );
+            let curAutobitLimit = response.data.autobid_limit > 0 ? response.data.autobid_limit : 'Global';
+            let curAutobidBatchHourLimit = response.data.autobid_batch_hour_limit > 0 ? response.data.autobid_batch_hour_limit + ' hr(s)' : 'Global';
+            $("#autobid_settings_user_id").val(autobidSettingsUserId);
+            $("#cur_autobid_limit").text(curAutobitLimit);
+            $("#cur_autobid_batch_hour_limit").text(curAutobidBatchHourLimit);
+            $("#autobid_limit").val("");
+            $("#autobid_batch_hour_limit").val("");
+          } else {
+            $('#autobidSettingsMessage').html(
+              `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
+            );
+          }
+        },
+        error: function(xhr) {
+          if (xhr.status === 422) {
+            // Validation errors
+            let errors = xhr.responseJSON.errors;
+            if (errors.autobid_limit) {
+              $('#autobid_limit').addClass('is-invalid');
+              $('#autobid_limit').after(
+                `<div id="addAutobidLimitError" class="invalid-feedback">${errors.autobid_limit[0]}</div>`
+              );
+            }
+            if (errors.autobid_batch_hour_limit) {
+              $('#autobid_batch_hour_limit').addClass('is-invalid');
+              $('#autobid_batch_hour_limit').after(
+                `<div id="addAutobidBatchHourLimitError" class="invalid-feedback">${errors.autobid_batch_hour_limit[0]}</div>`
+              );
+            }
+          } else if (xhr.status === 403) {
+            // Permission denied (no access)
+            let message = xhr.responseJSON?.message || 'You do not have permission to perform this action.';
+            $('#autobidSettingsMessage').html(
+              `<div class="alert alert-danger">${message}</div>`
+            );
+          } else {
+            // Other server errors
+            $('#autobidSettingsMessage').html(
               `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
             );
           }
