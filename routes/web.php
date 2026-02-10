@@ -213,6 +213,9 @@ Route::get('/test-customer-credit-below', [CronController::class, 'sendCreditBel
 Route::get('/test-customer-abandoned', [CronController::class, 'sendAbandonedCartReminderEmails']);
 Route::get('/test-customer-reminder', [CronController::class, 'sendNotifyCustomerRequestRepliesReminderEmail']);
 Route::get('/test-customer-todaymiss', [CronController::class, 'missedTodaySecuredTodayLastChanceToBidAndSecure']);
+Route::get('/test-notify-postcode', [CronController::class, 'sendnotifyCustomerNewProfessionalinPostcodeEmail']);
+
+
 
 
 Route::get('/zoho/scopes', function () {
