@@ -212,6 +212,8 @@ Route::get('/test-customer-lead-status', [CronController::class, 'sendLeadReques
 Route::get('/test-customer-credit-below', [CronController::class, 'sendCreditBelowFiftyEmail']);
 Route::get('/test-customer-abandoned', [CronController::class, 'sendAbandonedCartReminderEmails']);
 Route::get('/test-customer-reminder', [CronController::class, 'sendNotifyCustomerRequestRepliesReminderEmail']);
+Route::get('/test-customer-todaymiss', [CronController::class, 'sendGroupedLeadEmail']);
+
 
 Route::get('/zoho/scopes', function () {
     $scope = ZohoHelper::getnewAccessTokenTest();
@@ -233,5 +235,9 @@ Route::get('/testd7-lead-buyer', function () {
 });
 
 Route::get('/test-zeptomail/{leadId}', [d7LeadSupplierController::class, 'testZeptoMail']);
+
+Route::get('/test-d7-lead-suppliers', [D7LeadSupplierController::class, 'testIntegrateD7LeadSuppliers']);
+
+Route::get('/test/zoho-delete', [D7LeadSupplierController::class, 'testDeleteZohoRecord']);
 
 require __DIR__ . '/auth.php';

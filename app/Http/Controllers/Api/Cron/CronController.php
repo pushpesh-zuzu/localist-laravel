@@ -44,12 +44,15 @@ class CronController extends Controller
     public function onEveningBasis()
     {
         $sendGroupedLeadEmail = $this->sendGroupedLeadEmail();
+        $missedTodaySecuredToday = $this->missedTodaySecuredTodayLastChanceToBidAndSecure();
+        
 
         return response()->json([
             'status' => 'success',
             'message' => 'Zoho email cron ran successfully.',
             'details' => [
                 'new_lead_after_evening' => $sendGroupedLeadEmail,
+                'your_daily_leads_report' => $missedTodaySecuredToday,
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -1572,9 +1575,8 @@ class CronController extends Controller
 
                         ZohoEmails::notifyCustomerRequestRepliesReminder($user->id, $lead->id);
 
-                       
+
                         $totalEmailsSent++;
-                      
                     } catch (\Throwable $e) {
                         Log::error("Error sending 6hr customer email for Lead ID {$lead->id}: {$e->getMessage()}");
                         continue;
@@ -1587,5 +1589,164 @@ class CronController extends Controller
             'emails_sent' => $totalEmailsSent,
             'timestamp' => now()->toDateTimeString(),
         ]);
+    }
+
+
+    public function missedTodaySecuredTodayLastChanceToBidAndSecure()
+    {
+        $totalSent   = 0;
+        $leadPref    = new LeadService();
+        $settingName = 'Your Daily Leads Report';
+        $since24Hours = now()->subDay();
+        $leadSlotCount = 5;
+
+        // PRELOAD: 5+ bids wali leads (ONLY ONCE)
+        $slotFullLeadIds = DB::table('recommended_leads')
+            ->select('lead_id')
+            ->groupBy('lead_id')
+            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
+            ->pluck('lead_id')
+            ->toArray();
+
+        User::query()
+            ->whereNotNull('zoho_record_id')
+            ->where('form_status', 1)
+            ->where('user_type', 1)
+            ->select('id', 'total_credit')
+            ->chunkById(500, function ($sellers) use (&$totalSent, $leadPref, $settingName, $since24Hours, $slotFullLeadIds) {
+
+                foreach ($sellers as $seller) {
+                    try {
+
+                        // One email per day
+                        $alreadySentToday = EmailLog::where('user_id', $seller->id)
+                            ->whereDate('created_at', today())
+                            ->where('setting_name', $settingName)
+                            ->exists();
+
+                        if ($alreadySentToday) {
+                            continue;
+                        }
+
+                        $sections = [
+                            'missed_secured_lastchance' => [],
+                            'credit_enough'             => [],
+                            'credit_not_enough'         => [],
+                        ];
+
+                        // Already emailed lead IDs (once per seller)
+                        $alreadyEmailedLeadIds = EmailLog::where('user_id', $seller->id)
+                            ->where('setting_name', $settingName)
+                            ->pluck('lead_id')
+                            ->toArray();
+
+                        /**
+                         *  Missed / Secured / Last Chance
+                         * ONLY leads with 5+ bids
+                         */
+                        $leads = $leadPref
+                            ->getSellerLeadsBaseQuery($seller->id)
+                            ->where('created_at', '>=', $since24Hours)
+                            ->whereIn('id', $slotFullLeadIds)
+                            ->orderByDesc('id')
+                            ->get();
+
+                        $filtered = $leadPref->leadsAccordingTOSellerPref($seller->id, $leads);
+
+                        $sections['missed_secured_lastchance'] = $filtered
+                            ->whereNotIn('id', $alreadyEmailedLeadIds)
+                            ->pluck('id')
+                            ->take(2)
+                            ->toArray();
+
+                        /**
+                         *  AutoBid – Credit Enough
+                         */
+
+ $sections['credit_enough'] = DB::table('recommended_leads')
+                            ->where('seller_id', $seller->id)
+                            ->where('created_at', '>=', $since24Hours)
+                            ->where('status', 'pending')
+                            ->orderByDesc('id')
+                            ->pluck('lead_id')
+                            ->take(2)
+                            ->toArray();
+
+                       
+
+                        /**
+                         *  AutoBid – Not Secured (less than 5 bids)
+                         */
+                        $baseQuery = $leadPref->getSellerLeadsBaseQuery($seller->id, null, null, null, 'Autobid');
+
+                        $autoBidLeads = $baseQuery
+                            ->where('created_at', '>=', $since24Hours)
+                            ->whereNotIn('id', $alreadyEmailedLeadIds)
+                            ->whereNotIn('id', $slotFullLeadIds)
+                            ->orderByDesc('id')
+                            ->limit(2)
+                            ->get();
+
+                        $autoBidFiltered = $leadPref->leadsAccordingTOSellerPref(
+                            $seller->id,
+                            $autoBidLeads
+                        );
+
+                        foreach ($autoBidFiltered as $lead) {
+                            $reasons = [];
+
+                            if ($lead->credit_score > $seller->total_credit) {
+                                $reasons[] = 'low credits';
+                            }
+
+                            if (optional($seller->details)->autobid_pause == 0 ||  optional($seller->details)->is_autobid == 1) {
+                                $reasons[] = 'auto-bid disabled';
+                            }
+
+                            if (!empty($reasons)) {
+                                $sections['credit_not_enough'][] = $lead->id;
+                            }
+                        }
+
+                        // Nothing to send
+                        if (empty($sections['missed_secured_lastchance']) && empty($sections['credit_enough']) && empty($sections['credit_not_enough'])) {
+                            continue;
+                        }
+
+                        /**
+                         * Autobid status
+                         */
+                        $details = optional($seller->details);
+                        $autobidStatus = 0;
+
+                        if (($details->autobid_pause == 0 && $details->is_autobid == 0) || ($details->autobid_pause == 1 && $details->is_autobid == 1)) {
+                            $autobidStatus = 1;
+                        }
+
+                        // Send unified email
+                        ZohoEmails::sendYourDailyLeadsReport(
+                            $seller->id,
+                            $sections,
+                            $autobidStatus,
+                            $seller->total_credit
+                        );
+
+                        $totalSent++;
+                    } catch (\Throwable $e) {
+                        Log::error('Unified Lead Digest failed', [
+                            'user_id' => $seller->id,
+                            'error'   => $e->getMessage(),
+                        ]);
+                    }
+                }
+            });
+
+        unset($leadPref);
+
+        return [
+            'status'    => 'success',
+            'emails'    => $totalSent,
+            'timestamp' => now()->toDateTimeString(),
+        ];
     }
 }

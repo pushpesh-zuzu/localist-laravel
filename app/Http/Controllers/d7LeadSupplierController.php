@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\D7LeadSupplier;
 use Yajra\Datatables\Datatables;
 use App\Exports\d7LeadSupplierListExport;
+use App\Helpers\Zoho\ZohoD7LeadSuppliers;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class d7LeadSupplierController extends Controller
@@ -50,7 +52,7 @@ class d7LeadSupplierController extends Controller
 
 
     public function testZeptoMail($leadId)
-    {       
+    {
         $suppliers = [
             [
                 'id' => '1',
@@ -114,5 +116,140 @@ class d7LeadSupplierController extends Controller
         );
 
         return "Test mail sent for Lead ID: $leadId. Check EmailLog for response.";
+    }
+
+
+    public function testIntegrateD7LeadSuppliers()
+    {
+        $results = [];
+
+        D7LeadSupplier::whereNull('zoho_record_id')
+            ->chunk(50, function ($suppliers) use (&$results) {
+                foreach ($suppliers as $supplier) {
+                    try {
+
+                        if (!empty($supplier->zoho_record_id)) {
+                            $results[$supplier->id] = [
+                                'skipped' => true,
+                                'message' => 'Zoho record already exists',
+                            ];
+                            continue;
+                        }
+
+                        $results[$supplier->id] =
+                            app(ZohoD7LeadSuppliers::class)->integrateD7LeadSupplier($supplier->id);
+
+                        usleep(500000); // 0.5 sec delay
+
+                    } catch (\Throwable $e) {
+                        $results[$supplier->id] = [
+                            'error' => true,
+                            'message' => $e->getMessage(),
+                        ];
+                    }
+                }
+            });
+
+        return $results;
+    }
+
+    public function testDeleteZohoRecord()
+    {
+        $zohoRecordId = '623840000007420131';
+
+        try {
+
+            $response = app(ZohoD7LeadSuppliers::class)->deleteZohoRecord($zohoRecordId);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function zeptoWebhook(Request $request)
+    {
+        Log::info('Zepto Webhook Received', $request->all());
+
+        $eventName = $request->input('event_name.0'); // softbounce | hardbounce | fbl_compliant
+
+        $message   = $request->input('event_message.0');
+
+        if (!$eventName || !$message) {
+            return response()->json(['status' => 'invalid_payload'], 200);
+        }
+
+        $messageId = $message['request_id'] ?? null;
+
+        $eventData = $message['event_data'][0] ?? [];
+        $details   = $eventData['details'][0] ?? [];
+
+        $email  = $details['bounced_recipient'] ?? null;
+        $reason = $details['reason'] ?? null;
+
+        $supplierLead = null;
+
+        if ($messageId) {
+            $supplierLead = D7LeadSupplier::where('message_id', $messageId)->first();
+        }
+
+        if (!$supplierLead && $email) {
+            $supplierLead = D7LeadSupplier::where('supplier_email', $email)
+                ->latest('id')
+                ->first();
+        }
+
+        if (!$supplierLead) {
+            return response()->json(['status' => 'not_found'], 200);
+        }
+
+        switch ($eventName) {
+
+            case 'hardbounce':
+                if ($supplierLead->email_status !== 'hard_bounced') {
+                    $supplierLead->update([
+                        'email_status'  => 'hard_bounced',
+                        'bounce_reason' => $reason,
+                    ]);
+
+                    if ($supplierLead->zoho_record_id) {
+                        app(ZohoD7LeadSuppliers::class)
+                            ->deleteZohoRecord($supplierLead->zoho_record_id);
+                    }
+                }
+                break;
+
+            case 'softbounce':
+                $supplierLead->update([
+                    'email_status'  => 'soft_bounced',
+                    'bounce_reason' => $reason,
+                ]);
+
+                if ($supplierLead->zoho_record_id) {
+                    app(ZohoD7LeadSuppliers::class)
+                        ->deleteZohoRecord($supplierLead->zoho_record_id);
+                }
+                break;
+
+            case 'fbl_compliant': // spam complaint
+                $supplierLead->update([
+                    'email_status'  => 'spam',
+                    'bounce_reason' => 'fbl_complaint',
+                ]);
+
+                if ($supplierLead->zoho_record_id) {
+                    app(ZohoD7LeadSuppliers::class)
+                        ->deleteZohoRecord($supplierLead->zoho_record_id);
+                }
+                break;
+
+            default:
+                // ignore
+                break;
+        }
+
+        return response()->json(['status' => 'ok'], 200);
     }
 }

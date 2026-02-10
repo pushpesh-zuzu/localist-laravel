@@ -175,3 +175,8 @@ ALTER TABLE `users` ADD `platform_source` VARCHAR(255) NULL AFTER `utm_medium`;
 
 
 INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Lead Buyers Complete List', 'leadbuyers.allloginhistorylist', 'All Login History List', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16'), (NULL, 'Lead Buyers Complete List', 'leadbuyers.allloginhistory-excelexport', 'Login History Excel Export', 'admin', NULL, NULL), (NULL, 'Lead Buyers Complete List', 'leadbuyers.allloginhistory-csvexport', 'Login History Csv Export', 'admin', NULL, NULL);
+
+
+ALTER TABLE `d7_lead_suppliers` ADD `email_status` VARCHAR(255) NULL AFTER `lead_service`, ADD `bounce_reason` TINYTEXT NULL AFTER `email_status`, ADD `message_id` TINYTEXT NULL AFTER `bounce_reason`;
+
+ALTER TABLE `d7_lead_suppliers` CHANGE `email_status` `email_status` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'new';

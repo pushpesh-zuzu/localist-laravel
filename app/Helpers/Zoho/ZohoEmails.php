@@ -1253,7 +1253,7 @@ class ZohoEmails
             $leadViews[] = [
                 'id'                  => $lead->id,
                 'lead_name'           => $lead->customer->name ? explode(' ', trim($lead->customer->name))[0] : '',
-                'postcode'            => $lead->postcode ? explode(' ', trim($lead->postcode))[0] : '',
+                'postcode'            => $lead->postcode   ? substr(str_replace(' ', '', trim($lead->postcode)), 0, 4)  : '',
                 'masked_phone'        => $lead->customer?->phone ? substr($lead->customer->phone, 0, 5) . str_repeat('*', strlen($lead->customer->phone) - 5) : 'N/A',
                 'masked_email'        => $lead->customer?->email ? (function ($email) {
                     [$name, $domain] = explode('@', $email);
@@ -1537,7 +1537,7 @@ class ZohoEmails
 
             return [
                 'lead_name' => $lead->customer->name ? explode(' ', trim($lead->customer->name))[0] : '',
-                'postcode' => $lead->postcode ? explode(' ', trim($lead->postcode))[0] : '',
+                'postcode' => $lead->postcode   ? substr(str_replace(' ', '', trim($lead->postcode)), 0, 4)  : '', 
                 'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 5) . str_repeat('*', strlen($lead->customer->phone) - 5) : 'N/A',
                 'masked_email' => $lead->customer?->email ? (function ($email) {
                     [$name, $domain] = explode('@', $email);
@@ -2412,7 +2412,7 @@ class ZohoEmails
 
     public static function sendLoginMagicLinkEmail($user, $token)
     {
-        
+
         $sendLeadRequestEmail = EmailSetting::where('setting_name', 'Send Login Magic Link')->value('setting_value');
 
         if ($sendLeadRequestEmail) {
@@ -2430,7 +2430,7 @@ class ZohoEmails
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
-                        'token' => $token,                       
+                        'token' => $token,
                     ])->render();
 
                     $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -2947,7 +2947,7 @@ class ZohoEmails
 
     public static function reviewsForHiredLeadBuyer($leadId, $sellerId)
     {
-        
+
         $sendEmail = EmailSetting::where('setting_name', 'Reviews Hired Lead Buyer')
             ->value('setting_value');
 
@@ -3206,7 +3206,7 @@ class ZohoEmails
         $customerName  = optional($lead->customer)->name;
         $customerEmail = optional($lead->customer)->email;
         $customerId    = optional($lead->customer)->id;
-
+        $leadId  = $lead->id;
         // Unsubscribed
         if (!User::isUserSubscribed($customerId)) {
             return;
@@ -3231,7 +3231,8 @@ class ZohoEmails
             'serviceName' => $serviceName ?? '',
             'postCode' => $postCode,
             'userId' => $customerId ?? '',
-
+            'leadId' => $leadId ?? '',
+            'buyerId' => $customerId ?? '',
         ])->render();
 
         $htmlContent = (new CssToInlineStyles())->convert($htmlView);
@@ -3523,11 +3524,11 @@ class ZohoEmails
 
         $response = Http::withToken($accessToken)->get($url);
 
-         if ($response->successful()) {
+        if ($response->successful()) {
             return data_get($response->json(), 'data.0.Owner.name');
         }
 
-        
+
         return null;
     }
 
@@ -3720,15 +3721,15 @@ class ZohoEmails
 
             if (!empty($zohoId)) {
                 $user = User::where('id', $userId)->first();
-              
+
                 if (!empty($user)) {
 
                     $htmlView = view('emails.customers.request_replies_reminder',  [
                         'baseUrl' => config('app.react_base_url'),
                         'siteUrl' => config('app.url'),
-                        'name' => $user->name,                                           
+                        'name' => $user->name,
                         'leadId' => $leadId ?? '',
-                        'buyerId' => $userId ?? '',                        
+                        'buyerId' => $userId ?? '',
                         'userId' => $user->id ?? '',
 
                     ])->render();
@@ -3782,6 +3783,173 @@ class ZohoEmails
                 }
             }
         }
-        
+    }
+
+
+
+
+
+
+    public static function sendYourDailyLeadsReport(int $userId, array $sections, $autobidStatus = 0, $totalCredit = 0)
+    {
+        // Unsubscribed
+        if (!User::isUserSubscribed($userId)) {
+            return;
+        }
+
+        if (empty(array_filter($sections))) {
+            return;
+        }
+
+        $settingName = 'Your Daily Leads Report';
+
+        if (!EmailSetting::where('setting_name', $settingName)->value('setting_value')) {
+            return;
+        }
+
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) {
+            return;
+        }
+
+        $zohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
+        if (!$zohoId) {
+            return;
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            return;
+        }
+
+        /* ======================================================
+     | Build SECTION WISE lead views (1 lead) + COUNTS
+     ======================================================*/
+        $sectionViews  = [];
+        $sectionCounts = [];
+
+        foreach ($sections as $sectionKey => $leadIds) {
+
+            if (empty($leadIds)) {
+                continue;
+            }
+
+
+            $sectionCounts[$sectionKey] = count($leadIds);
+            $leadId = $leadIds[0];
+
+            $lead = LeadRequest::with(['category', 'customer'])->find($leadId);
+            if (!$lead) {
+                continue;
+            }
+
+            $questionsAndAnswers = collect(json_decode($lead->arrayed_questions, true))
+                ->filter(fn($item) => isset($item['ques'], $item['ans']) && is_array($item['ans']))
+                ->map(fn($item) => [
+                    'question' => $item['ques'],
+                    'answer'   => implode(', ', $item['ans'])
+                ])
+                ->toArray();
+
+            $sectionViews[$sectionKey][] = [
+                'id'               => $lead->id,
+                'lead_name'        => strtok($lead->customer->name ?? '', ' '),
+                'postcode'         => strtok($lead->postcode ?? '', ' '),
+                'userPhone'         =>   $lead->customer->phone ?? '',
+                'userEmail'         =>   $lead->customer->email ?? '',
+                'masked_phone'     => $lead->customer?->phone
+                    ? substr($lead->customer->phone, 0, 5) . '*****'
+                    : 'N/A',
+                'masked_email'     => $lead->customer?->email
+                    ? preg_replace('/(^..).*(@.*$)/', '$1****$2', $lead->customer->email)
+                    : 'N/A',
+                'service_name'     => $lead->category->name ?? '',
+                'credit_score'     => $lead->credit_score,
+                'hasEnoughCredits' => $lead->credit_score <= $user->total_credit ? '1' : '0',
+                'questionsAndAnswers' => $questionsAndAnswers,
+            ];
+        }
+
+        if (empty($sectionViews)) {
+            return;
+        }
+
+        /* ======================================================
+      Render EMAIL
+      ======================================================*/
+        $htmlView = view('emails.lead_buyers.leads.daily-leads-summary', [
+            'baseUrl' => config('app.react_base_url'),
+            'siteUrl' => config('app.url'),
+            'name'           => $user->name,
+            'userId'         => $user->id,
+            'sections'       => $sectionViews,     // 1 lead
+            'sectionCounts'  => $sectionCounts,    // total count
+            'autobidStatus'  => $autobidStatus,
+            'totalCredit'    => $totalCredit,
+        ])->render();
+
+        /* ======================================================
+       | Send Zoho Email
+        ======================================================*/
+        $url       = ZohoHelper::getSetting(ZohoHelper::EMAIL_LEAD_BUYERS_API_URL, $zohoId);
+        $fromEmail = CustomHelper::setting_value('zoho_default_from_email');
+        $toEmail   = $user->email;
+        $subject   = 'Your Daily Leads Report – Check Secured and Missed Enquiries';
+
+        $response = Http::withToken($accessToken)->post($url, [
+            'data' => [[
+                'from' => [
+                    'email'     => $fromEmail,
+                    'user_name' => 'Localists.com',
+                ],
+                'to' => [['email' => $toEmail]],
+                'subject' => $subject,
+                'content' => $htmlView,
+                'mail_format' => 'html',
+                'org_email' => true,
+            ]]
+        ]);
+
+        $rel = self::getZohoMailResponse($response);
+        // ONE EmailLog per seller (no duplicate)
+        $leadId = null;
+
+        // sections me se sirf PEHLA valid lead uthao
+        foreach ($sections as $sectionKey => $leadIds) {
+            if (!empty($leadIds)) {
+                $leadId = $leadIds[0];
+                break;
+            }
+        }
+
+        //agar koi lead hi nahi mila
+        if (!$leadId) {
+            return;
+        }
+
+        // safety: already logged today?
+        $alreadyLogged = EmailLog::where('user_id', $user->id)
+            ->where('setting_name', $settingName)
+            ->whereDate('created_at', today())
+            ->exists();
+
+        if ($alreadyLogged) {
+            return;
+        }
+
+        EmailLog::insert([
+            'user_id'      => $user->id,
+            'from_email'   => $fromEmail,
+            'lead_id'      => $leadId,
+            'to_email'     => $toEmail,
+            'message_id'   => $rel['message_id'] ?? null,
+            'subject'      => $subject,
+            'setting_name' => $settingName,
+            'content'      => $htmlView,
+            'zoho_url'     => $url,
+            'response'     => json_encode($rel),
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
     }
 }

@@ -57,9 +57,9 @@
                             <table align="center" cellpadding="0" cellspacing="0" role="presentation">
                                 <tr>
                                     <td align="center">
-                                        <a href="{{ $baseUrl }}/en/gb/login"
+                                        <a href="{{ url('/api/email-customer-request-top-five-matches/' . $leadId . '/' . $buyerId) }}"
                                             style="display:inline-block;background:#FF9A2F;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:16px;font-weight:700;">
-                                            View Professional
+                                            Request Professional
                                         </a>
                                     </td>
                                 </tr>

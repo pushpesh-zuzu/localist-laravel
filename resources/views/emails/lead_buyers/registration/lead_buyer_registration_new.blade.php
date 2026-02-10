@@ -244,16 +244,35 @@
               </table>
 
               <!-- Footer -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#111637; margin-top:10px; padding:8px; border-radius:5px;">
+              <!-- <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#111637; margin-top:10px; padding:8px; border-radius:5px;">
                 <tr>
-                  <td align="center" style="color:#fff; font-size:12px; font-weight:500; font-family:Inter, sans-serif;">
-                    <!-- Company + Email inline -->
-                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" style="vertical-align:middle;"> &nbsp;Localists.com
+                  <td align="center" style="color:#fff; font-size:12px; font-weight:500; font-family:Inter, sans-serif;"> -->
+              <!-- Company + Email inline -->
+              <!-- <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" style="vertical-align:middle;"> &nbsp;Localists.com
                     &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
                     <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" style="vertical-align:middle;"> &nbsp;contact@localists.com
                   </td>
                 </tr>
+              </table> -->
+
+              <table role="presentation"
+                width="100%"
+                cellspacing="0"
+                cellpadding="0"
+                border="0"
+                style="background-color:#111637;">
+                <tr>
+                  <td align="center"
+                    style="padding:12px 10px; color:#fff; font-size:12px; font-weight:500; font-family:Inter, Arial, sans-serif;">
+                    <img src="{{$siteUrl}}/public/images/globleimg.png" width="19" height="19" style="vertical-align:middle;">
+                    &nbsp;Localists.com
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <img src="{{$siteUrl}}/public/images/vectorimg.png" width="18" height="14" style="vertical-align:middle;">
+                    &nbsp;contact@localists.com
+                  </td>
+                </tr>
               </table>
+
 
             </td>
           </tr>
@@ -263,7 +282,7 @@
                 Click here to
                 <a href="{{ url('/api/unsubscribe-status-update/' . $userId . '/user') }}"
                   style="color:#00AFE3; text-decoration:underline;font-weight:600;">
-                 unsubscribe
+                  unsubscribe
                 </a> and we will remove you from our emailing list.
               </p>
             </td>

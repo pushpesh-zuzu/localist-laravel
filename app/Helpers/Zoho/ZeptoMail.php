@@ -76,13 +76,15 @@ class ZeptoMail
 
                 // Log::info('API Response: ' . json_encode($responseData, JSON_PRETTY_PRINT));
                 /// $responseData = [];
+                $messageId = $responseData['request_id'] ?? null;
+
                 D7LeadSupplier::where('id', $supplier['id'])
                     ->update([
                         'mail_sent'    => 1,
+                        'message_id' => $messageId,
                     ]);
 
 
-                $messageId =  null;
                 $dataE['user_id'] = $supplier['id'] ?? 1;
                 $dataE['from_email'] = $fromEmail;
                 $dataE['to_email'] = $supplier['email'];
@@ -110,5 +112,4 @@ class ZeptoMail
             }
         }
     }
-
 }

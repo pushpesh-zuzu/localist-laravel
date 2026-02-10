@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\RequestException;
 use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZeptoMail;
+use App\Helpers\Zoho\ZohoD7LeadSuppliers;
 use App\Models\D7LeadSupplier;
 use App\Models\D7SearchLog;
 use App\Models\EmailSetting;
@@ -158,6 +159,7 @@ class D7LeadFinderService
 
     public function getSearchSuppliers()
     {
+        Log::info('Suppliers API Response');
         $sendEmail = EmailSetting::where('setting_name', 'D7 Supplier Send Mail')
             ->value('setting_value');
 
@@ -184,7 +186,7 @@ class D7LeadFinderService
 
         foreach ($searches as $search) {
             try {
-
+             
                 $search->update(['status' => 'processing']);
 
                 $response = Http::timeout(15)->get("{$this->baseUrl}/results/", [
@@ -194,17 +196,19 @@ class D7LeadFinderService
 
                 $response->throw();
                 $suppliers = $response->json();
+               
 
                 if (empty($suppliers)) {
                     $search->update(['status' => 'completed']);
                     continue;
                 }
 
-                self::addUpdateSuppliers($suppliers, $search->keyword);
+                self::addUpdateSuppliers($suppliers, $search->keyword);                
 
                 $dbSuppliers = D7LeadSupplier::where('lead_service', $search->keyword)
                     ->whereNotNull('email')
                     ->where('mail_sent', 0)
+                    ->whereNotIn('email_status', ['hard_bounced', 'soft_bounced'])
                     ->where('is_subscribed', 1)
                     ->where(function ($q) use ($skipEmails) {
                         foreach ($skipEmails as $skip) {
@@ -217,6 +221,7 @@ class D7LeadFinderService
                     })
                     ->get();
 
+              
                 if ($dbSuppliers->isEmpty()) {
                     $search->update(['status' => 'completed']);
                     continue;
@@ -233,6 +238,7 @@ class D7LeadFinderService
                     ])
                     ->toArray();
 
+               
                 // suppliers (10 per batch)
                 $batches = $dbSuppliers->chunk(10);
 
@@ -273,8 +279,6 @@ class D7LeadFinderService
     }
 
 
-
-
     public static function addUpdateSuppliers(array $suppliers, $keyword)
     {
         foreach ($suppliers as $supplier) {
@@ -291,39 +295,74 @@ class D7LeadFinderService
                 continue;
             }
 
+            // helper for y/n → 1/0
+            $yn = fn($v) => isset($v) && strtolower($v) === 'y' ? 1 : 0;
+
             $data = [
-                'name'                  => $supplier['name'] ?? null,
-                'phone'                 => $supplier['phone'] ?? null,
-                'website'               => $supplier['website'] ?? null,
-                'category'              => $supplier['category'] ?? null,
+                // Basic
+                'name'        => $supplier['name'] ?? null,
+                'phone'       => $supplier['phone'] ?? null,
+                'website'     => $supplier['website'] ?? null,
+                'category'    => $supplier['category'] ?? null,
 
-                'address1'              => $supplier['address1'] ?? null,
-                'address2'              => $supplier['address2'] ?? null,
-                'region'                => $supplier['region'] ?? null,
-                'zip'                   => $supplier['zip'] ?? null,
-                'country'               => $supplier['country'] ?? null,
+                // Address
+                'address1'    => $supplier['address1'] ?? null,
+                'address2'    => $supplier['address2'] ?? null,
+                'region'      => $supplier['region'] ?? null,
+                'zip'         => $supplier['zip'] ?? null,
+                'country'     => $supplier['country'] ?? null,
 
-                'google_stars'          => $supplier['google_stars'] ?? 0,
-                'google_review_count'   => $supplier['google_review_count'] ?? 0,
+                // Google
+                'google_stars'        => $supplier['googlestars'] ?? 0,
+                'google_review_count' => $supplier['googlecount'] ?? 0,
+                'google_rank'        => $supplier['google_rank'] ?? null,
 
-                'instagram_followers'   => $supplier['instagram_followers'] ?? 0,
-                'instagram_follows'     => $supplier['instagram_follows'] ?? 0,
-                'instagram_media_count' => $supplier['instagram_media_count'] ?? 0,
+                // Yelp
+                'yelp_stars'         => $supplier['yelpstars'] ?? null,
+                'yelp_review_count' => $supplier['yelpcount'] ?? 0,
 
-                'facebook_url'          => $supplier['facebook_url'] ?? null,
-                'instagram_url'         => $supplier['instagram_url'] ?? null,
-                'linkedin_url'          => $supplier['linkedin_url'] ?? null,
+                // Facebook
+                'facebook_stars'         => $supplier['fbstars'] ?? null,
+                'facebook_review_count' => $supplier['fbcount'] ?? 0,
+                'facebook_url'           => $supplier['facebook'] ?? null,
 
-                'lead_service'          => $keyword,
-                'mail_sent'             => 0,
+                // Instagram
+                'instagram_followers'   => $supplier['ig_followers'] ?? 0,
+                'instagram_follows'     => $supplier['ig_follows'] ?? 0,
+                'instagram_is_business' => $supplier['ig_isbusiness'] ?? 0,
+                'instagram_media_count' => $supplier['ig_media_count'] ?? 0,
+                'instagram_url'         => $supplier['instagram'] ?? null,
+
+                // Other social
+                'twitter_url'  => $supplier['twitter'] ?? null,
+                'linkedin_url' => $supplier['linkedin'] ?? null,
+
+                // Tech / Tracking flags
+                'facebook_pixel'     => $yn($supplier['fbpixel'] ?? null),
+                'schema_enabled'     => $yn($supplier['schema'] ?? null),
+                'google_remarketing' => $yn($supplier['gremarketing'] ?? null),
+                'google_analytics'   => $yn($supplier['ganalytics'] ?? null),
+                'linkedin_analytics' => $yn($supplier['lianalytics'] ?? null),
+                'uses_wordpress'     => $yn($supplier['uses_wp'] ?? null),
+                'uses_shopify'       => $yn($supplier['uses_shopify'] ?? null),
+                'mobile_friendly'    => $yn($supplier['mobilefriendly'] ?? null),
+
+                // CRM
+                'lead_service' => $keyword,
+                'mail_sent'    => 0,
             ];
 
+            // remove null / empty only (keep 0 values)
             $data = array_filter($data, fn($v) => $v !== null && $v !== '');
 
-            D7LeadSupplier::updateOrCreate(
+            $supplierModel =  D7LeadSupplier::updateOrCreate(
                 ['email' => $email],
                 $data
             );
+
+            CustomHelper::runInBackground(function () use ($supplierModel) {
+                app(ZohoD7LeadSuppliers::class)->integrateD7LeadSupplier($supplierModel->id, $supplierModel->wasRecentlyCreated ? 'insert' : 'update');
+            });
         }
     }
 }
