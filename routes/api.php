@@ -74,10 +74,8 @@ Route::get('unsubscribe-status-update/{id}/{type}', [UserController::class, 'uns
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
-Route::post('zeptomail/webhook', function (Request $request) {
-    return response()->json(['status' => 'ok'], 200);
-});
-// Route::post('zeptomail/webhook1ss', [d7LeadSupplierController::class, 'zeptoWebhook']);
+
+Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook']);
 
 
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
