@@ -232,10 +232,10 @@ class RecommendedLeadsController extends Controller
         $this->leadCloseAfter21Days();
 
         // place autobid
-        $this->placeAutobid($leadService);
+        $this->placeAutobid($request, $leadService);
     }
 
-    public function placeAutobid($leadService){
+    public function placeAutobid($request, $leadService){
         // -----------------------------------------------------------------------------
         // AUTOBID ENGINE
         // -----------------------------------------------------------------------------
