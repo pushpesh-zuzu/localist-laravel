@@ -252,7 +252,7 @@ class RecommendedLeadsController extends Controller
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
 
         // Number of days after plan purchase before autobidding is allowed for a seller
-        $autoBidAfterPlanPurchseDays = CustomHelper::setting_value("autobid_after_plan_purchase_days", 7);
+        $autoBidAfterPlanPurchseDays = (int) CustomHelper::setting_value("autobid_after_plan_purchase_days", 7);
         
         // Fetch leads eligible for autobidding:
         // - Lead is open
