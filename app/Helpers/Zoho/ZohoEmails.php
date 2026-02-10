@@ -3854,7 +3854,8 @@ class ZohoEmails
             $sectionViews[$sectionKey][] = [
                 'id'               => $lead->id,
                 'lead_name'        => strtok($lead->customer->name ?? '', ' '),
-                'postcode'         => strtok($lead->postcode ?? '', ' '),
+                'postcode' => $lead->postcode    ? substr(str_replace(' ', '', trim($lead->postcode)), 0, 4)    : '',
+                'fullpostcode' => $lead->postcode     ?? '',                
                 'userPhone'         =>   $lead->customer->phone ?? '',
                 'userEmail'         =>   $lead->customer->email ?? '',
                 'masked_phone'     => $lead->customer?->phone

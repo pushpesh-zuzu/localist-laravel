@@ -151,7 +151,7 @@
                     <div style="font-size:10px;color:#253238;font-weight:600;margin-top:6px;">
                       <div style="line-height:15px;margin-bottom:10px;">
                         <img src="{{$siteUrl}}/public/images/icons/marker-pin.png" alt="Location" style="display:inline-block;vertical-align:middle;margin-right:4px;">
-                        {{ $lead['postcode'] }}
+                        {{ $lead['fullpostcode'] }}
                       </div>
                       <div style="line-height:15px;margin-bottom:10px;">
                         <img src="{{$siteUrl}}/public/images/icons/mail.png" alt="Email" style="display:inline-block;vertical-align:middle;margin-right:4px;">
