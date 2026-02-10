@@ -232,10 +232,10 @@ class RecommendedLeadsController extends Controller
         $this->leadCloseAfter21Days();
 
         // place autobid
-        $this->placeAutobid();
+        $this->placeAutobid($leadService);
     }
 
-    public function placeAutobid(){
+    public function placeAutobid($leadService){
         // -----------------------------------------------------------------------------
         // AUTOBID ENGINE
         // -----------------------------------------------------------------------------
@@ -382,7 +382,7 @@ class RecommendedLeadsController extends Controller
 
 
 
-    private function placeAutobidOldOld(){
+    private function placeAutobidOldOld($leadService){
         //start getting auto bid leads
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
