@@ -45,7 +45,7 @@ class CronController extends Controller
     {
         $sendGroupedLeadEmail = $this->sendGroupedLeadEmail();
         $missedTodaySecuredToday = $this->missedTodaySecuredTodayLastChanceToBidAndSecure();
-        
+
 
         return response()->json([
             'status' => 'success',
@@ -1663,7 +1663,7 @@ class CronController extends Controller
                          *  AutoBid – Credit Enough
                          */
 
- $sections['credit_enough'] = DB::table('recommended_leads')
+                        $sections['credit_enough'] = DB::table('recommended_leads')
                             ->where('seller_id', $seller->id)
                             ->where('created_at', '>=', $since24Hours)
                             ->where('status', 'pending')
@@ -1672,7 +1672,7 @@ class CronController extends Controller
                             ->take(2)
                             ->toArray();
 
-                       
+
 
                         /**
                          *  AutoBid – Not Secured (less than 5 bids)
