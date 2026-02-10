@@ -180,3 +180,25 @@ INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `crea
 ALTER TABLE `d7_lead_suppliers` ADD `email_status` VARCHAR(255) NULL AFTER `lead_service`, ADD `bounce_reason` TINYTEXT NULL AFTER `email_status`, ADD `message_id` TINYTEXT NULL AFTER `bounce_reason`;
 
 ALTER TABLE `d7_lead_suppliers` CHANGE `email_status` `email_status` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'new';
+
+ALTER TABLE `d7_lead_suppliers`
+ADD COLUMN `google_rank` int UNSIGNED DEFAULT NULL AFTER `google_review_count`,
+ADD COLUMN `yelp_stars` decimal(2,1) DEFAULT NULL AFTER `google_rank`,
+ADD COLUMN `yelp_review_count` int UNSIGNED DEFAULT '0' AFTER `yelp_stars`,
+ADD COLUMN `facebook_stars` decimal(2,1) DEFAULT NULL AFTER `yelp_review_count`,
+ADD COLUMN `facebook_review_count` int UNSIGNED DEFAULT '0' AFTER `facebook_stars`,
+ADD COLUMN `twitter_url` varchar(255) DEFAULT NULL AFTER `linkedin_url`,
+ADD COLUMN `facebook_pixel` tinyint(1) DEFAULT '0' AFTER `twitter_url`,
+ADD COLUMN `schema_enabled` tinyint(1) DEFAULT '0' AFTER `facebook_pixel`,
+ADD COLUMN `google_remarketing` tinyint(1) DEFAULT '0' AFTER `schema_enabled`,
+ADD COLUMN `google_analytics` tinyint(1) DEFAULT '0' AFTER `google_remarketing`,
+ADD COLUMN `linkedin_analytics` tinyint(1) DEFAULT '0' AFTER `google_analytics`,
+ADD COLUMN `uses_wordpress` tinyint(1) DEFAULT '0' AFTER `linkedin_analytics`,
+ADD COLUMN `uses_shopify` tinyint(1) DEFAULT '0' AFTER `uses_wordpress`,
+ADD COLUMN `mobile_friendly` tinyint(1) DEFAULT '0' AFTER `uses_shopify`,
+ADD COLUMN `email_status` varchar(255) 
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci 
+    DEFAULT 'new' AFTER `lead_service`,
+ADD COLUMN `bounce_reason` tinytext AFTER `email_status`,
+ADD COLUMN `message_id` tinytext AFTER `bounce_reason`,
+ADD COLUMN `zoho_record_id` varchar(255) DEFAULT NULL AFTER `message_id`;

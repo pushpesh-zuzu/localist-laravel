@@ -24,11 +24,8 @@ use App\Http\Controllers\Api\OctoparseController;
 use App\Http\Controllers\Api\Facebook\Forms\DrivewayInstallationForm;
 use App\Http\Controllers\Api\Facebook\Forms\RoofingForm;
 use App\Http\Controllers\Api\Facebook\Forms\FenceAndGateForm;
-<<<<<<< Updated upstream
 use App\Http\Controllers\Api\Facebook\Forms\LandscapingForm;
-=======
 use App\Http\Controllers\d7LeadSupplierController;
->>>>>>> Stashed changes
 
 // use App\Http\Controllers\Api\ZohoController;
 
