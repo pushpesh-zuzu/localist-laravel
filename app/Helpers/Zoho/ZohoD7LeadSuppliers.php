@@ -34,9 +34,12 @@ class ZohoD7LeadSuppliers
             if ($action == 'insert') {
                 $response = $this->upsertToZohoService($access_token, $payload);
             } else {
+
                 $supplierLead = D7LeadSupplier::where('id', $supplierId)->first();
                 if (!empty($supplierLead->zoho_record_id)) {
+                   
                     $response = $this->updateZohoRecord($access_token, $supplierLead->zoho_record_id, $payload);
+                    
                 } else {
                     $response = $this->upsertToZohoService($access_token, $payload);
                 }
@@ -44,7 +47,8 @@ class ZohoD7LeadSuppliers
 
             $responseData = $response->json();
 
-            if ( isset($responseData['data'][0]['status']) &&  $responseData['data'][0]['status'] === 'success' &&  isset($responseData['data'][0]['details']['id'])
+            if (
+                isset($responseData['data'][0]['status']) &&  $responseData['data'][0]['status'] === 'success' &&  isset($responseData['data'][0]['details']['id'])
             ) {
 
                 $zohoRecordId = $responseData['data'][0]['details']['id'];
@@ -188,15 +192,13 @@ class ZohoD7LeadSuppliers
     }
 
 
-    protected function updateZohoRecord(string $accessToken, string $zohoRecordId,  array $payload)
+    protected function updateZohoRecord(string $accessToken, string $zohoRecordId, array $payload)
     {
         return Http::withToken($accessToken)
             ->put(
                 "https://www.zohoapis.eu/crm/v2/D7_Lead_Suppliers/{$zohoRecordId}",
                 [
-                    'data' => [
-                        $payload
-                    ]
+                    'data' => $payload['data']   // ✅ ONLY actual data
                 ]
             );
     }

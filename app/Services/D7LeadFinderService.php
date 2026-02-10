@@ -186,7 +186,7 @@ class D7LeadFinderService
 
         foreach ($searches as $search) {
             try {
-             
+
                 $search->update(['status' => 'processing']);
 
                 $response = Http::timeout(15)->get("{$this->baseUrl}/results/", [
@@ -196,14 +196,14 @@ class D7LeadFinderService
 
                 $response->throw();
                 $suppliers = $response->json();
-               
+
 
                 if (empty($suppliers)) {
                     $search->update(['status' => 'completed']);
                     continue;
                 }
 
-                self::addUpdateSuppliers($suppliers, $search->keyword);                
+                self::addUpdateSuppliers($suppliers, $search->keyword);
 
                 $dbSuppliers = D7LeadSupplier::where('lead_service', $search->keyword)
                     ->whereNotNull('email')
@@ -221,7 +221,7 @@ class D7LeadFinderService
                     })
                     ->get();
 
-              
+
                 if ($dbSuppliers->isEmpty()) {
                     $search->update(['status' => 'completed']);
                     continue;
@@ -238,7 +238,7 @@ class D7LeadFinderService
                     ])
                     ->toArray();
 
-               
+
                 // suppliers (10 per batch)
                 $batches = $dbSuppliers->chunk(10);
 
@@ -292,6 +292,10 @@ class D7LeadFinderService
             $existing = D7LeadSupplier::where('email', $email)->first();
 
             if ($existing && $existing->is_subscribed == 0) {
+                continue;
+            }
+
+            if ($existing && in_array($existing->email_status, ['hard_bounced', 'soft_bounced'])) {
                 continue;
             }
 
