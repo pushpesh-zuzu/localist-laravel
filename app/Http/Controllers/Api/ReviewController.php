@@ -77,7 +77,8 @@ class ReviewController extends Controller{
     public function getCustomerLink(Request $request){
         $user_id = $request->user_id;
         $uuid = User::where('id',$user_id)->value('uuid');
-        $url = url('review/' .$uuid) ;
+        $postloginBaseUrl = CustomHelper::setting_value('postlogin_base_url');
+        $url = $postloginBaseUrl .'review/' .$uuid ;
         return $this->sendResponse('Customer review link',str_replace('/admin','',$url));
     }
 

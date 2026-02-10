@@ -60,7 +60,10 @@
                   <td>Public Profile</td>
                   <td>
                     @if($aRows->form_status == 1)
-                      <a href="{{ url(config('app.react_base_url') .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name))) .'/' .$aRows->id) }}" target="_blank">{{ url(config('app.react_base_url') .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name))) .'/' .$aRows->id) }}</a>
+                      @php
+                        $postloginBaseUrl = \App\Helpers\CustomHelper::setting_value('postlogin_base_url');
+                      @endphp
+                      <a href="{{ $postloginBaseUrl .'view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name)) .'/' .$aRows->id) }}" target="_blank">{{ $postloginBaseUrl .'view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRows->name)) .'/' .$aRows->id) }}</a>
                     @endif
                   </td>
                 </tr>
