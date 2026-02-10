@@ -90,24 +90,20 @@ class MapController extends Controller
 
         // $creditBuyers = $crediBuyersQuery->get()->toArray();
         $creditBuyers = $crediBuyersQuery->get()->map(function ($buyer) {
-            $buyer->profile_link = url(
-                rtrim(config('app.react_base_url'), '/')
+            $buyer->profile_link = rtrim(CustomHelper::setting_value('postlogin_base_url'), '/')
                 . '/view-profile/'
                 . strtolower(preg_replace('/\s+/', '-', trim($buyer->name)))
                 . '/'
-                . $buyer->id
-            );
+                . $buyer->id;
 
             return $buyer;
         })->toArray();
         $noCreditBuyers = $noCreditBuyersQuery->get()->map(function ($buyer) {
-            $buyer->profile_link = url(
-                rtrim(config('app.react_base_url'), '/')
+            $buyer->profile_link = rtrim(CustomHelper::setting_value('postlogin_base_url'), '/')
                 . '/view-profile/'
                 . strtolower(preg_replace('/\s+/', '-', trim($buyer->name)))
                 . '/'
-                . $buyer->id
-            );
+                . $buyer->id;
 
             return $buyer;
         })->toArray();
