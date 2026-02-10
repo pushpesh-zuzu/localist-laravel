@@ -260,7 +260,7 @@
                 cellspacing="0"
                 cellpadding="0"
                 border="0"
-                style="background-color:#111637;">
+                style="background-color:#111637; min-width:100%;">
                 <tr>
                   <td align="center"
                     style="padding:12px 10px; color:#fff; font-size:12px; font-weight:500; font-family:Inter, Arial, sans-serif;">
