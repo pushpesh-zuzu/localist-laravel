@@ -270,8 +270,8 @@ class RecommendedLeadsController extends Controller
         // Maximum AUTO bids allowed per lead (quote request)
         $autobidPerLeadLimit = CustomHelper::setting_value("autobid_per_lead_limit", 3);
         
-        // Maximum AUTO bids allowed per seller per batch (default per day)
-        $autobidPerSellerLimit = CustomHelper::setting_value("autobid_per_seller_limit", 2);
+        // Maximum AUTO bids allowed per Lead Buyer per batch (default per day)
+        $autobidPerLeadBuyerLimit = CustomHelper::setting_value("autobid_per_lead_buyer_limit", 2);
         foreach($leads as $lead){
             // Get all sellers eligible to bid for this lead
             $sellers = $leadService->getAllSellers($lead);            
@@ -319,7 +319,7 @@ class RecommendedLeadsController extends Controller
                                 Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($autoBidAfterPlanPurchseDays))
                             ){
                                 // Default per-seller autobid limit and batch duration
-                                $autobidLimit = $autobidPerSellerLimit;
+                                $autobidLimit = $autobidPerLeadBuyerLimit;
                                 $batchHourLimit = CustomHelper::setting_value("autobid_batch_hour_limit", 24);                           
                                 
                                 // Load seller-specific overrides, if present
