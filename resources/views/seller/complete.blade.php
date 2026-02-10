@@ -197,11 +197,11 @@
             <hr />
             <div class="row">
               <div class="col-md-12 mb-3">
-                <label for="autobid_limit" class="form-label">Autobid Limit</label>
+                <label for="autobid_limit" class="form-label">Autobid Limit (0 for Global)</label>
                 <input type="number" class="form-control" id="autobid_limit" name="autobid_limit" required min="0">
               </div>
               <div class="col-md-12">
-                <label for="autobid_batch_hour_limit" class="form-label">Autobid Batch Hour Limit</label>
+                <label for="autobid_batch_hour_limit" class="form-label">Autobid Batch Hour Limit (0 for Global)</label>
                 <input type="number" class="form-control" id="autobid_batch_hour_limit" name="autobid_batch_hour_limit" required min="0">
               </div>
             </div>
