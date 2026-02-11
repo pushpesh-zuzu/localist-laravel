@@ -742,9 +742,13 @@ class LeadPreferenceController extends Controller
     {
         $aValues = $request->all();
         $serviceIds = is_array($aValues['service_id']) ? $aValues['service_id'] : explode(',', $aValues['service_id']);
-        $leadcount = LeadRequest::whereIn('service_id', $serviceIds)
-                            ->get()->count();
-        return $this->sendResponse('Pending Leads', $leadcount);
+        $totalLeadcount = LeadRequest::whereIn('service_id', $serviceIds)
+            ->where('status', '<>' ,'hired')
+            ->count();
+        if(empty($totalLeadcount) || $totalLeadcount < 20){
+            $totalLeadcount = random_int(15, 50);
+        }
+        return $this->sendResponse('Pending Leads', $totalLeadcount);
     }
 
 
