@@ -1599,7 +1599,7 @@ class CronController extends Controller
         $settingName = 'Your Daily Leads Report';
         $since24Hours = now()->subDay();
         $leadSlotCount = 5;
-
+       
         // PRELOAD: 5+ bids wali leads (ONLY ONCE)
         $slotFullLeadIds = DB::table('recommended_leads')
             ->select('lead_id')
@@ -1695,15 +1695,21 @@ class CronController extends Controller
                         foreach ($autoBidFiltered as $lead) {
                             $reasons = [];
 
+                            // Credit check
                             if ($lead->credit_score > $seller->total_credit) {
                                 $reasons[] = 'low credits';
                             }
 
-                            if (optional($seller->details)->autobid_pause == 0 ||  optional($seller->details)->is_autobid == 1) {
+                            // Auto-bid disabled check
+                            if (
+                                optional($seller->details)->autobid_pause == 0 ||
+                                optional($seller->details)->is_autobid == 1
+                            ) {
                                 $reasons[] = 'auto-bid disabled';
                             }
 
-                            if (!empty($reasons)) {
+                            // Only push if any reason exists
+                            if (count($reasons) > 0) {
                                 $sections['credit_not_enough'][] = $lead->id;
                             }
                         }
