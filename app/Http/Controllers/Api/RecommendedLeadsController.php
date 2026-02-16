@@ -231,8 +231,17 @@ class RecommendedLeadsController extends Controller
         //close leads after n days
         $this->leadCloseAfter21Days();
 
-        // place autobid
-        $this->placeAutobid($request, $leadService);
+        $isSiteLive = CustomHelper::setting_value("is_site_live", 'no');
+        
+        if($isSiteLive == 'yes'){
+            // when site is in live
+            print_r("old autobid system as site is live");
+            $this->placeAutobidOld($request, $leadService);
+        }else{
+            // when site is in development
+            print_r("new autobid system as site is in development phase");
+            $this->placeAutobid($request, $leadService);
+        }
     }
 
     public function placeAutobid($request, $leadService){
@@ -381,8 +390,7 @@ class RecommendedLeadsController extends Controller
     }
 
 
-
-    private function placeAutobidOldOld($leadService){
+    private function placeAutobidOld($request, $leadService){
         //start getting auto bid leads
         //get Leads which are N minutes older
         $startBidAfter = CustomHelper::setting_value("start_autobid_after", 5);
@@ -419,7 +427,7 @@ class RecommendedLeadsController extends Controller
                             &&
                             Carbon::now()->greaterThanOrEqualTo($planPurchaseDate->copy()->addDays($afterPlanPurchseDays))
                         ){
-                            $batch = CustomHelper::getCurrentAutobidBatch($s->id);
+                            $batch = CustomHelper::getCurrentAutobidBatchSevenDayWise($s->id);
 
                             if(!empty($batch)){
                                 $dateStart = Carbon::parse($batch['start'])->startOfDay();
