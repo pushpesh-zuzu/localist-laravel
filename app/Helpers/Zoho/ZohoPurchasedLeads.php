@@ -88,9 +88,14 @@ class ZohoPurchasedLeads
 
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
         $userName = User::find($userId)->name;
+        $LeadBuyerPhone = User::find($recommendedLeads->seller_id)->phone;
+        $LeadBuyerName = User::find($recommendedLeads->seller_id)->name;
+        $userPhone = User::find($userId)->phone;
+        $userEmail = User::find($userId)->email;
         $customerName = User::find($recommendedLeads->buyer_id)->name;
         $service = Category::find($recommendedLeads->service_id)->name;
         $creditScore = LeadRequest::find($recommendedLeads->lead_id)->credit_score;
+        $postcode  = LeadRequest::find($recommendedLeads->lead_id)->postcode;
         $datetime = new DateTime($recommendedLeads->created_at, new DateTimeZone('Europe/London'));
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
 
@@ -110,7 +115,13 @@ class ZohoPurchasedLeads
                 'Unit_Type'             => (string) ($recommendedLeads->unit_type ?? ''),
                 'BuyerId'               => (string) ($recommendedLeads->buyer_id ?? ''),
                 'Disclose_Information'  => (string) ($recommendedLeads->disclose_information ?? ''),
-                'Final_Price'           => (string) ($recommendedLeads->final_price ?? '')
+                'Final_Price'           => (string) ($recommendedLeads->final_price ?? ''),
+                'Lead_Post_Code'           => (string) ($postcode  ?? ''),
+                'Customer_Email'           => (string) ($userEmail ?? ''),
+                'Customer_Phone'           => (string) ($userPhone ?? ''),
+                'Lead_Buyer_Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
+                'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? '')
+                
 
             ]],
             'duplicate_check_fields' => ['Lead_Purchase_Id']
