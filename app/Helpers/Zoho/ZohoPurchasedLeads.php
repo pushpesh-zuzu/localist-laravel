@@ -119,7 +119,7 @@ class ZohoPurchasedLeads
                 'Lead_Post_Code'           => (string) ($postcode  ?? ''),
                 'Customer_Email'           => (string) ($userEmail ?? ''),
                 'Customer_Phone'           => (string) ($userPhone ?? ''),
-                'Mobile'         =>  (string) ($LeadBuyerPhone ?? ''),
+                'Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
                 'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? '')
                 
 
