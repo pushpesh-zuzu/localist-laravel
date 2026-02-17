@@ -118,10 +118,12 @@ class ZohoPurchasedLeads
                 'Final_Price'           => (string) ($recommendedLeads->final_price ?? ''),
                 'Lead_Post_Code'           => (string) ($postcode  ?? ''),
                 'Customer_Email'           => (string) ($userEmail ?? ''),
-                'Customer_Phone'           => (string) ($userPhone ?? ''),
+                'Customer_Phone'           => $userPhone = str_starts_with($userPhone ?? '', '+44')
+                    ? '0' . substr($userPhone, 3)
+                    : (string) ($userPhone ?? ''),
                 'Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
                 'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? '')
-                
+
 
             ]],
             'duplicate_check_fields' => ['Lead_Purchase_Id']
