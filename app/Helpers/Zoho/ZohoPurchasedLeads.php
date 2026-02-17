@@ -90,8 +90,8 @@ class ZohoPurchasedLeads
         $userName = User::find($userId)->name;
         $LeadBuyerPhone = User::find($recommendedLeads->seller_id)->phone;
         $LeadBuyerName = User::find($recommendedLeads->seller_id)->name;
-        $userPhone = User::find($userId)->phone;
-        $userEmail = User::find($userId)->email;
+        $userPhone = User::find($recommendedLeads->buyer_id)->phone;
+        $userEmail = User::find($recommendedLeads->buyer_id)->email;
         $customerName = User::find($recommendedLeads->buyer_id)->name;
         $service = Category::find($recommendedLeads->service_id)->name;
         $creditScore = LeadRequest::find($recommendedLeads->lead_id)->credit_score;
