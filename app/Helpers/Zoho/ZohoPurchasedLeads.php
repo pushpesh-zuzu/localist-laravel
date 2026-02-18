@@ -125,12 +125,6 @@ class ZohoPurchasedLeads
             ? implode("\n\n", $questionBlocks)
             : null;
 
-
-
-
-
-
-
         return [
             'data' => [[
                 'Lead_Purchased_Id'     => $recommendedLeads->id,
@@ -156,7 +150,6 @@ class ZohoPurchasedLeads
                 'Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
                 'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? ''),
                 'Question_Answers'             => $formattedQA,
-
 
             ]],
             'duplicate_check_fields' => ['Lead_Purchase_Id']
