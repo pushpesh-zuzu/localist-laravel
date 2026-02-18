@@ -96,8 +96,40 @@ class ZohoPurchasedLeads
         $service = Category::find($recommendedLeads->service_id)->name;
         $creditScore = LeadRequest::find($recommendedLeads->lead_id)->credit_score;
         $postcode  = LeadRequest::find($recommendedLeads->lead_id)->postcode;
+        $arrayedQuestions  = LeadRequest::find($recommendedLeads->lead_id)->arrayed_questions;
         $datetime = new DateTime($recommendedLeads->created_at, new DateTimeZone('Europe/London'));
         $formatted = $datetime->format('Y-m-d\TH:i:sP');
+
+        $questions = json_decode($arrayedQuestions ?? '[]', true);
+
+        if (!is_array($questions)) {
+            $questions = [];
+        }
+
+        $questionBlocks = [];
+        $index = 1;
+
+        foreach ($questions as $qa) {
+            $question = trim($qa['ques'] ?? '');
+            $answers  = is_array($qa['ans'] ?? null) ? $qa['ans'] : [];
+
+            if (!$question || empty($answers)) continue;
+
+            $formattedAnswer = implode(', ', $answers);
+
+            $questionBlocks[] = "Q{$index}. {$question}\nAns:  {$formattedAnswer}";
+            $index++;
+        }
+
+        $formattedQA = !empty($questionBlocks)
+            ? implode("\n\n", $questionBlocks)
+            : null;
+
+
+
+
+
+
 
         return [
             'data' => [[
@@ -122,7 +154,8 @@ class ZohoPurchasedLeads
                     ? '0' . substr($userPhone, 3)
                     : (string) ($userPhone ?? ''),
                 'Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
-                'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? '')
+                'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? ''),
+                'Question_Answers'             => $formattedQA,
 
 
             ]],
