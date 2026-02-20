@@ -202,3 +202,6 @@ ADD COLUMN `email_status` varchar(255)
 ADD COLUMN `bounce_reason` tinytext AFTER `email_status`,
 ADD COLUMN `message_id` tinytext AFTER `bounce_reason`,
 ADD COLUMN `zoho_record_id` varchar(255) DEFAULT NULL AFTER `message_id`;
+
+
+ALTER TABLE `purchase_histories` CHANGE `status` `status` TINYINT(1) NULL DEFAULT NULL COMMENT '0 = pending, 1 = sucess, 2 = failure,3=Refund';

@@ -751,6 +751,8 @@ class CustomHelper
 
                         $user->increment('total_credit', intval($planHistory->credits));
 
+                        $stripePaymentIntentId = $paymentIntent->id;
+
                         PlanHistory::create([
                             'user_id'      => $userId,
                             'is_topup'     => $isTopup,
@@ -759,6 +761,7 @@ class CustomHelper
                             'price'        => $planHistory->price,
                             'vat'          => $planHistory->vat,
                             'total_amount' => $planHistory->total_amount,
+                            'stripe_payment_intent' => $stripePaymentIntentId, 
                             'purchase_type' => 'auto_topup',
                             'created_at'   => now(),
                             'updated_at'   => now(),

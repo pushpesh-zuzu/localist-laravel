@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\Facebook\Forms\DrivewayInstallationForm;
 use App\Http\Controllers\Api\Facebook\Forms\RoofingForm;
 use App\Http\Controllers\Api\Facebook\Forms\FenceAndGateForm;
 use App\Http\Controllers\Api\Facebook\Forms\LandscapingForm;
+use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\d7LeadSupplierController;
 
 // use App\Http\Controllers\Api\ZohoController;
@@ -74,7 +75,7 @@ Route::get('unsubscribe-status-update/{id}/{type}', [UserController::class, 'uns
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
-
+Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
 Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook']);
 
 

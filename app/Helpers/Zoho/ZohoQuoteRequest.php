@@ -90,6 +90,7 @@ class ZohoQuoteRequest
         $userName = User::find($userId)->name;
         $customerName = User::find($leadRequests->customer_id)->name;
         $customerEmail = User::find($leadRequests->customer_id)->email;
+        $customerPhone = User::find($leadRequests->customer_id)->phone;
         $service = Category::find($leadRequests->service_id)->name;
         $creditScore = $leadRequests->credit_score;
 
@@ -129,7 +130,8 @@ class ZohoQuoteRequest
                 'Receive_Online'               => $leadRequests->recevive_online == 1 ? 'Yes' : 'No',
                 'Closed'                       => $leadRequests->closed_status == 1 ? 'Yes' : 'No',
                 'Question_Answers'             => $formattedQA,
-                'Description'                  => $leadRequests->details
+                'Description'                  => $leadRequests->details,
+                'Phone'         =>  (string) ($customerPhone ?? ''),
 
             ]],
             'duplicate_check_fields' => ['Quote_Request_Record_Id']

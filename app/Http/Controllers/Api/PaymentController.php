@@ -78,6 +78,7 @@ class PaymentController extends Controller
 
             if ($paymentIntent->status === 'succeeded') {
                 //add up new credit in total credits
+                 $stripePaymentIntentId = $paymentIntent->id;
                 $prevCredits = intval(User::where('id', $user_id)->value('total_credit'));
 
                 // $dataCr['total_credit'] = $prevCredits + intval($credits);
@@ -97,6 +98,7 @@ class PaymentController extends Controller
                 $dataPh['price'] = number_format($request->amount, 2);
                 $dataPh['vat'] = number_format($request->vat, 2);
                 $dataPh['total_amount'] = $total_amount;
+                 $dataPh['stripe_payment_intent'] = $stripePaymentIntentId; 
                 $dataPh['created_at'] = date('Y-m-d H:i:s');
                 PlanHistory::insertGetId($dataPh);
 
