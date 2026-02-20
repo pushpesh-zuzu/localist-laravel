@@ -1,16 +1,16 @@
 <x-app-layout>
   <x-slot name="header">{{ __('Lead Buyers (Complete List)') }} </x-slot>
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-    </div>
-   @endif
+  @if(session('success'))
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+  </div>
+  @endif
 
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
-    </div>
-   @endif
+  @if(session('error'))
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
+  </div>
+  @endif
   <div class="card mb-4">
     <div class="card-header">
       <strong>{{ __('Lead Buyers') }}</strong>
@@ -43,12 +43,12 @@
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Total Credit</th>
-               <!-- <th scope="col">Entry URL</th>
+              <!-- <th scope="col">Entry URL</th>
               <th scope="col">User IP</th> -->
               <th scope="col">Last Login</th>
               <th scope="col">Registration Status</th>
               <th scope="col">Status</th>
-               <th>Zoho Status</th>
+              <th>Zoho Status</th>
               <th scope="col">Action</th>
             </tr>
           </thead>
@@ -59,24 +59,24 @@
               <td>{{ $aRow->name }}</td>
               <td>{{ $aRow->email }}</td>
               <td class="text text-center">{{ $aRow->total_credit }}</td>
-               <!-- <td style="word-break: break-all; max-width: 200px;">
+              <!-- <td style="word-break: break-all; max-width: 200px;">
                 {{ $aRow->entry_url ?? '' }}
               </td>
               <td>{{ $aRow->user_ip_address ?? '' }}</td> -->
               <td>{{ $aRow->lastLogin?->login_at ? \Carbon\Carbon::parse($aRow->lastLogin->login_at)->format('m/d/Y h:i a') : '' }} </td>
               <td>{{ $aRow->form_status == 1 ? 'Complete' : 'InComplete' }}</td>
               <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
-               <td>{{ $aRow->zoho_record_id  ? 'Inserted'     : 'Not-inserted'; }}</td>
+              <td>{{ $aRow->zoho_record_id  ? 'Inserted'     : 'Not-inserted'; }}</td>
               <td>
 
 
-               @can('leadbuyers.sendtozoho')
-                      @if(!$aRow->zoho_record_id && !empty($aRow->name) && !empty($aRow->email))
-                          <a href="{{ route('zoho.seller.send', ['type' => 'complete', 'id' => $aRow->id]) }}" class="text-primary text-decoration-none">
-                              <i class="fa-solid fa-cloud-arrow-up"></i> Send to Zoho |
-                          </a>
-                      @endif
-              @endcan
+                @can('leadbuyers.sendtozoho')
+                @if(!$aRow->zoho_record_id && !empty($aRow->name) && !empty($aRow->email))
+                <a href="{{ route('zoho.seller.send', ['type' => 'complete', 'id' => $aRow->id]) }}" class="text-primary text-decoration-none">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Send to Zoho |
+                </a>
+                @endif
+                @endcan
 
                 @can('leadbuyers.add-credit')
                 <a href="javascript:void(0)"
@@ -111,12 +111,18 @@
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Details"> <i class="bi bi-eye"></i></a>
                 @endcan
                 @can('leadbuyers.view-public-profile')
+                @php
+                $postloginBaseUrl = rtrim(\App\Helpers\CustomHelper::setting_value('postlogin_react_base_url'), '/');
+                $slug = strtolower(preg_replace('/\s+/', '-', trim($aRow->name)));
+                @endphp
 
- @php
-                        $postloginBaseUrl = \App\Helpers\CustomHelper::setting_value('postlogin_react_base_url');
-                      @endphp
-
-                <a href="{{ $postloginBaseUrl .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRow->name))) .'/' .$aRow->id) }}" target="_blank" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Public Profile"> <i class="bi bi-person-badge"></i></a>
+                <a href="{{ $postloginBaseUrl . '/view-profile/' . $slug . '/' . $aRow->id }}"
+                  target="_blank"
+                  data-coreui-toggle="tooltip"
+                  data-coreui-placement="top"
+                  title="View Public Profile">
+                  <i class="bi bi-person-badge"></i>
+                </a>
                 @endcan
                 @can('leadbuyers.custom-reviews')
                 <a href="javascript:void(0)"
@@ -127,12 +133,12 @@
                 </a>
                 @endcan
                 @can('leadbuyers.complete-delete')
-                 <a href="javascript:void(0)"
+                <a href="javascript:void(0)"
                   onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
-                class="text text-danger"
-                title="Delete">
-                <i class="fa-solid fa-trash"></i>
-                </a> 
+                  class="text text-danger"
+                  title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
                 @endcan
 
               </td>
@@ -187,9 +193,9 @@
           </div>
           <div class="modal-body">
             <div class="row">
-                <div class="col-md-12">
-                  <p id="autobidSettingsMessage"></p>
-                </div>
+              <div class="col-md-12">
+                <p id="autobidSettingsMessage"></p>
+              </div>
               <div class="col-md-12">
                 <label class="form-label mb-3"><strong>Autobid Limit:<strong></label>
                 <span id="cur_autobid_limit" class="badge bg-primary fs-6 ms-1">0</span>
@@ -284,51 +290,59 @@
   @push('scripts')
 
   <script>
-   $('#dataTable').DataTable({
-    
-    destroy: true,
-    dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
-    buttons: [
-        @can('leadbuyers.complete-excelexport')
-        {
-            text: 'Export Excel',
-            className: "btn btn-success btn-sm",
-            action: function(e, dt, node, config) {
-                let start = $('#from_date').val();
-                let end = $('#to_date').val();
-                let search = dt.search(); // Use dt instead of dataTable
-                
-                let query = $.param({ start_date: start, end_date: end, search: search });
-                window.location.href = "{{ route('export.com.seller.excel') }}" + "?" + query;
-                
-                e.preventDefault();
-            }
+    $('#dataTable').DataTable({
+
+      destroy: true,
+      dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
+      buttons: [
+        @can('leadbuyers.complete-excelexport') {
+          text: 'Export Excel',
+          className: "btn btn-success btn-sm",
+          action: function(e, dt, node, config) {
+            let start = $('#from_date').val();
+            let end = $('#to_date').val();
+            let search = dt.search(); // Use dt instead of dataTable
+
+            let query = $.param({
+              start_date: start,
+              end_date: end,
+              search: search
+            });
+            window.location.href = "{{ route('export.com.seller.excel') }}" + "?" + query;
+
+            e.preventDefault();
+          }
         },
-         @endcan
-        @can('leadbuyers.complete-csvexport')
-        {
-            text: 'Export CSV',
-            className: "btn btn-info btn-sm",
-            action: function(e, dt, node, config) {
-                let start = $('#from_date').val();
-                let end = $('#to_date').val();
-                let search = dt.search(); // Use dt instead of dataTable
-                
-                let query = $.param({ start_date: start, end_date: end, search: search });
-                window.location.href = "{{ route('export.com.seller.csv') }}" + "?" + query;
-                
-                e.preventDefault();
-            }
+        @endcan
+        @can('leadbuyers.complete-csvexport') {
+          text: 'Export CSV',
+          className: "btn btn-info btn-sm",
+          action: function(e, dt, node, config) {
+            let start = $('#from_date').val();
+            let end = $('#to_date').val();
+            let search = dt.search(); // Use dt instead of dataTable
+
+            let query = $.param({
+              start_date: start,
+              end_date: end,
+              search: search
+            });
+            window.location.href = "{{ route('export.com.seller.csv') }}" + "?" + query;
+
+            e.preventDefault();
+          }
         }
-          @endcan
-    ],
-    "language": {
+        @endcan
+      ],
+      "language": {
         "emptyTable": "No records found"
-    },
-     columnDefs: [
-        { targets: 0, searchable: false } // disable search on the first (#) column
-    ]
-  });
+      },
+      columnDefs: [{
+          targets: 0,
+          searchable: false
+        } // disable search on the first (#) column
+      ]
+    });
 
     $(document).on("click", ".view-credit", function() {
       let userId = $(this).data("user-id");
@@ -440,7 +454,7 @@
         success: function(res) {
           if (res.success) {
             let curAutobitLimit = res.data.autobid_limit > 0 ? res.data.autobid_limit : 'Global';
-            let curAutobidBatchHourLimit = res.data.autobid_batch_hour_limit > 0 ? res.data.autobid_batch_hour_limit + ' hr(s)': 'Global';
+            let curAutobidBatchHourLimit = res.data.autobid_batch_hour_limit > 0 ? res.data.autobid_batch_hour_limit + ' hr(s)' : 'Global';
             $("#autobid_settings_user_id").val(autobidSettingsUserId);
             $("#cur_autobid_limit").text(curAutobitLimit);
             $("#cur_autobid_batch_hour_limit").text(curAutobidBatchHourLimit);
