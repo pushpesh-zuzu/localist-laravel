@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use App\Helpers\CustomHelper;
 use App\Models\RecommendedLead;
+
 class SellerCompleteListExport implements FromCollection, WithHeadings, WithMapping
 {
     protected $fromDate;
@@ -24,7 +25,7 @@ class SellerCompleteListExport implements FromCollection, WithHeadings, WithMapp
 
     public function collection()
     {
-       $query = User::query()
+        $query = User::query()
             ->whereIn('user_type', [1, 3])
             ->where('form_status', 1)
             ->whereNull('deleted_at') // 🧩 ensures soft-deleted users are excluded
@@ -36,34 +37,34 @@ class SellerCompleteListExport implements FromCollection, WithHeadings, WithMapp
                     $q->whereNull('deleted_at'); // optional, if these tables have SoftDeletes
                 },
                 'serviceLocations' => function ($q) {
-            $q->whereNull('deleted_at'); // 👈 added this new relationship
-        },
+                    $q->whereNull('deleted_at'); // 👈 added this new relationship
+                },
             ])
             ->withSum('planHistories as total_credits_bought', 'credits')
             ->orderBy('id', 'DESC');
 
-        
-        if ($this->fromDate && $this->toDate) {           
-                $query->whereBetween('created_at', [
-                    $this->fromDate . ' 00:00:00',
-                    $this->toDate . ' 23:59:59',
-                ]);
-            } elseif ($this->fromDate) {
-                $query->whereDate('created_at', '>=', $this->fromDate);
-            } elseif ($this->toDate) {
-                $query->whereDate('created_at', '<=', $this->toDate);
-            }
+
+        if ($this->fromDate && $this->toDate) {
+            $query->whereBetween('created_at', [
+                $this->fromDate . ' 00:00:00',
+                $this->toDate . ' 23:59:59',
+            ]);
+        } elseif ($this->fromDate) {
+            $query->whereDate('created_at', '>=', $this->fromDate);
+        } elseif ($this->toDate) {
+            $query->whereDate('created_at', '<=', $this->toDate);
+        }
 
 
-      if ($this->search && $this->search !== '') {
-    $search = $this->search;
-    $query->where(function ($q) use ($search) {
-        $q->where('name', 'like', "%{$search}%")
-          ->orWhere('email', 'like', "%{$search}%")
-          ->orWhere('total_credit', 'like', "%{$search}%")
-          ->orWhere('form_status', $search === 'Complete' ? 1 : ($search === 'Incomplete' ? 0 : null)) 
-          ->orWhere('status', $search === 'Active' ? 1 : ($search === 'Inactive' ? 0 : null))
-          ->orWhereRaw("
+        if ($this->search && $this->search !== '') {
+            $search = $this->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('total_credit', 'like', "%{$search}%")
+                    ->orWhere('form_status', $search === 'Complete' ? 1 : ($search === 'Incomplete' ? 0 : null))
+                    ->orWhere('status', $search === 'Active' ? 1 : ($search === 'Inactive' ? 0 : null))
+                    ->orWhereRaw("
               DATE_FORMAT(
                   (
                       SELECT login_at
@@ -75,47 +76,47 @@ class SellerCompleteListExport implements FromCollection, WithHeadings, WithMapp
                   '%m/%d/%Y %h:%i %p'
               ) LIKE ?
           ", ["%{$search}%"]);
-    });
-}
+            });
+        }
 
 
-      
+
 
         return $query->get();
     }
 
     public function map($user): array
     {
-    $ratingData = CustomHelper::getAverageRating($user->id);
-    $averageRating = $ratingData['average_rating'] ?? 'N/A';
-    $totalReviews = $ratingData['total_reviews'] ?? 0;
+        $ratingData = CustomHelper::getAverageRating($user->id);
+        $averageRating = $ratingData['average_rating'] ?? 'N/A';
+        $totalReviews = $ratingData['total_reviews'] ?? 0;
 
-     $leadStats = RecommendedLead::selectRaw('COUNT(*) as total_hired, SUM(bid) as total_bid')
-        ->whereIn('status', ['pending', 'hired'])->where('seller_id', $user->id)
-        ->first();
-         $sellerTotalHired=$leadStats->total_hired ?? 0;
-        $sellerTotalBid=$leadStats->total_bid ?? 0;
+        $leadStats = RecommendedLead::selectRaw('COUNT(*) as total_hired, SUM(bid) as total_bid')
+            ->whereIn('status', ['pending', 'hired'])->where('seller_id', $user->id)
+            ->first();
+        $sellerTotalHired = $leadStats->total_hired ?? 0;
+        $sellerTotalBid = $leadStats->total_bid ?? 0;
 
 
-$userServices = $user->services->map(function ($service) use ($user) {
-    $categoryName = $service->category->name ?? '';
+        $userServices = $user->services->map(function ($service) use ($user) {
+            $categoryName = $service->category->name ?? '';
 
-    // find matching service location
-    $location = $user->serviceLocations
-        ->where('user_service_id', $service->id)
-        ->first();  
+            // find matching service location
+            $location = $user->serviceLocations
+                ->where('user_service_id', $service->id)
+                ->first();
 
-    if ($location) {
-        return sprintf(
-            '%s (Miles: %s, Postcode: %s)',
-            $categoryName,
-            $location->miles ?? 'N/A',
-            $location->postcode ?? 'N/A'
-        );
-    }
+            if ($location) {
+                return sprintf(
+                    '%s (Miles: %s, Postcode: %s)',
+                    $categoryName,
+                    $location->miles ?? 'N/A',
+                    $location->postcode ?? 'N/A'
+                );
+            }
 
-    return $categoryName;
-})->implode(', ');
+            return $categoryName;
+        })->implode(', ');
 
 
 
@@ -128,10 +129,11 @@ $userServices = $user->services->map(function ($service) use ($user) {
             $user->lastLogin?->login_at ? \Carbon\Carbon::parse($user->lastLogin->login_at)->format('d/m/Y h:i a') : '',
             (string) $sellerTotalHired ?? 0,
             (string) $sellerTotalBid ?? 0,
-            url(config('app.react_base_url') . '/view-profile/' . 
-            strtolower(preg_replace('/\s+/', '-', trim($user->name))) . 
-            '/' . $user->id),           
-            $userServices,           
+            rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/')
+                . '/view-profile/'
+                . strtolower(preg_replace('/\s+/', '-', trim($user->name)))
+                . '/' . $user->id,
+            $userServices,
             optional($user->serviceLocations->first())->miles ?? 'N/A',
             $user->created_at ? $user->created_at->format('d/m/Y') : '',
             $totalReviews,

@@ -154,7 +154,7 @@
 
                     <!-- CTA BUTTON INSIDE BLUE BOX -->
                     <div style="text-align:center;">
-                      <a href="{{ $baseUrl }}/sellers/leads/my-responses" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                      <a href="{{ $postloginUrl }}/sellers/leads/my-responses" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
                         Contact Lead Now
                       </a>
                     </div>

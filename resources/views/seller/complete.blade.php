@@ -111,7 +111,12 @@
                 <a href="{{ route('seller.show.custom',['type' => 'complete', 'id' => $aRow->id]) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Details"> <i class="bi bi-eye"></i></a>
                 @endcan
                 @can('leadbuyers.view-public-profile')
-                <a href="{{ url(config('app.react_base_url') .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRow->name))) .'/' .$aRow->id) }}" target="_blank" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Public Profile"> <i class="bi bi-person-badge"></i></a>
+
+ @php
+                        $postloginBaseUrl = \App\Helpers\CustomHelper::setting_value('postlogin_react_base_url');
+                      @endphp
+
+                <a href="{{ $postloginBaseUrl .'/view-profile/' . strtolower(preg_replace('/\s+/', '-', trim($aRow->name))) .'/' .$aRow->id) }}" target="_blank" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="View Public Profile"> <i class="bi bi-person-badge"></i></a>
                 @endcan
                 @can('leadbuyers.custom-reviews')
                 <a href="javascript:void(0)"

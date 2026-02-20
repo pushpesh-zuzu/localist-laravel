@@ -51,7 +51,7 @@
                     <table cellpadding="0" cellspacing="0" align="center">
                       <tr>
                         <td bgcolor="#FF9933" style="border-radius:30px;padding:8px 22px;">
-                          <a href="{{ $baseUrl }}/settings/billing/my-credits" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;display:inline-block;line-height:1;font-family:Inter, Arial, Helvetica, sans-serif;">
+                          <a href="{{ $postloginUrl }}/settings/billing/my-credits" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;display:inline-block;line-height:1;font-family:Inter, Arial, Helvetica, sans-serif;">
                             <img src="{{$siteUrl}}/public/images/icons/coins-hand.png" width="18" height="18" alt="" style="vertical-align:middle;margin-right:8px;display:inline-block;">
                             <span style="vertical-align:middle;">
                               Top up credits

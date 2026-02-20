@@ -42,7 +42,7 @@
 
               <!-- Button -->
               <div style="text-align:center;margin:18px 0 0;">
-                <a href="{{ $baseUrl }}/sellers/leads" style="background:#ff9c2c;color:#ffffff; text-decoration:none;padding:8px 22px;border-radius:30px;font-weight:700;font-size:14px;display:inline-block;">
+                <a href="{{ $postloginUrl }}/sellers/leads" style="background:#ff9c2c;color:#ffffff; text-decoration:none;padding:8px 22px;border-radius:30px;font-weight:700;font-size:14px;display:inline-block;">
                   View leads in dashboard
                 </a>
               </div>
@@ -185,13 +185,13 @@
                     <!-- CTA BUTTON INSIDE BLUE BOX -->
                     @if($lead['hasEnoughCredits'])
                     <div style="text-align:center;">
-                      <a href="{{ $baseUrl }}/sellers/leads" style="background:#ff9c2c;color:#ffffff;text-decoration:none; padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                      <a href="{{ $postloginUrl }}/sellers/leads" style="background:#ff9c2c;color:#ffffff;text-decoration:none; padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
                         Contact {{ $lead['lead_name'] }} now
                       </a>
                     </div>
                     @else
                     <div style="text-align:center;">
-                      <a href="{{ $baseUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none; padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                      <a href="{{ $postloginUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none; padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
                         Contact Lead Now
                       </a>
                     </div>
@@ -405,32 +405,32 @@
                       <table width="100%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td style="font-size:13px;color:#253238;line-height:22px;">
-                            1. <a href="{{ $baseUrl }}/sellers/dashboard"
+                            1. <a href="{{ $postloginUrl }}/sellers/dashboard"
                               style="color:#253238;text-decoration:underline;font-weight:700;">
                               Dashboard
                             </a><br>
 
-                            2. <a href="{{ $baseUrl }}/sellers/leads"
+                            2. <a href="{{ $postloginUrl }}/sellers/leads"
                               style="color:#253238;text-decoration:underline;font-weight:700;">
                               Leads
                             </a><br>
 
-                            3. <a href="{{ $baseUrl }}/settings/profile/my-profile"
+                            3. <a href="{{ $postloginUrl }}/settings/profile/my-profile"
                               style="color:#253238;text-decoration:underline;font-weight:700;">
                               My Profile
                             </a><br>
 
-                            4. <a href="{{ $baseUrl }}/settings/leads/my-services"
+                            4. <a href="{{ $postloginUrl }}/settings/leads/my-services"
                               style="color:#253238;text-decoration:underline;font-weight:700;">
                               My Services
                             </a><br>
 
-                            5. <a href="{{ $baseUrl }}/settings/billing/my-credits"
+                            5. <a href="{{ $postloginUrl }}/settings/billing/my-credits"
                               style="color:#253238;text-decoration:underline;font-weight:700;">
                               My Credits
                             </a><br>
 
-                            6. <a href="{{ $baseUrl }}/settings/billing/invoice-billing-details"
+                            6. <a href="{{ $postloginUrl }}/settings/billing/invoice-billing-details"
                               style="color:#253238;text-decoration:underline;font-weight:700;">
                               Invoices &amp; Billing Details
                             </a>
@@ -452,7 +452,7 @@
                   <!-- CTA BUTTON -->
                   <tr>
                     <td align="center" style="padding:16px 0 20px 0;">
-                      <a href="{{ $baseUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none;
+                      <a href="{{ $postloginUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none;
                             padding:8px 22px;border-radius:30px;
                             font-size:14px;font-weight:700;display:inline-block;">
                         Contact Lead Now

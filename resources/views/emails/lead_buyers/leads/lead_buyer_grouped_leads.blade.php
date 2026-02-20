@@ -154,9 +154,9 @@
                             <tr>
                               <td style="padding-top:12px;text-align:center;">
                                 @if(!empty($lead['hasEnoughCredits']))
-                                  <a href="{{ $baseUrl }}/sellers/leads" style="display:inline-block;background:#00afe3;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:10px 20px;border-radius:6px;">Contact Lead Now</a>
+                                  <a href="{{ $postloginUrl }}/sellers/leads" style="display:inline-block;background:#00afe3;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:10px 20px;border-radius:6px;">Contact Lead Now</a>
                                 @else
-                                  <a href="{{ $baseUrl }}/settings/billing/my-credits" style="display:inline-block;background:#00afe3;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:10px 20px;border-radius:6px;">Contact Lead Now</a>
+                                  <a href="{{ $postloginUrl }}/settings/billing/my-credits" style="display:inline-block;background:#00afe3;color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:10px 20px;border-radius:6px;">Contact Lead Now</a>
                                 @endif
                               </td>
                             </tr>

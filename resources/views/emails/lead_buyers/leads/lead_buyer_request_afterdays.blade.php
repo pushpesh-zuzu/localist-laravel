@@ -87,12 +87,12 @@
                     <!-- BUTTON BELOW CARDS -->
                     <div style="text-align:center;margin-top:12px;">
                       @if ($credit_purchase)
-                      <a href="{{ $baseUrl }}/settings/billing/my-credits"
+                      <a href="{{ $postloginUrl }}/settings/billing/my-credits"
                         style="background:#FF9933;  color:#FFFFFF;  text-decoration:none;  padding:8px 22px;  border-radius:30px;  font-size:15px;  font-weight:600;  border:1px solid #d1e8f5;display:inline-block;">
                         Contact Lead Now
                       </a>
                       @else
-                      <a href="{{ $baseUrl }}/sellers/leads"
+                      <a href="{{ $postloginUrl }}/sellers/leads"
                         style="background:#FF9933;  color:#FFFFFF;  text-decoration:none;  padding:8px 22px;  border-radius:30px;  font-size:15px;  font-weight:600;  border:1px solid #d1e8f5;display:inline-block;">
                         Contact Lead Now
                       </a>

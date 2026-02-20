@@ -152,7 +152,7 @@
                 Manage Your Requests
               </div>
               <div style="font-size:12px; color:#253238; margin-top:4px;">
-                Create & manage your requests from <a href="{{$baseUrl}}/buyers/create" style="color:#00afe3;">My Request Panel</a>
+                Create & manage your requests from <a href="{{$postloginUrl}}/buyers/create" style="color:#00afe3;">My Request Panel</a>
               </div>
             </td>
           </tr>

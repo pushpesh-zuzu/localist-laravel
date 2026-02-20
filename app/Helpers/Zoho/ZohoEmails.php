@@ -53,6 +53,7 @@ class ZohoEmails
                     $user->update(['remember_token' => $token]);
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration_new',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'email' => $user->email,
@@ -196,6 +197,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.customers.registration.quote_customer_registration',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'email' => $user->email,
@@ -308,6 +310,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_encouragement',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'userId' => $user->id ?? '',
@@ -707,6 +710,7 @@ class ZohoEmails
         // Email view for multiple leads
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_request', [
             'baseUrl' => config('app.react_base_url'),
+            'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
             'siteUrl' => config('app.url'),
             'name' => $user->name,
             'userId' => $user->id ?? '',
@@ -977,6 +981,7 @@ class ZohoEmails
 
             $htmlView = view('emails.lead_buyers.leads.lead_buyer_autobidenough', [
                 'baseUrl' => config('app.react_base_url'),
+                'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                 'siteUrl' => config('app.url'),
                 'name' => $user->name,
                 'userId' => $user->id ?? '',
@@ -1279,6 +1284,7 @@ class ZohoEmails
 
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_grouped_leads', [
             'baseUrl'         => config('app.react_base_url'),
+            'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
             'name'            => $user->name,
             'userId'          => $user->id ?? '',
             'leadDetailsList' => $leadViews,
@@ -1561,6 +1567,7 @@ class ZohoEmails
         // Render single email with all leads grouped
         $htmlView = view('emails.lead_buyers.leads.lead_buyer_requestreply', [
             'baseUrl' => config('app.react_base_url'),
+            'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
             'siteUrl' => config('app.url'),
             'name' => $user->name ? explode(' ', trim($user->name))[0] : '',
             'userId' => $user->id ?? '',
@@ -1661,6 +1668,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_aftertime',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'userId' => $user->id ?? '',
@@ -1766,6 +1774,7 @@ class ZohoEmails
                 if (!empty($user)) {
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_request_afterdays',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'userId' => $user->id ?? '',
@@ -2069,6 +2078,7 @@ class ZohoEmails
 
                         $htmlView = view('emails.lead_buyers.leads.lead_buyer_closed',  [
                             'baseUrl' => config('app.react_base_url'),
+                            'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                             'siteUrl' => config('app.url'),
                             'name' => $user->name,
                             'userId' => $user->id ?? '',
@@ -2190,6 +2200,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_hired',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'userId' => $user->id ?? '',
@@ -2298,6 +2309,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_pool_of_7_lead_buyer',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'userId' => $user->id ?? '',
@@ -3001,7 +3013,7 @@ class ZohoEmails
 
         $slug = strtolower(preg_replace('/\s+/', '-', trim($seller->name)));
 
-        $reviewUrl = config('app.react_base_url') . '/view-profile/' . $slug . '/' . $seller->id;
+        $reviewUrl = rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/') . '/view-profile/' . $slug . '/' . $seller->id;
 
         $htmlView = view('emails.customers.reviews_hired_lead_buyer', [
             'baseUrl' => config('app.react_base_url'),
@@ -3133,7 +3145,7 @@ class ZohoEmails
         $htmlView = view('emails.customers.lead-accepted-email', [
             'baseUrl' => config('app.react_base_url'),
             'appURL' => config('app.url'),
-
+            'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
             'customerName' => $customerName ?? '',
             'serviceName' => $categoryName ?? '',
             'leadId' => $leadId,
@@ -3648,6 +3660,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.lead_buyers.leads.lead_buyer_low_credit_alert',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'userId' => $user->id ?? '',
@@ -3726,6 +3739,7 @@ class ZohoEmails
 
                     $htmlView = view('emails.customers.request_replies_reminder',  [
                         'baseUrl' => config('app.react_base_url'),
+                        'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
                         'siteUrl' => config('app.url'),
                         'name' => $user->name,
                         'leadId' => $leadId ?? '',
@@ -3880,6 +3894,7 @@ class ZohoEmails
       ======================================================*/
         $htmlView = view('emails.lead_buyers.leads.daily-leads-summary', [
             'baseUrl' => config('app.react_base_url'),
+            'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
             'siteUrl' => config('app.url'),
             'name'           => $user->name,
             'userId'         => $user->id,

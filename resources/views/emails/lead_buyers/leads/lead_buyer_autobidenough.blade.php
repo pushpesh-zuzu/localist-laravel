@@ -162,13 +162,13 @@
                     <!-- CTA BUTTON INSIDE BLUE BOX -->
                     @if($lead['hasEnoughCredits'])
                     <div style="text-align:center;">
-                      <a href="{{ $baseUrl }}/sellers/leads/save-for-later" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                      <a href="{{ $postloginUrl }}/sellers/leads/save-for-later" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
                         Contact Lead Now
                       </a>
                     </div>
                     @else
                     <div style="text-align:center;">
-                      <a href="{{ $baseUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
+                      <a href="{{ $postloginUrl }}/settings/billing/my-credits" style="background:#ff9c2c;color:#ffffff;text-decoration:none;padding:8px 22px;border-radius:30px;font-size:15px; font-weight:bold;display:inline-block;">
                         Contact Lead Now
                       </a>
                     </div>

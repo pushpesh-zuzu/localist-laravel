@@ -93,7 +93,7 @@
 
                   <!-- Button -->
                   <td align="right" valign="middle">
-                    <a href="{{ $baseUrl }}/view-profile/{{ $leadId }}/{{ $seller->id }}"
+                    <a href="{{ $postloginUrl }}/view-profile/{{ $leadId }}/{{ $seller->id }}"
                        class="contact-btn"
                        style="background:#00AEEF; color:#fff; padding:10px 18px;
                               border-radius:6px; font-size:13px; text-decoration:none;

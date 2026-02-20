@@ -180,7 +180,7 @@
                     <p style="margin-top:5px; color:#252832; font-size:12px; font-weight:500; line-height:18px;">
                       To give you plenty of time to utilise the platform, your credits are valid for 12 months, giving you more time to experience our high quality, high intent leads without any pressure. Add some credit to your account now.
                     </p>
-                    <a href="{{$baseUrl}}/settings/billing/payment-details" style="display:inline-block; padding:8px 15px; background-color:#0fc77b; color:#fff; font-weight:700; text-decoration:none; border-radius:81px; margin-top:10px;">Add Card/Credits</a>
+                    <a href="{{$postloginUrl}}/settings/billing/payment-details" style="display:inline-block; padding:8px 15px; background-color:#0fc77b; color:#fff; font-weight:700; text-decoration:none; border-radius:81px; margin-top:10px;">Add Card/Credits</a>
                   </td>
                 </tr>
 

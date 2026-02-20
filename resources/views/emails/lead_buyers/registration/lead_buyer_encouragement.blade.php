@@ -147,7 +147,7 @@
                     <table align="center" style="margin-top:18px;">
                       <tr>
                         <td bgcolor="#ff9933" style="padding:10px 26px; border-radius:100px;">
-                          <a href="{{$baseUrl}}/settings/billing/my-credits"
+                          <a href="{{$postloginUrl}}/settings/billing/my-credits"
                             style="color:#ffffff; font-weight:800; text-decoration:none; display:inline-block;">
                             Enable Auto Bid Now
                           </a>
@@ -196,7 +196,7 @@
                       <tr>
                         <td bgcolor="#66FF0D"
                           style="padding:8px 22px; border-radius:100px; text-align:center;">
-                          <a href="{{$baseUrl}}/settings/billing/my-credits"
+                          <a href="{{$postloginUrl}}/settings/billing/my-credits"
                             style="font-size:15px; font-weight:800; color:#253238; text-decoration:none; display:inline-block;">
                             Contact Lead Now
                           </a>

@@ -128,7 +128,7 @@
                                 bgcolor="#2E7BF1"
                                 style="border-radius:119px;font-family:Inter, Arial, sans-serif;">
 
-                                <a href="{{ $baseUrl }}/sellers/leads"
+                                <a href="{{ $postloginUrl }}/sellers/leads"
                                   style="display:inline-block;
                       width:172px;
                       line-height:36px;
@@ -228,7 +228,7 @@
                                 bgcolor="#2E7BF1"
                                 style="border-radius:119px;font-family:Inter, Arial, sans-serif;">
 
-                                <a href="{{ $baseUrl }}/sellers/leads/my-responses"
+                                <a href="{{ $postloginUrl }}/sellers/leads/my-responses"
                                   style="display:inline-block; width:172px; line-height:36px; font-size:14px;font-weight:700;  color:#ffffff; text-decoration:none;">
                                   {{ $total1 > 1 ? 'View all details' : 'View Details' }}
                                 </a>
@@ -341,7 +341,7 @@
                                 bgcolor="#2E7BF1"
                                 style="border-radius:119px;font-family:Inter, Arial, sans-serif;">
 
-                                <a href="{{ $baseUrl }}/sellers/leads"
+                                <a href="{{ $postloginUrl }}/sellers/leads"
                                   style="display:inline-block;
                                 width:172px;
                                 line-height:36px;
@@ -407,7 +407,7 @@
 
                       <ul style="font-size:14px;color:#333;margin:0 0 12px 18px;padding:0;line-height:22px;">
                         @if(($totalCredit ?? 0) < 50) <li style="margin-bottom:8px;">
-                          <a href="{{ $baseUrl }}/settings/billing/my-credits"
+                          <a href="{{ $postloginUrl }}/settings/billing/my-credits"
                             style="color:#00AFE3;text-decoration:underline;">
                             Add credits
                           </a>
@@ -417,7 +417,7 @@
 
                           @if($autobidStatus==1)
                           <li style="margin-bottom:8px;">
-                            <a href="{{ $baseUrl }}/settings/billing/my-credits"
+                            <a href="{{ $postloginUrl }}/settings/billing/my-credits"
                               style="color:#00AFE3;text-decoration:underline;">
                               Enable Auto Bid
                             </a>

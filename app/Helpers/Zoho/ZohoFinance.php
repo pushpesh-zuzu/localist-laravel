@@ -86,8 +86,14 @@ class ZohoFinance
                 $statusText = 'Success';
                 break;
             case 2:
-                $statusText = 'Failed';
-                break;
+                $statusText = 'Failed';           
+        }
+        if ($log->payment_type == 0) {
+            $paymentType = 'Credit';
+        } elseif ($log->payment_type == 1) {
+            $paymentType = 'Debit';
+        } else {
+            $paymentType = 'Refund';
         }
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
         $userName = User::find($userId)->name;
@@ -100,7 +106,7 @@ class ZohoFinance
                 //'Price'           => $log->price,
                 'Credits'         => $log->credits,
                 'Transaction_Date' => \Carbon\Carbon::parse($log->purchase_Date)->toDateString(),
-                'Payment_Type'     => $log->payment_type == 0 ? 'Credit' : 'Debit',
+                'Payment_Type'     => $paymentType,
                 'Payment_Status'   => $statusText,
             ]],
             'duplicate_check_fields' => ['Transaction_Id1']

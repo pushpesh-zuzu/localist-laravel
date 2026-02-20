@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoFinance;
 
 class StripeWebhookController extends Controller
 {
@@ -20,7 +21,7 @@ class StripeWebhookController extends Controller
     {
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-     
+
         Stripe::setApiKey(CustomHelper::setting_value('stripe_secret'));
 
         // webhook secret alag use hoga
@@ -29,7 +30,7 @@ class StripeWebhookController extends Controller
         try {
             $event = Webhook::constructEvent($payload, $sigHeader, $secret);
         } catch (\Exception $e) {
-            Log::error('Stripe webhook signature failed: ' . $e->getMessage());
+            //  Log::error('Stripe webhook signature failed: ' . $e->getMessage());
             return response('Invalid signature', 400);
         }
 
@@ -70,9 +71,10 @@ class StripeWebhookController extends Controller
 
             $refundType = $isFullRefund ? 'Full refund' : 'Partial refund';
 
-            $purchaseTypeFormatted = ucwords(str_replace('_', ' ', $plan->purchase_type));
-            $details = "{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} processed on " . now()->toDateTimeString();
+            $purchaseTypeFormatted = $plan->purchase_type == 'manual'  ? '' : ucwords(str_replace('_', ' ', $plan->purchase_type));
 
+            $details = trim("{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} processed on " . now()->toDateTimeString());
+           
             if ($isFullRefund) {
                 $user->decrement('total_credit', $plan->credits);
                 $creditsToReverse = $plan->credits;
@@ -80,22 +82,29 @@ class StripeWebhookController extends Controller
                 $creditsToReverse = 0; // Partial refund me credits unchanged
             }
 
-            PurchaseHistory::insertGetId([
+            $transactionId =  PurchaseHistory::insertGetId([
                 'user_id'        => $user->id,
                 'purchase_date'  => now()->toDateString(),
-                'price'          => $charge->amount_refunded / 100,
+                'price' => number_format($charge->amount_refunded / 100, 2, '.', ''),
                 'credits'        => $creditsToReverse,
                 'details'        => $details,
-                'payment_type'   => 3,
+                'payment_type'   => 2,
                 'error_response' => '',
                 'status'         => 1,
                 'created_at'     => now(),
                 'updated_at'   => now(),
             ]);
 
+            $userId = $user->id;
 
-            Log::info('Refund processed successfully for user: ' . $user->id);
-            
+            if ($transactionId) {
+                CustomHelper::runInBackground(function () use ($userId, $transactionId) {
+                    app(ZohoFinance::class)->integratePurchaseHistory($userId, $transactionId);
+                });
+            }
+
+
+            // Log::info('Refund processed successfully for user: ' . $user->id);
         } catch (\Exception $e) {
             Log::error('Refund handling error: ' . $e->getMessage());
         }
