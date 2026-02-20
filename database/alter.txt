@@ -205,3 +205,5 @@ ADD COLUMN `zoho_record_id` varchar(255) DEFAULT NULL AFTER `message_id`;
 
 
 ALTER TABLE `purchase_histories` CHANGE `status` `status` TINYINT(1) NULL DEFAULT NULL COMMENT '0 = pending, 1 = sucess, 2 = failure,3=Refund';
+
+ALTER TABLE `plan_histories` ADD `stripe_payment_intent` VARCHAR(255) NULL AFTER `purchase_type`;
