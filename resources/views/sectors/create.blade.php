@@ -73,7 +73,7 @@
           </div>
           <div class="row mb-3">
             <div class="col-md-12">
-                <label class="form-label">{{ __('Service Tags') }}</label>
+                <label class="form-label">Service Tags (Popular Jobs / Sub Service)</label>
                 <div class="flex-wrap gap-2 border rounded p-2" id="tagsContainer" style="display: none;">
                     <!-- Existing tags will render here -->
                 </div>

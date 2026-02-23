@@ -51,6 +51,7 @@ class SectorController extends Controller{
         $data['is_home'] = $request->is_home;
         $data['is_popular'] = $request->is_popular;
         $data['show_in_search'] = $request->show_in_search;
+        $data['tags'] = $request->tags;
         if($request->hasFile('category_icon')){
             $data['category_icon'] = CustomHelper::fileUpload($request->category_icon,'category');
         }
