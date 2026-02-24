@@ -86,7 +86,6 @@ class ApiController extends Controller
                 users.phone,
                 users.profile_image,
                 users.total_credit,
-                users.avg_rating,
                 users.about_company,
                 users.form_status,
                 users.business_profile_name,
@@ -119,7 +118,14 @@ class ApiController extends Controller
                 $query->where('nation_wide', 1)
                     ->orWhereRaw('distance <= (miles + ?)', [$cityRadius]);
             })
-            ->get();
+            ->get()->map(function ($items) {
+                $rt = CustomHelper::getAverageRating($items->id);
+                $items->avg_rating = $rt['average_rating'];
+                $items->total_reviews = $rt['total_reviews'];
+                return $items;
+            });
+        
+        
         $sellers = collect($sellers); // ensure it's a collection
 
         $recommendedCount = (int) CustomHelper::setting_value("recommended_list_count", 0);
