@@ -58,7 +58,7 @@ class ZohoQuoteCustomers
                 if ($type) {
                     AbandonedUser::where('id', $userId)
                         ->update(['zoho_record_id' => $zohoRecordId]);
-                }else{
+                } else {
                     User::where('id', $userId)
                         ->update(['zoho_record_id' => $zohoRecordId]);
                 }
@@ -195,5 +195,67 @@ class ZohoQuoteCustomers
     {
         return Http::withToken($accessToken)
             ->post('https://www.zohoapis.eu/crm/v2/Quote_Customers/upsert', $payload);
+    }
+
+
+    protected function upsertToZohoWhatsapp($accessToken, $zoho_record_id, array $payload)
+    {
+
+        $response = Http::withToken($accessToken)
+            ->put("https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zoho_record_id}", [
+                'data' => $payload['data']
+            ]);
+
+
+        return $response;
+    }
+
+    public function updateZohoCustomerDetailForWhatsapp($userId, $magiclink, $quoteRequestUrl, $password)
+    {
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) return null;
+
+        $user = User::findOrFail($userId);
+        // Build payload for updating only Status
+
+        $payload = [
+            'data' => [[
+                'User_Auto_Id'          => $user->zoho_record_id,
+                'Magic_Login_Link'            => $magiclink,
+                'Quote_Request_URL'     => $quoteRequestUrl,
+                'Plan_Password'         => $password ?? '',
+                'WhatsApp_Phone_Number' => $user->phone ?? '',
+            ]],
+            'duplicate_check_fields' => ['User_Auto_Id']
+        ];
+
+        // Update using your existing Zoho update function
+        $response = $this->upsertToZohoWhatsapp($accessToken, $user->zoho_record_id, $payload);
+
+        $responseDataItem = $response->json()['data'][0] ?? null;
+        $errorMessage = $response->json()['data'][0]['message'] ?? null;
+        $dbRecordId = $user->id;
+        $dbTable = 'user_details';
+
+        // Safe Zoho logging
+        try {
+            ZohoHelper::logZohoRequest(
+                'updateZohoCustomerDetailForWhatsapp',
+                'https://www.zohoapis.eu/crm/v2/Quote_Customers/upsert',
+                $payload,           // payload sent to Zoho
+                $responseDataItem,   // response received from Zoho
+                $errorMessage,       // error message if any
+                $user->id ?? null, // main user ID
+                $dbRecordId,         // database record ID
+                $dbTable,            // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho whatsapp  update', [
+                'exception' => $e->getMessage(),
+                'userId' => $userId
+            ]);
+        }
+
+        return $response->json();
     }
 }

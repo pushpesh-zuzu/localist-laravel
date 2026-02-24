@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Hash;
 use App\Events\NewNotificationEvent;
 use App\Helpers\Zoho\ZohoEmails;
 use App\Helpers\Zoho\ZohoFinance;
+use App\Helpers\Zoho\ZohoLeadBuyers;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
 use App\Models\PurchaseHistory;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
@@ -819,7 +821,7 @@ class CustomHelper
                             'price'        => $planHistory->price,
                             'vat'          => $planHistory->vat,
                             'total_amount' => $planHistory->total_amount,
-                            'stripe_payment_intent' => $stripePaymentIntentId, 
+                            'stripe_payment_intent' => $stripePaymentIntentId,
                             'purchase_type' => 'auto_topup',
                             'created_at'   => now(),
                             'updated_at'   => now(),
@@ -1104,5 +1106,37 @@ class CustomHelper
         echo '</pre>';
 
         if ($die) die;
+    }
+
+
+    public static function saveDataForWhastappMsg($baseUrl, $userId, $password, $token, $type = null,$leadId = null )
+    {
+        $magiclink = $baseUrl . '/en/gb/login?client_id=' . base64_encode($token);
+
+        $quoteRequestUrl = $leadId
+            ? url("/api/email-customer-request-top-five-matches/{$leadId}/{$userId}")
+            : null;
+
+        UserDetail::updateOrCreate(
+            ['user_id' => $userId],
+            [
+                'magic_link' => $magiclink,
+                'quote_request_url' => $quoteRequestUrl,
+                'plan_password' => $password,
+            ]
+        );
+
+        CustomHelper::runInBackground(function () use ($userId, $magiclink, $quoteRequestUrl, $password, $type) {
+
+            if ($type === 'customer') {
+
+                app(ZohoQuoteCustomers::class)
+                    ->updateZohoCustomerDetailForWhatsapp($userId, $magiclink, $quoteRequestUrl, $password);
+            } elseif ($type === 'buyer') {
+
+                app(ZohoLeadBuyers::class)
+                    ->updateZohoBuyerDetailForWhatsapp($userId, $magiclink,  $password);
+            }
+        });
     }
 }

@@ -35,7 +35,10 @@ class UserDetail extends Model
                             'billing_city',
                             'billing_postcode',
                             'billing_phone',
-                            'billing_vat_register'
+                            'billing_vat_register',
+                            'magic_link',
+                            'quote_request_url',
+                            'plan_password'
                         ];
     public function users()
     {

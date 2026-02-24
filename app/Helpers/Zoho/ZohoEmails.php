@@ -51,6 +51,9 @@ class ZohoEmails
 
                     $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
                     $user->update(['remember_token' => $token]);
+
+                    CustomHelper::saveDataForWhastappMsg(config('app.react_base_url'), $userId, $password, $token, 'buyer', null);
+
                     $htmlView = view('emails.lead_buyers.registration.lead_buyer_registration_new',  [
                         'baseUrl' => config('app.react_base_url'),
                         'postloginUrl' =>  rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/'),
@@ -1543,7 +1546,7 @@ class ZohoEmails
 
             return [
                 'lead_name' => $lead->customer->name ? explode(' ', trim($lead->customer->name))[0] : '',
-                'postcode' => $lead->postcode   ? substr(str_replace(' ', '', trim($lead->postcode)), 0, 4)  : '', 
+                'postcode' => $lead->postcode   ? substr(str_replace(' ', '', trim($lead->postcode)), 0, 4)  : '',
                 'masked_phone' => $lead->customer?->phone ? substr($lead->customer->phone, 0, 5) . str_repeat('*', strlen($lead->customer->phone) - 5) : 'N/A',
                 'masked_email' => $lead->customer?->email ? (function ($email) {
                     [$name, $domain] = explode('@', $email);
@@ -3869,7 +3872,7 @@ class ZohoEmails
                 'id'               => $lead->id,
                 'lead_name'        => strtok($lead->customer->name ?? '', ' '),
                 'postcode' => $lead->postcode    ? substr(str_replace(' ', '', trim($lead->postcode)), 0, 4)    : '',
-                'fullpostcode' => $lead->postcode     ?? '',                
+                'fullpostcode' => $lead->postcode     ?? '',
                 'userPhone'         =>   $lead->customer->phone ?? '',
                 'userEmail'         =>   $lead->customer->email ?? '',
                 'masked_phone'     => $lead->customer?->phone
