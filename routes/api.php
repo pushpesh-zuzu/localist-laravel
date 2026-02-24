@@ -80,6 +80,7 @@ Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook
 
 
 Route::post('get-seller-list-city-wise', [ApiController::class, 'getSellerListCityWise']);
+Route::post('add-request-callback-city-wise', [ApiController::class, 'addRequestCallbackCityWise']);
 
 
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);

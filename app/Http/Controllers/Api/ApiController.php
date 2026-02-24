@@ -31,6 +31,7 @@ use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoLeadBuyers;
 use App\Helpers\Zoho\ZohoQuoteCustomers;
 use App\Models\SmsLog;
+use App\Models\CallbackRequest;
 use \Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Attributes\Log as AttributesLog;
@@ -156,6 +157,35 @@ class ApiController extends Controller
         $data['total_sellers'] = count($finalSortedSellers);
         $data['sellers'] = $finalSortedSellers;
         return $this->sendResponse('Seller List City Wise.', $data);
+    }
+
+    public function addRequestCallbackCityWise(Request $request){
+        $validator = Validator::make($request->all(), [
+            'seller_id' => 'required|integer|exists:users,id',
+            'service_id' => 'required|integer|exists:categories,id',
+            'city' => 'required|string',
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|numeric',
+            
+        ], [
+            'seller_id.exists' => 'Provided User does not exists.',
+            'service_id.exists' => 'Provided service does not exists.'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $data['seller_id'] = $request->seller_id;
+        $data['service_id'] = $request->service_id;
+        $data['city'] = $request->city;
+        $data['name'] = $request->name;
+        $data['email'] = $request->email;
+        $data['phone'] = $request->phone;
+        CallbackRequest::insertGetId($data);
+        return $this->sendResponse('Request Callback Added Successfully.');
+
     }
 
     public function testNewLeadFunction(Request $request, LeadService $leadService){
