@@ -79,6 +79,9 @@ Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook']);
 
 
+Route::post('get-seller-list-city-wise', [ApiController::class, 'getSellerListCityWise']);
+
+
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
 
 Route::post('get-city-name', [ApiController::class, 'getCityName']);

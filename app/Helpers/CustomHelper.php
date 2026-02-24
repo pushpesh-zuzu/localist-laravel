@@ -586,7 +586,65 @@ class CustomHelper
         ];
     }
 
+    public static function getCityGeoData(string $city): ?array
+    {
+        $response = Http::withHeaders([
+            'User-Agent' => 'your-app-name'
+        ])->get('https://nominatim.openstreetmap.org/search', [
+            'city' => $city,
+            'country' => 'United Kingdom',
+            'format' => 'json',
+            'limit' => 1,
+        ]);
 
+        $data = $response->json();
+
+        if (empty($data[0])) {
+            return null;
+        }
+
+        $result = $data[0];
+
+        $centerLat = (float) $result['lat'];
+        $centerLng = (float) $result['lon'];
+
+        $bbox = $result['boundingbox'];
+
+        $south = (float) $bbox[0];
+        $north = (float) $bbox[1];
+        $west  = (float) $bbox[2];
+        $east  = (float) $bbox[3];
+
+        $radius = self::calculateDistanceMiles($north, $east, $south, $west) / 2;
+
+        return [
+            'city' => $city,
+            'lat' => $centerLat,
+            'lng' => $centerLng,
+            'radius' => $radius
+        ];
+    }
+
+    private static function calculateDistanceMiles($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 3958.8; // miles
+
+        $lat1 = deg2rad($lat1);
+        $lon1 = deg2rad($lon1);
+        $lat2 = deg2rad($lat2);
+        $lon2 = deg2rad($lon2);
+
+        $dLat = $lat2 - $lat1;
+        $dLon = $lon2 - $lon1;
+
+        $a = sin($dLat/2) * sin($dLat/2) +
+            cos($lat1) * cos($lat2) *
+            sin($dLon/2) * sin($dLon/2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+
+        return $earthRadius * $c;
+    }
 
 
     public static function getCoordinates($postcode)

@@ -40,6 +40,117 @@ use App\Services\LeadService;
 
 class ApiController extends Controller
 {
+    public function getSellerListCityWise(Request $request, LeadService $leadService)
+    {
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|integer|exists:categories,id',
+            'city' => [
+                'required',
+                'string',
+                'min:4',
+                'regex:/^[a-zA-Z\s]+$/' // Only allows letters and spaces
+            ]
+        ], [
+            'service_id.exists' => 'Provided service id does not exists.',
+            'city.regex' => 'City name must contain only letters and spaces.'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        $serviceId = $request->service_id;
+        $city      = $request->city;
+
+        $cityGeoData = CustomHelper::getCityGeoData($city);
+
+        if (empty($cityGeoData)) {
+            return $this->sendError("City not found or geocoding failed.");
+        }
+
+        $lat        = $cityGeoData['lat'];
+        $lng        = $cityGeoData['lng'];
+        $cityRadius = $cityGeoData['radius'];
+
+        $baseQuery = DB::table('user_service_locations as usl')
+            ->join('users', 'users.id', '=', 'usl.user_id')
+            ->join('postcodes as p', 'p.postcode', '=', 'usl.postcode')
+            ->leftJoin('user_details', 'user_details.user_id', '=', 'users.id')
+            ->leftJoin('user_response_times as urt', 'urt.seller_id', '=', 'usl.user_id')
+            ->where('usl.service_id', $serviceId)
+            ->where('users.total_credit', '>', 0)
+            ->selectRaw("
+                users.id,
+                users.name,
+                users.email,
+                users.phone,
+                users.profile_image,
+                users.total_credit,
+                users.avg_rating,
+                users.about_company,
+                users.form_status,
+                users.business_profile_name,
+                users.company_logo,
+                user_details.is_autobid,
+                user_details.autobid_pause,
+                usl.user_id,
+                usl.service_id,
+                usl.miles,
+                usl.nation_wide,
+                usl.postcode,
+                COALESCE(urt.average, 15) as response_time,
+                p.latitude as lat,
+                p.longitude as lng,
+                TRUNCATE(
+                    3958.8 * acos(
+                        cos(radians(?)) *
+                        cos(radians(p.latitude)) *
+                        cos(radians(p.longitude) - radians(?)) +
+                        sin(radians(?)) *
+                        sin(radians(p.latitude))
+                    ), 3
+                ) as distance,
+                users.created_at as user_created_time
+            ", [$lat, $lng, $lat]);
+
+        $sellers = DB::query()
+            ->fromSub($baseQuery, 't')
+            ->where(function ($query) use ($cityRadius) {
+                $query->where('nation_wide', 1)
+                    ->orWhereRaw('distance <= (miles + ?)', [$cityRadius]);
+            })
+            ->get();
+        $sellers = collect($sellers); // ensure it's a collection
+
+        $recommendedCount = (int) CustomHelper::setting_value("recommended_list_count", 0);
+        $w80 = (int) floor($recommendedCount * 0.8);
+
+        // First sort by credit DESC (tie-breaker distance ASC)
+        $sorted = $sellers
+            ->sortBy([
+                ['total_credit', 'desc'],
+                ['distance', 'asc']
+            ])
+            ->values();
+
+        $topN = $sorted->take($w80);
+
+        $remaining = $sorted
+            ->slice($w80)
+            ->sortBy('distance')   // only distance for remaining
+            ->values();
+
+        $finalSortedSellers = $topN->merge($remaining)->values();
+
+        $service = Category::where('id', $serviceId)->first();
+        $data['service'] = $service->name;
+        $data['popular_services'] = $service->tags;
+        $data['city'] = $city;
+        $data['recommended_count'] = $recommendedCount;
+        $data['total_sellers'] = count($finalSortedSellers);
+        $data['sellers'] = $finalSortedSellers;
+        return $this->sendResponse('Seller List City Wise.', $data);
+    }
 
     public function testNewLeadFunction(Request $request, LeadService $leadService){
         $baseQuery = $leadService->getSellerLeadsBaseQuery($request->user_id);
