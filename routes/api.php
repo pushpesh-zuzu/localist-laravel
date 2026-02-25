@@ -75,7 +75,7 @@ Route::get('unsubscribe-status-update/{id}/{type}', [UserController::class, 'uns
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
 Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
-Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
+//Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
 Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook']);
 
 
