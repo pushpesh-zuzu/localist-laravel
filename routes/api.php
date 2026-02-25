@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\Facebook\Forms\DrivewayInstallationForm;
 use App\Http\Controllers\Api\Facebook\Forms\RoofingForm;
 use App\Http\Controllers\Api\Facebook\Forms\FenceAndGateForm;
 use App\Http\Controllers\Api\Facebook\Forms\LandscapingForm;
+use App\Http\Controllers\Api\Facebook\Forms\TreeSurgeryForm;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\d7LeadSupplierController;
 
@@ -35,6 +36,7 @@ Route::post('get-facebook-leads-driveway-installation-from',[DrivewayInstallatio
 Route::post('get-facebook-leads-roofing-from',[RoofingForm::class,'getFacebookLeadsRoofingFrom']);
 Route::post('get-facebook-leads-fence-and-gate-from',[FenceAndGateForm::class,'getFacebookLeadsFenceAndGateForm']);
 Route::post('get-facebook-leads-landscaping-from',[LandscapingForm::class,'getFacebookLeadsLandscapingForm']);
+Route::post('get-facebook-leads-tree-surgery-from',[TreeSurgeryForm::class,'getFacebookLeadsTreeSurgeryForm']);
 
 Route::post('get-facebook-leads-tt',[DrivewayInstallationForm::class,'tt']);
 
