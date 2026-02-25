@@ -74,12 +74,19 @@ class StripeWebhookController extends Controller
             $purchaseTypeFormatted = $plan->purchase_type == 'manual'  ? '' : ucwords(str_replace('_', ' ', $plan->purchase_type));
 
             $details = trim("{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} processed on " . now()->toDateTimeString());
-           
+
             if ($isFullRefund) {
-                $user->decrement('total_credit', $plan->credits);
-                $creditsToReverse = $plan->credits;
+
+                // Latest value DB se le lo
+                $user->refresh();
+
+                $creditsToReverse = min($user->total_credit, $plan->credits);
+
+                if ($creditsToReverse > 0) {
+                    $user->decrement('total_credit', $creditsToReverse);
+                }
             } else {
-                $creditsToReverse = 0; // Partial refund me credits unchanged
+                $creditsToReverse = 0;
             }
 
             $transactionId =  PurchaseHistory::insertGetId([
