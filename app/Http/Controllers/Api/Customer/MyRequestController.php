@@ -138,6 +138,7 @@ class MyRequestController extends Controller
             $dataUser['utm_source'] = $request->utm_source;
             $dataUser['utm_medium'] = $request->utm_medium ?? null;
             $dataUser['platform_source'] = $request->platform_source ?? null;
+            $dataUser['quote_type'] = $request->quote_type ?? 'Online Form';
             //for
 
             $dataUser['password'] = Hash::make($password);
@@ -217,6 +218,7 @@ class MyRequestController extends Controller
             $dataUser['utm_source'] = $request->utm_source;
             $dataUser['utm_medium'] = $request->utm_medium ?? null;
             $dataUser['platform_source'] = $request->platform_source ?? null;
+            $dataUser['quote_type'] = $request->quote_type ?? 'Online Form';
 
             $dataUser['created_at'] = date('Y-m-d H:i:s');
             $dataUser['updated_at'] = date('Y-m-d H:i:s');
@@ -370,6 +372,7 @@ class MyRequestController extends Controller
             $nuData['utm_source'] = $abUser->utm_source;
             $nuData['utm_medium'] = $abUser->utm_medium ?? null;
             $nuData['platform_source'] = $abUser->platform_source ?? null;
+            $nuData['quote_type'] = $abUser->quote_type ?? 'Online Form';
             $nuData['password'] = Hash::make($password);
             $nuData['user_type'] = 2;
             $nuData['active_status'] = 2;
