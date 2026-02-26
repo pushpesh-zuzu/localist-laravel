@@ -233,15 +233,15 @@ class RecommendedLeadsController extends Controller
 
         $isSiteLive = CustomHelper::setting_value("is_site_live", 'no');
         
-        if($isSiteLive == 'yes'){
-            // when site is in live
-            print_r("old autobid system as site is live");
-            $this->placeAutobidOld($request, $leadService);
-        }else{
-            // when site is in development
-            print_r("new autobid system as site is in development phase");
-            $this->placeAutobid($request, $leadService);
-        }
+        // if($isSiteLive == 'yes'){
+        //     // when site is in live
+        //     print_r("old autobid system as site is live");
+        //     $this->placeAutobidOld($request, $leadService);
+        // }else{
+        //     // when site is in development
+        //     print_r("new autobid system as site is in development phase");
+        //     $this->placeAutobid($request, $leadService);
+        // }
     }
 
     public function placeAutobid($request, $leadService){
