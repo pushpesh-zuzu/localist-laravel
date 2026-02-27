@@ -84,7 +84,7 @@ class LandscapingForm extends Controller
                     }
                 }
                 $dataUser['zipcode'] = $postcode;
-                $dataUser['utm_source'] = "Facebook Form";
+                $dataUser['platform_source'] = "Facebook Form";
                 $dataUser['quote_type'] = "Online Form";
                 $dataUser['city'] = $city;
                 $dataUser['entry_url'] = $request->entry_url ?? null;

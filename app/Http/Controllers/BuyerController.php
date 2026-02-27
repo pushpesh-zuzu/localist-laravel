@@ -399,7 +399,7 @@ class BuyerController extends Controller
             abort_if(!auth()->user()->canAny(['quotecustomers.view-details', 'quotecustomers.test-complete-view-details']), 403, __('User does not have the right permissions.'));
             $aRows = User::where('id', $id)->with(['leadRequests.category'])->first();
         }
-        return view('buyer.view', compact('aRows', 'user_id'));
+        return view('buyer.view', compact('aRows', 'user_id', 'type'));
     }
 
     public function contactForm(Request $request)
@@ -451,6 +451,28 @@ class BuyerController extends Controller
     public function update(Request $request, string $id)
     {
         //
+    }
+
+    public function updatePlatformSource(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $platformSource = $request->input('platform_source');
+        $type = $request->input('type');
+
+        if ($type == 'abandoned') {
+            $user = AbandonedUser::find($userId);
+        } else {    
+            $user = User::find($userId);
+        }
+        
+        if ($user) {
+            $user->platform_source = $platformSource;
+            $user->save();
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 404);
     }
 
     /**

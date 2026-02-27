@@ -58,7 +58,30 @@
 
             <div class="col-md-4"><b>Entry URL: </b> {{ $aRows->entry_url ?? '' }}</div>
             <div class="col-md-4"><b>User IP Address: </b> {{ $aRows->user_ip_address ?? '' }}</div>
-            <div class="col-md-4"><b>Source: </b> {{ $aRows->utm_source ?? '' }}</div>
+            <div class="col-md-4">
+              <b>Source: </b>
+              @php 
+                $platform_source = $aRows->platform_source;
+                
+                $canUpdatePlatformSource = false;
+                if ($type === 'abandoned') {
+                    $canUpdatePlatformSource = auth()->user()->can('quotecustomers.incom-update-platform-source');
+                } else {
+                    $canUpdatePlatformSource = auth()->user()->can('quotecustomers.update-platform-source');
+                }
+              @endphp
+              <select style="width: 85%; display:inline-block;" class="form-control" name="platform_source" id="platform_source" 
+                @if(!$canUpdatePlatformSource) disabled @endif onchange="updatePlatformSource(this,{{$aRows->id}})">
+                <option value="">Select Source</option>
+                <option value="Facebook Form" @if($platform_source === 'Facebook Form') selected @endif>Facebook Form</option>
+                <option value="Google Ads" @if($platform_source == 'Google Ads') selected @endif>Google Ads</option>
+                <option value="Microsoft Ads" @if($platform_source == 'Microsoft Ads') selected @endif>Microsoft Ads</option>
+                <option value="SEO" @if($platform_source == 'SEO') selected @endif>SEO</option>
+                <option value="AWin" @if($platform_source == 'AWin') selected @endif>AWin</option>
+                <option value="Your Tarmac Driveway" @if($platform_source == 'Your Tarmac Driveway') selected @endif>Your Tarmac Driveway</option>
+                <option value="Your Resin Driveway" @if($platform_source == 'Your Resin Driveway') selected @endif>Your Resin Driveway</option>
+              </select> 
+            </div>
             <div class="col-md-4"><b>Quote Type: </b> {{ $aRows->quote_type ?? '' }}</div>
           </div>
 
@@ -156,6 +179,34 @@
 
   </div>
   @endif
-
-
+  
+  @push('scripts')
+<script>
+  function updatePlatformSource(selectElement, userId) {
+    var selectedValue = selectElement.value;
+    var type = "{{ $type }}";
+    $.ajax({
+      url: "{{ route('buyer.updatePlatformSource') }}",
+      type: 'POST',
+      data: {
+        _token: '{{ csrf_token() }}',
+        user_id: userId,
+        platform_source: selectedValue,
+        type: type
+      },
+      success: function(response) {
+        if (response.success) {
+          alert('Platform source updated successfully.');
+        } else {
+          alert('Failed to update platform source.');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error(xhr.responseText);
+        alert('An error occurred while updating the platform source.');
+      }
+    });
+  }
+</script> 
+@endpush
 </x-app-layout>
