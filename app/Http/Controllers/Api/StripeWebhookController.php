@@ -73,8 +73,11 @@ class StripeWebhookController extends Controller
 
             $purchaseTypeFormatted = $plan->purchase_type == 'manual'  ? '' : ucwords(str_replace('_', ' ', $plan->purchase_type));
 
-            $details = trim("{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} processed on " . now()->toDateTimeString());
 
+            $showamount = number_format($charge->amount_refunded / 100, 2, '.', '');
+
+            $details = trim("{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} (€{$showamount}) processed on " . now()->toDateTimeString());
+         
             if ($isFullRefund) {
 
                 // Latest value DB se le lo
