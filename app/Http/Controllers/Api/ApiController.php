@@ -121,8 +121,20 @@ class ApiController extends Controller
             })
             ->get()->map(function ($items) {
                 $rt = CustomHelper::getAverageRating($items->id);
+                $categories = UserService::with('category:id,name')
+                    ->where('user_id', $items->user_id)
+                    ->get()
+                    ->map(function ($service) {
+                        return [
+                            'service_id' => $service->service_id,
+                            'name' => optional($service->category)->name,
+                        ];
+                    })
+                    ->values()
+                    ->toArray();
                 $items->avg_rating = $rt['average_rating'];
                 $items->total_reviews = $rt['total_reviews'];
+                $items->services = $categories;
                 return $items;
             });
         
