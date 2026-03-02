@@ -76,7 +76,7 @@ class StripeWebhookController extends Controller
 
             $showamount = number_format($charge->amount_refunded / 100, 2, '.', '');
 
-            $details = trim("{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} (€{$showamount}) processed on " . now()->toDateTimeString());
+            $details = trim("{$plan->plan_name} {$plan->credits} {$purchaseTypeFormatted} credits purchased | {$refundType} (£{$showamount}) processed on " . now()->toDateTimeString());
          
             if ($isFullRefund) {
 
