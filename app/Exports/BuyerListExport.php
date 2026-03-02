@@ -189,7 +189,7 @@ class BuyerListExport implements FromCollection, WithHeadings, WithMapping, With
             $user->msclickid ?? '',
             $user->entry_url ?? '',
             $user->user_ip_address ?? '',
-            $user->utm_source ?? '',
+            $user->platform_source ?? '',
         ];
 
 
