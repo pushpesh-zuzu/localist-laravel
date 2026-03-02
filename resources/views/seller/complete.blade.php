@@ -91,6 +91,15 @@
                   title="Autobid Setting">
                   <i class="bi bi-gear"></i>
                 </a>
+
+                @endcan
+               @can('leadbuyers.credit-deduction')
+                <a href="javascript:void(0)"
+                  class="text text-danger deduct-credit"
+                  data-user-id="{{ $aRow->id }}"
+                  title="Deduct Credit">
+                  <i class="bi bi-dash-circle"></i>
+                </a>
                 @endcan
                 @can('leadbuyers.bids')
                 <a href="{{ route('seller.sellerBids',$aRow->id) }}" class="text text-primary"><i class="fa-solid fa-chess-pawn" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Bids"></i></a>
@@ -282,7 +291,41 @@
 
 
 
+  <div class="modal fade" id="creditDeductionModal" tabindex="-1" aria-labelledby="creditDeductionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="creditDeductionForm">
+        @csrf
+        <input type="hidden" id="deduct_user_id" name="user_id">
 
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="creditDeductionModalLabel">Deduct Lead Buyer Credit</h5>
+            <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <div id="creditDeductionMessage"></div>
+
+            <div class="mb-3">
+              <label class="form-label"><strong>Current Credit:</strong></label>
+              <span id="deduct_current_credit" class="badge bg-primary fs-6 ms-1">0</span>
+            </div>
+
+            <div class="mb-3">
+              <label for="deduct_credit" class="form-label">Deduct Credit</label>
+              <input type="number" class="form-control" id="deduct_credit" name="deduct_credit" required min="1">
+            </div>
+
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Deduct Credit</button>
+            <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
 
   <!-- Credit Modal -->
@@ -343,6 +386,39 @@
         } // disable search on the first (#) column
       ]
     });
+
+    $(document).on("click", ".deduct-credit", function() {
+      let userId = $(this).data("user-id");
+      let baseUrl = $("#_url").val();
+      $("#deduct_user_id").val('');
+      $("#deduct-credit").text('');
+      $('#creditDeductionMessage').html('');
+      $.ajax({
+        url: baseUrl + "/seller/get-credit/" + userId, // Route to get user credit
+        type: "GET",
+        success: function(res) {
+          if (res.success) {
+
+            $("#deduct_user_id").val(userId);
+            $("#deduct_current_credit").text(res.data.total_credit);
+            $("#deduct_credit").val("");
+            var creditModalE = document.getElementById("creditDeductionModal");
+            var creditModalShow = new coreui.Modal(creditModalE);
+            creditModalShow.show();
+          } else {
+            alert(res.message || "Failed to fetch user credit.");
+          }
+        },
+        error: function(xhr) {
+          alert("Server error. Please try again.");
+        },
+        complete: function() {
+          $("#loader").fadeOut();
+        }
+      });
+    });
+
+
 
     $(document).on("click", ".view-credit", function() {
       let userId = $(this).data("user-id");
@@ -550,6 +626,73 @@
           } else {
             // Other server errors
             $('#autobidSettingsMessage').html(
+              `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
+            );
+          }
+        }
+      });
+
+    });
+
+    $('#creditDeductionForm').submit(function(e) {
+      e.preventDefault();
+
+      let userId = $('#deduct_user_id').val();
+      let deductCredit = $('#deduct_credit').val();
+
+
+      $('#creditDeductionMessage').html('');
+      $('#deduct_credit').removeClass('is-invalid');
+      $('#addCreditError').remove();
+
+
+      if (!userId) {
+        $('#creditMessage').html(
+          `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
+        );
+        return;
+      }
+
+      $.ajax({
+        url: "{{ route('seller.deductCredits') }}",
+        type: "POST",
+        data: {
+          _token: $('input[name=_token]').val(),
+          user_id: userId,
+          deduct_credit: deductCredit
+        },
+        success: function(response) {
+          if (response.success) {
+            $('#creditDeductionMessage').html(
+              `<div class="alert alert-success">${response.message || 'Credit updated successfully!'}</div>`
+            );
+            $('#deduct_current_credit').text(response.new_credit);
+            $('#deduct_credit').val('');
+          } else {
+            $('#creditDeductionMessage').html(
+              `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
+            );
+          }
+        },
+        error: function(xhr) {
+          if (xhr.status === 422) {
+            // Validation errors
+            let errors = xhr.responseJSON.errors;
+            if (errors.add_credit) {
+              $('#deduct_credit').addClass('is-invalid');
+              $('#deduct_credit').after(
+                `<div id="addCreditError" class="invalid-feedback">${errors.add_credit[0]}</div>`
+              );
+            }
+          } else if (xhr.status === 403) {
+            // Permission denied (no access)
+            let message = xhr.responseJSON?.message || 'You do not have permission to perform this action.';
+            $('#creditDeductionMessage').html(
+              `<div class="alert alert-danger">${message}</div>`
+            );
+          } else {
+            // Other server errors
+            $('#creditDeductionMessage').html(
               `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
             );
           }

@@ -210,3 +210,7 @@ ALTER TABLE `plan_histories` ADD `stripe_payment_intent` VARCHAR(255) NULL AFTER
 
 
 ALTER TABLE `user_details` ADD `magic_link` TINYTEXT NULL AFTER `zoho_details_id`, ADD `quote_request_url` TINYTEXT NULL AFTER `magic_link`, ADD `plan_password` VARCHAR(255) NULL AFTER `quote_request_url`;
+
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Lead Buyers Complete List', 'leadbuyers.credit_deduction', 'Credit Deduction', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');

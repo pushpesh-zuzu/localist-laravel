@@ -384,7 +384,7 @@ class SellerController extends Controller
         ]);
     }
 
-    
+
 
 
     public function sellerSaveCustomReview(Request $request)
@@ -480,7 +480,18 @@ class SellerController extends Controller
         $data['status'] = 1;
         $data['created_at'] = date('Y-m-d H:i:s');
 
-        PurchaseHistory::create($data);
+        $purchase = PurchaseHistory::create($data);
+        
+        $transactionId = $purchase->id;
+
+        $userId = $user->id;
+
+        if ($transactionId) {
+            CustomHelper::runInBackground(function () use ($userId, $transactionId) {
+                app(ZohoFinance::class)->integratePurchaseHistory($userId, $transactionId);
+            });
+        }
+
 
         return response()->json([
             'success' => true,
@@ -766,7 +777,7 @@ class SellerController extends Controller
                     $request->to_date . ' 23:59:59',
                 ]);
             }
-            
+
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -840,7 +851,82 @@ class SellerController extends Controller
         $userType =  $request->userType;
 
         $fileName = 'Lead Buyers Login History List' . '.csv';
-        
+
         return Excel::download(new LoginHistoryListExport($fromDate, $toDate, $search, $userType), $fileName);
+    }
+
+
+    public function deductCredits(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'deduct_credit' => 'required|integer|min:1',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $user = User::lockForUpdate()->findOrFail($request->user_id);
+
+            // Fresh DB value
+            $currentCredits = $user->total_credit;
+
+            // ❌ If entered credits > available → error
+            if ($request->deduct_credit > $currentCredits) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient credits. Available credits: ' . $currentCredits
+                ]);
+            }
+
+            // ✅ Deduct full amount only
+            $user->decrement('total_credit', $request->deduct_credit);
+
+            // ✅ Save deduction history (corrected)
+            $detail = "Manual {$request->deduct_credit} credit deducted";
+
+            $data['user_id'] = $request->user_id;
+            $data['purchase_date'] = now()->format('Y-m-d');
+            $data['price'] = 0;
+            $data['credits'] = $request->deduct_credit; // minus for deduction
+            $data['details'] = $detail;
+            $data['payment_type'] = 1;
+            $data['error_response'] = null;
+            $data['status'] = 1;
+            $data['created_at'] = now();
+
+
+            $purchase = PurchaseHistory::create($data);
+
+            $transactionId = $purchase->id;
+
+            $userId = $user->id;
+
+            if ($transactionId) {
+                CustomHelper::runInBackground(function () use ($userId, $transactionId) {
+                    app(ZohoFinance::class)->integratePurchaseHistory($userId, $transactionId);
+                });
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$request->deduct_credit} credits deducted successfully.",
+                'new_credit' => $user->total_credit
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong.'
+            ]);
+        }
     }
 }
