@@ -39,6 +39,7 @@ use App\Helpers\Zoho\ZohoQuoteRequest;
 use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoLeadAvailable;
+use App\Helpers\Zoho\ZohoLeadYourMatches;
 use App\Helpers\Zoho\ZohoServiceLocations;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
@@ -1970,6 +1971,55 @@ class LeadPreferenceController extends Controller
                     ]
                 ];
         // return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
+    }
+
+
+
+    public function getZohoLeadYourMatches(Request $request, LeadService $leadService)
+    {
+        $leadId = $request->lead_id;
+        $leadRequest = LeadRequest::where('id', $leadId)->first();
+
+        if (empty($leadRequest)) {
+            return $this->sendError('lead request not found');
+        }
+
+        $recommendedController = new RecommendedLeadsController();
+
+        $manualResult = $recommendedController->getManualLeads($request, $leadService);
+        $manualData = $manualResult->getData(true);
+
+        // CHECK ERROR
+        if (($manualData['success'] ?? false) === false) {
+            return $this->sendError($manualData['message'] ?? 'Unknown error while fetching sellers');
+        }
+
+        // Extract sellers
+        $data = $manualData['data'][0] ?? null;
+        if (!$data || empty($data['sellers'])) {
+            return $this->sendError("No sellers found for this lead");
+        }
+
+        $sellers = collect($data['sellers']);
+
+        $zohoQuoteRequestId = $leadRequest->zoho_quote_request_id;
+
+        // Step 1: Delete old leads
+        $deleteResult = app(ZohoLeadYourMatches::class)->deleteYourMatchesLeadsRecords($leadId);
+
+        sleep(5); // Optional: brief pause to ensure deletion is processed
+
+        // Step 2: Batch upsert new leads
+        $insertResult = app(ZohoLeadYourMatches::class)->integrateYourMatchesLeadsBatch($leadId, $zohoQuoteRequestId, $sellers);
+ 
+        // Step 3: Combine and return
+        return $this->sendResponse(
+            'Your Matches synced successfully, Please reload the page to see the changes.',
+            [
+                'deleted_entries_count' => $deleteResult['deleted_count'] ?? 0,
+                'inserted_entries_count' => $insertResult['inserted_count'] ?? 0,
+            ]
+        );
     }
 
 }
