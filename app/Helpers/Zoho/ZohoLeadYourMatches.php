@@ -42,10 +42,10 @@ class ZohoLeadYourMatches
     protected function buildAvailableSellersBatchPayload($leadId, $lookupId, $sellers)
     {
 
-dd($sellers);
+
         $payloads = [];
         $allRecords = [];
-        $accessToken = ZohoHelper::getAccessToken();
+
         foreach ($sellers as $seller) {
 
 
@@ -53,7 +53,14 @@ dd($sellers);
                 $seller = (object) $seller;
             }
 
-            $sellerlookupId = ZohoHelper::getZohoLeadBuyerId($accessToken, $seller->id);
+            $user = User::find($seller->id);
+
+            if (!$user || empty($user->zoho_record_id)) {
+                continue;
+            }
+
+            $sellerlookupId = $user->zoho_record_id;
+
 
             if (empty($seller->name) || empty($seller->service_name)) {
                 continue;
@@ -127,7 +134,7 @@ dd($sellers);
                 $searchUrl = "https://www.zohoapis.eu/crm/v2/Your_Matches/search?criteria=(Lead_Request_Id:equals:{$leadId})&page={$page}&per_page={$perPage}";
 
                 $response = Http::withToken($accessToken)->get($searchUrl);
-               
+
                 $records = $response->json('data') ?? [];
 
                 if (empty($records)) {
@@ -144,7 +151,7 @@ dd($sellers);
                         ->retry(3, 1000)
                         ->delete($deleteUrl);
 
-                  
+
                     if ($deleteResponse->successful()) {
                         $totalDeleted += count($chunk);
                     }
