@@ -87,8 +87,8 @@ Route::post('add-request-callback-city-wise', [ApiController::class, 'addRequest
 
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
 
-
  Route::get('/zoho-leads-your-matches', [LeadPreferenceController::class, 'getZohoLeadYourMatches']);
+ Route::get('/zoho-customer-number-of-purchases', [LeadPreferenceController::class, 'updateCustomerNumberOfPurchases']);
 
 Route::post('get-city-name', [ApiController::class, 'getCityName']);
 

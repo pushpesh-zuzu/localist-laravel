@@ -258,4 +258,54 @@ class ZohoQuoteCustomers
 
         return $response->json();
     }
+
+
+
+
+
+     public function updateZohoCustomerNoOfPurchases($userId, $purchasesCounts)
+    {
+        $accessToken = ZohoHelper::getAccessToken();
+        if (!$accessToken) return null;
+
+        $user = User::findOrFail($userId);
+        // Build payload for updating only Status
+
+        $payload = [
+            'data' => [[
+                'User_Auto_Id'          => $user->zoho_record_id,
+                'Number_Of_Purchases'            => $purchasesCounts,               
+            ]],
+            'duplicate_check_fields' => ['User_Auto_Id']
+        ];
+
+        // Update using your existing Zoho update function
+        $response = $this->upsertToZohoWhatsapp($accessToken, $user->zoho_record_id, $payload);
+
+        $responseDataItem = $response->json()['data'][0] ?? null;
+        $errorMessage = $response->json()['data'][0]['message'] ?? null;
+        $dbRecordId = $user->id;
+        $dbTable = 'users';
+
+        // Safe Zoho logging
+        try {
+            ZohoHelper::logZohoRequest(
+                'updateZohoCustomerNoOfPurchases',
+                'https://www.zohoapis.eu/crm/v2/Quote_Customers/upsert',
+                $payload,           // payload sent to Zoho
+                $responseDataItem,   // response received from Zoho
+                $errorMessage,       // error message if any
+                $user->id ?? null, // main user ID
+                $dbRecordId,         // database record ID
+                $dbTable,            // database table name
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to log Zoho whatsapp  update', [
+                'exception' => $e->getMessage(),
+                'userId' => $userId
+            ]);
+        }
+
+        return $response->json();
+    }
 }

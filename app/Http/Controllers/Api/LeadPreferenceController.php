@@ -24,7 +24,12 @@ use App\Models\User;
 use App\Models\AutobidStatusLog;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Mail, Validator, Http
+    Auth,
+    Hash,
+    DB,
+    Mail,
+    Validator,
+    Http
 };
 
 use Illuminate\Support\Facades\Storage;
@@ -40,6 +45,7 @@ use App\Helpers\Zoho\ZohoQuestionAnswer;
 use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoLeadAvailable;
 use App\Helpers\Zoho\ZohoLeadYourMatches;
+use App\Helpers\Zoho\ZohoQuoteCustomers;
 use App\Helpers\Zoho\ZohoServiceLocations;
 use App\Models\NotificationSetting;
 use App\Models\NotificationLog;
@@ -85,9 +91,9 @@ class LeadPreferenceController extends Controller
 
         // Step 1: Delete old leads
         $deleteResult = app(ZohoLeadAvailable::class)->deleteLeadsAvailableRecords($userId);
-        
+
         sleep(5); // Optional: brief pause to ensure deletion is processed
-        
+
         // Step 2: Batch upsert new leads
         $insertResult = app(ZohoLeadAvailable::class)->integrateAvailableLeadsBatch($userId, $allLeads);
 
@@ -137,22 +143,24 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
     }
 
-    private function addLeadViewCount($baseLeads){
+    private function addLeadViewCount($baseLeads)
+    {
         // ===== Add view_count to each lead =====
         $leadIds = $baseLeads->pluck('id')->toArray();
         $customerIds = $baseLeads->pluck('customer_id')->toArray();
         $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
             ->whereIn('lead_id', $leadIds)
-            ->select('buyer_id',
-                     'lead_id',
-                     DB::raw('SUM(visitors_count) as total_views'),
-                    //  DB::raw('SUM(random_count) as total_randoms')
-                    )
+            ->select(
+                'buyer_id',
+                'lead_id',
+                DB::raw('SUM(visitors_count) as total_views'),
+                //  DB::raw('SUM(random_count) as total_randoms')
+            )
             ->groupBy('buyer_id', 'lead_id')
             ->get();
 
         // 2. Map them into a nested array like: [buyer_id][lead_id] => count
-         $leadMetricsMap = [];
+        $leadMetricsMap = [];
         foreach ($rawViewCounts as $row) {
             $views = $row->total_views >= 30 ? $row->total_views : rand(5, 30);
             $leadMetricsMap[$row->buyer_id][$row->lead_id] = [
@@ -175,14 +183,15 @@ class LeadPreferenceController extends Controller
         return $baseLeads;
     }
 
-    public function changePrimaryService(Request $request){
+    public function changePrimaryService(Request $request)
+    {
         $validator = Validator::make($request->all(), [
-                'service_id' => 'required|integer|exists:categories,id',
-            ], [
+            'service_id' => 'required|integer|exists:categories,id',
+        ], [
             'service_id.exists' => 'Provided service id does not exists.',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -193,19 +202,20 @@ class LeadPreferenceController extends Controller
         $user->updated_at = date('Y-m-d H:i:s');
         $user->save();
 
-        CustomHelper::runInBackground(function() use ($user_id) {
+        CustomHelper::runInBackground(function () use ($user_id) {
             app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
         });
-        
+
         return $this->sendResponse("Primary service changed successfully");
     }
 
-    public function getservices(Request $request){
+    public function getservices(Request $request)
+    {
         $user_id = $request->user_id;
         $serviceId = UserService::where('user_id', $user_id)->pluck('service_id')->toArray();
         $categories = Category::whereIn('id', $serviceId)->get();
         foreach ($categories as $key => $value) {
-            $value['locations'] = UserServiceLocation::whereIn('user_id',[$user_id])->whereIn('service_id', [$value->id])->count();
+            $value['locations'] = UserServiceLocation::whereIn('user_id', [$user_id])->whereIn('service_id', [$value->id])->count();
             $value['leadcount'] =  LeadRequest::whereIn('service_id', [$value->id])->count();
 
             //for getting primary category in service list
@@ -224,9 +234,9 @@ class LeadPreferenceController extends Controller
 
         // Fetch all records where 'category' matches the given service_id
         $categories = ServiceQuestion::where('category', $service_id)
-                                 ->where('status', 1)
-                                 ->orderBy('id', 'ASC')
-                                 ->get();
+            ->where('status', 1)
+            ->orderBy('id', 'ASC')
+            ->get();
 
         return $this->sendResponse(__('Category Data'), $categories);
     }
@@ -238,8 +248,8 @@ class LeadPreferenceController extends Controller
 
         // Get all locations for the user
         $aRows = UserServiceLocation::where('user_id', $userId)
-                                    ->whereIn('service_id', [$aVals['service_id']])
-                                    ->get();
+            ->whereIn('service_id', [$aVals['service_id']])
+            ->get();
 
 
         return $this->sendResponse(__('User Service Data'), $aRows);
@@ -251,17 +261,17 @@ class LeadPreferenceController extends Controller
         $service_id = $request->service_id;
         $leadPreference = ServiceQuestion::where('category', $service_id)->get();
         // print_r($leadPreference->toArray());
-        if(count($leadPreference)>0){
+        if (count($leadPreference) > 0) {
             $questions = [];
-            foreach($leadPreference as $value){
+            foreach ($leadPreference as $value) {
                 $value['answers'] = LeadPrefrence::where('question_id', $value->id)
-                                                    ->where('user_id', $user_id)
-                                                    ->pluck('answers')
-                                                    ->first();
+                    ->where('user_id', $user_id)
+                    ->pluck('answers')
+                    ->first();
                 $catArrAns = json_decode($value['answer'], true);
                 $catAns = "";
-                foreach($catArrAns as $a){
-                    if(!empty($catAns)){
+                foreach ($catArrAns as $a) {
+                    if (!empty($catAns)) {
                         $catAns .= ',';
                     }
                     $catAns .= $a['option'];
@@ -269,20 +279,19 @@ class LeadPreferenceController extends Controller
                 $value['answer'] = $catAns;
             }
             $leadPreferences = $leadPreference;
-        }else{
+        } else {
             $leadPreferences = ServiceQuestion::where('category', $service_id)->get();
-            foreach($leadPreference as $value){
+            foreach ($leadPreference as $value) {
                 $catArrAns = json_decode($value['answer'], true);
                 $catAns = "";
-                foreach($catArrAns as $a){
-                    if(!empty($catAns)){
+                foreach ($catArrAns as $a) {
+                    if (!empty($catAns)) {
                         $catAns .= ',';
                     }
                     $catAns .= $a['option'];
                 }
                 $value['answer'] = $catAns;
             }
-
         }
         return $this->sendResponse(__('Lead Preferences Data'), $leadPreferences);
     }
@@ -315,8 +324,7 @@ class LeadPreferenceController extends Controller
             if ($leadPreference) {
                 // Update existing record
                 $leadPreference->update(['answers' => $cleanedAnswer]);
-                $userId=$request->user_id;
-                
+                $userId = $request->user_id;
             } else {
                 // Create a new record
                 $leadPreference = LeadPrefrence::create([
@@ -334,30 +342,31 @@ class LeadPreferenceController extends Controller
         $userId = $request->user_id;
         $serviceIdZoho = $request->service_id;
 
-        CustomHelper::runInBackground(function() use ($userId, $serviceIdZoho) {
+        CustomHelper::runInBackground(function () use ($userId, $serviceIdZoho) {
             app(ZohoQuestionAnswer::class)->integrateServiceQaSingle($userId, $serviceIdZoho);
         });
-        
+
 
         return $this->sendResponse(__('Data processed successfully'), $insertedOrUpdatedData);
     }
 
-    public function removeService(Request $request){
+    public function removeService(Request $request)
+    {
         $user_id = $request->user_id;
         $serviceid = $request->service_id;
-        $user_service_id = UserService::where('user_id',$user_id)->where('service_id',$serviceid)->pluck('zoho_service_id')->first();
-        $user_service_locations = UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->distinct()->pluck('zoho_location_id');
-        $user_lead_prefrences = LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->distinct()->pluck('zoho_question_id');
-        UserService::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
-        UserServiceLocation::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
-        LeadPrefrence::where('user_id',$user_id)->where('service_id',$serviceid)->delete();
+        $user_service_id = UserService::where('user_id', $user_id)->where('service_id', $serviceid)->pluck('zoho_service_id')->first();
+        $user_service_locations = UserServiceLocation::where('user_id', $user_id)->where('service_id', $serviceid)->distinct()->pluck('zoho_location_id');
+        $user_lead_prefrences = LeadPrefrence::where('user_id', $user_id)->where('service_id', $serviceid)->distinct()->pluck('zoho_question_id');
+        UserService::where('user_id', $user_id)->where('service_id', $serviceid)->delete();
+        UserServiceLocation::where('user_id', $user_id)->where('service_id', $serviceid)->delete();
+        LeadPrefrence::where('user_id', $user_id)->where('service_id', $serviceid)->delete();
 
-        CustomHelper::runInBackground(function() use ($user_id, $user_service_id, $user_service_locations, $user_lead_prefrences,$serviceid) {
-             app(ZohoService::class)->deleteBuyerService($user_service_id);
+        CustomHelper::runInBackground(function () use ($user_id, $user_service_id, $user_service_locations, $user_lead_prefrences, $serviceid) {
+            app(ZohoService::class)->deleteBuyerService($user_service_id);
             app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
-            app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrences,$user_id,$serviceid);
-		});
-        
+            app(ZohoQuestionAnswer::class)->deleteServiceQa($user_lead_prefrences, $user_id, $serviceid);
+        });
+
         return $this->sendResponse(__('Service deleted Sucessfully'));
     }
 
@@ -367,13 +376,13 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
-        $creditFilter = $request->credit_filter;//High, Medium, Low
+        $creditFilter = $request->credit_filter; //High, Medium, Low
         $sortType = $request->sort_type; //newest,oldest
         $page_type = $request->page_type; //new leads, saved leads
         $relType = "New Leads";
 
         //for saved leads page only
-        if(!empty($page_type) && $page_type == 'saved_leads'){
+        if (!empty($page_type) && $page_type == 'saved_leads') {
             $savedLeadIds = SaveForLater::where('seller_id', $user_id)
                 ->pluck('lead_id')
                 ->toArray();
@@ -382,7 +391,7 @@ class LeadPreferenceController extends Controller
                 ->whereIn('id', $savedLeadIds);
 
             $relType = "Saved Leads";
-        }else{
+        } else {
             //for new leads page
             $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id);
         }
@@ -392,7 +401,7 @@ class LeadPreferenceController extends Controller
             $baseQuery = match ($creditFilter) {
                 'High'   => $baseQuery->where('credit_score', '>=', 15),
                 'Medium' => $baseQuery->whereBetween('credit_score', [10, 14]),
-                'Low'    => $baseQuery->where('credit_score','<=', 9),
+                'Low'    => $baseQuery->where('credit_score', '<=', 9),
                 default  => $baseQuery,
             };
         }
@@ -407,46 +416,44 @@ class LeadPreferenceController extends Controller
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
-        return $this->sendResponse( $relType .' Request Data', $allLeads->values());
+        return $this->sendResponse($relType . ' Request Data', $allLeads->values());
     }
 
-    
+
     public function getPendingLeads(Request $request)
     {
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-            ->where('status','<>', 'hired')
+            ->where('status', '<>', 'hired')
             ->where('is_archived', 0)
             ->pluck('lead_id')
             ->toArray();
         $allLeads = LeadRequest::with(['customer', 'category'])
-            ->whereIn('id',$recommendedLeadIds)
-            ->whereHas('customer', function($query) {
+            ->whereIn('id', $recommendedLeadIds)
+            ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
             ->orderBy('id', 'DESC')
             ->get();
         foreach ($allLeads as $key => $value) {
-            $isActivity = ActivityLog::where('to_user_id',$user_id)
-                                 ->where('from_user_id',$value->customer_id)
-                                 ->where('lead_id',$value->id)
-                                 ->latest()
-                                 ->first();
-            if(!empty($isActivity)){
-                if($isActivity->activity_name == 'Requested a callback'){
+            $isActivity = ActivityLog::where('to_user_id', $user_id)
+                ->where('from_user_id', $value->customer_id)
+                ->where('lead_id', $value->id)
+                ->latest()
+                ->first();
+            if (!empty($isActivity)) {
+                if ($isActivity->activity_name == 'Requested a callback') {
                     $value['profile_view'] = "Requested a callback";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
-                }else{
-                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                } else {
+                    $value['profile_view'] = $value['customer']->name . " viewed your profile";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
                 }
-
-            }else{
+            } else {
                 $value['profile_view'] = "";
                 $value['profile_view_time'] = "";
             }
-
         }
         return $this->sendResponse(__('Lead Request Data'), $allLeads);
     }
@@ -456,13 +463,13 @@ class LeadPreferenceController extends Controller
         $validator = Validator::make($request->all(), [
             'lead_id' => 'required|integer|exists:lead_requests,id',
             'customer_id' => 'required|integer|exists:users,id'
-            ], [
+        ], [
             'lead_id.required' => 'Lead ID is required.',
             'lead_id.exists' => 'Lead ID does not exist.',
             'customer_id.required' => 'Customer ID is required.',
             'customer_id.exists' => 'Customer ID does not exist.',
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -474,14 +481,14 @@ class LeadPreferenceController extends Controller
             ->where('buyer_id', $buyer_id)
             ->where('lead_id', $lead_id)
             ->value('id');
-        if(!empty($leadArchiveId)){
+        if (!empty($leadArchiveId)) {
             RecommendedLead::where('id', $leadArchiveId)
                 ->update([
                     'is_archived' => 1
                 ]);
             return $this->sendResponse('Lead archived successfully');
         }
-        return $this->sendError('Pending Lead not found');        
+        return $this->sendError('Pending Lead not found');
     }
 
     public function getArchiveLeads(Request $request)
@@ -489,37 +496,35 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-            ->where('status','<>', 'hired')
+            ->where('status', '<>', 'hired')
             ->where('is_archived', 1)
             ->pluck('lead_id')
             ->toArray();
         $allLeads = LeadRequest::with(['customer', 'category'])
-            ->whereIn('id',$recommendedLeadIds)
-            ->whereHas('customer', function($query) {
+            ->whereIn('id', $recommendedLeadIds)
+            ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
             ->orderBy('id', 'DESC')
             ->get();
         foreach ($allLeads as $key => $value) {
-            $isActivity = ActivityLog::where('to_user_id',$user_id)
-                                 ->where('from_user_id',$value->customer_id)
-                                 ->where('lead_id',$value->id)
-                                 ->latest()
-                                 ->first();
-            if(!empty($isActivity)){
-                if($isActivity->activity_name == 'Requested a callback'){
+            $isActivity = ActivityLog::where('to_user_id', $user_id)
+                ->where('from_user_id', $value->customer_id)
+                ->where('lead_id', $value->id)
+                ->latest()
+                ->first();
+            if (!empty($isActivity)) {
+                if ($isActivity->activity_name == 'Requested a callback') {
                     $value['profile_view'] = "Requested a callback";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
-                }else{
-                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                } else {
+                    $value['profile_view'] = $value['customer']->name . " viewed your profile";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
                 }
-
-            }else{
+            } else {
                 $value['profile_view'] = "";
                 $value['profile_view_time'] = "";
             }
-
         }
         return $this->sendResponse(__('Archive Lead Request Data'), $allLeads);
     }
@@ -529,13 +534,13 @@ class LeadPreferenceController extends Controller
         $validator = Validator::make($request->all(), [
             'lead_id' => 'required|integer|exists:lead_requests,id',
             'customer_id' => 'required|integer|exists:users,id'
-            ], [
+        ], [
             'lead_id.required' => 'Lead ID is required.',
             'lead_id.exists' => 'Lead ID does not exist.',
             'customer_id.required' => 'Customer ID is required.',
             'customer_id.exists' => 'Customer ID does not exist.',
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -547,14 +552,14 @@ class LeadPreferenceController extends Controller
             ->where('buyer_id', $buyer_id)
             ->where('lead_id', $lead_id)
             ->value('id');
-        if(!empty($leadArchiveId)){
+        if (!empty($leadArchiveId)) {
             RecommendedLead::where('id', $leadArchiveId)
                 ->update([
                     'is_archived' => 0
                 ]);
             return $this->sendResponse('Lead unarchived successfully');
         }
-        return $this->sendError('Archived Lead not found');        
+        return $this->sendError('Archived Lead not found');
     }
 
     public function getHiredLeads(Request $request)
@@ -562,17 +567,17 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-            ->where('status','hired')
+            ->where('status', 'hired')
             ->pluck('lead_id')
             ->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
-        ->whereIn('id',$recommendedLeadIds)
-        ->whereHas('customer', function($query) {
-            $query->where('form_status', 1);
-        })->where('status','hired')
-        ->orderBy('id', 'DESC')
-        ->get();
+            ->whereIn('id', $recommendedLeadIds)
+            ->whereHas('customer', function ($query) {
+                $query->where('form_status', 1);
+            })->where('status', 'hired')
+            ->orderBy('id', 'DESC')
+            ->get();
 
         return $this->sendResponse(__('Lead Request Data'), $allLeads);
     }
@@ -586,30 +591,30 @@ class LeadPreferenceController extends Controller
     public function addHiredLeads(Request $request)
     {
         $aVals = $request->all();
-        $lead = LeadRequest::where('id',$aVals['lead_id'])->first();
+        $lead = LeadRequest::where('id', $aVals['lead_id'])->first();
         $leadId = $aVals['lead_id'];
-        if(empty($lead)){
+        if (empty($lead)) {
             return $this->sendError('Lead not found', 404);
         }
 
         $sellerId = $request->user_id;
         $buyerId = $lead->customer_id;
 
-        $recommendedId= RecommendedLead::where('lead_id', $aVals['lead_id'])
-                ->where('seller_id', $sellerId)
-                ->where('buyer_id', $buyerId)
-                ->value('id');
-        $users = User::where('id',$buyerId)->pluck('name')->first();
+        $recommendedId = RecommendedLead::where('lead_id', $aVals['lead_id'])
+            ->where('seller_id', $sellerId)
+            ->where('buyer_id', $buyerId)
+            ->value('id');
+        $users = User::where('id', $buyerId)->pluck('name')->first();
 
-        $sellerName = User::where('id',$sellerId)->pluck('name')->first();
-        $buyerName = User::where('id',$lead->customer_id)->pluck('name')->first();
-        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+        $sellerName = User::where('id', $sellerId)->pluck('name')->first();
+        $buyerName = User::where('id', $lead->customer_id)->pluck('name')->first();
+        $leadTime = LeadRequest::where('id', $aVals['lead_id'])->pluck('created_at')->first();
         $activityname = $sellerName . ' updated status to hired';
         $isActivity = self::getActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname);
 
-        if($lead->status != 'hired'){
-            LeadRequest::where('id',$aVals['lead_id'])->update([
-                'status'=>'hired',
+        if ($lead->status != 'hired') {
+            LeadRequest::where('id', $aVals['lead_id'])->update([
+                'status' => 'hired',
                 'hired_by' => $sellerId,
                 'hired_to' => $sellerId
             ]);
@@ -625,33 +630,29 @@ class LeadPreferenceController extends Controller
 
 
             $sendmessage = 'Request submited sucessfully';
-            if(empty($isActivity)){
+            if (empty($isActivity)) {
                 self::addActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname, "hired", $leadTime);
             }
 
-            if($statusUpdate){
-                CustomHelper::runInBackground(function() use ($sellerId, $recommendedId,$leadId) {
-	                app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
+            if ($statusUpdate) {
+                CustomHelper::runInBackground(function () use ($sellerId, $recommendedId, $leadId) {
+                    app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
                     // ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
-                    ZohoEmails::newLeadHiredEmail($leadId,$sellerId);
-                    ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId);
+                    ZohoEmails::newLeadHiredEmail($leadId, $sellerId);
+                    ZohoEmails::reviewsForHiredLeadBuyer($leadId, $sellerId);
                 });
 
                 $requestLeadId = $lead->id ?? null;
                 if (!empty($requestLeadId)) {
-                    CustomHelper::runInBackground(function() use ($requestLeadId) {
+                    CustomHelper::runInBackground(function () use ($requestLeadId) {
                         app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
                     });
                 }
                 return $this->sendResponse('Request Submitted Successfully');
-                
-            }
-            else{
+            } else {
                 return $this->sendError('Request Submission Failed');
             }
-
-
-        }else{
+        } else {
             $sendmessage = 'This lead is already hired!';
             return $this->sendResponse($sendmessage, []);
         }
@@ -667,35 +668,35 @@ class LeadPreferenceController extends Controller
             'final_price' => 'sometimes',
             'unit_type' => 'sometimes',
             'disclose_information' => 'sometimes|integer'
-            ], [
+        ], [
             'lead_id.required' => 'Lead Id is required.',
             'seller_id.required' => 'Seller Id is required.',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
         $aVals = $request->all();
         $sellerId = $aVals['seller_id'];
         $buyerId = $request->user_id;
-        $lead = LeadRequest::where('id',$aVals['lead_id'])->first();
-        if(empty($lead)){
+        $lead = LeadRequest::where('id', $aVals['lead_id'])->first();
+        if (empty($lead)) {
             return $this->sendError('Lead not found', 404);
         }
-        $buyerName = User::where('id',$buyerId)->pluck('name')->first();
-        $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+        $buyerName = User::where('id', $buyerId)->pluck('name')->first();
+        $leadTime = LeadRequest::where('id', $aVals['lead_id'])->pluck('created_at')->first();
 
         $activityname = $buyerName . ' updated status to hired';
-        $isActivity = self::getActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname);
-          $statusUpdate = false;
-          //dd($lead->status);
-        if($lead->status != 'hired'){
-            LeadRequest::where('id',$aVals['lead_id'])->update([
-                'status'=>'hired',
+        $isActivity = self::getActivityLog($buyerId, $sellerId, $aVals['lead_id'], $activityname);
+        $statusUpdate = false;
+        //dd($lead->status);
+        if ($lead->status != 'hired') {
+            LeadRequest::where('id', $aVals['lead_id'])->update([
+                'status' => 'hired',
                 'hired_by' => $buyerId,
                 'hired_to' => $sellerId
             ]);
-            $statusUpdate =RecommendedLead::where('lead_id', $aVals['lead_id'])
+            $statusUpdate = RecommendedLead::where('lead_id', $aVals['lead_id'])
                 ->where('seller_id', $sellerId)
                 ->where('buyer_id', $buyerId)
                 ->update([
@@ -705,33 +706,32 @@ class LeadPreferenceController extends Controller
                     'status' => 'hired'
                 ]);
             $sendmessage = 'Request submited sucessfully';
-            if(empty($isActivity)){
-                self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, "hired", $leadTime);
+            if (empty($isActivity)) {
+                self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'], $activityname, "hired", $leadTime);
             }
-            $leadId=$aVals['lead_id'];
-        }else{
+            $leadId = $aVals['lead_id'];
+        } else {
             $sendmessage = 'This lead is already hired!';
         }
 
-        if($statusUpdate){
-            CustomHelper::runInBackground(function() use ($sellerId,$leadId) {
-                ZohoEmails::newLeadClosedEmail($leadId,$sellerId);
-                ZohoEmails::reviewsForHiredLeadBuyer($leadId,$sellerId);
-		    });
+        if ($statusUpdate) {
+            CustomHelper::runInBackground(function () use ($sellerId, $leadId) {
+                ZohoEmails::newLeadClosedEmail($leadId, $sellerId);
+                ZohoEmails::reviewsForHiredLeadBuyer($leadId, $sellerId);
+            });
 
             $requestLeadId = $lead->id ?? null;
             if (!empty($requestLeadId)) {
-                 $recommendedId= RecommendedLead::where('lead_id', $aVals['lead_id'])
-                ->where('seller_id', $sellerId)
-                ->where('buyer_id', $buyerId)
-                ->value('id');
-                CustomHelper::runInBackground(function() use ($requestLeadId,$sellerId,$recommendedId) {
+                $recommendedId = RecommendedLead::where('lead_id', $aVals['lead_id'])
+                    ->where('seller_id', $sellerId)
+                    ->where('buyer_id', $buyerId)
+                    ->value('id');
+                CustomHelper::runInBackground(function () use ($requestLeadId, $sellerId, $recommendedId) {
                     app(ZohoPurchasedLeads::class)->integratePurchaseLeads($sellerId, $recommendedId);
                     app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
                 });
             }
             return $this->sendResponse($sendmessage);
-            
         }
 
         return $this->sendResponse($sendmessage, []);
@@ -744,9 +744,9 @@ class LeadPreferenceController extends Controller
         $aValues = $request->all();
         $serviceIds = is_array($aValues['service_id']) ? $aValues['service_id'] : explode(',', $aValues['service_id']);
         $totalLeadcount = LeadRequest::whereIn('service_id', $serviceIds)
-            ->where('status', '<>' ,'hired')
+            ->where('status', '<>', 'hired')
             ->count();
-        if(empty($totalLeadcount) || $totalLeadcount < 20){
+        if (empty($totalLeadcount) || $totalLeadcount < 20) {
             $totalLeadcount = random_int(15, 50);
         }
         return $this->sendResponse('Pending Leads', $totalLeadcount);
@@ -758,22 +758,25 @@ class LeadPreferenceController extends Controller
     {
         $aVals = $request->all();
         $userId = $request->user_id;
-        $validator = Validator::make($aVals, [
-            //'service_id' => 'required|exists:services,id',
-            'service_id' => [
-                'required',
-                'exists:categories,id',
-                Rule::unique('user_services', 'service_id')->where(function ($query) use ($userId ) {
-                    return $query->where('user_id', $userId );
-                })
+        $validator = Validator::make(
+            $aVals,
+            [
+                //'service_id' => 'required|exists:services,id',
+                'service_id' => [
+                    'required',
+                    'exists:categories,id',
+                    Rule::unique('user_services', 'service_id')->where(function ($query) use ($userId) {
+                        return $query->where('user_id', $userId);
+                    })
+                ],
+                'user_id' => 'required|exists:users,id',
             ],
-            'user_id' => 'required|exists:users,id',
-          ],
-          [
-            'user_id.exists' => 'The selected user does not exist.',
-            'service_id.exists' => 'The selected service does not exist.',
-            'service_id.unique' => 'You have already added this service to your profile.',
-        ]);
+            [
+                'user_id.exists' => 'The selected user does not exist.',
+                'service_id.exists' => 'The selected service does not exist.',
+                'service_id.unique' => 'You have already added this service to your profile.',
+            ]
+        );
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
@@ -785,12 +788,12 @@ class LeadPreferenceController extends Controller
             $serviceAllIds = [];
             foreach ($serviceIds as $serviceId) {
 
-                $userService = UserService::createUserService($aVals['user_id'],$serviceId,0);
+                $userService = UserService::createUserService($aVals['user_id'], $serviceId, 0);
                 $serviceAllIds[] = $userService->id;
                 //get existing locations for this user
                 $userLocations = UserServiceLocation::where('user_id', $userId)->get();
 
-                foreach($userLocations as $loc){
+                foreach ($userLocations as $loc) {
                     $locData['user_id'] =  $userId;
                     $locData['service_id'] =  $serviceId;
                     $locData['user_service_id'] =  $userService->id;
@@ -805,26 +808,23 @@ class LeadPreferenceController extends Controller
                     $locData['status'] =  1;
                     $locData['created_at'] =  date('Y-m-d H:i:s');
                     //add previous locations to this new service
-                    $locExists = UserServiceLocation::where('user_id',$userId)->where('service_id',$serviceId)
-                        ->where('user_service_id', $userService->id)->where('miles',$loc->miles)->where('nation_wide',$loc->nation_wide)
+                    $locExists = UserServiceLocation::where('user_id', $userId)->where('service_id', $serviceId)
+                        ->where('user_service_id', $userService->id)->where('miles', $loc->miles)->where('nation_wide', $loc->nation_wide)
                         ->where('postcode', $loc->postcode)->first();
-                    if(empty($locExists)){
+                    if (empty($locExists)) {
                         $location = UserServiceLocation::create($locData);
                         $locationIds[] = $location->id;
-
-
                     }
-
                 }
 
                 //save answer to preferences
                 $leadPreferences = ServiceQuestion::where('category', $serviceId)->get();
                 foreach ($leadPreferences as $question) {
                     // Get default options from 'answer' column of ServiceQuestion table
-                    $arrQues = json_decode( $question->answer, true);
+                    $arrQues = json_decode($question->answer, true);
                     $catAns = "";
-                    foreach($arrQues as $q){
-                        if(!empty($catAns)){
+                    foreach ($arrQues as $q) {
+                        if (!empty($catAns)) {
                             $catAns .= ',';
                         }
                         $catAns .= $q['option'];
@@ -845,7 +845,7 @@ class LeadPreferenceController extends Controller
                     $cleanedAnswer = rtrim($cleanedAnswer, ',');
 
                     // Insert or update the lead preference
-                    $leadPref=LeadPrefrence::updateOrCreate(
+                    $leadPref = LeadPrefrence::updateOrCreate(
                         [
                             'user_id' => $userId,
                             'service_id' => $serviceId,
@@ -859,13 +859,13 @@ class LeadPreferenceController extends Controller
                 }
             }
 
-            CustomHelper::runInBackground(function() use ($userId, $serviceAllIds, $locationIds, $questionIds,$serviceIds) {
+            CustomHelper::runInBackground(function () use ($userId, $serviceAllIds, $locationIds, $questionIds, $serviceIds) {
                 app(ZohoService::class)->integrateService($userId, $serviceAllIds);
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
-                app(ZohoQuestionAnswer::class)->integrateServiceQa($userId,$serviceIds);
-		    });
+                app(ZohoQuestionAnswer::class)->integrateServiceQa($userId, $serviceIds);
+            });
             return $this->sendResponse(__('Service added to your profile successfully'));
-        }else{
+        } else {
             return $this->sendResponse(__('Select Service to proceed'));
         }
     }
@@ -875,23 +875,23 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $userId = $aVals['user_id'];
 
-        $aRows = UserService::where('user_id',$userId)
-        ->join('categories', 'categories.id', '=', 'user_services.service_id')
-        ->select('user_services.*', 'categories.name')
-        ->get();
-        return $this->sendResponse(__('User Service Data'),$aRows);
-
+        $aRows = UserService::where('user_id', $userId)
+            ->join('categories', 'categories.id', '=', 'user_services.service_id')
+            ->select('user_services.*', 'categories.name')
+            ->get();
+        return $this->sendResponse(__('User Service Data'), $aRows);
     }
 
-    public function expandRadius(Request $request){
+    public function expandRadius(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'location_id' => 'required|integer|exists:user_service_locations,id'
-            ], [
+        ], [
             'location_id.required' => 'Location Id is required.',
             'location_id.exists' => 'Provided location id does not exists.',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -903,67 +903,69 @@ class LeadPreferenceController extends Controller
         $data['miles'] = $location->miles + 20;
         $data['updated_at'] = date('Y-m-d H:i:s');
 
-        UserServiceLocation::where('id',$request->location_id)->update($data);
+        UserServiceLocation::where('id', $request->location_id)->update($data);
 
         $locationId = $request->location_id;
 
-        CustomHelper::runInBackground(function() use ($userId, $locationId) {
+        CustomHelper::runInBackground(function () use ($userId, $locationId) {
             app(ZohoServiceLocations::class)->integrateServiceSingleLocations($userId, $locationId);
-		});
+        });
 
         return $this->sendResponse('Radius Expaned');
-
     }
 
     public function addUserLocation(Request $request)
     {
         $aVals = $request->all();
         $userId = $aVals['user_id'];
-        $validator = Validator::make($aVals, [
-            //'service_id' => 'required|exists:services,id',
-            'service_id' => [
-                'required',
-                'exists:categories,id',
+        $validator = Validator::make(
+            $aVals,
+            [
+                //'service_id' => 'required|exists:services,id',
+                'service_id' => [
+                    'required',
+                    'exists:categories,id',
+                ],
+                'user_id' => 'required|exists:users,id',
+                // 'postcode' => 'required',
             ],
-            'user_id' => 'required|exists:users,id',
-            // 'postcode' => 'required',
-          ],
-          [
-            'user_id.exists' => 'The selected user does not exist.',
-            'service_id.exists' => 'The selected service does not exist.',
-        ]);
+            [
+                'user_id.exists' => 'The selected user does not exist.',
+                'service_id.exists' => 'The selected service does not exist.',
+            ]
+        );
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
-        $userlocations = UserServiceLocation::where('user_id',$userId)
-                                            ->where('postcode',$aVals['postcode'])
-                                            ->where('miles',$aVals['miles'])
-                                            ->where('type',$aVals['type'])
-                                            ->first();
+        $userlocations = UserServiceLocation::where('user_id', $userId)
+            ->where('postcode', $aVals['postcode'])
+            ->where('miles', $aVals['miles'])
+            ->where('type', $aVals['type'])
+            ->first();
 
-        if(isset($userlocations) && $userlocations !=''){
+        if (isset($userlocations) && $userlocations != '') {
             return $this->sendError('Postcode with the same user already exists');
         }
-        
 
-        if(!empty($aVals['travel_time'])){
+
+        if (!empty($aVals['travel_time'])) {
             $travel_time = $aVals['travel_time'];
-        }else{
+        } else {
             $travel_time = "";
         }
-        if(!empty($aVals['travel_by'])){
+        if (!empty($aVals['travel_by'])) {
             $travel_by = $aVals['travel_by'];
-        }else{
+        } else {
             $travel_by = "";
         }
         //make miles 0 if type is not distance
-        if($aVals['type'] != 'Distance'){
+        if ($aVals['type'] != 'Distance') {
             $aVals['miles'] = 0;
         }
 
         //calculate miles from transport mode and tavel time if type is travel time
-        if($aVals['type'] == 'Travel Time'){
+        if ($aVals['type'] == 'Travel Time') {
             $travelTimeInMinutes = CustomHelper::convertTravelTimeToMinutes($aVals['travel_time']);
             $aVals['miles'] = CustomHelper::getDistanceMilesFromTravellingMode($aVals['travel_by'], $travelTimeInMinutes);
         }
@@ -972,35 +974,36 @@ class LeadPreferenceController extends Controller
         if ($serviceIds) {
             $locationIds = [];
             foreach ($serviceIds as $serviceId) {
-                 $userService = UserService::where('user_id', $userId)
-                                    ->where('service_id', $serviceId)
-                                    ->first();
+                $userService = UserService::where('user_id', $userId)
+                    ->where('service_id', $serviceId)
+                    ->first();
 
-                    if (!$userService) {
-                        continue; // skip if user_service does not exist
-                    }
+                if (!$userService) {
+                    continue; // skip if user_service does not exist
+                }
 
-                    $userServiceId = $userService->id;
-                    $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
+                $userServiceId = $userService->id;
+                $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
 
-                     // CLEAN COORDINATES HANDLING
-                    $coords = $aVals['coordinates'] ?? [];
-                        if (is_string($coords)) $coords = json_decode($coords, true);
-                        if (!is_array($coords)) $coords = [];
+                // CLEAN COORDINATES HANDLING
+                $coords = $aVals['coordinates'] ?? [];
+                if (is_string($coords)) $coords = json_decode($coords, true);
+                if (!is_array($coords)) $coords = [];
 
                 $aLocation = UserServiceLocation::create(
-                    ['user_id' => $aVals['user_id'],
-                    'service_id' => $serviceId,
-                    'user_service_id' => $userServiceId,
-                    'postcode' => $aVals['postcode'],
-                    'type'=>$aVals['type'],
-                    'miles' => $aVals['miles'],
-                    'nation_wide' => $nationWide,
-                    'city'=>$aVals['city'],
-                    'travel_time'=>$travel_time,
-                    'travel_by'=>$travel_by,
-                   // 'coordinates' => $aVals['coordinates']
-                    'coordinates'     => json_encode($coords),
+                    [
+                        'user_id' => $aVals['user_id'],
+                        'service_id' => $serviceId,
+                        'user_service_id' => $userServiceId,
+                        'postcode' => $aVals['postcode'],
+                        'type' => $aVals['type'],
+                        'miles' => $aVals['miles'],
+                        'nation_wide' => $nationWide,
+                        'city' => $aVals['city'],
+                        'travel_time' => $travel_time,
+                        'travel_by' => $travel_by,
+                        // 'coordinates' => $aVals['coordinates']
+                        'coordinates'     => json_encode($coords),
                     ] // Fields to insert
                 );
                 $insertedId = $aLocation->id;
@@ -1009,12 +1012,12 @@ class LeadPreferenceController extends Controller
 
             }
 
-            CustomHelper::runInBackground(function() use ($userId, $locationIds) {
+            CustomHelper::runInBackground(function () use ($userId, $locationIds) {
                 app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIds);
-		    });
+            });
 
             return $this->sendResponse(__('Location updated successfully'));
-        }else{
+        } else {
             return $this->sendResponse(__('Select Service to proceed'));
         }
     }
@@ -1026,7 +1029,7 @@ class LeadPreferenceController extends Controller
         $aRows = UserServiceLocation::where('user_id', $user_id)
             ->orderBy('postcode')
             ->get();
-            // echo "<pre>";print_r($aRows->toArray());exit;
+        // echo "<pre>";print_r($aRows->toArray());exit;
 
         // Group by postcode and miles
         $grouped = $aRows->groupBy(function ($item) {
@@ -1056,8 +1059,8 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $userId = $aVals['user_id'];
 
-        if($aVals['type'] == "Nationwide"){
-             $validator = Validator::make($aVals, [
+        if ($aVals['type'] == "Nationwide") {
+            $validator = Validator::make($aVals, [
                 'service_id' => ['required', 'exists:categories,id'],
                 'user_id' => 'required|exists:users,id',
                 'miles' => 'required',
@@ -1066,7 +1069,7 @@ class LeadPreferenceController extends Controller
                 'user_id.exists' => 'The selected user does not exist.',
                 'service_id.exists' => 'The selected service does not exist.',
             ]);
-        }else{
+        } else {
             $validator = Validator::make($aVals, [
                 'service_id' => ['required', 'exists:categories,id'],
                 'user_id' => 'required|exists:users,id',
@@ -1090,29 +1093,29 @@ class LeadPreferenceController extends Controller
         $travel_time = $aVals['travel_time'] ?? '';
         $travel_by = $aVals['travel_by'] ?? '';
         $nationWide = isset($aVals['nation_wide']) && $aVals['nation_wide'] == 1 ? 1 : 0;
-        
-       $coords = $aVals['coordinates'] ?? [];
+
+        $coords = $aVals['coordinates'] ?? [];
         if (is_string($coords)) $coords = json_decode($coords, true);
         if (!is_array($coords)) $coords = [];
 
         //make miles 0 if type is not distance
-        if($aVals['type'] != 'Distance'){
+        if ($aVals['type'] != 'Distance') {
             $aVals['miles'] = 0;
         }
         //calculate miles from transport mode and tavel time if type is travel time
-        if($aVals['type'] == 'Travel Time'){
+        if ($aVals['type'] == 'Travel Time') {
             $travelTimeInMinutes = CustomHelper::convertTravelTimeToMinutes($aVals['travel_time']);
             $aVals['miles'] = CustomHelper::getDistanceMilesFromTravellingMode($aVals['travel_by'], $travelTimeInMinutes);
         }
 
         // Delete old entry
         $locationIds = UserServiceLocation::where('user_id', $userId)
-        ->pluck('zoho_location_id');
+            ->pluck('zoho_location_id');
 
-         UserServiceLocation::where('user_id', $userId)
-         ->whereIn('postcode', [$aVals['postcode_old']])
-         ->where('type', $aVals['type'])
-         ->delete();
+        UserServiceLocation::where('user_id', $userId)
+            ->whereIn('postcode', [$aVals['postcode_old']])
+            ->where('type', $aVals['type'])
+            ->delete();
 
         $locationIdLists = [];
 
@@ -1143,10 +1146,10 @@ class LeadPreferenceController extends Controller
                         ->where('postcode', $aVals['postcode'])
                         ->where('miles', $aVals['miles']);
 
-                // If this is an edit (not new insert), exclude the current location
-                if (!empty($aVals['location_id'])) {
-                    $duplicateExists->where('id', '!=', $aVals['location_id']);
-                }
+                    // If this is an edit (not new insert), exclude the current location
+                    if (!empty($aVals['location_id'])) {
+                        $duplicateExists->where('id', '!=', $aVals['location_id']);
+                    }
 
                     $duplicateExists = $duplicateExists->exists();
 
@@ -1173,15 +1176,14 @@ class LeadPreferenceController extends Controller
             ]);
 
             $locationIdLists[] = $locationInsert->id;
-
         }
         $locationIdsList = UserServiceLocation::where('user_id', $userId)
             ->pluck('id');
 
-        CustomHelper::runInBackground(function() use ($userId, $locationIds,$locationIdsList) {
+        CustomHelper::runInBackground(function () use ($userId, $locationIds, $locationIdsList) {
             app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($locationIds);
             app(ZohoServiceLocations::class)->integrateServiceLocations($userId, $locationIdsList);
-		});
+        });
 
         return $this->sendResponse(__('Location updated successfully'));
     }
@@ -1199,37 +1201,38 @@ class LeadPreferenceController extends Controller
         } else {
 
             $query = UserServiceLocation::where('user_id', $aValues['user_id'])
-                                        ->where('miles', $aValues['miles'])
-                                        ->where('postcode', $aValues['postcode']);
+                ->where('miles', $aValues['miles'])
+                ->where('postcode', $aValues['postcode']);
         }
 
 
         $user_service_locations = $query->pluck('zoho_location_id');
 
-        CustomHelper::runInBackground(function() use ($user_service_locations) {
+        CustomHelper::runInBackground(function () use ($user_service_locations) {
             app(ZohoServiceLocations::class)->deleteBuyerServiceLocation($user_service_locations);
-		});
+        });
 
         $query->delete();
-        
+
 
         return $this->sendResponse('Location deleted successfully');
     }
 
-    public function leadsByFilter(Request $request, LeadService $leadService){
+    public function leadsByFilter(Request $request, LeadService $leadService)
+    {
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
         $page_type = $request->page_type; //new leads, saved leads
         $relType = "New Leads";
 
         //for saved leads page only
-        if(!empty($page_type) && $page_type == 'saved_leads'){
+        if (!empty($page_type) && $page_type == 'saved_leads') {
             $relType = "Saved Leads";
 
-            $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
-        }else{
+            $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read', 0)->count();
+        } else {
             //for new leads page
-            $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read',0)->count();
+            $unread = LeadRequest::where('customer_id', '!=', $user_id)->where('is_read', 0)->count();
         }
 
         $leadSpotlights = self::getSpotligths($user_id, $leadService, $page_type);
@@ -1263,9 +1266,9 @@ class LeadPreferenceController extends Controller
         ];
         $leadSpotlights = [];
         foreach ($spotlights as $sp) {
-            if(!empty($page_type) && $page_type == 'saved_leads'){
+            if (!empty($page_type) && $page_type == 'saved_leads') {
                 $query = $leadService->getSellerSavedLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
-            }else{
+            } else {
                 $query = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['spotlightFilter' => $sp]);
             }
 
@@ -1294,10 +1297,9 @@ class LeadPreferenceController extends Controller
 
         $result = [];
         foreach ($timeFilters as $time) {
-            if(!empty($page_type) && $page_type == 'saved_leads'){
+            if (!empty($page_type) && $page_type == 'saved_leads') {
                 $baseQuery = $leadService->getSellerSavedLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
-
-            }else{
+            } else {
                 $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['lead_time' => $time]);
             }
 
@@ -1321,9 +1323,9 @@ class LeadPreferenceController extends Controller
 
         foreach ($categories as $category) {
             // Use basequery to get all lead IDs matching filters
-            if(!empty($page_type) && $page_type == 'saved_leads'){
+            if (!empty($page_type) && $page_type == 'saved_leads') {
                 $leads = $leadService->getSellerSavedLeadsBaseQuery($user_id)->where('service_id', $category->id)->get();
-            }else{
+            } else {
                 $leads = $leadService->getSellerLeadsBaseQuery($user_id)->where('service_id', $category->id)->get();
             }
             $category['locations'] = UserServiceLocation::where('user_id', $user_id)->where('service_id', $category->id)->count();
@@ -1341,14 +1343,14 @@ class LeadPreferenceController extends Controller
         foreach ($uniqueRows as $row) {
             // Use basequery and apply postcode match
 
-            if(!empty($page_type) && $page_type == 'saved_leads'){
+            if (!empty($page_type) && $page_type == 'saved_leads') {
                 $leadCount = $leadService->getSellerSavedLeadsBaseQuery($user_id)
-                            ->where('postcode', $row->postcode)
-                            ->count();
-            }else{
+                    ->where('postcode', $row->postcode)
+                    ->count();
+            } else {
                 $leadCount = $leadService->getSellerLeadsBaseQuery($user_id)
-                            ->where('postcode', $row->postcode)
-                            ->count();
+                    ->where('postcode', $row->postcode)
+                    ->count();
             }
 
 
@@ -1366,9 +1368,9 @@ class LeadPreferenceController extends Controller
         foreach ($creditList as $creditItem) {
             // print_r($creditItem->credits);
             // print_r("\n\n\n");
-            if(!empty($page_type) && $page_type == 'saved_leads'){
+            if (!empty($page_type) && $page_type == 'saved_leads') {
                 $baseQuery = $leadService->getSellerSavedLeadsBaseQuery($user_id, null, null, ['creditFilter' => $creditItem->credits]);
-            }else{
+            } else {
                 $baseQuery = $leadService->getSellerLeadsBaseQuery($user_id, null, null, ['creditFilter' => $creditItem->credits]);
             }
             //
@@ -1394,10 +1396,10 @@ class LeadPreferenceController extends Controller
 
         // Check if the current combination already exists
         $visitor = UniqueVisitor::where('seller_id', $aVals['user_id'])
-                                ->where('buyer_id', $aVals['customer_id'])
-                                ->where('ip_address', $myip)
-                                ->where('date', $visited_date)
-                                ->first();
+            ->where('buyer_id', $aVals['customer_id'])
+            ->where('ip_address', $myip)
+            ->where('date', $visited_date)
+            ->first();
 
         // Fetch total random_count for this buyer-lead
         // $totalRandomCount = UniqueVisitor::where('buyer_id', $aVals['customer_id'])
@@ -1431,15 +1433,15 @@ class LeadPreferenceController extends Controller
 
             // Fetch lead and related details
             $leads = LeadRequest::with(['customer', 'category'])
-                                ->where('id', $aVals['lead_id'])
-                                ->where('customer_id', $users->id)
-                                ->first();
+                ->where('id', $aVals['lead_id'])
+                ->where('customer_id', $users->id)
+                ->first();
 
             $leads->purchase_type = RecommendedLead::where('lead_id', $aVals['lead_id'])
-                                    ->where('buyer_id', $aVals['customer_id'])
-                                    ->where('seller_id', $aVals['user_id'])
-                                    ->pluck('purchase_type')
-                                    ->first();
+                ->where('buyer_id', $aVals['customer_id'])
+                ->where('seller_id', $aVals['user_id'])
+                ->pluck('purchase_type')
+                ->first();
 
             $users->leads = $leads;
         }
@@ -1449,13 +1451,14 @@ class LeadPreferenceController extends Controller
 
 
 
-    public function saveForLater(Request $request){
+    public function saveForLater(Request $request)
+    {
         $aVals = $request->all();
-        $isDataExists = SaveForLater::where('seller_id',$aVals['user_id'])
-                                    ->where('user_id',$aVals['buyer_id'])
-                                    ->where('lead_id',$aVals['lead_id'])
-                                    ->first();
-        if(empty($isDataExists)){
+        $isDataExists = SaveForLater::where('seller_id', $aVals['user_id'])
+            ->where('user_id', $aVals['buyer_id'])
+            ->where('lead_id', $aVals['lead_id'])
+            ->first();
+        if (empty($isDataExists)) {
             $bids = SaveForLater::create([
                 'seller_id' => $aVals['user_id'], //loggedin user id
                 'user_id' => $aVals['buyer_id'], //buyer
@@ -1499,7 +1502,7 @@ class LeadPreferenceController extends Controller
                     'savedLeads' => []
                 ]
             ]);
-        }else{
+        } else {
             return $this->sendResponse(__('Saved Leads'), [
                 [
                     'savedLeads' => $allLeads->values()
@@ -1510,30 +1513,32 @@ class LeadPreferenceController extends Controller
         // return $this->sendResponse(__('Saved Leads'), $savedLeads);
     }
 
-    public function onlineRemoteSwitch(Request $request){
+    public function onlineRemoteSwitch(Request $request)
+    {
         $aVals = $request->all();
 
-        $isDataExists = User::where('id',$aVals['user_id'])->first();
-        if(!empty($isDataExists)){
+        $isDataExists = User::where('id', $aVals['user_id'])->first();
+        if (!empty($isDataExists)) {
             $bids =  $isDataExists->update(['is_online' => $aVals['is_online']]);
             $isonline  = $aVals['is_online'];
             // return $this->sendResponse('Switched update', $isonline);
             $userId = $aVals['user_id'];
 
 
-            CustomHelper::runInBackground(function() use ($userId) {
+            CustomHelper::runInBackground(function () use ($userId) {
                 app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
-		    });
+            });
 
             return $this->sendResponse(__('Switched update'));
         }
         return $this->sendError('User not found');
     }
 
-    public function getOnlineRemoteSwitch(Request $request){
+    public function getOnlineRemoteSwitch(Request $request)
+    {
         $aVals = $request->all();
-        $isDataExists = User::where('id',$aVals['user_id'])->first();
-        if(!empty($isDataExists)){
+        $isDataExists = User::where('id', $aVals['user_id'])->first();
+        if (!empty($isDataExists)) {
             return $this->sendResponse(__('Online Switch Data'), [
                 'isonline' => $isDataExists->is_online
             ]);
@@ -1541,12 +1546,13 @@ class LeadPreferenceController extends Controller
         return $this->sendError('User not found');
     }
 
-    public function totalCredit(Request $request){
+    public function totalCredit(Request $request)
+    {
         $user_id = $request->user_id;
-        $totalCredits = User::where('id',$user_id)->value('total_credit');
+        $totalCredits = User::where('id', $user_id)->value('total_credit');
         $data['total_credit'] = !empty($totalCredits) ? $totalCredits : 0;
-        $plan = PlanHistory::where('user_id',$user_id)->orderBy('id','desc')->first();
-        $data['plan_purchased'] = !empty($plan)? 1 : 0;
+        $plan = PlanHistory::where('user_id', $user_id)->orderBy('id', 'desc')->first();
+        $data['plan_purchased'] = !empty($plan) ? 1 : 0;
         return $this->sendResponse('Total credit', $data);
     }
 
@@ -1554,45 +1560,45 @@ class LeadPreferenceController extends Controller
     {
         $seller_id = $request->user_id;
         $result = [];
-            // Fetch all matching bids
-            $bids = RecommendedLead::where('seller_id', $seller_id)
-                ->orderBy('distance','ASC')
-                ->get();
+        // Fetch all matching bids
+        $bids = RecommendedLead::where('seller_id', $seller_id)
+            ->orderBy('distance', 'ASC')
+            ->get();
 
-            // Get seller IDs and unique service IDs
-            $sellerIds = $bids->pluck('buyer_id')->toArray();
-            $serviceIds = $bids->pluck('service_id')->unique()->toArray();
+        // Get seller IDs and unique service IDs
+        $sellerIds = $bids->pluck('buyer_id')->toArray();
+        $serviceIds = $bids->pluck('service_id')->unique()->toArray();
 
-            // Get users and categories
-            $leads = LeadRequest::whereIn('customer_id', $sellerIds)
-                        ->whereIn('service_id', $serviceIds)
-                        ->with(['customer', 'category'])
-                        ->get();
-            if(!empty($leads)){
-                return $this->sendResponse(__('AutoBid Data'), [
-                    [
-                        'leads' => $leads
-                    ]
-                ]);
-            }else{
-                return $this->sendResponse(__('AutoBid Data'), [
-                    [
-                        'leads' => []
-                    ]
-                ]);
-            }
-
+        // Get users and categories
+        $leads = LeadRequest::whereIn('customer_id', $sellerIds)
+            ->whereIn('service_id', $serviceIds)
+            ->with(['customer', 'category'])
+            ->get();
+        if (!empty($leads)) {
+            return $this->sendResponse(__('AutoBid Data'), [
+                [
+                    'leads' => $leads
+                ]
+            ]);
+        } else {
+            return $this->sendResponse(__('AutoBid Data'), [
+                [
+                    'leads' => []
+                ]
+            ]);
+        }
     }
 
-    public function sevenDaysAutobidPause(Request $request){
+    public function sevenDaysAutobidPause(Request $request)
+    {
         $aVals = $request->all();
-        $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
-        if(!empty($userdetails)){
+        $userdetails = UserDetail::where('user_id', $aVals['user_id'])->first();
+        if (!empty($userdetails)) {
             $autobidpause = $aVals['autobid_pause'];
             $msg = $autobidpause  == 1 ? 'Autobid is inactive' : 'Autobid is active';
-            if($userdetails->is_autobid == 1){
+            if ($userdetails->is_autobid == 1) {
                 $data['autobid_pause'] = $autobidpause;
-                UserDetail::where('user_id',$aVals['user_id'])->update($data);
+                UserDetail::where('user_id', $aVals['user_id'])->update($data);
 
                 $bidStatus = $autobidpause == 1 ? 'paused' : 'resumed';
                 $data2['user_id'] = $aVals['user_id'];
@@ -1607,15 +1613,16 @@ class LeadPreferenceController extends Controller
         return $this->sendError('User not found!');
     }
 
-    public function getSevenDaysAutobidPause(Request $request){
+    public function getSevenDaysAutobidPause(Request $request)
+    {
         $aVals = $request->all();
-        $userdetails = UserDetail::where('user_id',$aVals['user_id'])->first();
-        if(isset($userdetails) && $userdetails != ''){
+        $userdetails = UserDetail::where('user_id', $aVals['user_id'])->first();
+        if (isset($userdetails) && $userdetails != '') {
             return $this->sendResponse('Seven Days autobid pause data', [
                 'autobidpause' => $userdetails->autobid_pause
             ]);
         }
-            return $this->sendResponse('Data not found', []);
+        return $this->sendResponse('Data not found', []);
     }
 
     public function responseStatus(Request $request)
@@ -1630,47 +1637,51 @@ class LeadPreferenceController extends Controller
         $buyerName = User::where('id', $buyerId)->pluck('name')->first();
         $activityname = "";
 
-        $leadtime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
+        $leadtime = LeadRequest::where('id', $aVals['lead_id'])->pluck('created_at')->first();
 
-        if($aVals['response_type'] == 'seller'){
+        if ($aVals['response_type'] == 'seller') {
 
 
-            if($type == 'Whatsapp'){
-                $activityname = $sellerName .' contacted '. $buyerName .' through Whatsapp';
+            if ($type == 'Whatsapp') {
+                $activityname = $sellerName . ' contacted ' . $buyerName . ' through Whatsapp';
             }
-            if($type == 'email'){
-            $activityname = $sellerName.' contacted '. $buyerName .' through email';
+            if ($type == 'email') {
+                $activityname = $sellerName . ' contacted ' . $buyerName . ' through email';
             }
-            if($type == 'mobile'){
-                $activityname = $sellerName .' contacted '. $buyerName .' through mobile';
+            if ($type == 'mobile') {
+                $activityname = $sellerName . ' contacted ' . $buyerName . ' through mobile';
             }
-            if($type == 'sms'){
-                $activityname = $sellerName .' contacted '. $buyerName .' through SMS';
+            if ($type == 'sms') {
+                $activityname = $sellerName . ' contacted ' . $buyerName . ' through SMS';
             }
-            $isActivity = self::getActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname);
-            self::addActivityLog($sellerId, $buyerId,$aVals['lead_id'],$activityname, $type, $leadtime);
-
-        }else{
-            if($type == 'Whatsapp'){
-                $activityname = $buyerName .' contacted '. $sellerName .' through Whatsapp';
+            $isActivity = self::getActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname);
+            self::addActivityLog($sellerId, $buyerId, $aVals['lead_id'], $activityname, $type, $leadtime);
+        } else {
+            if ($type == 'Whatsapp') {
+                $activityname = $buyerName . ' contacted ' . $sellerName . ' through Whatsapp';
             }
-            if($type == 'email'){
-            $activityname = $buyerName .' contacted '. $sellerName .' through email';
+            if ($type == 'email') {
+                $activityname = $buyerName . ' contacted ' . $sellerName . ' through email';
             }
-            if($type == 'mobile'){
-                $activityname = $buyerName .' contacted '. $sellerName .' through mobile';
+            if ($type == 'mobile') {
+                $activityname = $buyerName . ' contacted ' . $sellerName . ' through mobile';
             }
-            if($type == 'sms'){
-                $activityname = $buyerName .' contacted '. $sellerName .' through SMS';
+            if ($type == 'sms') {
+                $activityname = $buyerName . ' contacted ' . $sellerName . ' through SMS';
             }
-            $isActivity = self::getActivityLog($buyerId, $sellerId,$aVals['lead_id'],$activityname);
-            if(empty($isActivity)){
-                self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'],$activityname, $type, $leadtime);
+            $isActivity = self::getActivityLog($buyerId, $sellerId, $aVals['lead_id'], $activityname);
+            if (empty($isActivity)) {
+                self::addActivityLog($buyerId, $sellerId, $aVals['lead_id'], $activityname, $type, $leadtime);
             }
 
             //Add Notification Log for new contact
-            CustomHelper::logNotifications($sellerId, $aVals['lead_id'], 'buyer_browser_customer_sending_message',
-                'New Message', 'You Received a New Message');
+            CustomHelper::logNotifications(
+                $sellerId,
+                $aVals['lead_id'],
+                'buyer_browser_customer_sending_message',
+                'New Message',
+                'You Received a New Message'
+            );
         }
 
         return $this->sendResponse(__('Status Updated'), []);
@@ -1738,27 +1749,27 @@ class LeadPreferenceController extends Controller
 
     public function getActivityLog($from_user_id, $to_user_id, $lead_id, $activity_name)
     {
-        $activities = ActivityLog::where('lead_id',$lead_id)
-                                          ->where('from_user_id',$from_user_id)
-                                          ->where('to_user_id',$to_user_id)
-                                          ->where('lead_id',$lead_id)
-                                          ->where('activity_name',$activity_name)
-                                          ->first();
-         return $activities;
+        $activities = ActivityLog::where('lead_id', $lead_id)
+            ->where('from_user_id', $from_user_id)
+            ->where('to_user_id', $to_user_id)
+            ->where('lead_id', $lead_id)
+            ->where('activity_name', $activity_name)
+            ->first();
+        return $activities;
     }
 
     public function sellerNotes(Request $request)
     {
         $aVals = $request->all();
 
-        if(!empty($aVals['delete_note_id'])){
+        if (!empty($aVals['delete_note_id'])) {
             SellerNote::where('id', $aVals['delete_note_id'])->delete();
-        }else if(!empty($aVals['note_id'])){
+        } else if (!empty($aVals['note_id'])) {
             SellerNote::where('id', $aVals['note_id'])->update([
                 'notes' => $aVals['notes'],
                 'updated_at' => date('Y-m-d H:i:d')
             ]);
-        }else{
+        } else {
             $now = now();
             SellerNote::create([
                 'seller_id'  => $aVals['user_id'],
@@ -1775,55 +1786,55 @@ class LeadPreferenceController extends Controller
     public function getSellerNotes(Request $request)
     {
         $aVals = $request->all();
-        $isNotes = SellerNote::where('seller_id',$aVals['user_id'])
-                             ->where('buyer_id',$aVals['buyer_id'])
-                             ->where('lead_id',$aVals['lead_id'])
-                             ->orderBy('updated_at', 'DESC')
-                             ->get();
-        if(!empty($isNotes)){
+        $isNotes = SellerNote::where('seller_id', $aVals['user_id'])
+            ->where('buyer_id', $aVals['buyer_id'])
+            ->where('lead_id', $aVals['lead_id'])
+            ->orderBy('updated_at', 'DESC')
+            ->get();
+        if (!empty($isNotes)) {
             $isNotes = $isNotes;
-        }else{
+        } else {
             $isNotes = "";
         }
 
         return $this->sendResponse(__('Notes'), [
-                'notes' => $isNotes
-            ]);
+            'notes' => $isNotes
+        ]);
     }
 
-    public function pendingPurchaseTypeFilter(Request $request){
+    public function pendingPurchaseTypeFilter(Request $request)
+    {
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
-        if($aVals['purchase_type'] !== 'All'){
-            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
+        if ($aVals['purchase_type'] !== 'All') {
+            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type', $aVals['purchase_type']);
         }
         $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
-        ->whereIn('id',$recommendedLeadIds)
-        ->whereHas('customer', function($query) {
-            $query->where('form_status', 1);
-        })->where('status','pending')
-        ->orderBy('id', 'DESC')
-        ->get();
+            ->whereIn('id', $recommendedLeadIds)
+            ->whereHas('customer', function ($query) {
+                $query->where('form_status', 1);
+            })->where('status', 'pending')
+            ->orderBy('id', 'DESC')
+            ->get();
 
         foreach ($allLeads as $key => $value) {
-            $isActivity = ActivityLog::where('to_user_id',$user_id)
-                                 ->where('from_user_id',$value->customer_id)
-                                 ->where('lead_id',$value->id)
-                                 ->latest()
-                                 ->first();
-            if(!empty($isActivity)){
-                if($isActivity->activity_name == 'Requested a callback'){
+            $isActivity = ActivityLog::where('to_user_id', $user_id)
+                ->where('from_user_id', $value->customer_id)
+                ->where('lead_id', $value->id)
+                ->latest()
+                ->first();
+            if (!empty($isActivity)) {
+                if ($isActivity->activity_name == 'Requested a callback') {
                     $value['profile_view'] = "Requested a callback";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
-                }else{
-                    $value['profile_view'] = $value['customer']->name." viewed your profile";
+                } else {
+                    $value['profile_view'] = $value['customer']->name . " viewed your profile";
                     $value['profile_view_time'] = $isActivity->created_at->diffForHumans();
                 }
-
-            }else{
+            } else {
                 $value['profile_view'] = "";
                 $value['profile_view_time'] = "";
             }
@@ -1836,18 +1847,18 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $request->user_id;
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id);
-        if($aVals['purchase_type'] !== 'All'){
-            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type',$aVals['purchase_type']);
+        if ($aVals['purchase_type'] !== 'All') {
+            $recommendedLeadIds = $recommendedLeadIds->where('purchase_type', $aVals['purchase_type']);
         }
         $recommendedLeadIds = $recommendedLeadIds->pluck('lead_id')->toArray();
 
         $allLeads = LeadRequest::with(['customer', 'category'])
-        ->whereIn('id',$recommendedLeadIds)
-        ->whereHas('customer', function($query) {
-            $query->where('form_status', 1);
-        })->where('status','hired')
-        ->orderBy('id', 'DESC')
-        ->get();
+            ->whereIn('id', $recommendedLeadIds)
+            ->whereHas('customer', function ($query) {
+                $query->where('form_status', 1);
+            })->where('status', 'hired')
+            ->orderBy('id', 'DESC')
+            ->get();
 
         return $this->sendResponse(__('Hired Lead'), $allLeads);
     }
@@ -1890,14 +1901,14 @@ class LeadPreferenceController extends Controller
 
         // Exclude leads from recommended table starts
         $recommendedLeadIds = RecommendedLead::where('seller_id', $user_id)
-        ->pluck('lead_id')
-        ->toArray();
+            ->pluck('lead_id')
+            ->toArray();
 
         // Merge both exclusion arrays
         $excludedLeadIds = array_merge($savedLeadIds, $recommendedLeadIds);
 
         if (!empty($excludedLeadIds)) {
-        $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
+            $baseQuery = $baseQuery->whereNotIn('id', $excludedLeadIds);
         }
 
         // Exclude leads from recommended table ends
@@ -1933,21 +1944,22 @@ class LeadPreferenceController extends Controller
 
             return true;
         });
-         // ===== Add view_count to each lead =====
+        // ===== Add view_count to each lead =====
         $leadIds = $filteredLeads->pluck('id')->toArray();
         $customerIds = $filteredLeads->pluck('customer_id')->toArray();
         $rawViewCounts = UniqueVisitor::whereIn('buyer_id', $customerIds)
             ->whereIn('lead_id', $leadIds)
-            ->select('buyer_id',
-                     'lead_id',
-                     DB::raw('SUM(visitors_count) as total_views'),
-                    //  DB::raw('SUM(random_count) as total_randoms')
-                    )
+            ->select(
+                'buyer_id',
+                'lead_id',
+                DB::raw('SUM(visitors_count) as total_views'),
+                //  DB::raw('SUM(random_count) as total_randoms')
+            )
             ->groupBy('buyer_id', 'lead_id')
             ->get();
 
         // 2. Map them into a nested array like: [buyer_id][lead_id] => count
-         $leadMetricsMap = [];
+        $leadMetricsMap = [];
         foreach ($rawViewCounts as $row) {
             $views = $row->total_views >= 30 ? $row->total_views : rand(5, 30);
             $leadMetricsMap[$row->buyer_id][$row->lead_id] = [
@@ -1965,11 +1977,11 @@ class LeadPreferenceController extends Controller
             return $lead;
         });
         return [
-                    'response' => [
-                        'total_leads' => $filteredLeads->count(),
-                        'unread' => $filteredLeads->where('is_read', 0)->count()
-                    ]
-                ];
+            'response' => [
+                'total_leads' => $filteredLeads->count(),
+                'unread' => $filteredLeads->where('is_read', 0)->count()
+            ]
+        ];
         // return $this->sendResponse(__('Lead Request Data'), $filteredLeads->count());
     }
 
@@ -2011,7 +2023,7 @@ class LeadPreferenceController extends Controller
 
         // Step 2: Batch upsert new leads
         $insertResult = app(ZohoLeadYourMatches::class)->integrateYourMatchesLeadsBatch($leadId, $zohoQuoteRequestId, $sellers);
- 
+
         // Step 3: Combine and return
         return $this->sendResponse(
             'Your Matches synced successfully, Please reload the page to see the changes.',
@@ -2022,4 +2034,30 @@ class LeadPreferenceController extends Controller
         );
     }
 
+
+
+    public function updateCustomerNumberOfPurchases(Request $request)
+    {
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return $this->sendError('User not found');
+        }
+
+        $numberOfPurchases = RecommendedLead::where('buyer_id', $user->id)
+            ->where('status', 'hired')
+            ->count();
+
+        $insertResult = app(ZohoQuoteCustomers::class)
+            ->updateZohoCustomerNoOfPurchases($user->id, $numberOfPurchases);
+
+        if (!$insertResult) {
+            return $this->sendError('Failed to sync number of purchases with Zoho.');
+        }
+
+        return $this->sendResponse(
+            'Number of purchases synced successfully. Please reload the page to see the changes.'
+        );
+    }
 }
