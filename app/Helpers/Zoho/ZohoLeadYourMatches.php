@@ -15,7 +15,6 @@ class ZohoLeadYourMatches
      */
     public function integrateYourMatchesLeadsBatch($leadId, $lookupId, $sellers)
     {
-
         $accessToken = ZohoHelper::getAccessToken();
 
         if (!$lookupId || empty($sellers)) {
@@ -24,18 +23,18 @@ class ZohoLeadYourMatches
 
         $payloads = $this->buildAvailableSellersBatchPayload($leadId, $lookupId, $sellers);
 
-
-
         $insertedCount = 0;
 
         foreach ($payloads as $payload) {
 
             $response = $this->upsertToZohoYourMatchesForLeads($accessToken, $payload);
 
+            Log::info('Zoho Upsert Response', $response->json()); // 👈 important
+
             $data = $response->json('data') ?? [];
 
             foreach ($data as $record) {
-                if (isset($record['code']) && $record['code'] === 'SUCCESS') {
+                if (isset($record['status']) && $record['status'] === 'success') {
                     $insertedCount++;
                 }
             }
@@ -49,13 +48,10 @@ class ZohoLeadYourMatches
      */
     protected function buildAvailableSellersBatchPayload($leadId, $lookupId, $sellers)
     {
-
-
         $payloads = [];
-        $allRecords = [];
+        $uniqueRecords = [];
 
         foreach ($sellers as $seller) {
-
 
             if (is_array($seller)) {
                 $seller = (object) $seller;
@@ -67,45 +63,54 @@ class ZohoLeadYourMatches
                 continue;
             }
 
-            $sellerlookupId = $user->zoho_record_id;
-
-
-
             if (empty($seller->name) || empty($seller->service_name)) {
                 continue;
             }
-            if ($seller->avg_rating > 0) {
-                $rating = $seller->avg_rating . ' Star';
-            } else {
-                $rating = '-';
-            }
-            if ($seller->quicktorespond > 0) {
-                $quicktorespond = 'Yes';
-            } else {
-                $quicktorespond = 'No';
-            }
-            $str = fn($v) => isset($v) ? (string) $v : null;
-            $allRecords[] = [
-                'Name' => $seller->business_profile_name ?? '',
-                'Lead_Buyer_Name' => $sellerlookupId ?? '',
 
+            $sellerlookupId = $user->zoho_record_id;
+
+            // 🔥 UNIQUE KEY (important)
+            $uniqueKey = $leadId . '_' . $sellerlookupId;
+
+            if (isset($uniqueRecords[$uniqueKey])) {
+                continue; // skip duplicate seller
+            }
+
+            $rating = ($seller->avg_rating > 0)
+                ? $seller->avg_rating . ' Star'
+                : '-';
+
+            $quicktorespond = ($seller->quicktorespond > 0)
+                ? 'Yes'
+                : 'No';
+
+            $uniqueRecords[$uniqueKey] = [
+                'Name' => $seller->business_profile_name ?? '',
+                'Lead_Buyer_Name' => $sellerlookupId,
                 'Postcode' => $seller->postcode ?? '',
                 'Email' => $seller->email ?? '',
                 'Phone' => $seller->phone ?? '',
                 'Service_Name' => $seller->service_name ?? '',
-                'Credit_Score' => $str($seller->credit_score) ?? '',
-                'Total_Credit' => $str($seller->total_credit) ?? '',
-                'Quick_Responder' => $quicktorespond ?? '',
-                'Lead_Request_Id' => strval($leadId),
-                'Rating' => $rating ?? '',
-                'Seller_Distance' => ($seller->distance ?? '') . ' miles away',
-                'Synced_At' => Carbon::now()->format('jS M Y, g:i A'),
+                'Credit_Score' => isset($seller->credit_score) ? (string)$seller->credit_score : '',
+                'Total_Credit' => isset($seller->total_credit) ? (string)$seller->total_credit : '',
+                'Quick_Responder' => $quicktorespond,
+                'Lead_Request_Id' => (string)$leadId,
+                'Rating' => $rating,
+                'Seller_Distance' => isset($seller->distance)
+                    ? $seller->distance . ' miles away'
+                    : '',
+                'Synced_At' => Carbon::now()->format('Y-m-d H:i:s'),
                 'Quote_Request_Lookup' => $lookupId,
             ];
         }
 
-        foreach (array_chunk($allRecords, 50) as $chunk) {
-            $payloads[] = ['data' => $chunk];
+        $allRecords = array_values($uniqueRecords);
+
+        foreach (array_chunk($allRecords, 100) as $chunk) {
+            $payloads[] = [
+                'data' => $chunk,
+                'duplicate_check_fields' => ['Lead_Buyer_Name']
+            ];
         }
 
         return $payloads;
@@ -116,9 +121,16 @@ class ZohoLeadYourMatches
      */
     protected function upsertToZohoYourMatchesForLeads($accessToken, array $payload)
     {
-        $response =  Http::withToken($accessToken)
+        $response = Http::withToken($accessToken)
+            ->retry(3, 1000)
             ->post('https://www.zohoapis.eu/crm/v2/Your_Matches/upsert', $payload);
 
+        if (!$response->successful()) {
+            Log::error('Zoho Upsert Failed', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+        }
 
         return $response;
     }
@@ -134,15 +146,27 @@ class ZohoLeadYourMatches
 
         $accessToken = ZohoHelper::getAccessToken();
         $totalDeleted = 0;
-        $page = 1;
-        $perPage = 200;
+        $maxAttempts = 10; // safety stop
+        $attempt = 0;
 
         try {
 
-            do {
-                $searchUrl = "https://www.zohoapis.eu/crm/v2/Your_Matches/search?criteria=(Lead_Request_Id:equals:{$leadId})&page={$page}&per_page={$perPage}";
+            while ($attempt < $maxAttempts) {
+
+                $searchUrl = "https://www.zohoapis.eu/crm/v2/Your_Matches/search?criteria=(Lead_Request_Id:equals:{$leadId})&per_page=200";
 
                 $response = Http::withToken($accessToken)->get($searchUrl);
+
+                // If no content (204)
+                if ($response->status() == 204) {
+                    Log::info('Zoho Delete: No records found');
+                    break;
+                }
+
+                if (!$response->successful()) {
+                    Log::error('Zoho Search Failed', $response->json());
+                    break;
+                }
 
                 $records = $response->json('data') ?? [];
 
@@ -160,23 +184,35 @@ class ZohoLeadYourMatches
                         ->retry(3, 1000)
                         ->delete($deleteUrl);
 
-
                     if ($deleteResponse->successful()) {
-                        $totalDeleted += count($chunk);
+
+                        $deleteData = $deleteResponse->json('data') ?? [];
+
+                        foreach ($deleteData as $item) {
+                            if (($item['status'] ?? '') === 'success') {
+                                $totalDeleted++;
+                            }
+                        }
+                    } else {
+                        Log::error('Zoho Delete Failed', $deleteResponse->json());
                     }
                 }
 
-                $page++;
-            } while (count($records) === $perPage);
+                $attempt++;
+                sleep(2);
+            }
         } catch (\Exception $e) {
 
-            Log::error('Zoho Delete Error', [
+            Log::error('Zoho Delete Exception', [
                 'leadId' => $leadId,
                 'error' => $e->getMessage()
             ]);
         }
 
-        Log::info('Zoho Delete End', ['deleted_count' => $totalDeleted]);
+        Log::info('Zoho Delete End', [
+            'deleted_count' => $totalDeleted,
+            'attempts' => $attempt
+        ]);
 
         return ['deleted_count' => $totalDeleted];
     }
