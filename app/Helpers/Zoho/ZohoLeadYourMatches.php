@@ -24,13 +24,21 @@ class ZohoLeadYourMatches
 
         $payloads = $this->buildAvailableSellersBatchPayload($leadId, $lookupId, $sellers);
 
+
+
         $insertedCount = 0;
 
         foreach ($payloads as $payload) {
+
             $response = $this->upsertToZohoYourMatchesForLeads($accessToken, $payload);
+
             $data = $response->json('data') ?? [];
 
-            $insertedCount += count($data);
+            foreach ($data as $record) {
+                if (isset($record['code']) && $record['code'] === 'SUCCESS') {
+                    $insertedCount++;
+                }
+            }
         }
 
         return ['inserted_count' => $insertedCount];
@@ -62,6 +70,7 @@ class ZohoLeadYourMatches
             $sellerlookupId = $user->zoho_record_id;
 
 
+
             if (empty($seller->name) || empty($seller->service_name)) {
                 continue;
             }
@@ -77,7 +86,7 @@ class ZohoLeadYourMatches
             }
             $str = fn($v) => isset($v) ? (string) $v : null;
             $allRecords[] = [
-                'Name' => $seller->name ?? '',
+                'Name' => $seller->business_profile_name ?? '',
                 'Lead_Buyer_Name' => $sellerlookupId ?? '',
 
                 'Postcode' => $seller->postcode ?? '',
@@ -95,7 +104,7 @@ class ZohoLeadYourMatches
             ];
         }
 
-        foreach (array_chunk($allRecords, 100) as $chunk) {
+        foreach (array_chunk($allRecords, 50) as $chunk) {
             $payloads[] = ['data' => $chunk];
         }
 

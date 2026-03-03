@@ -2007,7 +2007,7 @@ class LeadPreferenceController extends Controller
         // Step 1: Delete old leads
         $deleteResult = app(ZohoLeadYourMatches::class)->deleteYourMatchesLeadsRecords($leadId);
 
-        sleep(5); // Optional: brief pause to ensure deletion is processed
+        sleep(8); // Optional: brief pause to ensure deletion is processed
 
         // Step 2: Batch upsert new leads
         $insertResult = app(ZohoLeadYourMatches::class)->integrateYourMatchesLeadsBatch($leadId, $zohoQuoteRequestId, $sellers);
