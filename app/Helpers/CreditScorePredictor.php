@@ -38,6 +38,19 @@ class CreditScorePredictor{
             // Calculate total score logic can be implemented here
             $creditScore += $sa['score'] ?? 0;
         }
+
+        // on 5/03/2026
+        if($service_id == 112){
+            // tree surgery by 30%
+            $tRel = number_format(($creditScore * 1.30), 5);
+            $creditScore = ceil($tRel);
+        }
+
+        if($service_id == 113){
+            // roofing by 20%
+            $tRel = number_format(($creditScore * 1.20), 5);
+            $creditScore = ceil($tRel);
+        }
         
         return $creditScore;        
     }
@@ -94,6 +107,26 @@ class CreditScorePredictor{
                     $tRel = number_format(($rel * 1.30), 5);
                     $rel = ceil($tRel);
                 }
+
+                // #on 5/3/2026
+                if($servie_id == 43 || $servie_id == 51){
+                    // landscaping and driveway increase by 20%
+                    $tRel = number_format(($rel * 1.20), 5);
+                    $rel = ceil($tRel);
+                }
+
+                if($servie_id == 49){
+                    // fence and gate increase by 30%
+                    $tRel = number_format(($rel * 1.30), 5);
+                    $rel = ceil($tRel);
+                }
+
+                if($servie_id == 52){
+                    // patio increase by 40%
+                    $tRel = number_format(($rel * 1.40), 5);
+                    $rel = ceil($tRel);
+                }
+                
 
 
             }else{
