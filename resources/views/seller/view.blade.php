@@ -16,6 +16,11 @@
                   <td>{{ $aRows->name }}</td>
                 </tr>
                 <tr>
+                  <td style="width: 180px;">Business Profile Name</td>
+                  <td>{{ $aRows->business_profile_name }}</td>
+                </tr>
+                    
+                <tr>
                   <td>Email</td>
                   <td>{{ $aRows->email }}</td>
                 </tr>
