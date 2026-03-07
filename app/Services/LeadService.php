@@ -880,9 +880,15 @@ class LeadService
     public function leadsAccordingTOSellerPref($user_id, $leads)
     {
         $pref = $this->getSellerPreferenceMap($user_id);
+        // echo "<pre>";
+        // print_r("pref:");
+        // print_r($pref);
         $leads  = collect($leads);
         $groupedPrefs = collect($pref)->groupBy('service_id')->toArray();
-        $filteredLeads = $this->filterSellerLeadsByGroupedPreferences($leads, $groupedPrefs);
+        // print_r("groupedPrefs:");
+        // print_r($groupedPrefs);
+        $serviceQuestionOptions = $this->buildServiceQuestionOptionsMap();
+        $filteredLeads = $this->filterSellerLeadsByGroupedPreferences($leads, $groupedPrefs, $serviceQuestionOptions);
         return $filteredLeads;
     }
 
@@ -901,55 +907,126 @@ class LeadService
         return $prefs;
     }
 
-    private function filterSellerLeadsByGroupedPreferences(\Illuminate\Support\Collection $leads, array $groupedPrefs)
-    {
-        return $leads->filter(function ($lead) use ($groupedPrefs) {
+    private function filterSellerLeadsByGroupedPreferences(\Illuminate\Support\Collection $leads, array $groupedPrefs, array $serviceQuestionOptions) {
+
+        return $leads->filter(function ($lead) use ($groupedPrefs, $serviceQuestionOptions) {
+
             $serviceId = $lead->service_id;
 
             if (!isset($groupedPrefs[$serviceId])) {
-                // logger("No preferences for service_id: $serviceId");
                 return false;
             }
 
             $prefs = $groupedPrefs[$serviceId];
+
             $leadQuestions = json_decode($lead->arrayed_questions, true);
 
             if (!is_array($leadQuestions)) {
-                // logger("Invalid questions JSON for lead ID: {$lead->id}");
                 return false;
             }
 
+            /*
+            Build Lead Question → Answer Map
+            */
+
             $leadMap = [];
+
             foreach ($leadQuestions as $q) {
-                $normalized = $this->normalizeQuestion($q['ques']);
-                $leadMap[$normalized] = $q['ans'];
+
+                $normalizedQuestion = $this->normalizeQuestion($q['ques']);
+
+                $answers = $q['ans'];
+
+                if (!is_array($answers)) {
+                    $answers = [$answers];
+                }
+
+                $leadMap[$normalizedQuestion] = array_map(function ($a) {
+                    return strtolower(trim($a));
+                }, $answers);
             }
 
+            /*
+            Validate Seller Preferences
+            */
+
             foreach ($prefs as $pref) {
+
                 $question = $this->normalizeQuestion($pref['question']);
-                $expectedAnswers = $pref['answers'];
 
                 if (!isset($leadMap[$question])) {
-                    // logger("Lead ID {$lead->id} missing question: $question");
-                    // return false; if strict match (all questions) is required
-                    continue; // if want to include leads which has missing leads
+                    continue;
                 }
 
                 $leadAnswers = $leadMap[$question];
 
-                $intersect = array_intersect($expectedAnswers, $leadAnswers);
+                $expectedAnswers = array_map(function ($a) {
+                    return strtolower(trim($a));
+                }, $pref['answers']);
 
-                if (empty($intersect) && !in_array(strtolower('Something else (please describe)'), array_map('strtolower', $expectedAnswers))) {
-                    // logger("Lead ID {$lead->id} failed on question: $question");
-                    // logger("Lead answers: " . json_encode($leadAnswers));
-                    // logger("Expected answers: " . json_encode($expectedAnswers));
+                $allowSomethingElse = in_array('something else (please describe)', $expectedAnswers);
+
+                $predefinedOptions =
+                    $serviceQuestionOptions[$serviceId][$question] ?? [];
+
+                $matched = false;
+
+                foreach ($leadAnswers as $leadAnswer) {
+
+                    /*
+                    Direct match
+                    */
+
+                    if (in_array($leadAnswer, $expectedAnswers)) {
+                        $matched = true;
+                        break;
+                    }
+
+                    /*
+                    Treat unknown answers as Something Else
+                    */
+
+                    if ($allowSomethingElse && !in_array($leadAnswer, $predefinedOptions)) {
+                        $matched = true;
+                        break;
+                    }
+                }
+
+                if (!$matched) {
                     return false;
                 }
             }
 
-            // logger("Matched Lead ID: {$lead->id}, Service ID: $serviceId");
             return true;
         });
+    }
+
+    private function buildServiceQuestionOptionsMap()
+    {
+        $rows = ServiceQuestion::select('category','questions','answer')->get();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+
+            $answers = json_decode($row->answer, true);
+
+            if (!is_array($answers)) {
+                continue;
+            }
+
+            $options = [];
+
+            foreach ($answers as $opt) {
+                $options[] = strtolower(trim($opt['option']));
+            }
+
+            $questionKey = $this->normalizeQuestion($row->questions);
+
+            $map[$row->category][$questionKey] = $options;
+        }
+
+        return $map;
     }
 
     private function normalizeQuestion(string $question): string

@@ -164,6 +164,7 @@ class ApiController extends Controller
         $service = Category::where('id', $serviceId)->first();
         $data['service'] = $service->name;
         $data['popular_services'] = $service->tags;
+        $data['cityGeoData'] = $cityGeoData;
         $data['city'] = $city;
         $data['recommended_count'] = $recommendedCount;
         $data['total_sellers'] = count($finalSortedSellers);
