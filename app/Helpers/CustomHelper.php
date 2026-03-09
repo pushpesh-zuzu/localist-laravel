@@ -593,7 +593,9 @@ class CustomHelper
         $response = Http::withHeaders([
             'User-Agent' => 'MyLaravelApp/1.0'
         ])->get('https://nominatim.openstreetmap.org/search', [
-            'q' => $city . ' ' . $county . ', United Kingdom',
+            'city' => $city,
+            'county' => $county,
+            'country' => 'United Kingdom',
             'format' => 'json',
             'accept-language' => 'en',
             'addressdetails' => 1,
