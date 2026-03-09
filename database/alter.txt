@@ -214,3 +214,12 @@ ALTER TABLE `user_details` ADD `magic_link` TINYTEXT NULL AFTER `zoho_details_id
 
 
 INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Lead Buyers Complete List', 'leadbuyers.credit-deduction', 'Credit Deduction', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
+
+
+
+
+
+
+
+
+ALTER TABLE `lead_requests` ADD `time_slots` LONGTEXT NULL AFTER `zoho_quote_request_id`;

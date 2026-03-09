@@ -986,6 +986,7 @@ class MyRequestController extends Controller
         $data['details'] = $request->details;
         $data['professional_letin'] = !empty($request->professional_letin) ? $request->professional_letin : '0';
         $data['has_additional_details'] = !empty($request->details) ? '1' : '0';
+        $data['time_slots'] = !empty($request->slots) ? $request->slots : null;
         $sId = LeadRequest::where('id', $leadRequestId)->update($data);
 
         if ($sId) {
