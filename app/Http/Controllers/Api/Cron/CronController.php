@@ -1790,9 +1790,8 @@ class CronController extends Controller
                 if (!empty($slotFullLeadIds)) {
                     $query->orWhereIn('id', $slotFullLeadIds);
                 }
-            })
-            ->orderBy('id', 'desc')
-            ->limit(1)
+            })           
+          
             ->get();
 
         if ($leads->isEmpty()) {
