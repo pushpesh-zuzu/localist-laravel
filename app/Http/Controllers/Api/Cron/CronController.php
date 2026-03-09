@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\CustomHelper;
+use App\Helpers\Zoho\ZohoQuoteRequest;
 use App\Models\AbandonedUser;
 use Illuminate\Support\Facades\Log;
 use App\Services\D7LeadFinderService;
@@ -67,6 +68,8 @@ class CronController extends Controller
         $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
 
         $customerReplyReminderEmail = $this->sendNotifyCustomerRequestRepliesReminderEmail();
+        $updateLeadRequestExpairedStatus = $this->updateLeadRequestExpairedStatus();
+
 
         return response()->json([
             'status' => 'success',
@@ -75,6 +78,7 @@ class CronController extends Controller
                 'd7_supplier_summary' => $d7Response,
                 'abandoned_cart_reminder_summary' => $sendAbandonedCartReminderEmail,
                 'customerReplyReminderEmail' => $customerReplyReminderEmail,
+                'updateLeadRequestExpairedStatus' => $updateLeadRequestExpairedStatus,
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
@@ -1599,7 +1603,7 @@ class CronController extends Controller
         $settingName = 'Your Daily Leads Report';
         $since24Hours = now()->subDay();
         $leadSlotCount = 5;
-       
+
         // PRELOAD: 5+ bids wali leads (ONLY ONCE)
         $slotFullLeadIds = DB::table('recommended_leads')
             ->select('lead_id')
@@ -1754,5 +1758,65 @@ class CronController extends Controller
             'emails'    => $totalSent,
             'timestamp' => now()->toDateTimeString(),
         ];
+    }
+
+
+
+
+    public function updateLeadRequestExpairedStatus()
+    {
+
+        $expiredCount = 0;
+
+        $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
+        $leadSlotCount = CustomHelper::setting_value('lead_slot_count', 5);
+
+        $slotFullLeadIds = DB::table('recommended_leads')
+            ->select('lead_id')
+            ->groupBy('lead_id')
+            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
+            ->pluck('lead_id')
+            ->toArray();
+
+        $expiredDate = Carbon::now()->subDays($closeLeadsAfterDays);
+
+        $leads = LeadRequest::whereHas('customer', function ($query) {
+            $query->where('form_status', 1);
+        })
+            ->whereNotIn('status', ['hired', 'expired'])
+            ->where(function ($query) use ($expiredDate, $slotFullLeadIds) {
+                $query->where('created_at', '<=', $expiredDate);
+
+                if (!empty($slotFullLeadIds)) {
+                    $query->orWhereIn('id', $slotFullLeadIds);
+                }
+            })
+            ->orderBy('id', 'desc')
+            ->limit(1)
+            ->get();
+
+        if ($leads->isEmpty()) {
+            return "No leads found to expire";
+        }
+
+        foreach ($leads as $lead) {
+
+            $lead->update([
+                'status' => 'expired'
+            ]);
+
+            $expiredCount++;
+
+            $requestLeadId = $lead->id;
+
+            if (!empty($requestLeadId)) {
+                Log::info('Running Zoho status update in background', ['lead_id' => $requestLeadId]);
+                CustomHelper::runInBackground(function () use ($requestLeadId) {
+                    app(ZohoQuoteRequest::class)->updateZohoQuoteStatus($requestLeadId);
+                });
+            }
+        }
+
+        Log::info('Lead expire process completed', ['expired_count' => $expiredCount]);
     }
 }
