@@ -1339,9 +1339,9 @@ class LeadService
 
         // Group by user_id
         $groupedPrefs = collect($prefs)->groupBy('user_id')->toArray();
-
+        $questionOptions = $this->buildServiceQuestionOptionsMap();
         // Run match logic
-        $matchedUserIds = $this->filterMatchingUsers($arrayedQuestions, $groupedPrefs);
+        $matchedUserIds = $this->filterMatchingUsers($arrayedQuestions, $groupedPrefs, $serviceId, $questionOptions);
 
         // Final filtered result
         $final = $filteredUsers->filter(function ($row) use ($matchedUserIds) {
@@ -1351,19 +1351,23 @@ class LeadService
         return $final;
     }
 
-    private function filterMatchingUsers(array $arrayedQuestions, array $groupedPrefs): array
-    {
+    private function filterMatchingUsers(array $arrayedQuestions, array $groupedPrefs, $serviceId, array $questionOptions): array {
+
         $matchingUserIds = [];
 
         foreach ($groupedPrefs as $userId => $prefs) {
+
             $prefMap = [];
 
             foreach ($prefs as $pref) {
+
                 $question = is_object($pref) ? $pref->question : ($pref['question'] ?? null);
-                $answers = is_object($pref) ? $pref->answers : ($pref['answers'] ?? []);
+                $answers  = is_object($pref) ? $pref->answers  : ($pref['answers'] ?? []);
 
                 if (is_string($question)) {
+
                     $normalizedQ = $this->normalizeQuestion($question);
+
                     $prefMap[$normalizedQ] = array_map(function ($a) {
                         return strtolower(trim($a));
                     }, $answers);
@@ -1373,32 +1377,47 @@ class LeadService
             $matchedAll = true;
 
             foreach ($arrayedQuestions as $q) {
+
                 $question = $this->normalizeQuestion($q['ques']);
-                $leadAnswers = array_map('strtolower', array_map('trim', $q['ans']));
+
+                $leadAnswers = array_map(function ($a) {
+                    return strtolower(trim($a));
+                }, $q['ans']);
+
                 $userAnswers = $prefMap[$question] ?? [];
 
-                // Log for debugging
-                // logger("User ID: $userId | Question: {$q['ques']} => $question");
-                // logger("Lead Answers: ", $leadAnswers);
-                // logger("User Prefs: ", $userAnswers);
+                $allowSomethingElse = in_array(
+                    'something else (please describe)',
+                    $userAnswers
+                );
 
-                // Case 4: match if user pref contains "other"
-                if (in_array(strtolower('Something else (please describe)'), array_map('strtolower', $userAnswers))) {
-                    continue;
+                $predefinedOptions =
+                    $questionOptions[$serviceId][$question] ?? [];
+
+                $matched = false;
+
+                foreach ($leadAnswers as $leadAnswer) {
+
+                    // Case 1 — Direct match
+                    if (in_array($leadAnswer, $userAnswers)) {
+                        $matched = true;
+                        break;
+                    }
+
+                    // Case 2 — Treat unknown answers as "Something else"
+                    if ($allowSomethingElse && !in_array($leadAnswer, $predefinedOptions)) {
+                        $matched = true;
+                        break;
+                    }
                 }
 
-                // Case 3: exclude if no overlap
-                if (empty(array_intersect($leadAnswers, $userAnswers))) {
-                    // logger("❌ Mismatch on: {$q['ques']}");
-                    // logger("Lead Answers: ", $leadAnswers);
-                    // logger("User Prefs: ", $userAnswers);
+                if (!$matched) {
                     $matchedAll = false;
                     break;
                 }
             }
 
             if ($matchedAll) {
-                // logger("✅ Matched user: $userId");
                 $matchingUserIds[] = $userId;
             }
         }
