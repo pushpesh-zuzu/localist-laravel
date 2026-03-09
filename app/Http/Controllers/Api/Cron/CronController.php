@@ -68,8 +68,7 @@ class CronController extends Controller
         $sendAbandonedCartReminderEmail = $this->sendAbandonedCartReminderEmails();
 
         $customerReplyReminderEmail = $this->sendNotifyCustomerRequestRepliesReminderEmail();
-        $updateLeadRequestExpairedStatus = $this->updateLeadRequestExpairedStatus();
-
+    
 
         return response()->json([
             'status' => 'success',
@@ -77,8 +76,7 @@ class CronController extends Controller
             'details' => [
                 'd7_supplier_summary' => $d7Response,
                 'abandoned_cart_reminder_summary' => $sendAbandonedCartReminderEmail,
-                'customerReplyReminderEmail' => $customerReplyReminderEmail,
-                'updateLeadRequestExpairedStatus' => $updateLeadRequestExpairedStatus,
+                'customerReplyReminderEmail' => $customerReplyReminderEmail,             
             ],
             'timestamp' => now()->toDateTimeString(),
         ]);
