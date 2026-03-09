@@ -588,29 +588,59 @@ class CustomHelper
         ];
     }
 
-    public static function getCityGeoData(string $city): ?array
+    public static function getCityGeoData(string $city, string $county): ?array
     {
         $response = Http::withHeaders([
-            'User-Agent' => 'your-app-name'
+            'User-Agent' => 'MyLaravelApp/1.0'
         ])->get('https://nominatim.openstreetmap.org/search', [
-            'city' => $city,
-            'country' => 'United Kingdom',
+            'q' => $city . ' ' . $county . ', United Kingdom',
             'format' => 'json',
-            'limit' => 1,
+            'accept-language' => 'en',
+            'addressdetails' => 1,
         ]);
 
         $data = $response->json();
 
-        if (empty($data[0])) {
+        if (empty($data)) {
             return null;
         }
 
-        $result = $data[0];
+        $bestResult = null;
+        $largestArea = 0;
 
-        $centerLat = (float) $result['lat'];
-        $centerLng = (float) $result['lon'];
+        foreach ($data as $result) {
 
-        $bbox = $result['boundingbox'];
+            if (!isset($result['boundingbox'])) {
+                continue;
+            }
+            if (isset($result['class']) && in_array($result['class'], ['building','highway','amenity'])) {
+                continue;
+            }
+
+            $tempBbox = $result['boundingbox'];
+
+            $south = (float) $tempBbox[0];
+            $north = (float) $tempBbox[1];
+            $west  = (float) $tempBbox[2];
+            $east  = (float) $tempBbox[3];
+
+            $area = abs(($north - $south) * ($east - $west));
+
+            if ($area > $largestArea) {
+                $largestArea = $area;
+                $bestResult = $result;
+            }
+        }
+
+        if (!$bestResult) {
+            return null;
+        }
+
+        $centerLat = (float) $bestResult['lat'];
+        $centerLng = (float) $bestResult['lon'];
+
+        $display_name = $bestResult['display_name'];
+        $bbox = $bestResult['boundingbox'];
 
         $south = (float) $bbox[0];
         $north = (float) $bbox[1];
@@ -620,7 +650,10 @@ class CustomHelper
         $radius = self::calculateDistanceMiles($north, $east, $south, $west) / 2;
 
         return [
+            'display_name' => $display_name,    
             'city' => $city,
+            'county' => $county,
+            'postcode' =>  $bestResult['address']['postcode'] ?? null,
             'lat' => $centerLat,
             'lng' => $centerLng,
             'radius' => $radius

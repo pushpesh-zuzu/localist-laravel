@@ -50,10 +50,17 @@ class ApiController extends Controller
                 'string',
                 'min:4',
                 'regex:/^[a-zA-Z\s]+$/' // Only allows letters and spaces
+            ],
+            'county' => [
+                'required',
+                'string',
+                'min:4',
+                'regex:/^[a-zA-Z\s]+$/' // Only allows letters and spaces
             ]
         ], [
             'service_id.exists' => 'Provided service id does not exists.',
-            'city.regex' => 'City name must contain only letters and spaces.'
+            'city.regex' => 'City name must contain only letters and spaces.',
+            'county.regex' => 'City name must contain only letters and spaces.'
         ]);
 
         if ($validator->fails()) {
@@ -61,9 +68,10 @@ class ApiController extends Controller
         }
 
         $serviceId = $request->service_id;
+        $county = $request->county;
         $city      = $request->city;
 
-        $cityGeoData = CustomHelper::getCityGeoData($city);
+        $cityGeoData = CustomHelper::getCityGeoData($city, $county);
 
         if (empty($cityGeoData)) {
             return $this->sendError("City not found or geocoding failed.");
