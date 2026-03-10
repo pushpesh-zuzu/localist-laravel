@@ -14,7 +14,7 @@ class RequestListController extends Controller
     {
         abort_if(!auth()->user()->can('requestlist.viewlist'), 403, __('User does not have the right permissions.'));
         if ($request->ajax()) {
-           
+
             $matched_leads = \DB::table('lead_requests')
                 ->select(
                     'lead_requests.*',
@@ -84,6 +84,34 @@ class RequestListController extends Controller
                     $unit  = $item->unit_type ?: '';
                     return $price . ($unit ? ' / ' . $unit : '');
                 })
+                ->editColumn('time_slots', function ($item) {
+
+                    $output = '';
+                    $slotsData = json_decode($item->time_slots, true);
+
+                    if (is_array($slotsData)) {
+
+                        foreach ($slotsData as $slot) {
+
+                            if (!isset($slot['date'], $slot['slots'])) {
+                                continue;
+                            }
+
+                            $date = \Carbon\Carbon::parse($slot['date'])->format('d-m-Y');
+                            $times = explode(',', $slot['slots']);
+
+                            $output .= "<b>Date:</b> " . e($date) . "<br>";
+
+                            foreach ($times as $time) {
+                                $output .= "• " . e(trim($time)) . "<br>";
+                            }
+
+                            $output .= "<br>";
+                        }
+                    }
+
+                    return $output ?: '-';
+                })
                 ->filterColumn('price_unit', function ($query, $keyword) {
                     $query->where(function ($q) use ($keyword) {
                         $q->orWhere('recommended_leads.final_price', 'like', "%{$keyword}%")
@@ -105,7 +133,7 @@ class RequestListController extends Controller
                     }
                 })
 
-                ->rawColumns(['questions', 'customer_name', 'category_name', 'created_at', 'city'])
+                ->rawColumns(['questions', 'customer_name', 'category_name', 'created_at', 'city','time_slots'])
                 ->make(true);
         }
 

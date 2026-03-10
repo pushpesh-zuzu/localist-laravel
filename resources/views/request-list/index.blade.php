@@ -23,9 +23,12 @@
               <th>Frequent</th>
               <th>Status</th>
               <th>Que/Ans</th>
+              <th>Booking Time Slots</th>
               <th>Additional Dtails</th>
               <th>Hired User</th>
               <th>Final Price and Unit</th>
+               
+              
             </thead>
             <tbody>
 
@@ -69,6 +72,7 @@
             data: 'customer_name',
             name: 'customer_name'
           },
+          
           {
             data: 'city',
             name: 'city'
@@ -113,6 +117,10 @@
             data: 'questions',
             name: 'questions'
           },
+           {
+            data: 'time_slots',
+            name: 'time_slots'
+          },
           {
             data: 'details',
             name: 'details'
@@ -125,13 +133,14 @@
             data: 'price_unit',
             name: 'price_unit'
           },
-          
+         
+
+
 
         ],
         dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
         buttons: [
-          @can('requestlist.excelexport')
-          {
+          @can('requestlist.excelexport') {
             extend: 'excelHtml5',
             text: 'Export Excel',
             title: 'Request List',
@@ -145,9 +154,8 @@
               }
             }
           },
-           @endcan
-        @can('requestlist.csvexport')
-          {
+          @endcan
+          @can('requestlist.csvexport') {
             extend: 'csvHtml5',
             text: 'Export CSV',
             title: 'Request List',
