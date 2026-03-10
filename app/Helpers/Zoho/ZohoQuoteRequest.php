@@ -111,6 +111,31 @@ class ZohoQuoteRequest
         $formattedQA = implode("\n\n", $questionBlocks);
 
 
+
+        $formattedSlots = '';
+
+        if (!empty($leadRequests->time_slots)) {
+
+            $slotsData = json_decode($leadRequests->time_slots, true);
+
+            if (!empty($slotsData)) {
+                foreach ($slotsData as $slot) {
+
+                    $date = \Carbon\Carbon::parse($slot['date'])->format('d-m-Y');
+                    $times = explode(',', $slot['slots']);
+
+                    $formattedSlots .= $date . ":\n";
+
+                    foreach ($times as $time) {
+                        $formattedSlots .= trim($time) . "\n";
+                    }
+
+                    $formattedSlots .= "\n";
+                }
+            }
+        }
+
+
         return [
             'data' => [[
                 'Quote_Request_Record_Id'      => $leadRequests->id,
@@ -132,6 +157,7 @@ class ZohoQuoteRequest
                 'Question_Answers'             => $formattedQA,
                 'Description'                  => $leadRequests->details,
                 'Phone'         =>  (string) ($customerPhone ?? ''),
+                'Booking_Time_Slots' => $formattedSlots ?: null,
 
             ]],
             'duplicate_check_fields' => ['Quote_Request_Record_Id']
