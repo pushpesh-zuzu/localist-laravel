@@ -3450,21 +3450,7 @@ class ZohoEmails
 
             $quoteOwnerName = Self::getQuoteOwnerName($zohoId);
 
-            $sellers = collect($sellers)->map(function ($seller) use ($accessToken) {
-
-                $sellerZohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $seller->id);
-
-                $seller->sellerOwnerName = null;
-                if ($sellerZohoId) {
-                    $seller->sellerOwnerName = Self::getLeadBuyerOwnerName($sellerZohoId);
-                    // Small delay to prevent hitting Zoho rate limit
-                    usleep(200000); // 0.2 seconds
-                }
-
-                return $seller;
-            });
-
-
+            
             if (!empty($zohoId)) {
 
                 $serviceName  = optional($lead->category)->name;
