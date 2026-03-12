@@ -3449,6 +3449,22 @@ class ZohoEmails
             $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
 
             $quoteOwnerName = Self::getQuoteOwnerName($zohoId);
+
+            $sellers = collect($sellers)->map(function ($seller) use ($accessToken) {
+
+                $sellerZohoId = ZohoHelper::getZohoLeadBuyerId($accessToken, $seller->id);
+
+                $seller->sellerOwnerName = null;
+                if ($sellerZohoId) {
+                    $seller->sellerOwnerName = Self::getLeadBuyerOwnerName($sellerZohoId);
+                    // Small delay to prevent hitting Zoho rate limit
+                    usleep(200000); // 0.2 seconds
+                }
+
+                return $seller;
+            });
+
+
             if (!empty($zohoId)) {
 
                 $serviceName  = optional($lead->category)->name;
@@ -3536,6 +3552,22 @@ class ZohoEmails
     {
         $accessToken = ZohoHelper::getAccessToken();
         $url = "https://www.zohoapis.eu/crm/v2/Quote_Customers/{$zohoId}";
+
+        $response = Http::withToken($accessToken)->get($url);
+
+        if ($response->successful()) {
+            return data_get($response->json(), 'data.0.Owner.name');
+        }
+
+
+        return null;
+    }
+
+
+    public static function getLeadBuyerOwnerName($zohoId)
+    {
+        $accessToken = ZohoHelper::getAccessToken();
+        $url = "https://www.zohoapis.eu/crm/v2/Lead_Buyer_Registration/{$zohoId}";
 
         $response = Http::withToken($accessToken)->get($url);
 
