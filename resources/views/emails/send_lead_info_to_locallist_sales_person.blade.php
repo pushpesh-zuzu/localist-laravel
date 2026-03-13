@@ -101,7 +101,9 @@
                                         <th align="left" style="border:1px solid #e5e7eb;font-size:13px;">
                                             Postcode
                                         </th>
-                                       
+                                        <th align="left" style="border:1px solid #e5e7eb;font-size:13px;">
+                                            Lead Buyer Registration Owner
+                                        </th>
 
                                         <th align="center" style="border:1px solid #e5e7eb;font-size:13px;">
                                             Total Credit
@@ -126,7 +128,7 @@
                                             {{ $seller->postcode ?? 'N/A' }}
                                         </td>
 
-                                      
+                                        <td>{{ $seller->sellerOwnerName ?? 'N/A' }}</td>
 
                                         <td align="center" style="border:1px solid #e5e7eb;font-size:13px;">
                                             {{ $seller->total_credit ?? 0 }}
