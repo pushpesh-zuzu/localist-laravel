@@ -134,7 +134,6 @@ class ApiController extends Controller
                     ->get()
                     ->map(function ($service) {
                         return [
-                            'service_id' => $service->service_id,
                             'name' => optional($service->category)->name,
                         ];
                     })
@@ -168,6 +167,16 @@ class ApiController extends Controller
             ->values();
 
         $finalSortedSellers = $topN->merge($remaining)->values();
+
+        $finalSortedSellers = $finalSortedSellers->map(function ($seller) {
+            return [
+                'business_profile_name' => $seller->business_profile_name,
+                'company_logo' => $seller->company_logo,
+                'avg_rating' => $seller->avg_rating,
+                'total_reviews' => $seller->total_reviews,
+                'services' => $seller->services
+            ];
+        });
 
         $service = Category::where('id', $serviceId)->first();
         $data['service'] = $service->name;
