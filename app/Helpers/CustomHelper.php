@@ -33,6 +33,61 @@ use App\Models\CustomReview;
 class CustomHelper
 {
 
+
+    public static function maskLead($item)
+    {
+        // postcode
+        if (!empty($item->postcode)) {
+            $postcode = strtoupper(str_replace(' ', '', $item->postcode));
+            $item->postcode = substr($postcode, 0, 4);
+        }
+
+        // lead phone
+        if (!empty($item->phone)) {
+            $visible = substr($item->phone, 0, 3);
+            $item->phone = $visible . str_repeat('*', max(strlen($item->phone) - 3, 0));
+        }
+
+        if (!empty($item->customer)) {
+
+            // name
+            if (!empty($item->customer->name)) {
+                $nameParts = explode(' ', $item->customer->name);
+                $item->customer->name = $nameParts[0];
+            }
+
+            // zipcode
+            if (!empty($item->customer->zipcode)) {
+                $zipcode = strtoupper(str_replace(' ', '', $item->customer->zipcode));
+                $item->customer->zipcode = substr($zipcode, 0, 4);
+            }
+
+            // email
+            if (!empty($item->customer->email)) {
+
+                $emailParts = explode('@', $item->customer->email);
+
+                if (count($emailParts) === 2) {
+                    $name = $emailParts[0];
+                    $domain = $emailParts[1];
+
+                    $visible = substr($name, 0, 2);
+                    $masked = str_repeat('*', max(strlen($name) - 2, 0));
+
+                    $item->customer->email = $visible . $masked . '@' . $domain;
+                }
+            }
+
+            // phone
+            if (!empty($item->customer->phone)) {
+                $visible = substr($item->customer->phone, 0, 5);
+                $item->customer->phone = $visible . str_repeat('*', max(strlen($item->customer->phone) - 5, 0));
+            }
+        }
+
+        return $item;
+    }
+
     public static function getPostcodesWithinPolygonQuery(array $polygon)
     {
         if (empty($polygon)) {

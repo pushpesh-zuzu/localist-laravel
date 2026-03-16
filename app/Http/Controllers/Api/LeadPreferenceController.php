@@ -140,6 +140,12 @@ class LeadPreferenceController extends Controller
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
+        $allLeads = $allLeads->map(function ($item){
+
+            return CustomHelper::maskLead($item);
+            
+        }); 
+
         return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
     }
 
@@ -1495,6 +1501,11 @@ class LeadPreferenceController extends Controller
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
+
+        $allLeads = $allLeads->map(function ($item){ 
+            return CustomHelper::maskLead($item); 
+            
+        });
 
         if ($allLeads->isEmpty()) {
             return $this->sendResponse(__('Saved Leads'), [
