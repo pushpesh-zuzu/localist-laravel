@@ -36,52 +36,77 @@ class CustomHelper
 
     public static function maskLead($item)
     {
-        // postcode
+        $maskPostcode = function ($postcode) {
+            $postcode = strtoupper(str_replace(' ', '', $postcode));
+            return substr($postcode, 0, 4);
+        };
+
+        $maskName = function ($name) {
+            return explode(' ', $name)[0];
+        };
+
+        $maskEmail = function ($email) {
+            $parts = explode('@', $email);
+            if (count($parts) !== 2) return $email;
+
+            $name = $parts[0];
+            $domain = $parts[1];
+
+            return substr($name, 0, 2)
+                . str_repeat('*', max(strlen($name) - 2, 0))
+                . '@' . $domain;
+        };
+
+        $maskPhone = function ($phone) {
+
+            if (str_starts_with($phone, '+44')) {
+                $visible = 5;
+            } elseif (str_starts_with($phone, '0')) {
+                $visible = 3;
+            } else {
+                $visible = 2;
+            }
+
+            return substr($phone, 0, $visible)
+                . str_repeat('*', max(strlen($phone) - $visible, 0));
+        };
+
         if (!empty($item->postcode)) {
-            $postcode = strtoupper(str_replace(' ', '', $item->postcode));
-            $item->postcode = substr($postcode, 0, 4);
+            $item->postcode = $maskPostcode($item->postcode);
         }
 
-        // lead phone
         if (!empty($item->phone)) {
-            $visible = substr($item->phone, 0, 3);
-            $item->phone = $visible . str_repeat('*', max(strlen($item->phone) - 3, 0));
+            $item->phone = $maskPhone($item->phone);
+        }
+
+        if (!empty($item->name)) {
+            $item->name = $maskName($item->name);
+        }
+
+        if (!empty($item->zipcode)) {
+            $item->zipcode = $maskPostcode($item->zipcode);
+        }
+
+        if (!empty($item->email)) {
+            $item->email = $maskEmail($item->email);
         }
 
         if (!empty($item->customer)) {
 
-            // name
             if (!empty($item->customer->name)) {
-                $nameParts = explode(' ', $item->customer->name);
-                $item->customer->name = $nameParts[0];
+                $item->customer->name = $maskName($item->customer->name);
             }
 
-            // zipcode
             if (!empty($item->customer->zipcode)) {
-                $zipcode = strtoupper(str_replace(' ', '', $item->customer->zipcode));
-                $item->customer->zipcode = substr($zipcode, 0, 4);
+                $item->customer->zipcode = $maskPostcode($item->customer->zipcode);
             }
 
-            // email
             if (!empty($item->customer->email)) {
-
-                $emailParts = explode('@', $item->customer->email);
-
-                if (count($emailParts) === 2) {
-                    $name = $emailParts[0];
-                    $domain = $emailParts[1];
-
-                    $visible = substr($name, 0, 2);
-                    $masked = str_repeat('*', max(strlen($name) - 2, 0));
-
-                    $item->customer->email = $visible . $masked . '@' . $domain;
-                }
+                $item->customer->email = $maskEmail($item->customer->email);
             }
 
-            // phone
             if (!empty($item->customer->phone)) {
-                $visible = substr($item->customer->phone, 0, 5);
-                $item->customer->phone = $visible . str_repeat('*', max(strlen($item->customer->phone) - 5, 0));
+                $item->customer->phone = $maskPhone($item->customer->phone);
             }
         }
 

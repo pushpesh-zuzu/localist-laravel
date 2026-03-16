@@ -169,6 +169,10 @@ class RecommendedLeadsController extends Controller
             }
         }
 
+        $result = collect($result)->map(function ($item){
+            return CustomHelper::maskLead((object) $item);
+        });
+
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
 
@@ -216,6 +220,11 @@ class RecommendedLeadsController extends Controller
                 ->values();
 
             $finalSorted = $topN->merge($remaining);
+
+            $finalSorted = $finalSorted->map(function ($item){ 
+                return CustomHelper::maskLead((object)$item); 
+                
+            });
 
             $result['response']['sellers'] = $finalSorted->values()->toArray();
         }else{
