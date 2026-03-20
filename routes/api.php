@@ -37,6 +37,7 @@ Route::post('get-facebook-leads-roofing-from',[RoofingForm::class,'getFacebookLe
 Route::post('get-facebook-leads-fence-and-gate-from',[FenceAndGateForm::class,'getFacebookLeadsFenceAndGateForm']);
 Route::post('get-facebook-leads-landscaping-from',[LandscapingForm::class,'getFacebookLeadsLandscapingForm']);
 Route::post('get-facebook-leads-tree-surgery-from',[TreeSurgeryForm::class,'getFacebookLeadsTreeSurgeryForm']);
+Route::post('get-facebook-leads-landscaping-from-with-optional-calendar',[LandscapingForm::class,'getFacebookLeadsLandscapingFormWithOptionalCalendar']);
 
 Route::post('get-facebook-leads-tt',[DrivewayInstallationForm::class,'tt']);
 

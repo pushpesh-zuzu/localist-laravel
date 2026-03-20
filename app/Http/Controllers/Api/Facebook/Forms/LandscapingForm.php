@@ -46,6 +46,37 @@ use App\Http\Controllers\Api\Customer\MyRequestController;
 
 class LandscapingForm extends Controller
 {
+    public function getFacebookLeadsLandscapingFormWithOptionalCalendar(Request $request, LeadService $leadService){
+        $payload   = $request->all();
+        $serviceId = 43;
+
+        $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
+
+        // echo "<pre>";
+        // print_r($fbArray);
+        // exit;
+
+        $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
+
+        if(!empty($fbArray['info']['time_slot'])){
+            $fData = json_decode($response->getContent(), true);
+            if (!empty($fData['success'])) {
+                $leadId = $fData['data']['request_id'];
+                
+                $ts = $fbArray['info']['time_slot'];
+                $dt = Carbon::parse($ts)->setTimezone('Europe/London'); 
+                $timeSlot = json_encode(array(array(
+                    "date" => $dt->toDateString(),
+                    "slots" => $dt->format('h:i A')
+                )));   
+                
+                $leadData['time_slots'] = $timeSlot;
+                $sId = LeadRequest::where('id', $leadId)->update($leadData);
+            }
+        }
+
+        return $response;
+    }
     
     public function getFacebookLeadsLandscapingForm(Request $request, LeadService $leadService){
         $payload   = $request->all();
@@ -56,6 +87,15 @@ class LandscapingForm extends Controller
         // echo "<pre>";
         // print_r($fbArray);
         // exit;
+
+        $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
+
+        
+
+        return $response;
+    }
+
+    public function insertLeads($request, $fbArray, $serviceId, $leadService){
         
         if(!empty($fbArray['questions']) && !empty($fbArray['info'])){
             $questions = json_encode($fbArray['questions']);
@@ -217,6 +257,7 @@ class LandscapingForm extends Controller
         'full_name'    => 'full_name',
         'phone_number' => 'phone_number',
         'post_code'    => 'post_code',
+        'when_are_you_available_to_receive_quotations?' => 'time_slot'
     ];
 
     /**
