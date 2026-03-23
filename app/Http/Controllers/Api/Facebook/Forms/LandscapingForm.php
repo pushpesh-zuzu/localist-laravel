@@ -52,9 +52,9 @@ class LandscapingForm extends Controller
 
         $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
 
-        echo "<pre>";
-        print_r($fbArray);
-        exit;
+        // echo "<pre>";
+        // print_r($fbArray);
+        // exit;
 
         $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
 
