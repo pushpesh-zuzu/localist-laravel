@@ -52,9 +52,9 @@ class LandscapingForm extends Controller
 
         $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
 
-        // echo "<pre>";
-        // print_r($fbArray);
-        // exit;
+        echo "<pre>";
+        print_r($fbArray);
+        exit;
 
         $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
 
@@ -292,8 +292,19 @@ class LandscapingForm extends Controller
          * 1️⃣ Handle info fields
          */
         if (array_key_exists($fbField['name'], $infoFieldMap)) {
-            $info[$infoFieldMap[$fbField['name']]] = trim($fbField['value']);
-            continue;
+
+            $value = $fbField['value'] ?? null;
+
+            if (is_array($value)) {
+                $value = implode(', ', $value);
+            }
+
+            $value = is_string($value) ? trim($value) : null;
+
+            // ✅ ALWAYS set key (even if null)
+            $info[$infoFieldMap[$fbField['name']]] = $value !== '' ? $value : null;
+
+            continue; // 🔴 CRITICAL: never let it go to questions
         }
 
         $fbQuestionSlug = $normalize($fbField['name']);
