@@ -28,8 +28,8 @@ class RequestListController extends Controller
                         ->whereNotNull('recommended_leads.final_price');
                 })
                 ->leftJoin('users', 'users.id', '=', 'lead_requests.customer_id')
-                ->leftJoin('categories', 'categories.id', '=', 'lead_requests.service_id')
-                ->orderBy('lead_requests.id', 'desc');
+                ->leftJoin('categories', 'categories.id', '=', 'lead_requests.service_id');
+               // ->orderBy('lead_requests.id', 'desc');
 
 
             return Datatables::of($matched_leads)

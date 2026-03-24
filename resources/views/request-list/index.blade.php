@@ -65,7 +65,7 @@
         columns: [{
             data: 'DT_RowIndex',
             name: 'DT_RowIndex',
-            orderable: false,
+            orderable: true,
             searchable: false
           },
           {
@@ -172,7 +172,7 @@
           @endcan
         ],
         order: [
-          [2, 'desc']
+          [0, 'asc']
         ] // Optional: default order
       });
 
