@@ -1,60 +1,71 @@
 <x-app-layout>
-  <x-slot name="header">{{ __('Lead Buyers Login History') }} </x-slot>
-  @if(session('success'))
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ session('success') }}
+  @section('title', 'Lead Buyers Login History')
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+    <h4 class="mb-0">{{ __("Lead Buyers Login History") }}</h4>
   </div>
-  @endif
-
-  @if(session('error'))
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{ session('error') }}
-  </div>
-  @endif
-  <div class="card mb-4">
-    <div class="card-header">
-      <strong>{{ __('Lead Buyers Login History') }}</strong>
+  <div class="container-fluid py-2 px-0">
+    @if(session('success'))
+    <div class="alert alert-success shadow-sm border-0 rounded-3">
+      {{ session('success') }}
     </div>
+    @endif
 
-    <div class="card-body">
-      <div class="container mb-5">
-        <form id="filterForm" class="row g-3 justify-content-center align-items-end">
-          <div class="col-12 col-md-3">
-            <label for="from_date" class="form-label">From Date</label>
-            <input type="date" id="from_date" name="from_date" class="form-control" placeholder="dd-mm-yyyy">
+    @if(session('error'))
+    <div class="alert alert-danger shadow-sm border-0 rounded-3">
+      {{ session('error') }}
+    </div>
+    @endif
+
+    {{-- Card --}}
+    <div class="card border-1  rounded-4">
+      <div class="card-body p-4">
+        {{-- Filter Section --}}
+        <form id="filterForm" class="row g-3 align-items-end mb-4">
+
+          <div class="col-md-2">
+            <label class="form-label small custom-label ms-2" style="color: black;">From Date</label>
+            <input type="date" id="from_date" name="from_date"
+              value="{{ request('from_date') }}"
+              class="form-control rounded-pill shadow-sm px-3">
           </div>
 
-          <div class="col-12 col-md-3">
-            <label for="to_date" class="form-label">To Date</label>
-            <input type="date" id="to_date" name="to_date" class="form-control" placeholder="dd-mm-yyyy">
+          <div class="col-md-2">
+            <label class="form-label small custom-label ms-2">To Date</label>
+            <input type="date" id="to_date" name="to_date"
+              value="{{ request('to_date') }}"
+              class="form-control rounded-pill shadow-sm px-3">
           </div>
 
-          <div class="col-12 col-md-3 d-flex gap-2 mt-2 mt-md-0">
-            <button type="button" id="filterBtn" class="btn btn-primary ">Filter</button>
-            <button type="button" id="resetBtn" class="btn btn-secondary">Reset</button>
+          <div class="col-md-4 d-flex gap-2">
+            <button type="button" id="filterBtn"
+              class="btn btn-primary px-3 rounded-pill shadow-sm">
+              🔍 Filter
+            </button>
+
+            <button type="button" id="resetBtn" class="btn btn-light border px-3 rounded-pill shadow-sm">Reset</button>
+
           </div>
         </form>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-striped table-bordered" id="dataTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th style="text-align:center;">IP Address (Last Login)</th>
-              <th style="text-align:center;">Logged-in Device (Last Login)</th>
-              <th style="text-align:center;">First Login</th>
-              <th style="text-align:center;">Last Login</th>
-              <th style="text-align:center;">Total Logins</th>
-            </tr>
-          </thead>
-        </table>
+        <hr class="my-4">
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered" id="dataTable">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th style="text-align:center;">IP Address (Last Login)</th>
+                <th style="text-align:center;">Logged-in Device (Last Login)</th>
+                <th style="text-align:center;">First Login</th>
+                <th style="text-align:center;">Last Login</th>
+                <th style="text-align:center;">Total Logins</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-
 </x-app-layout>
 <script>
   function loadDataTable() {
@@ -69,6 +80,13 @@
       processing: true,
       serverSide: true,
       responsive: true,
+      autoWidth: true,
+      order: [],
+
+      columnDefs: [{
+        orderable: false,
+        targets: [0, 1, 2, 3, 4, 5, 6, 7]
+      }],
       ajax: {
         url: '{{ route("seller.allloginhistorylist") }}',
         data: function(d) {
@@ -78,8 +96,9 @@
       },
       columns: [{
           data: 'DT_RowIndex',
+          name: 'DT_RowIndex',
+          searchable: false,
           orderable: false,
-          searchable: false
         },
         {
           data: 'name',
@@ -92,14 +111,10 @@
         {
           data: 'last_ip',
           name: 'last_ip',
-          orderable: false,
-          searchable: true
         },
         {
           data: 'last_device',
           name: 'last_device',
-          orderable: false,
-          searchable: true
         },
         {
           data: 'first_login_time',
@@ -116,8 +131,7 @@
       ],
       dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
       buttons: [
-         @can('leadbuyers.allloginhistory-excelexport')
-        {
+        @can('leadbuyers.allloginhistory-excelexport') {
           text: 'Export Excel',
           className: "btn btn-success btn-sm",
           action: function(e, dt, node, config) {
@@ -136,8 +150,7 @@
           }
         },
         @endcan
-        @can('leadbuyers.allloginhistory-csvexport')
-        {
+        @can('leadbuyers.allloginhistory-csvexport') {
           text: 'Export CSV',
           className: "btn btn-info btn-sm",
           action: function(e, dt, node, config) {
@@ -158,6 +171,10 @@
         @endcan
 
       ],
+      columnDefs: [{
+        orderable: false,
+        targets: [0, 1, 2, 3, 4, 5, 6, 7]
+      }],
 
       language: {
         emptyTable: "No login records found"

@@ -25,13 +25,14 @@ class RoleController extends Controller
             ->when($loggedInRole != 7, function($q) {
                 // Agar super-admin nahi hai to super-admin role ko hide karo
                 $q->where('roles.name', '!=', 'super-admin');
-            })
-            ->orderBy('id', 'asc');
+            });
+            //->orderBy('id', 'asc');
 
         if ($request->ajax()) {
             return DataTables::of($roles)
 
                 ->addIndexColumn()
+                
                 ->editColumn('action', function ($user) {
                     $html = "";
 

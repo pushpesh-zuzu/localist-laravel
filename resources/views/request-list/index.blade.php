@@ -1,16 +1,16 @@
 <x-app-layout>
-  <x-slot name="header">{{ __('Request List') }} </x-slot>
-
+ @section('title', 'Request List') 
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+    <h4 class="mb-0">{{ __('Request List') }}</h4>   
+  </div>
+ @include('layouts.alerts')
   <div class="card mb-4">
-    <div class="card-header">
-      <strong>{{ __('Request List') }}</strong>
-    </div>
     <div class="card-body">
       <div class="row">
         <div class="col-md-12">
           <table id="cat-table" class="table table-bordered table-striped">
             <thead>
-              <th width="20px;">#</th>
+              <th width="20px;">S.No</th>
               <th>Customer</th>
               <th>Loacation</th>
               <th>DateTime</th>
@@ -27,18 +27,15 @@
               <th>Additional Dtails</th>
               <th>Hired User</th>
               <th>Final Price and Unit</th>
-               
-              
             </thead>
             <tbody>
-
             </tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
-
+</div>
   @push('scripts')
   <script>
     $(document).ready(function() {

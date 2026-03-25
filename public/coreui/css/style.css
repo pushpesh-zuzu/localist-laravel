@@ -13935,4 +13935,13 @@ textarea.form-control-lg {
     }
 
 }
+
+table.dataTable thead th {
+  background-color: #00afe3 !important;
+  color: #ffffff !important;  /* 👈 white text */
+  font-weight: 600;
+}
+.custom-label {
+  color: #000 !important;
+}
 /*# sourceMappingURL=style.css.map */

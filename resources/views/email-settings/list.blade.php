@@ -1,29 +1,28 @@
 <x-app-layout>
-    <x-slot name="header">{{ __('Email Setting') }} </x-slot>
-
-    <div class="row">
-        <div class="md-col-12 mb-4">
-            @can('email-settings.create')
-            <a href="{{ route('email-settings.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Email Setting') }}</a>
-           @endcan
-        </div>
-        <div class="md-col-12 mb-4">
-            @if(session()->has('success'))
-            <div class="alert alert-success">{{ session()->get('success') }}</div>
-            @endif
-            @if(session()->has('error'))
-            <div class="alert alert-danger">{{ session()->get('error') }}</div>
-            @endif
-        </div>
+    @section('title', 'Email Setting')
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+        <h4 class="mb-0">{{ __("Email Setting") }}</h4>
+        @can('email-settings.create')
+        <a href="{{ route('email-settings.create') }}" class="btn btn-success text-white">
+            <i class="fa fa-plus fa-xs"></i> {{ _('Add Email Setting') }}
+        </a>
+        @endcan
     </div>
-
+    <div class="md-col-12 mb-4">
+        @if(session()->has('success'))
+        <div class="alert alert-success">{{ session()->get('success') }}</div>
+        @endif
+        @if(session()->has('error'))
+        <div class="alert alert-danger">{{ session()->get('error') }}</div>
+        @endif
+    </div>
     <div class="card mb-4">
         <div class="card-body">
             <table id="email-settings-table" class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>{{ __('Setting Name') }}</th>                        
-                        <th>{{ __('Email') }}</th>                       
+                        <th>{{ __('Setting Name') }}</th>
+                        <th>{{ __('Email') }}</th>
                         <th>{{ __('Whatsapp') }}</th>
                     </tr>
                 </thead>
@@ -31,24 +30,24 @@
                     @foreach($settings as $s)
                     <tr>
                         <td>{{$s['setting_name']}}</td>
-                       
+
                         <td>
-                              @can('email-settings.email-on-off')
+                            @can('email-settings.email-on-off')
                             <div class="form-check form-switch m-0">
                                 <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-settingtype="email" data-value="{{$s['setting_value']}}" @if($s['setting_value']) checked @endif>
                             </div>
-                             @endcan
+                            @endcan
                         </td>
-                        
-                         
+
+
                         <td>
-                             @can('email-settings.whatsapp-on-off')
+                            @can('email-settings.whatsapp-on-off')
                             <div class="form-check form-switch m-0">
                                 <input class="form-check-input toggle" type="checkbox" role="switch" data-id="{{$s['id']}}" data-setting="{{$s['setting_name']}}" data-settingtype="whatsapp" data-value="{{$s['whatsapp_setting_value']}}" @if($s['whatsapp_setting_value']) checked @endif>
                             </div>
-                             @endcan
+                            @endcan
                         </td>
-                         
+
                     </tr>
                     @endforeach
                 </tbody>
@@ -84,7 +83,7 @@
                         id: id,
                         setting_name: settingName,
                         setting_value: newValue,
-                         settingType: settingType,
+                        settingType: settingType,
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(response) {

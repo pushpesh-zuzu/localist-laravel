@@ -1,19 +1,20 @@
 <x-app-layout>
-    <x-slot name="header">{{ __('Plans') }} </x-slot>
-
-    <div class="card mb-4">
-      <div class="card-header">
-          <strong>{{ __('Plans') }}</strong>
-           @can('plans.create')
-          <a href="{{ route('plans.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Plan') }}</a>
-          @endcan
-      </div>
+  @section('title', 'Plans')
+   <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+    <h4 class="mb-0">{{ __("Plans") }}</h4>
+    @can('plans.create')
+    <a href="{{ route('plans.create') }}" class="btn btn-success text-white">
+      <i class="fa fa-plus fa-xs"></i> {{ _('Add Plan') }}
+    </a>
+    @endcan
+  </div>
+    <div class="card mb-4">      
       <div class="card-body">
         @if(count($aRows) > 0)
         <table class="table table-striped" id="dataTable">
           <thead>
           <tr>
-            <th scope="col" width="20px;">#</th>
+            <th scope="col" width="20px;">S.No</th>
             <th scope="col">Category</th>
             <th scope="col">Name</th>
             <th scope="col">Price</th>
@@ -55,6 +56,24 @@
         No records found
         @endif
       </div>
-    </div>
- 
-</x-app-layout>           
+    </div> 
+</x-app-layout>     
+
+
+<script>
+  $(document).ready(function() {
+
+    if ($.fn.DataTable.isDataTable('#dataTable')) {
+      $('#dataTable').DataTable().destroy();
+    }
+
+    let table = $('#dataTable').DataTable({
+      ordering: false,
+      order: []
+    });
+
+    // 🔥 REMOVE sorting classes manually
+    $('#dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+  });
+</script>

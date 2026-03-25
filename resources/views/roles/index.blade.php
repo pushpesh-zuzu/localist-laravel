@@ -1,19 +1,20 @@
 <x-app-layout>
-
-    <x-slot name="header">{{__("Roles")}} </x-slot>
-      @include('layouts.alerts')
+    @section('title', 'Roles')
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+        <h4 class="mb-0">{{ __("Roles") }}</h4>
+        @can('role.create')
+        <a href="{{ route('roles.create') }}" class="btn btn-success text-white">
+            <i class="fa fa-plus fa-xs"></i> Add
+        </a>
+        @endcan
+    </div>
+    @include('layouts.alerts')
     <div class="card mb-4">
-        <div class="card-header">
-            <strong>{{ __('Roles') }}</strong>
-            @can('role.create')
-            <a href="{{route('roles.create')}}" class="btn btn-info" style="float: right;margin-right:3px;"><i class="fa fa-plus fa-xs"></i> Add </a>
-            @endcan
-        </div>
-        <div class="card-body">         
+        <div class="card-body">
             <table id="roletable" class="table table-bordered table-striped">
                 <thead>
                     <th>
-                        #
+                        S.No
                     </th>
                     <th>
                         {{__("Role Name")}}
@@ -36,19 +37,25 @@
             responsive: true,
             serverSide: true,
             autoWidth: true,
-            stateSave: true,
+            paging: false,
+            searching: false,
+            info: false,
+            lengthChange: false,
+            ordering: false,
+            order: [],
             ajax: url + '/roles',
             columns: [{
-                    data: 'id',
-                    name: 'id',
-                    searchable: true,
-                    orderable: true
+                    data: null,
+                    name: 'sno',
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
                 },
                 {
                     data: 'name',
                     name: 'roles.name',
-                    searchable: true,
-                    orderable: true
                 },
                 {
                     data: 'action',
@@ -59,7 +66,7 @@
             ],
 
             order: [
-                [1, 'ASC']
+                [0, 'asc']
             ]
         });
 

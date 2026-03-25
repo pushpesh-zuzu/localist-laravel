@@ -1,5 +1,8 @@
 <x-app-layout>
-  <x-slot name="header">{{ __('D7 Lead Suppliers') }} </x-slot>
+  @section('title', 'D7 Lead Suppliers')
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+    <h4 class="mb-0">{{ __("D7 Lead Suppliers") }}</h4>
+  </div>
   @if(session('success'))
   <div class="alert alert-success alert-dismissible fade show" role="alert">
     {{ session('success') }}
@@ -12,16 +15,12 @@
   </div>
   @endif
   <div class="card mb-4">
-    <div class="card-header">
-      <strong>{{ __('D7 Lead Suppliers') }}</strong>
-    </div>
-
     <div class="card-body">
       <div class="table-responsive">
         <table class="table table-striped table-bordered" id="dataTable">
           <thead>
             <tr>
-              <th>#</th>
+              <th>S.No</th>
               <th>Category</th>
               <th>Service</th>
               <th>Supplier Name</th>
@@ -58,19 +57,20 @@
       processing: true,
       serverSide: true,
       autoWidth: false,
+    order: [],
+   
       ajax: d7LeadSupplierRoute,
       columns: [{
           data: 'DT_RowIndex',
           name: 'DT_RowIndex',
-          title: '#',
-          orderable: false,
-          searchable: false
+          title: 'S.No',
+           searchable: false, orderable: false ,
         },
         {
           data: 'category',
           name: 'category',
         },
-         {
+        {
           data: 'lead_service',
           name: 'lead_service',
         },
@@ -114,12 +114,15 @@
 
       columnDefs: [{
           targets: 1,
-          width: "200px"
+          width: "200px",
+          orderable: false,
+          targets: [0, 1, 2, 3, 4, 5,6,7,8,9,10]
         }, // Supplier Name
         {
           targets: 2,
           width: "220px"
         }, // Email
+        
       ],
 
       dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',

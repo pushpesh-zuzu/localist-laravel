@@ -1,13 +1,14 @@
 <x-app-layout>
-  <x-slot name="header">{{ __('Menus') }} </x-slot>
-
+  @section('title', 'Menus')
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+    <h4 class="mb-0">{{ __("Menus") }}</h4>
+    @can('footermenus.create')
+    <a href="{{ route('menus.create') }}" class="btn btn-success text-white">
+      <i class="fa fa-plus fa-xs"></i> {{ _('Add Menu') }}
+    </a>
+    @endcan
+  </div>
   <div class="card mb-4">
-    <div class="card-header">
-      <strong>{{ __('Menus') }}</strong>
-      @can('footermenus.create')
-      <a href="{{ route('menus.create') }}" class="btn btn-secondary btn-sm float-end">{{ _('Add Menu') }}</a>
-      @endcan
-    </div>
     <div class="card-body">
       @if(session()->has('success'))
       <div class="alert alert-success">{{ session()->get('success') }}</div>
@@ -62,3 +63,21 @@
   </div>
 
 </x-app-layout>
+
+<script>
+  $(document).ready(function() {
+
+    if ($.fn.DataTable.isDataTable('#dataTable')) {
+      $('#dataTable').DataTable().destroy();
+    }
+
+    let table = $('#dataTable').DataTable({
+      ordering: false,
+      order: []
+    });
+
+    // 🔥 REMOVE sorting classes manually
+    $('#dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+  });
+</script>
