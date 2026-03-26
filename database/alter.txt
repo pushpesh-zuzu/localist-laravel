@@ -223,3 +223,8 @@ INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `crea
 
 
 ALTER TABLE `lead_requests` ADD `time_slots` LONGTEXT NULL AFTER `zoho_quote_request_id`;
+
+
+ALTER TABLE `abandoned_users` ADD `awc` LONGTEXT NULL AFTER `quote_type`;
+
+ALTER TABLE `users` ADD `awc` LONGTEXT NULL AFTER `quote_type`;

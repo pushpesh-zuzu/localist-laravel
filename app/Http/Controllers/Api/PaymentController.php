@@ -78,7 +78,7 @@ class PaymentController extends Controller
 
             if ($paymentIntent->status === 'succeeded') {
                 //add up new credit in total credits
-                 $stripePaymentIntentId = $paymentIntent->id;
+                $stripePaymentIntentId = $paymentIntent->id;
                 $prevCredits = intval(User::where('id', $user_id)->value('total_credit'));
 
                 // $dataCr['total_credit'] = $prevCredits + intval($credits);
@@ -98,7 +98,7 @@ class PaymentController extends Controller
                 $dataPh['price'] = number_format($request->amount, 2);
                 $dataPh['vat'] = number_format($request->vat, 2);
                 $dataPh['total_amount'] = $total_amount;
-                 $dataPh['stripe_payment_intent'] = $stripePaymentIntentId; 
+                $dataPh['stripe_payment_intent'] = $stripePaymentIntentId;
                 $dataPh['created_at'] = date('Y-m-d H:i:s');
                 PlanHistory::insertGetId($dataPh);
 
@@ -107,10 +107,10 @@ class PaymentController extends Controller
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details);
 
 
-
+                $invoiceNumber = $invoicePrefix . "-" . $tId;
                 //Create invoice
                 $dataInv['user_id'] = $user_id;
-                $dataInv['invoice_number'] = $invoicePrefix . "-" . $tId;
+                $dataInv['invoice_number'] = $invoiceNumber;
                 $dataInv['details'] = $request->details;
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($request->amount, 2);
@@ -145,7 +145,17 @@ class PaymentController extends Controller
                     });
                 }
 
-                return $this->sendResponse('Payment successful!',['invoice_number' => $dataInv['invoice_number']]);
+                $planCount = PlanHistory::where('user_id', $user->id)->count();
+                $registeredAt = \Carbon\Carbon::parse($user->created_at);
+
+                if ($planCount == 1 && $registeredAt->diffInDays(now()) <= 365 && !empty($user->awc)) {
+                   
+                    CustomHelper::runInBackground(function () use ($user, $total_amount, $invoiceNumber) {
+                        self::sendAwinConversion($user, $total_amount, $invoiceNumber);
+                    });
+                }
+
+                return $this->sendResponse('Payment successful!', ['invoice_number' => $dataInv['invoice_number']]);
             } else {
                 $tId = CustomHelper::createTrasactionLog($user_id, $total_amount, $credits, $details, 2, 0, 'Payment did not succeed.');
                 return $this->sendError('Payment did not succeed.');
@@ -199,5 +209,44 @@ class PaymentController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="invoice.pdf"',
         ]);
+    }
+
+
+    private static function sendAwinConversion($user, $totalAmount, $orderReference)
+    {
+        try {
+            $currencyCode = "GBP";
+            $voucherCode = "";
+            $awc = $user->awc;
+
+            $url = "https://www.awin1.com/sread.php?tt=ss&tv=2&merchant=119697";
+            $url .= "&amount=" . $totalAmount;
+            $url .= "&ch=aw";
+            $url .= "&cr=" . $currencyCode;
+            $url .= "&ref=" . $orderReference;
+            $url .= "&parts=DEFAULT:" . $totalAmount;
+            $url .= "&testmode=0&vc=" . $voucherCode;
+            $url .= "&cks=" . $awc;
+
+          //  \Log::info("AWIN URL:", ['url' => $url]);
+
+            $c = curl_init();
+            curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($c, CURLOPT_URL, $url);
+
+            $response = curl_exec($c);
+
+            \Log::info("AWIN Response:", [
+                'response' => $response,
+                'http_code' => curl_getinfo($c, CURLINFO_HTTP_CODE)
+            ]);
+           
+
+        } catch (\Exception $e) {
+            \Log::error("AWIN Exception:", [
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 }
