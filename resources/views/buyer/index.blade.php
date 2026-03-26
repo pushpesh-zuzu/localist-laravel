@@ -99,10 +99,27 @@
         }
       },
       columns: [{
-          data: 'DT_RowIndex',
-          name: 'DT_RowIndex',
-          orderable: false,
-          searchable: false
+          data: null,
+          name: 'id',
+          orderable: true,
+          searchable: false,
+          render: function(data, type, row, meta) {
+
+            let table = $('#dataTable').DataTable();
+            let info = table.page.info();           
+            let order = table.order();
+            let dir = order[0][1]; 
+
+            if (type === 'sort' || type === 'type') {
+              return row.id;
+            }
+          
+            if (dir === 'asc') {
+              return meta.row + info.start + 1;
+            }
+           
+            return info.recordsTotal - (meta.row + info.start);
+          }
         },
         {
           data: 'name',
@@ -230,11 +247,22 @@
         }
 
         @endcan
-      ]
+      ],
+      order: [
+        [0, 'asc']
+      ],
+
+
     });
+
+
   }
 
+
   $(document).ready(function() {
+
+
+
     loadDataTable();
 
     $('#filterBtn').on('click', function() {
@@ -246,6 +274,8 @@
       $('#to_date').val('');
       loadDataTable();
     });
+
+
   });
 </script>
 

@@ -45,8 +45,8 @@ class BuyerController extends Controller
                 ->where(function ($q) {
                     $q->whereNull('email')
                         ->orWhere('email', 'not like', '%test%');
-                })
-                ->orderBy('id', 'DESC');
+                });
+
             if ($request->from_date && $request->to_date) {
                 $query->whereBetween('created_at', [
                     $request->from_date . ' 00:00:00',
@@ -59,7 +59,9 @@ class BuyerController extends Controller
             }
 
             return DataTables::of($query)
-                ->addIndexColumn()
+                ->orderColumn('id', function ($query, $order) {
+                    $query->orderBy('id', $order);
+                })
                 ->addColumn('postcode', function ($user) {
                     return $user->leadRequests->pluck('postcode')->implode('<br>');
                 })
@@ -272,8 +274,8 @@ class BuyerController extends Controller
                 ->where(function ($q) {
                     $q->whereNull('email')
                         ->orWhere('email', 'not like', '%test%');
-                })
-                ->orderBy('id', 'DESC');
+                });
+                
             if ($request->from_date && $request->to_date) {
                 $query->whereBetween('created_at', [
                     $request->from_date . ' 00:00:00',
@@ -286,7 +288,9 @@ class BuyerController extends Controller
             }
 
             return DataTables::of($query)
-                ->addIndexColumn()
+               ->orderColumn('id', function ($query, $order) {
+                    $query->orderBy('id', $order);
+                })
                 ->addColumn('zipcode', function ($user) {
                     return $user->zipcode ?? '';
                 })
@@ -461,10 +465,10 @@ class BuyerController extends Controller
 
         if ($type == 'abandoned') {
             $user = AbandonedUser::find($userId);
-        } else {    
+        } else {
             $user = User::find($userId);
         }
-        
+
         if ($user) {
             $user->platform_source = $platformSource;
             $user->save();
