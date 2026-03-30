@@ -59,11 +59,6 @@ class d7LeadSupplierController extends Controller
                 'email' => 'ashishg@zuzucodes.com',
                 'name'  => 'Test',
             ],
-            [
-                'id' => '2',
-                'email' => 'abuzer@zuzucodes.com',
-                'name'  => 'New Supplier',
-            ]
         ];
 
         $keyword = 'Driveway Installation';
@@ -153,6 +148,42 @@ class d7LeadSupplierController extends Controller
         return $results;
     }
 
+
+public function testIntegrateD7LeadAccountSuppliers()
+    {
+        $results = [];
+
+        D7LeadSupplier::whereNull('zoho_account_record_id')->where('is_subscribed','1')->where('email_status','new')
+            ->chunk(50, function ($suppliers) use (&$results) {
+                foreach ($suppliers as $supplier) {
+                    try {
+
+                        if (!empty($supplier->zoho_account_record_id)) {
+                            $results[$supplier->id] = [
+                                'skipped' => true,
+                                'message' => 'Zoho record already exists',
+                            ];
+                            continue;
+                        }
+
+                        $results[$supplier->id] =
+                            app(ZohoD7LeadSuppliers::class)->syncD7SuppliersToZohoAccounts($supplier->id);
+
+                        usleep(500000); // 0.5 sec delay
+
+                    } catch (\Throwable $e) {
+                        $results[$supplier->id] = [
+                            'error' => true,
+                            'message' => $e->getMessage(),
+                        ];
+                    }
+                }
+            });
+
+        return $results;
+    }
+
+
     public function testDeleteZohoRecord()
     {
         $zohoRecordId = '623840000007420131';
@@ -160,6 +191,21 @@ class d7LeadSupplierController extends Controller
         try {
 
             $response = app(ZohoD7LeadSuppliers::class)->deleteZohoRecord($zohoRecordId);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function testDeleteZohoAccountRecord()
+    {
+        $zohoRecordId = '623840000009556048';
+
+        try {
+            $response = app(ZohoD7LeadSuppliers::class)->deleteZohoAccountRecord($zohoRecordId);
         } catch (\Exception $e) {
 
             return response()->json([
@@ -218,6 +264,11 @@ class d7LeadSupplierController extends Controller
                         app(ZohoD7LeadSuppliers::class)
                             ->deleteZohoRecord($supplierLead->zoho_record_id);
                     }
+
+                    if ($supplierLead->zoho_account_record_id) {
+                        app(ZohoD7LeadSuppliers::class)
+                            ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
+                    }
                 }
                 break;
 
@@ -231,6 +282,11 @@ class d7LeadSupplierController extends Controller
                     app(ZohoD7LeadSuppliers::class)
                         ->deleteZohoRecord($supplierLead->zoho_record_id);
                 }
+
+                if ($supplierLead->zoho_account_record_id) {
+                        app(ZohoD7LeadSuppliers::class)
+                            ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
+                }
                 break;
 
             case 'fbl_compliant': // spam complaint
@@ -243,6 +299,10 @@ class d7LeadSupplierController extends Controller
                     app(ZohoD7LeadSuppliers::class)
                         ->deleteZohoRecord($supplierLead->zoho_record_id);
                 }
+                if ($supplierLead->zoho_account_record_id) {
+                        app(ZohoD7LeadSuppliers::class)
+                            ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
+                }
                 break;
 
             default:
@@ -252,4 +312,45 @@ class d7LeadSupplierController extends Controller
 
         return response()->json(['status' => 'ok'], 200);
     }
+
+
+
+
+ public function campaignWebhook(Request $request)
+{
+    // Full payload log
+    Log::info('Webhook Hit:', $request->all());
+
+    $data = $request->all();
+
+    // (Optional) email nikal lo duplicate check ke liye
+    $email = strtolower(trim(
+        $data['email'] ?? $data['Contact Email'] ?? ''
+    ));
+
+    // 🔁 Duplicate check (optional)
+    if ($email) {
+        $exists = D7LeadSupplier::where('email', $email)->exists();
+
+        if ($exists) {
+            return response()->json(['status' => 'duplicate']);
+        }
+    }
+
+    // ✅ Insert JSON payload
+    $supplierLead = D7LeadSupplier::create([
+        'name'        => 'test',
+        'email'        => $email ?: null,
+        'bounce_reason' => json_encode($data), // JSON store
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'id'     => $supplierLead->id
+    ]);
+}
+
+
+
+
 }

@@ -228,3 +228,9 @@ ALTER TABLE `lead_requests` ADD `time_slots` LONGTEXT NULL AFTER `zoho_quote_req
 ALTER TABLE `abandoned_users` ADD `awc` LONGTEXT NULL AFTER `quote_type`;
 
 ALTER TABLE `users` ADD `awc` LONGTEXT NULL AFTER `quote_type`;
+
+
+ALTER TABLE `d7_lead_suppliers` ADD `zoho_aacount_record_id` VARCHAR(255) NULL COMMENT 'This column is used for the Accounts module in Zoho CRM.' AFTER `zoho_record_id`;
+
+
+ALTER TABLE `d7_lead_suppliers` CHANGE `zoho_aacount_record_id` `zoho_account_record_id` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'This column is used for the Accounts module in Zoho CRM.';

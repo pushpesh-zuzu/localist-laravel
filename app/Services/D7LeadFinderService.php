@@ -204,7 +204,7 @@ class D7LeadFinderService
                 }
 
                 self::addUpdateSuppliers($suppliers, $search->keyword);
-
+                
                 $dbSuppliers = D7LeadSupplier::where('lead_service', $search->keyword)
                     ->whereNotNull('email')
                     ->where('mail_sent', 0)
@@ -282,7 +282,7 @@ class D7LeadFinderService
     public static function addUpdateSuppliers(array $suppliers, $keyword)
     {
         foreach ($suppliers as $supplier) {
-
+        
             if (empty($supplier['email'])) {
                 continue;
             }
@@ -294,6 +294,7 @@ class D7LeadFinderService
             if ($existing && $existing->is_subscribed == 0) {
                 continue;
             }
+            
 
             if ($existing && in_array($existing->email_status, ['hard_bounced', 'soft_bounced'])) {
                 continue;
@@ -366,6 +367,10 @@ class D7LeadFinderService
 
             CustomHelper::runInBackground(function () use ($supplierModel) {
                 app(ZohoD7LeadSuppliers::class)->integrateD7LeadSupplier($supplierModel->id, $supplierModel->wasRecentlyCreated ? 'insert' : 'update');
+            });
+
+            CustomHelper::runInBackground(function () use ($supplierModel) {
+                app(ZohoD7LeadSuppliers::class)->syncD7SuppliersToZohoAccounts($supplierModel->id, $supplierModel->wasRecentlyCreated ? 'insert' : 'update');
             });
         }
     }

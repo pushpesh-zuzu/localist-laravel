@@ -69,7 +69,8 @@ class D7LeadSupplier extends Model
         'email_status',
         'bounce_reason',
         'message_id',
-        'zoho_record_id'
+        'zoho_record_id',
+        'zoho_account_record_id'
     ];
 
     protected $casts = [

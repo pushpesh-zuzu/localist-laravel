@@ -63,6 +63,8 @@ class ZeptoMail
                     ],
                     'subject' => 'New ' . ($shortKeyword ?? 'Service') . ' lead',
                     'htmlbody' => $htmlContent,
+                    'track_opens'  => true,
+                    'track_clicks' => true,
                 ];
 
 

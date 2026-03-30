@@ -37,9 +37,8 @@ class ZohoD7LeadSuppliers
 
                 $supplierLead = D7LeadSupplier::where('id', $supplierId)->first();
                 if (!empty($supplierLead->zoho_record_id)) {
-                   
+
                     $response = $this->updateZohoRecord($access_token, $supplierLead->zoho_record_id, $payload);
-                    
                 } else {
                     $response = $this->upsertToZohoService($access_token, $payload);
                 }
@@ -201,5 +200,161 @@ class ZohoD7LeadSuppliers
                     'data' => $payload['data']   // ✅ ONLY actual data
                 ]
             );
+    }
+
+
+
+    public function syncD7SuppliersToZohoAccounts(int $supplierId, string $action = 'insert')
+    {
+        $access_token = ZohoHelper::getAccessToken();
+
+        if (!$access_token) {
+            return null;
+        }
+
+        $payload = $this->buildAccountModulePayload($supplierId);
+
+        $responseData = null;
+        $errorMessage = null;
+
+        try {
+
+            if ($action == 'insert') {
+                $response = $this->upsertToZohoAccountsModule($access_token, $payload);
+            } else {
+
+                $supplierLead = D7LeadSupplier::where('id', $supplierId)->first();
+                if (!empty($supplierLead->zoho_account_record_id)) {
+
+                    $response = $this->updateZohoAccountRecord($access_token, $supplierLead->zoho_account_record_id, $payload);
+                } else {
+                    $response = $this->upsertToZohoAccountsModule($access_token, $payload);
+                }
+            }
+
+            $responseData = $response->json();
+
+            if (
+                isset($responseData['data'][0]['status']) &&  $responseData['data'][0]['status'] === 'success' &&  isset($responseData['data'][0]['details']['id'])
+            ) {
+
+                $zohoRecordId = $responseData['data'][0]['details']['id'];
+
+                $updatePayload = [
+                    'data' => [[
+                        'id' => $zohoRecordId,
+                    ]]
+                ];
+
+                Http::withToken($access_token)
+                    ->put("https://www.zohoapis.eu/crm/v2/Accounts", $updatePayload);
+
+
+                D7LeadSupplier::where('id', $supplierId)
+                    ->update(['zoho_account_record_id' => $zohoRecordId]);
+            }
+        } catch (\Throwable $e) {
+            $errorMessage = $e->getMessage();
+        }
+
+        $dbRecordId = $supplierId;           // jo record update ho raha hai
+        $dbTable    = 'd7_lead_suppliers';
+
+        ZohoHelper::logZohoRequest(
+            'syncD7SuppliersToZohoAccounts',
+            'https://www.zohoapis.eu/crm/v2/Accounts/upsert',
+            $payload ?? null,
+            $responseData ?? null,
+            $errorMessage ?? null,
+            $supplierId ?? null,
+            $dbRecordId ?? null,
+            $dbTable ?? null
+        );
+
+        return $responseData;
+    }
+
+
+    protected function buildAccountModulePayload($userId)
+    {
+        $user = D7LeadSupplier::findOrFail($userId);
+
+        $datetime  = new DateTime($user->created_at, new DateTimeZone('Europe/London'));
+        $formatted = $datetime->format('Y-m-d\TH:i:sP');
+
+        // helper for string casting
+        $str = fn($v) => isset($v) ? (string) $v : null;
+
+        $payload = [
+            'data' => [[
+                'User_Auto_Id'  => $user->zoho_record_id ?? $user->id,
+
+                'Account_Name' => $user->name,
+                'Company_Email' => $user->email,
+
+                'Phone' => ltrim($str($user->phone), '+'),
+                'Website'  => $str($user->website),
+                'Main_Service_Type' => $str($user->lead_service),
+
+
+
+                'Billing_Street'  => $str($user->address1),
+                'Billing_City'  => $str($user->address2),
+                'Billing_Code' => $str($user->zip),
+
+                'Description'         =>  $user->google_stars
+                    ? 'Google Reviews: ' . $user->google_stars .
+                    ($user->google_review_count ? ' (' . $user->google_review_count . ')' : '')
+                    : null,
+
+
+                // Social URLs
+                'Facebook'  => $str($user->facebook_url),
+                'Instagram' => $str($user->instagram_url),
+                'LinkedIn'  => $str($user->linkedin_url),
+                'Twitter'   => $str($user->twitter_url),
+                'Lead_Source'   => 'D7 Supplier',
+                'created_at'           => $formatted,
+            ]],
+            'duplicate_check_fields' => ['User_Auto_Id']
+        ];
+
+        return $payload;
+    }
+
+
+    protected function upsertToZohoAccountsModule($accessToken, array $payload)
+    {
+        return Http::withToken($accessToken)
+            ->post('https://www.zohoapis.eu/crm/v2/Accounts/upsert', $payload);
+    }
+
+
+    protected function updateZohoAccountRecord(string $accessToken, string $zohoRecordId, array $payload)
+    {
+        return Http::withToken($accessToken)
+            ->put(
+                "https://www.zohoapis.eu/crm/v2/Accounts/{$zohoRecordId}",
+                [
+                    'data' => $payload['data']   // ✅ ONLY actual data
+                ]
+            );
+    }
+
+    public function deleteZohoAccountRecord(string $zohoRecordId)
+    {
+        $access_token = ZohoHelper::getAccessToken();
+
+        $response = Http::withToken($access_token)
+            ->delete("https://www.zohoapis.eu/crm/v2/Accounts/{$zohoRecordId}");
+
+        if ($response->failed()) {
+            Log::error('Zoho delete failed', [
+                'record_id' => $zohoRecordId,
+                'response' => $response->json(),
+            ]);
+
+            throw new \Exception('Failed to delete Zoho record');
+        }
     }
 }

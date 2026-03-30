@@ -245,6 +245,13 @@ Route::get('/test-zeptomail/{leadId}', [d7LeadSupplierController::class, 'testZe
 
 Route::get('/test-d7-lead-suppliers', [D7LeadSupplierController::class, 'testIntegrateD7LeadSuppliers']);
 
+Route::get('/test-d7-lead-account-suppliers', [D7LeadSupplierController::class, 'testIntegrateD7LeadAccountSuppliers']);
+
 Route::get('/test/zoho-delete', [D7LeadSupplierController::class, 'testDeleteZohoRecord']);
+
+Route::get('/test/zoho-account-delete', [D7LeadSupplierController::class, 'testDeleteZohoAccountRecord']);
+
+
+
 
 require __DIR__ . '/auth.php';

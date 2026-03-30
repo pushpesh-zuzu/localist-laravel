@@ -80,7 +80,7 @@ Route::post('verify-otp', [ApiController::class, 'verifyOtp']);
 
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
 Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook']);
-
+Route::post('campaign-webhook', [d7LeadSupplierController::class, 'campaignWebhook']);
 
 Route::post('get-seller-list-city-wise', [ApiController::class, 'getSellerListCityWise']);
 Route::post('add-request-callback-city-wise', [ApiController::class, 'addRequestCallbackCityWise']);
