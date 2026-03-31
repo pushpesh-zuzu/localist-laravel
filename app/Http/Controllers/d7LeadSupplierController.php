@@ -313,44 +313,4 @@ public function testIntegrateD7LeadAccountSuppliers()
         return response()->json(['status' => 'ok'], 200);
     }
 
-
-
-
- public function campaignWebhook(Request $request)
-{
-    // Full payload log
-    Log::info('Webhook Hit:', $request->all());
-
-    $data = $request->all();
-
-    // (Optional) email nikal lo duplicate check ke liye
-    $email = strtolower(trim(
-        $data['email'] ?? $data['Contact Email'] ?? ''
-    ));
-
-    // 🔁 Duplicate check (optional)
-    if ($email) {
-        $exists = D7LeadSupplier::where('email', $email)->exists();
-
-        if ($exists) {
-            return response()->json(['status' => 'duplicate']);
-        }
-    }
-
-    // ✅ Insert JSON payload
-    $supplierLead = D7LeadSupplier::create([
-        'name'        => 'test',
-        'email'        => $email ?: null,
-        'bounce_reason' => json_encode($data), // JSON store
-    ]);
-
-    return response()->json([
-        'status' => 'success',
-        'id'     => $supplierLead->id
-    ]);
-}
-
-
-
-
 }

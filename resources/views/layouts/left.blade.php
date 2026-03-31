@@ -295,6 +295,15 @@
       </a>
     </li>
     @endcan
+
+    @can('import-marketing-contacts')
+    <li class="nav-item">
+      <a href="{{ route('zoho.viewimport') }}" class="nav-link {{ request()->routeIs('zoho.viewimport') ? 'active' : '' }}">
+        <i class="fa-solid fa-user nav-icon"></i>
+        Import Marketing Contact
+      </a>
+    </li>
+    @endcan
   </ul>
 
 </div>

@@ -33,6 +33,7 @@ use App\Helpers\Zoho\ZohoEmails;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\d7LeadSupplierController;
 use App\Http\Controllers\PurchaseInvoiceHistoryController;
+use App\Http\Controllers\ZohoAccountImportController;
 use App\Services\D7LeadFinderService;
 
 Route::get('phpinfo', function () {
@@ -153,7 +154,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('seller/custom-reviews/save', [SellerController::class, 'sellerSaveCustomReview'])->name('seller.save.custom.review');
     Route::get('/seller/get-credit/{user}', [SellerController::class, 'getCredit'])->name('seller.getCredit');
     Route::post('/seller/add-credit', [SellerController::class, 'addCredit'])->name('seller.addCredit');
-     Route::post('/seller/deduct-credit', [SellerController::class, 'deductCredits'])->name('seller.deductCredits');
+    Route::post('/seller/deduct-credit', [SellerController::class, 'deductCredits'])->name('seller.deductCredits');
     Route::get('/seller/get-autobid-settings/{user}', [SellerController::class, 'getAutobidSettings'])->name('seller.getAutobidSettings');
     Route::post('/seller/update-autobid-settings', [SellerController::class, 'updateAutobidSettings'])->name('seller.updateAutobidSettings');
     Route::get('seller/{type}/{id}', [SellerController::class, 'show'])->name('seller.show.custom');
@@ -194,6 +195,9 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::get('purchase-invoice-history', [PurchaseInvoiceHistoryController::class, 'purchaseInvoiceHistoryList'])->name('purchase.invoice.history');
     Route::post('/admin-download-invoice', [PaymentController::class, 'downloadInvoice'])->name('plan.download-invoice');;
+
+    Route::get('/zoho-import', [ZohoAccountImportController::class, 'importZoho'])->name('zoho.viewimport');
+    Route::post('/zoho-import', [ZohoAccountImportController::class, 'importZohoAccounts'])->name('zoho.import');
 });
 
 

@@ -234,3 +234,6 @@ ALTER TABLE `d7_lead_suppliers` ADD `zoho_aacount_record_id` VARCHAR(255) NULL C
 
 
 ALTER TABLE `d7_lead_suppliers` CHANGE `zoho_aacount_record_id` `zoho_account_record_id` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'This column is used for the Accounts module in Zoho CRM.';
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Import Marketing Contacts', 'import-marketing-contacts', 'Import Marketing Contacts', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
