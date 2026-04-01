@@ -91,6 +91,7 @@ Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsA
  Route::get('/zoho-customer-number-of-purchases', [LeadPreferenceController::class, 'updateCustomerNumberOfPurchases']);
 
 Route::post('get-city-name', [ApiController::class, 'getCityName']);
+Route::post('get-address-list-from-postcode', [ApiController::class, 'getAddressesListFromPostcode']);
 
 Route::post('get-progress-percentage', [ApiController::class, 'getProgressPercentage']);
 

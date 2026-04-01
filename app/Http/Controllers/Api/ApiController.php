@@ -22,7 +22,7 @@ use App\Models\AbandonedUser;
 use App\Models\UserServiceLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Log as FacadesLog, Mail, Validator
+    Auth, Hash, DB , Log as FacadesLog, Mail, Validator, Http
 };
 use Illuminate\Support\Facades\Storage;
 use Log;
@@ -41,6 +41,72 @@ use App\Services\LeadService;
 
 class ApiController extends Controller
 {
+    public function getAddressesListFromPostcode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'postcode' => 'required'
+        ], [
+            'postcode.required' => 'Postcode is required.'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors());
+        }
+
+        $apiKey = CustomHelper::setting_value('postcode_address_key');
+
+        // Normalize postcode (standard UK format)
+        $postcode = strtoupper(trim($request->postcode));
+        $postcode = preg_replace('/\s+/', '', $postcode);
+
+        if (strlen($postcode) > 3) {
+            $postcode = substr($postcode, 0, -3) . ' ' . substr($postcode, -3);
+        }
+
+        // Validate UK postcode format
+        if (!preg_match('/^(GIR 0AA|[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2})$/', $postcode)) {
+            return $this->sendError('Invalid UK postcode format.');
+        }
+        // print_r($postcode);
+        try {
+            $response = Http::timeout(5)->get("https://api.ideal-postcodes.co.uk/v1/postcodes/" .$postcode ."?api_key=" .$apiKey);
+
+            $data = $response->json();
+            // print_r($data);
+
+            // Handle "postcode not found" (valid API response with 4040 code)
+            if (($data['code'] ?? null) === 4040) {
+                return $this->sendError('Postcode not found.');
+            }
+
+            // Handle other API failures
+            if (!$response->successful()) {
+                return $this->sendError('Unable to fetch address list.');
+            }
+
+            $results = $data['result'] ?? [];
+
+            $addressList = collect($results)->map(function ($item) {
+                return [
+                    'house_name' => $item['line_1'] ?? '',
+                    'street_address' => trim(
+                        ($item['line_2'] ?? '') . ', ' . ($item['line_3'] ?? ''),
+                        ', '
+                    ),
+                    'postcode' => $item['postcode'] ?? '',
+                ];
+            })->sortBy(function ($item) {
+                return strtolower($item['house_name']);
+            })->values()->toArray();
+
+            return $this->sendResponse('Address List.', $addressList);
+
+        }  catch (\Exception $e) {
+            return $this->sendError('Error: ' .$e->getMessage());
+        }
+    }
+
+
     public function getSellerListCityWise(Request $request, LeadService $leadService)
     {
         $validator = Validator::make($request->all(), [
