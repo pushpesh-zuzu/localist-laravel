@@ -7,6 +7,9 @@ use App\Models\D7LeadSupplier;
 use Yajra\Datatables\Datatables;
 use App\Exports\d7LeadSupplierListExport;
 use App\Helpers\Zoho\ZohoD7LeadSuppliers;
+use App\Helpers\Zoho\ZohoHelper;
+use App\Helpers\Zoho\ZohoImportService;
+use App\Models\D7SupplierClickOpenReport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -149,11 +152,11 @@ class d7LeadSupplierController extends Controller
     }
 
 
-public function testIntegrateD7LeadAccountSuppliers()
+    public function testIntegrateD7LeadAccountSuppliers()
     {
         $results = [];
 
-        D7LeadSupplier::whereNull('zoho_account_record_id')->where('is_subscribed','1')->where('email_status','new')
+        D7LeadSupplier::whereNull('zoho_account_record_id')->where('is_subscribed', '1')->where('email_status', 'new')
             ->chunk(50, function ($suppliers) use (&$results) {
                 foreach ($suppliers as $supplier) {
                     try {
@@ -168,6 +171,74 @@ public function testIntegrateD7LeadAccountSuppliers()
 
                         $results[$supplier->id] =
                             app(ZohoD7LeadSuppliers::class)->syncD7SuppliersToZohoAccounts($supplier->id);
+
+                        usleep(500000); // 0.5 sec delay
+
+                    } catch (\Throwable $e) {
+                        $results[$supplier->id] = [
+                            'error' => true,
+                            'message' => $e->getMessage(),
+                        ];
+                    }
+                }
+            });
+
+        return $results;
+    }
+
+
+    public function checkAccountByEmail()
+    {
+        $access_token = ZohoHelper::getAccessToken();
+        $results = [];
+
+        D7LeadSupplier::whereNull('zoho_account_record_id')
+            ->chunk(50, function ($suppliers) use ($access_token, &$results) {
+
+                foreach ($suppliers as $supplier) {
+                    try {
+
+                        // Skip if already mapped
+                        if (!empty($supplier->zoho_account_record_id)) {
+                            $results[$supplier->id] = [
+                                'skipped' => true,
+                                'message' => 'Zoho account already linked',
+                            ];
+                            continue;
+                        }
+
+                        // Search account in Zoho
+                        $zohoRecordId = app(ZohoImportService::class)
+                            ->searchAccountByEmail($access_token, $supplier->email);
+
+
+                        Log::info('Zoho Check Result', [
+                            'supplier_id'   => $supplier->id,
+                            'email'         => $supplier->email,
+                            'zohoRecordId'  => $zohoRecordId,
+                        ]);
+
+
+                        // If found, update
+                        if (!empty($zohoRecordId)) {
+
+                            $supplier->update([
+                                'zoho_account_record_id' => $zohoRecordId
+                            ]);
+
+                             app(ZohoImportService::class)
+                            ->updateLeadSourceForAccount($zohoRecordId);
+
+                            $results[$supplier->id] = [
+                                'success' => true,
+                                'zoho_id' => $zohoRecordId
+                            ];
+                        } else {
+                            $results[$supplier->id] = [
+                                'not_found' => true,
+                                'message' => 'No Zoho account found'
+                            ];
+                        }
 
                         usleep(500000); // 0.5 sec delay
 
@@ -284,8 +355,8 @@ public function testIntegrateD7LeadAccountSuppliers()
                 }
 
                 if ($supplierLead->zoho_account_record_id) {
-                        app(ZohoD7LeadSuppliers::class)
-                            ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
+                    app(ZohoD7LeadSuppliers::class)
+                        ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
                 }
                 break;
 
@@ -300,9 +371,84 @@ public function testIntegrateD7LeadAccountSuppliers()
                         ->deleteZohoRecord($supplierLead->zoho_record_id);
                 }
                 if ($supplierLead->zoho_account_record_id) {
-                        app(ZohoD7LeadSuppliers::class)
-                            ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
+                    app(ZohoD7LeadSuppliers::class)
+                        ->deleteZohoAccountRecord($supplierLead->zoho_account_record_id);
                 }
+                break;
+
+
+            case 'email_link_click': // spam complaint
+
+                break;
+
+
+            case 'email_open':
+
+
+                $email = $request->input('event_message.0.email_info.to.0.email_address.address');
+                $openTime = $request->input('event_message.0.event_data.0.details.0.time');
+
+
+                $supplierLead = D7LeadSupplier::where('supplier_email', $email)
+                    ->latest('id')
+                    ->first();
+
+                $openAt = $openTime ? \Carbon\Carbon::parse($openTime) : now();
+
+                if ($email && $messageId) {
+
+                    $report = D7SupplierClickOpenReport::firstOrCreate([
+                        'message_id'     => $messageId,
+                        'supplier_email' => $email,
+                    ]);
+
+                    $report->increment('open_count');
+
+                    $report->update([
+                        'open_at' => $openAt
+                    ]);
+                }
+
+
+                if ($supplierLead->zoho_account_record_id) {
+                    app(ZohoImportService::class)
+                        ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
+                }
+
+                break;
+
+
+            case 'email_click':
+            case 'email_link_click':
+
+                $email = $request->input('event_message.0.email_info.to.0.email_address.address');
+                $clickTime = $request->input('event_message.0.event_data.0.details.0.time');
+
+                $supplierLead = D7LeadSupplier::where('supplier_email', $email)
+                    ->latest('id')
+                    ->first();
+
+                $clickAt = $clickTime ? \Carbon\Carbon::parse($clickTime) : now();
+
+                if ($email && $messageId) {
+
+                    $report = D7SupplierClickOpenReport::firstOrCreate([
+                        'message_id'     => $messageId,
+                        'supplier_email' => $email,
+                    ]);
+
+                    $report->increment('click_count');
+
+                    $report->update([
+                        'click_at' => $clickAt
+                    ]);
+
+                    if ($supplierLead->zoho_account_record_id) {
+                        app(ZohoImportService::class)
+                            ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
+                    }
+                }
+
                 break;
 
             default:
@@ -312,5 +458,4 @@ public function testIntegrateD7LeadAccountSuppliers()
 
         return response()->json(['status' => 'ok'], 200);
     }
-
 }
