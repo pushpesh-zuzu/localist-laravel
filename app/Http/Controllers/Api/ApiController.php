@@ -79,25 +79,56 @@ class ApiController extends Controller
                 return $this->sendError('Postcode not found.');
             }
 
+        
             // Handle other API failures
             if (!$response->successful()) {
-                return $this->sendError('Unable to fetch address list.');
+                $errMsg = "Unable to fetch address list";
+                if(!empty($data['message'])){
+                    $errMsg = $data['message'];
+                }
+                return $this->sendError('Error: ' .$errMsg);
             }
 
             $results = $data['result'] ?? [];
+            
 
-            $addressList = collect($results)->map(function ($item) {
-                return [
-                    'house_name' => $item['line_1'] ?? '',
-                    'street_address' => trim(
-                        ($item['line_2'] ?? '') . ', ' . ($item['line_3'] ?? ''),
-                        ', '
-                    ),
-                    'postcode' => $item['postcode'] ?? '',
-                ];
-            })->sortBy(function ($item) {
-                return strtolower($item['house_name']);
-            })->values()->toArray();
+            $addressList = collect($results)
+                ->map(function ($item) {
+
+                    // CASE 1: Commercial
+                    if (!empty($item['organisation_name'])) {
+
+                        return [
+                            'house_name' => $item['organisation_name'],
+
+                            'street_address' => implode(', ', array_filter([
+                                $item['building_name'] ?? null,
+                                $item['thoroughfare'] ?? null,
+                                $item['dependant_locality'] ?? null,
+                                $item['post_town'] ?? null,
+                            ])),
+
+                            'postcode' => $item['postcode'] ?? '',
+                        ];
+                    }
+
+                    // CASE 2: Residential
+                    return [
+                        'house_name' => $item['building_number'] ?? $item['building_name'],
+
+                        'street_address' => implode(', ', array_filter([
+                            $item['thoroughfare'] ?? null,
+                            $item['post_town'] ?? null,
+                        ])),
+
+                        'postcode' => $item['postcode'] ?? '',
+                    ];
+                })
+                ->sort(function ($a, $b) {
+                    return strnatcasecmp($a['house_name'], $b['house_name']);
+                })
+                ->values()
+                ->toArray();
 
             return $this->sendResponse('Address List.', $addressList);
 
