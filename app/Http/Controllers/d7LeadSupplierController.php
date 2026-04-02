@@ -254,7 +254,7 @@ class d7LeadSupplierController extends Controller
         }
 
         if (!$supplierLead && $email) {
-            $supplierLead = D7LeadSupplier::where('supplier_email', $email)
+            $supplierLead = D7LeadSupplier::where('email', $email)
                 ->latest('id')
                 ->first();
         }
@@ -318,11 +318,6 @@ class d7LeadSupplierController extends Controller
                 break;
 
 
-            case 'email_link_click': // spam complaint
-
-                break;
-
-
             case 'email_open':
 
 
@@ -330,7 +325,7 @@ class d7LeadSupplierController extends Controller
                 $openTime = $request->input('event_message.0.event_data.0.details.0.time');
 
 
-                $supplierLead = D7LeadSupplier::where('supplier_email', $email)
+                $supplierLead = D7LeadSupplier::where('email', $email)
                     ->latest('id')
                     ->first();
 
@@ -358,14 +353,13 @@ class d7LeadSupplierController extends Controller
 
                 break;
 
-
-            case 'email_click':
+          
             case 'email_link_click':
 
                 $email = $request->input('event_message.0.email_info.to.0.email_address.address');
                 $clickTime = $request->input('event_message.0.event_data.0.details.0.time');
 
-                $supplierLead = D7LeadSupplier::where('supplier_email', $email)
+                $supplierLead = D7LeadSupplier::where('email', $email)
                     ->latest('id')
                     ->first();
 

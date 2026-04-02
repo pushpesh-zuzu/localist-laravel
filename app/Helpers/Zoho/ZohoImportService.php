@@ -453,7 +453,7 @@ class ZohoImportService
             $supplierId = $accountId ?? null;
 
             ZohoHelper::logZohoRequest(
-                'syncD7SuppliersToZohoAccounts',
+                'syncD7SuppliersClickOpenReports',
                 $url,
                 $relatedPayload,
                 $responseData,
