@@ -17,24 +17,24 @@ class ZohoAccountImportController extends Controller
         return view('d7supplier.import-account');
     }
 
-   
+
     public function importZohoAccounts(Request $request)
     {
         try {
 
-          
+
             $request->validate([
                 'file' => 'required|file|mimetypes:text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             ]);
 
-           
+
             $data = Excel::toArray([], $request->file('file'))[0];
 
             if (empty($data) || count($data) < 2) {
                 return response()->json(['error' => 'Empty file'], 400);
             }
 
-           
+
             $header = array_map('strtolower', $data[0]);
             unset($data[0]);
 
@@ -44,13 +44,13 @@ class ZohoAccountImportController extends Controller
                 $rows[] = array_combine($header, $row);
             }
 
-           
-             app(ZohoImportService::class)->importAccountsWithRelated($rows);
+
+            $result = app(ZohoImportService::class)->importAccountsWithRelated($rows);
 
             return response()->json([
-                'status' => 'Import started / completed'
+                'status' => 'Import completed',
+                'stats' => $result
             ]);
-
         } catch (\Exception $e) {
 
             Log::error('Zoho Import Error: ' . $e->getMessage());

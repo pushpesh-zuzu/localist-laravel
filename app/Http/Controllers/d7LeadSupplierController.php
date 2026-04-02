@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\D7LeadSupplier;
 use Yajra\Datatables\Datatables;
 use App\Exports\d7LeadSupplierListExport;
+use App\Helpers\CustomHelper;
 use App\Helpers\Zoho\ZohoD7LeadSuppliers;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoImportService;
@@ -154,105 +155,45 @@ class d7LeadSupplierController extends Controller
 
     public function testIntegrateD7LeadAccountSuppliers()
     {
-        $results = [];
-
-        D7LeadSupplier::whereNull('zoho_account_record_id')->where('is_subscribed', '1')->where('email_status', 'new')
-            ->chunk(50, function ($suppliers) use (&$results) {
-                foreach ($suppliers as $supplier) {
-                    try {
-
-                        if (!empty($supplier->zoho_account_record_id)) {
-                            $results[$supplier->id] = [
-                                'skipped' => true,
-                                'message' => 'Zoho record already exists',
-                            ];
-                            continue;
-                        }
-
-                        $results[$supplier->id] =
-                            app(ZohoD7LeadSuppliers::class)->syncD7SuppliersToZohoAccounts($supplier->id);
-
-                        usleep(500000); // 0.5 sec delay
-
-                    } catch (\Throwable $e) {
-                        $results[$supplier->id] = [
-                            'error' => true,
-                            'message' => $e->getMessage(),
-                        ];
-                    }
-                }
-            });
-
-        return $results;
-    }
-
-
-    public function checkAccountByEmail()
-    {
-        $access_token = ZohoHelper::getAccessToken();
-        $results = [];
+        set_time_limit(0);
 
         D7LeadSupplier::whereNull('zoho_account_record_id')
-            ->chunk(50, function ($suppliers) use ($access_token, &$results) {
+            ->where('is_subscribed', '1')
+            ->where('email_status', 'new')
+            ->chunk(50, function ($suppliers) {
 
                 foreach ($suppliers as $supplier) {
-                    try {
 
-                        // Skip if already mapped
-                        if (!empty($supplier->zoho_account_record_id)) {
-                            $results[$supplier->id] = [
-                                'skipped' => true,
-                                'message' => 'Zoho account already linked',
-                            ];
-                            continue;
-                        }
-
-                        // Search account in Zoho
-                        $zohoRecordId = app(ZohoImportService::class)
-                            ->searchAccountByEmail($access_token, $supplier->email);
-
-
-                        Log::info('Zoho Check Result', [
-                            'supplier_id'   => $supplier->id,
-                            'email'         => $supplier->email,
-                            'zohoRecordId'  => $zohoRecordId,
-                        ]);
-
-
-                        // If found, update
-                        if (!empty($zohoRecordId)) {
-
-                            $supplier->update([
-                                'zoho_account_record_id' => $zohoRecordId
-                            ]);
-
-                             app(ZohoImportService::class)
-                            ->updateLeadSourceForAccount($zohoRecordId);
-
-                            $results[$supplier->id] = [
-                                'success' => true,
-                                'zoho_id' => $zohoRecordId
-                            ];
-                        } else {
-                            $results[$supplier->id] = [
-                                'not_found' => true,
-                                'message' => 'No Zoho account found'
-                            ];
-                        }
-
-                        usleep(500000); // 0.5 sec delay
-
-                    } catch (\Throwable $e) {
-                        $results[$supplier->id] = [
-                            'error' => true,
-                            'message' => $e->getMessage(),
-                        ];
+                    if (!empty($supplier->zoho_account_record_id)) {
+                        continue;
                     }
+
+                    $supplierId = $supplier->id;
+
+                    CustomHelper::runInBackground(function () use ($supplierId) {
+
+                        try {
+
+                            app(ZohoD7LeadSuppliers::class)
+                                ->syncD7SuppliersToZohoAccounts($supplierId);
+                        } catch (\Throwable $e) {
+
+                            Log::error('Zoho Supplier Sync Error', [
+                                'supplier_id' => $supplierId,
+                                'message' => $e->getMessage()
+                            ]);
+                        }
+                    });
+
+                    usleep(2000000);
                 }
             });
 
-        return $results;
+        return "Background sync started";
     }
+
+
+
 
 
     public function testDeleteZohoRecord()

@@ -65,43 +65,62 @@
 </x-app-layout>
 
 <script>
-  $(document).ready(function () {
+  $(document).ready(function() {
 
-    $('#importForm').on('submit', function (e) {
-        e.preventDefault();
+    $('#importForm').on('submit', function(e) {
+      e.preventDefault();
 
-        let form = $('#importForm')[0];
-        let formData = new FormData(form);
+      let form = $('#importForm')[0];
+      let formData = new FormData(form);
 
-        // 🔽 disable button
-        $('#importBtn').prop('disabled', true).text('Importing...');
+      // 🔽 disable button
+      $('#importBtn').prop('disabled', true).text('Importing...');
 
-        $('#importStatus').html('<div class="text-info">Importing...</div>');
+      $('#importStatus').html('<div class="text-info">Importing...</div>');
 
-        $.ajax({
-            url: "{{ route('zoho.import') }}",
-            method: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
+      $.ajax({
+        url: "{{ route('zoho.import') }}",
+        method: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
 
-            success: function (res) {
-                $('#importStatus').html('<div class="text-success">Import completed</div>');
-                
-                form.reset();
+        success: function(res) {
+          let stats = res.stats;
 
-                // 🔽 enable button
-                $('#importBtn').prop('disabled', false).text('Import to Zoho');
-            },
+          let insertedEmails = stats.inserted_emails.join('<br>');
+          let updatedEmails = stats.updated_emails.join('<br>');
 
-            error: function (err) {
-                $('#importStatus').html('<div class="text-danger">Import failed</div>');
+          $('#importStatus').html(`
+        <div class="text-success">
+            Import completed <br><br>
 
-                // 🔽 enable button
-                $('#importBtn').prop('disabled', false).text('Import to Zoho');
-            }
-        });
+            Inserted: ${stats.inserted_count} <br>
+            Updated: ${stats.updated_count} <br>
+            Related Records: ${stats.related_records} <br><br>
+
+            <b>Inserted Emails</b><br>
+            ${insertedEmails || 'None'} <br><br>
+
+            <b>Updated Emails</b><br>
+            ${updatedEmails || 'None'}
+        </div>
+    `);
+
+          form.reset();
+
+          // 🔽 enable button
+          $('#importBtn').prop('disabled', false).text('Import to Zoho');
+        },
+
+        error: function(err) {
+          $('#importStatus').html('<div class="text-danger">Import failed</div>');
+
+          // 🔽 enable button
+          $('#importBtn').prop('disabled', false).text('Import to Zoho');
+        }
+      });
     });
 
-});
+  });
 </script>
