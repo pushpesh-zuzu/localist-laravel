@@ -767,8 +767,8 @@ class SellerController extends Controller
                     $q->whereNull('users.email')
                         ->orWhere('users.email', 'not like', '%test%');
                 })
-                ->groupBy('users.id', 'users.name', 'users.email')
-                ->orderBy('last_login', 'DESC');
+                ->groupBy('users.id', 'users.name', 'users.email');
+                // ->orderBy('last_login', 'DESC');
 
             // Date filter on login history
             if ($request->from_date && $request->to_date) {
@@ -780,7 +780,10 @@ class SellerController extends Controller
 
 
             return DataTables::of($query)
-                ->addIndexColumn()
+                // ->addIndexColumn()/
+                ->orderColumn('users.id', function ($query, $order) {
+    $query->orderBy('users.id', $order);
+})
                 ->addColumn('last_ip', function ($row) {
                     return $row->last_ip ?? '';
                 })

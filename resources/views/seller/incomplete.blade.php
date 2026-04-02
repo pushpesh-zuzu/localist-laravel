@@ -108,7 +108,7 @@
     order: [],
     columnDefs: [{
       orderable: false,
-      targets: [0, 1, 2, 3, 4, 5, 6, 7]
+      targets: [ 1, 2, 3, 4, 5, 6, 7]
     }],
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
 
@@ -144,7 +144,10 @@
         }
       },
       @endcan
-    ]
+    ],
+    order: [
+        [0, 'desc']
+      ],
   });
 </script>
 

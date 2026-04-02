@@ -399,7 +399,10 @@
             orderable: false,
             targets: [3, 4, 5, 6, 7, 8]
           } // disable search on the first (#) column
-        ]
+        ],
+        order: [
+        [0, 'desc']
+      ],
       });
 
       $(document).on("click", ".deduct-credit", function() {

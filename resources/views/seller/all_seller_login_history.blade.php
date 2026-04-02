@@ -95,10 +95,16 @@
         }
       },
       columns: [{
-          data: 'DT_RowIndex',
-          name: 'DT_RowIndex',
-          searchable: false,
+          data: null,
+          name: 'id',
           orderable: false,
+          searchable: false,
+          render: function(data, type, row, meta) {
+      let table = $('#dataTable').DataTable();
+      let info = table.page.info(); // pagination info
+      // Descending numbering across all pages
+      return info.recordsTotal - (meta.row + info.start);
+  },
         },
         {
           data: 'name',

@@ -104,6 +104,14 @@
 
       </div>
     </div>
+</style>
+
+#dataTable thead th .sorting,
+#dataTable thead th .sorting_asc,
+#dataTable thead th .sorting_desc {
+    background-image: none !important;
+}
+</style>
 
 </x-app-layout>
 
@@ -113,7 +121,7 @@
     order: [],
     columnDefs: [{
       orderable: false,
-      targets: [0, 1, 2, 3, 4, 5, 6]
+      targets: [ 1, 2, 3, 4, 5, 6]
     }],
     dom: '<"top-toolbar d-flex justify-content-between align-items-center"lBf>rtip',
     buttons: [
@@ -148,6 +156,9 @@
       },
       @endcan
     ],
+    order: [
+        [0, 'desc']
+      ],
     "language": {
       "emptyTable": "No records found"
     }
