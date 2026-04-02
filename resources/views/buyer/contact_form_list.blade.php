@@ -104,14 +104,7 @@
 
       </div>
     </div>
-</style>
 
-#dataTable thead th .sorting,
-#dataTable thead th .sorting_asc,
-#dataTable thead th .sorting_desc {
-    background-image: none !important;
-}
-</style>
 
 </x-app-layout>
 
