@@ -346,13 +346,15 @@ class d7LeadSupplierController extends Controller
                         $report->update([
                             'open_at' => $openAt->format('Y-m-d H:i:s')
                         ]);
+
+                        if ($supplierLead && $supplierLead->zoho_account_record_id) {
+                            app(ZohoImportService::class)
+                                ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
+                        }
                     }
                 }
 
-                if ($supplierLead && $supplierLead->zoho_account_record_id) {
-                    app(ZohoImportService::class)
-                        ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
-                }
+
 
                 break;
 
@@ -384,11 +386,11 @@ class d7LeadSupplierController extends Controller
                         $report->update([
                             'click_at' => $clickAt->format('Y-m-d H:i:s')
                         ]);
-                    }
 
-                    if ($supplierLead && $supplierLead->zoho_account_record_id) {
-                        app(ZohoImportService::class)
-                            ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
+                        if ($supplierLead && $supplierLead->zoho_account_record_id) {
+                            app(ZohoImportService::class)
+                                ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
+                        }
                     }
                 }
 
