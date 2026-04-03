@@ -11,9 +11,11 @@ use App\Helpers\Zoho\ZohoD7LeadSuppliers;
 use App\Helpers\Zoho\ZohoHelper;
 use App\Helpers\Zoho\ZohoImportService;
 use App\Models\D7SupplierClickOpenReport;
+use App\Models\EmailLog;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class d7LeadSupplierController extends Controller
 {
@@ -327,7 +329,18 @@ class d7LeadSupplierController extends Controller
                     ->latest('id')
                     ->first();
 
-                $openAt = $openTime ? \Carbon\Carbon::parse($openTime) : now();
+                $timestamp = \Carbon\Carbon::parse($openTime)->timestamp;
+                $bucket = floor($timestamp / 10);
+
+                $cacheKey = 'email_open:' . $messageId . ':' . $bucket;
+
+                if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
+                    return; // duplicate
+                }
+                $d7OpenEmailReport = EmailLog::where('message_id', $messageId)->first();
+
+
+                $emailDateTime = $d7OpenEmailReport->created_at->format('Y-m-d H:i:s');
 
                 if ($email && $messageId) {
 
@@ -336,21 +349,16 @@ class d7LeadSupplierController extends Controller
                         'supplier_email' => $email,
                     ]);
 
-                    $lastOpen = $report->open_at ? \Carbon\Carbon::parse($report->open_at) : null;
 
-                    // agar same second hai to increment na kare
-                    if (!$lastOpen || $lastOpen->timestamp !== $openAt->timestamp) {
+                    $report->increment('open_count');
 
-                        $report->increment('open_count');
+                    $report->update([
+                        'open_at' => $emailDateTime
+                    ]);
 
-                        $report->update([
-                            'open_at' => $openAt->format('Y-m-d H:i:s')
-                        ]);
-
-                        if ($supplierLead && $supplierLead->zoho_account_record_id) {
-                            app(ZohoImportService::class)
-                                ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
-                        }
+                    if ($supplierLead && $supplierLead->zoho_account_record_id) {
+                        app(ZohoImportService::class)
+                            ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
                     }
                 }
 
@@ -363,11 +371,24 @@ class d7LeadSupplierController extends Controller
                 $email = $request->input('event_message.0.email_info.to.0.email_address.address');
                 $clickTime = $request->input('event_message.0.event_data.0.details.0.time');
 
+                $timestamp = \Carbon\Carbon::parse($clickTime)->timestamp;
+                $bucket = floor($timestamp / 10);
+
+                $cacheKey = 'email_open:' . $messageId . ':' . $bucket;
+                if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
+                    return; // duplicate
+                }
                 $supplierLead = D7LeadSupplier::where('email', $email)
                     ->latest('id')
                     ->first();
 
-                $clickAt = $clickTime ? \Carbon\Carbon::parse($clickTime) : now();
+
+
+                $d7OpenEmailReport = EmailLog::where('message_id', $messageId)->first();
+
+
+                $emailDateTime = $d7OpenEmailReport->created_at->format('Y-m-d H:i:s');
+
 
                 if ($email && $messageId) {
 
@@ -376,21 +397,17 @@ class d7LeadSupplierController extends Controller
                         'supplier_email' => $email,
                     ]);
 
-                    $lastClick = $report->click_at ? \Carbon\Carbon::parse($report->click_at) : null;
 
-                    // duplicate webhook check
-                    if (!$lastClick || $lastClick->timestamp !== $clickAt->timestamp) {
 
-                        $report->increment('click_count');
+                    $report->increment('click_count');
 
-                        $report->update([
-                            'click_at' => $clickAt->format('Y-m-d H:i:s')
-                        ]);
+                    $report->update([
+                        'open_at' => $emailDateTime
+                    ]);
 
-                        if ($supplierLead && $supplierLead->zoho_account_record_id) {
-                            app(ZohoImportService::class)
-                                ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
-                        }
+                    if ($supplierLead && $supplierLead->zoho_account_record_id) {
+                        app(ZohoImportService::class)
+                            ->addMarketingContactHistory($supplierLead->zoho_account_record_id, $messageId);
                     }
                 }
 

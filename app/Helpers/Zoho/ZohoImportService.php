@@ -46,12 +46,12 @@ class ZohoImportService
 
                         $lastData = [
                             'email' => trim($row['email']),
-                           // 'name' => $row['name'] ?? null,
-                           // 'phone' => $row['phone'] ?? null,
+                            // 'name' => $row['name'] ?? null,
+                            // 'phone' => $row['phone'] ?? null,
                             //'website' => $row['website'] ?? null,
                             'campaign_opened_time' => $row['campaign_opened_time'] ?? null,
-                           // 'main_service_type' => $row['main_service_type'] ?? null,
-                           // 'lead_source' => $row['lead_source'] ?? null,
+                            // 'main_service_type' => $row['main_service_type'] ?? null,
+                            // 'lead_source' => $row['lead_source'] ?? null,
                         ];
                     } else {
 
@@ -103,12 +103,12 @@ class ZohoImportService
 
                     $payload = [
                         'data' => [[
-                          //  'Account_Name' => $accountName,
+                            //  'Account_Name' => $accountName,
                             'Company_Email' => $email,
-                          //  'Phone' => $phone,
-                          //  'Website' => $website,
-                           // 'Main_Service_Type' => $firstRow['main_service_type'] ?? null,
-                           // 'Lead_Source' => $firstRow['lead_source'] ?? null,
+                            //  'Phone' => $phone,
+                            //  'Website' => $website,
+                            // 'Main_Service_Type' => $firstRow['main_service_type'] ?? null,
+                            // 'Lead_Source' => $firstRow['lead_source'] ?? null,
                         ]]
                     ];
 
@@ -188,7 +188,7 @@ class ZohoImportService
                 // ======================
                 // RELATED MODULE
                 // ======================
-               
+
                 $relatedPayload = ['data' => []];
 
                 foreach ($grouped as $email => $rowsGroup) {
@@ -218,7 +218,7 @@ class ZohoImportService
                             'name' => trim($name),
                         ]));
 
-                         $relatedCount++;
+                        $relatedCount++;
                         $relatedPayload['data'][] = [
                             'Account' => ['id' => $accountId],
                             'CLICK' => $click !== null ? (string)$click : null,
@@ -241,7 +241,7 @@ class ZohoImportService
                         ->json();
                 }
 
-               usleep(2000000);
+                usleep(2000000);
             } catch (\Throwable $e) {
 
                 Log::error('Zoho Import Exception: ' . $e->getMessage(), [
@@ -412,16 +412,22 @@ class ZohoImportService
         $dateRaw = $open_at ?? $click_at ?? now();
 
         $date = $dateRaw
-            ? Carbon::parse($dateRaw)->format('n/j/Y H:i:s')
+            ? Carbon::parse($dateRaw)->format('d-m-Y H:i:s')
             : null;
 
         // unique key
+        // $UniqueKey = md5(json_encode([
+        //     'account' => $accountId,
+        //     'date'    => (string)$date,
+        //     'click'   => (string)$click,
+        //     'open'    => (string)$open,
+        //     'name'    => $name . $messageId,
+        // ]));
+
         $UniqueKey = md5(json_encode([
-            'account' => $accountId,
-            'date'    => (string)$date,
-            'click'   => (string)$click,
-            'open'    => (string)$open,
-            'name'    => $name . $messageId,
+            'account'   => $accountId,
+            'messageId' => $messageId,
+            'subject'   => trim(strtolower($name)), // normalize subject
         ]));
 
         $relatedPayload['data'][] = [
