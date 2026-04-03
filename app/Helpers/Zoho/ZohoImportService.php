@@ -46,12 +46,12 @@ class ZohoImportService
 
                         $lastData = [
                             'email' => trim($row['email']),
-                            'name' => $row['name'] ?? null,
-                            'phone' => $row['phone'] ?? null,
-                            'website' => $row['website'] ?? null,
+                           // 'name' => $row['name'] ?? null,
+                           // 'phone' => $row['phone'] ?? null,
+                            //'website' => $row['website'] ?? null,
                             'campaign_opened_time' => $row['campaign_opened_time'] ?? null,
-                            'main_service_type' => $row['main_service_type'] ?? null,
-                            'lead_source' => $row['lead_source'] ?? null,
+                           // 'main_service_type' => $row['main_service_type'] ?? null,
+                           // 'lead_source' => $row['lead_source'] ?? null,
                         ];
                     } else {
 
@@ -103,12 +103,12 @@ class ZohoImportService
 
                     $payload = [
                         'data' => [[
-                            'Account_Name' => $accountName,
+                          //  'Account_Name' => $accountName,
                             'Company_Email' => $email,
-                            'Phone' => $phone,
-                            'Website' => $website,
-                            'Main_Service_Type' => $firstRow['main_service_type'] ?? null,
-                            'Lead_Source' => $firstRow['lead_source'] ?? null,
+                          //  'Phone' => $phone,
+                          //  'Website' => $website,
+                           // 'Main_Service_Type' => $firstRow['main_service_type'] ?? null,
+                           // 'Lead_Source' => $firstRow['lead_source'] ?? null,
                         ]]
                     ];
 
@@ -429,7 +429,7 @@ class ZohoImportService
             'CLICK'            => (string)$click,
             'OPEN'             => (string)$open,
             'EMAIL_DATE_TIME'  => $date,
-            'SOURCE'           => 'D7 Supplier Send Mail',
+            'SOURCE_D7_CAMPAIGN'  => 'D7 Supplier Send Mail',
             'Name'             => $name ?: 'D7 Supplier Send Mail',
             'Unique_Key'       => $UniqueKey,
         ];
