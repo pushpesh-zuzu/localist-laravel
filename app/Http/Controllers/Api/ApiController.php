@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\Bid;
 use App\Models\UserDetail;
+use App\Models\Postcode;
 use App\Models\UserAccreditation;
 use App\Models\UserServiceDetail;
 use App\Models\ProfileQuestion;
@@ -59,77 +60,99 @@ class ApiController extends Controller
         $postcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
 
         // Validate UK postcode format
-        if (!preg_match('/^(GIR 0AA|[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2})$/', $postcode)) {
+        if (!preg_match('/^(GIR\s?0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/i', $postcode)) {
             return $this->sendError('Invalid UK postcode format.');
         }
         // print_r($postcode);
-        try {
-            $response = Http::timeout(5)->get("https://api.ideal-postcodes.co.uk/v1/postcodes/" .$postcode ."?api_key=" .$apiKey);
 
-            $data = $response->json();
-            // print_r($data);
-
-            // Handle "postcode not found" (valid API response with 4040 code)
-            if (($data['code'] ?? null) === 4040) {
-                return $this->sendError('Postcode not found.');
-            }
-
-        
-            // Handle other API failures
-            if (!$response->successful()) {
-                $errMsg = "Unable to fetch address list";
-                if(!empty($data['message'])){
-                    $errMsg = $data['message'];
+        $dbPostcode = Postcode::where('postcode', $postcode)->first();
+        if (empty($dbPostcode)) {
+            $tempCord = CustomHelper::getCoordinates($postcode);
+            if (!empty($tempCord)) {
+                $cordArr = json_decode($tempCord, true);
+                if (!empty($cordArr['lat']) && !empty($cordArr['lng'])) {
+                    Postcode::insertGetId([
+                        'postcode' => $postcode,
+                        'latitude' => $cordArr['lat'],
+                        'longitude' => $cordArr['lng'],
+                    ]);
                 }
-                return $this->sendError('Error: ' .$errMsg);
             }
+        }
+        if(empty($dbPostcode->address_list)){
+            try {
+                $response = Http::timeout(5)->get("https://api.ideal-postcodes.co.uk/v1/postcodes/" .$postcode ."?api_key=" .$apiKey);
 
-            $results = $data['result'] ?? [];
+                $data = $response->json();
+                // print_r($data);
+
+                // Handle "postcode not found" (valid API response with 4040 code)
+                if (($data['code'] ?? null) === 4040) {
+                    return $this->sendError('Postcode not found.');
+                }
+
             
+                // Handle other API failures
+                if (!$response->successful()) {
+                    $errMsg = "Unable to fetch address list";
+                    if(!empty($data['message'])){
+                        $errMsg = $data['message'];
+                    }
+                    return $this->sendError('Error: ' .$errMsg);
+                }
 
-            $addressList = collect($results)
-                ->map(function ($item) {
+                $results = $data['result'] ?? [];
+                
 
-                    // CASE 1: Commercial
-                    if (!empty($item['organisation_name'])) {
+                $addressList = collect($results)
+                    ->map(function ($item) {
 
+                        // CASE 1: Commercial
+                        if (!empty($item['organisation_name'])) {
+
+                            return [
+                                'house_name' => $item['organisation_name'],
+
+                                'street_address' => implode(', ', array_filter([
+                                    $item['building_name'] ?? null,
+                                    $item['thoroughfare'] ?? null,
+                                    $item['dependant_locality'] ?? null,
+                                    $item['post_town'] ?? null,
+                                ])),
+
+                                'postcode' => $item['postcode'] ?? '',
+                            ];
+                        }
+
+                        // CASE 2: Residential
                         return [
-                            'house_name' => $item['organisation_name'],
+                            'house_name' => $item['building_number'] ?? $item['building_name'],
 
                             'street_address' => implode(', ', array_filter([
-                                $item['building_name'] ?? null,
                                 $item['thoroughfare'] ?? null,
-                                $item['dependant_locality'] ?? null,
                                 $item['post_town'] ?? null,
                             ])),
 
                             'postcode' => $item['postcode'] ?? '',
                         ];
-                    }
+                    })
+                    ->sort(function ($a, $b) {
+                        return strnatcasecmp($a['house_name'], $b['house_name']);
+                    })
+                    ->values()
+                    ->toArray();
+                Postcode::where('postcode',$postcode)->update(array(
+                    'address_list' => json_encode($addressList)
+                ));
+                return $this->sendResponse('Address List.', $addressList);
 
-                    // CASE 2: Residential
-                    return [
-                        'house_name' => $item['building_number'] ?? $item['building_name'],
-
-                        'street_address' => implode(', ', array_filter([
-                            $item['thoroughfare'] ?? null,
-                            $item['post_town'] ?? null,
-                        ])),
-
-                        'postcode' => $item['postcode'] ?? '',
-                    ];
-                })
-                ->sort(function ($a, $b) {
-                    return strnatcasecmp($a['house_name'], $b['house_name']);
-                })
-                ->values()
-                ->toArray();
-
-            return $this->sendResponse('Address List.', $addressList);
-
-        }  catch (\Exception $e) {
-            return $this->sendError('Error: ' .$e->getMessage());
+            }  catch (\Exception $e) {
+                return $this->sendError('Error: ' .$e->getMessage());
+            }
+        }else{
+            return $this->sendResponse('Address List.', json_decode($dbPostcode->address_list));
         }
+        
     }
 
 
