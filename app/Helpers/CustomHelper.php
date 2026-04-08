@@ -556,7 +556,7 @@ class CustomHelper
         }
 
         // Strict UK postcode format
-        $isValidFormat = preg_match('/^(GIR 0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/', $postcode);
+        $isValidFormat = preg_match('/^(GIR\s?0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/i', $postcode);
 
         if (!$isValidFormat) {
             return [
