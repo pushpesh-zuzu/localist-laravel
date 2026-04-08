@@ -56,12 +56,7 @@ class ApiController extends Controller
         $apiKey = CustomHelper::setting_value('postcode_address_key');
 
         // Normalize postcode (standard UK format)
-        $postcode = strtoupper(trim($request->postcode));
-        $postcode = preg_replace('/\s+/', '', $postcode);
-
-        if (strlen($postcode) > 3) {
-            $postcode = substr($postcode, 0, -3) . ' ' . substr($postcode, -3);
-        }
+        $postcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
 
         // Validate UK postcode format
         if (!preg_match('/^(GIR 0AA|[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2})$/', $postcode)) {
@@ -422,8 +417,8 @@ class ApiController extends Controller
         if($validator->fails()){
             return $this->sendError($validator->errors());
         }
-
-        $res = CustomHelper::getCityNameFromPostcode($request->postcode);
+        $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
+        $res = CustomHelper::getCityNameFromPostcode($reqPostcode);
         if(!empty($res['valid']) && $res['valid'] == true){
             return $this->sendResponse('City Name Found', $res);        
         }else{

@@ -334,7 +334,8 @@ class UserController extends Controller
             $user->update(['remember_token' => $token]);
 
             $userdetails = UserDetail::where('user_id',$user->id)->first();
-
+            $zipcode = CustomHelper::normalizeInUKPostcodeFormate($request->zipcode);
+            $zipcode_old = CustomHelper::normalizeInUKPostcodeFormate($request->zipcode_old);
             if(empty($userdetails))
             {
                 UserDetail::create([
@@ -344,7 +345,7 @@ class UserController extends Controller
                     'billing_address1' => $request->apartment,
                     'billing_address2' => $request->address,
                     'billing_city' => $request->city,
-                    'billing_postcode' => ($request->zipcode) ? $request->zipcode : $request->zipcode_old ,
+                    'billing_postcode' => ($request->zipcode) ? $zipcode : $zipcode_old ,
                     'billing_phone' => $request->phone,
                     'billing_vat_register' => 1,
                 ]);
@@ -377,11 +378,11 @@ class UserController extends Controller
                     $aLocations['service_id'] = $serviceId;
                     $aLocations['user_service_id'] = $service->id;
                     $aLocations['user_id'] = $user->id;
-
+                    $servicePostcode = CustomHelper::normalizeInUKPostcodeFormate($aVals['postcode']);
                     if($index === 0){ // for primary category
                         $aLocations['miles'] = !empty($aVals['miles1']) ? $aVals['miles1'] : 0;
                         $aLocations['nation_wide'] = !empty($aVals['nation_wide']) ? $aVals['nation_wide'] : 0;
-                        $aLocations['postcode'] = $aVals['postcode'];
+                        $aLocations['postcode'] = $servicePostcode;
                         $aLocations['city'] = $aVals['cities'];
                         $aLocations['type'] = !empty($aVals['nation_wide']) ? "Nationwide" : "Distance";
                         $aLocations['coordinates'] = $aVals['coordinates'];
@@ -391,8 +392,9 @@ class UserController extends Controller
                         }else{
                             $aLocations['miles'] = $aVals['miles2'];
                         }
+                        $postcode2 = CustomHelper::normalizeInUKPostcodeFormate($aVals['postcode2']);
                         $aLocations['nation_wide'] = 0;
-                        $aLocations['postcode'] = !empty($aVals['postcode2']) ? $aVals['postcode2'] : "000000";
+                        $aLocations['postcode'] = !empty($aVals['postcode2']) ? $postcode2 : "000000";
                         $aLocations['city'] = null;
                         $aLocations['type'] = "Distance";
                         $aLocations['coordinates'] = "[]";

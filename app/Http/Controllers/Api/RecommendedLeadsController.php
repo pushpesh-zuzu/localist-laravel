@@ -184,7 +184,7 @@ class RecommendedLeadsController extends Controller
         $ratingFilter = $request->rating ?? [];
 
         // check if request postcode exists in postcode table, if not then get coordinates and save
-        $reqPostcode = $lead->postcode;
+        $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($lead->postcode);
         if(!empty($reqPostcode)){
             $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
             if(empty($dbPostcode)){

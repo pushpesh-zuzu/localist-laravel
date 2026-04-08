@@ -119,7 +119,8 @@ class MyRequestController extends Controller
                     $dataUser['phone'] = $cleanPhone;
                 }
             }
-            $dataUser['zipcode'] = $request->postcode;
+            $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
+            $dataUser['zipcode'] = $reqPostcode;
             $dataUser['city'] = $request->city;
             $dataUser['questions'] = $request->questions;
             $dataUser['service_id'] = $request->service_id;
@@ -157,7 +158,7 @@ class MyRequestController extends Controller
             $user = AbandonedUser::where('id', $euId)->first();
 
             $rel['user_id'] = $euId;
-            $rel['postcode'] = $request->postcode;
+            $rel['postcode'] = $reqPostcode;
             $rel['user_type'] = $user->user_type;
             $rel['form_status'] = $user->form_status;
             $rel['active_status'] = $user->active_status;
@@ -205,7 +206,7 @@ class MyRequestController extends Controller
             $dataUser['user_type'] = 2;
             $dataUser['active_status'] = 2;
             $dataUser['form_status'] = 0;
-            $dataUser['zipcode'] = $request->postcode;
+            $dataUser['zipcode'] = $reqPostcode;
             $dataUser['city'] = $request->city;
             $dataUser['questions'] = $request->questions;
             $dataUser['service_id'] = $request->service_id;
@@ -242,7 +243,6 @@ class MyRequestController extends Controller
         }
 
         // check if request postcode exists in postcode table, if not then get coordinates and save
-        $reqPostcode = $request->postcode;
         if (!empty($reqPostcode)) {
             CustomHelper::runInBackground(function () use ($reqPostcode) {
                 $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
@@ -512,7 +512,7 @@ class MyRequestController extends Controller
         }
 
         // check if request postcode exists in postcode table, if not then get coordinates and save
-        $reqPostcode = $request->postcode;
+        $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
         if (!empty($reqPostcode)) {
             CustomHelper::runInBackground(function () use ($reqPostcode) {
                 $dbPostcode = Postcode::where('postcode', $reqPostcode)->first();
@@ -536,7 +536,7 @@ class MyRequestController extends Controller
         $data['customer_id'] = $euId;
         $data['service_id'] = $serviceId;
         $data['city'] = $request->city;
-        $data['postcode'] = $request->postcode;
+        $data['postcode'] = $reqPostcode;
 
         // remove null from question
         $jQuestions = $request->questions;
@@ -584,7 +584,7 @@ class MyRequestController extends Controller
         $creditScoreModel = Category::where('id', $serviceId)->value('credit_score_model');
 
         if ($creditScoreModel === 'python') {
-            $predict['Location'] = $request->city . ', ' . strtoupper($request->postcode);
+            $predict['Location'] = $request->city . ', ' . strtoupper($reqPostcode);
             $predict['Urgent'] = $data['is_urgent'];
             $predict['High'] = $data['is_high_hiring'];
             $predict['Verified'] = $data['is_phone_verified'];

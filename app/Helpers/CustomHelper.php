@@ -742,6 +742,18 @@ class CustomHelper
         ];
     }
 
+    public static function normalizeInUKPostcodeFormate($inputPostcode){
+        // Normalize postcode (standard UK format)
+        $postcode = strtoupper(trim($inputPostcode));
+        $postcode = preg_replace('/\s+/', '', $postcode);
+
+        // if (strlen($postcode) > 3) {
+        //     $postcode = substr($postcode, 0, -3) . ' ' . substr($postcode, -3);
+        // }
+
+        return $postcode;
+    }
+
     private static function calculateDistanceMiles($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 3958.8; // miles

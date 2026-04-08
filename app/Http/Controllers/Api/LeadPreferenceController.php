@@ -805,7 +805,7 @@ class LeadPreferenceController extends Controller
                     $locData['user_service_id'] =  $userService->id;
                     $locData['miles'] =  $loc->miles;
                     $locData['nation_wide'] =  $loc->nation_wide;
-                    $locData['postcode'] =  $loc->postcode;
+                    $locData['postcode'] =  CustomHelper::normalizeInUKPostcodeFormate($loc->postcode);
                     $locData['city'] =  $loc->city;
                     $locData['travel_time'] =  $loc->travel_time;
                     $locData['travel_by'] =  $loc->travel_by;
@@ -944,8 +944,10 @@ class LeadPreferenceController extends Controller
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
+
+        $postcode = CustomHelper::normalizeInUKPostcodeFormate($aVals['postcode']);
         $userlocations = UserServiceLocation::where('user_id', $userId)
-            ->where('postcode', $aVals['postcode'])
+            ->where('postcode', $postcode)
             ->where('miles', $aVals['miles'])
             ->where('type', $aVals['type'])
             ->first();
@@ -1001,7 +1003,7 @@ class LeadPreferenceController extends Controller
                         'user_id' => $aVals['user_id'],
                         'service_id' => $serviceId,
                         'user_service_id' => $userServiceId,
-                        'postcode' => $aVals['postcode'],
+                        'postcode' => $postcode,
                         'type' => $aVals['type'],
                         'miles' => $aVals['miles'],
                         'nation_wide' => $nationWide,
@@ -1137,6 +1139,7 @@ class LeadPreferenceController extends Controller
 
             $userServiceId = $userService->id;
 
+            
             $isPostcodeChanged = ($aVals['postcode_old'] ?? '') != $aVals['postcode'];
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
 
@@ -1171,7 +1174,7 @@ class LeadPreferenceController extends Controller
                 'user_id' => $userId,
                 'service_id' => $serviceId,
                 'user_service_id' => $userServiceId,
-                'postcode' => $aVals['postcode'],
+                'postcode' => CustomHelper::normalizeInUKPostcodeFormate($aVals['postcode']),
                 'city' => $aVals['city'] ?? '',
                 'miles' => $aVals['miles'],
                 'type' => $aVals['type'],
