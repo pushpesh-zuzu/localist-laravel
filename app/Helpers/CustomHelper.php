@@ -547,13 +547,7 @@ class CustomHelper
         $apiKey = CustomHelper::setting_value('google_maps_api');
 
         // Normalize postcode
-        $postcode = strtoupper(trim($postcode));
-        $postcode = preg_replace('/\s+/', '', $postcode);
-
-        // Insert space before last 3 characters
-        if (strlen($postcode) > 3) {
-            $postcode = substr($postcode, 0, -3) . ' ' . substr($postcode, -3);
-        }
+        $postcode = $this->normalizeInUKPostcodeFormate($postcode);
 
         // Strict UK postcode format
         $isValidFormat = preg_match('/^(GIR\s?0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/i', $postcode);
