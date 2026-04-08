@@ -547,7 +547,7 @@ class CustomHelper
         $apiKey = CustomHelper::setting_value('google_maps_api');
 
         // Normalize postcode
-        $postcode = $this->normalizeInUKPostcodeFormate($postcode);
+        $postcode = CustomHelper::normalizeInUKPostcodeFormate($postcode);
 
         // Strict UK postcode format
         $isValidFormat = preg_match('/^(GIR\s?0AA|[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})$/i', $postcode);
