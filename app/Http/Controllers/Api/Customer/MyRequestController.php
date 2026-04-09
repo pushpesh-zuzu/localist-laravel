@@ -87,6 +87,9 @@ class MyRequestController extends Controller
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
+        
+        $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
+
         if ($request->form_status == "1") {
             $validator2 = Validator::make($request->all(), [
                 'name' => 'required',
@@ -119,7 +122,7 @@ class MyRequestController extends Controller
                     $dataUser['phone'] = $cleanPhone;
                 }
             }
-            $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
+            
             $dataUser['zipcode'] = $reqPostcode;
             $dataUser['city'] = $request->city;
             $dataUser['questions'] = $request->questions;
