@@ -114,11 +114,11 @@ class ApiController extends Controller
                                 'house_name' => $item['organisation_name'],
 
                                 'street_address' => implode(', ', array_filter([
-                                    $item['building_name'] ?? null,
-                                    $item['thoroughfare'] ?? null,
-                                    $item['dependant_locality'] ?? null,
-                                    $item['post_town'] ?? null,
-                                ])),
+                                    trim($item['building_name'] ?? ''),
+                                    trim($item['thoroughfare'] ?? ''),
+                                    trim($item['dependant_locality'] ?? ''),
+                                    trim($item['post_town'] ?? ''),
+                                ], fn($v) => $v !== '')),
 
                                 'postcode' => $item['postcode'] ?? '',
                             ];
@@ -126,8 +126,8 @@ class ApiController extends Controller
 
                         // CASE 2: Residential
                         return [
-                            'house_name' => $item['building_number'] ?? $item['building_name'],
-
+                            'house_name' => !empty($item['building_number']) ? $item['building_number'] : 
+                                (!empty($item['building_name']) ? $item['building_name'] : null),
                             'street_address' => implode(', ', array_filter([
                                 $item['thoroughfare'] ?? null,
                                 $item['post_town'] ?? null,
