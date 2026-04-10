@@ -146,7 +146,7 @@ class LeadPreferenceController extends Controller
             
         }); 
 
-        return $this->sendResponse(__('Lead Request Data'), $allLeads->values());
+        return $this->sendResponse( count($allLeads) .' Lead Request Data', $allLeads->values());
     }
 
     private function addLeadViewCount($baseLeads)

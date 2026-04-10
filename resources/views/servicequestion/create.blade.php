@@ -62,6 +62,13 @@
           <h6>Options</h6>
           <div class="row mb-3">
             <div class="col-md-12">
+              @php
+                $answerArray = array();
+                if(!empty($aRow) && !empty($aRow->answer)){
+                  $answerArray = json_decode($aRow->answer, true);
+                }
+              @endphp
+              @if(empty($answerArray))
               <div class="row">
                 <div class="col-md-7 d-flex align-items-center gap-2">
                     {{-- <strong>1. </strong> --}}
@@ -74,9 +81,29 @@
                     <input type="text" class="form-control" placeholder="Next Question Number" name="next_ques[]" id="next_ques" pattern="^\d+$|^last$" title="Enter a number or the word 'last'" required>
                 </div>
               </div>
+              @else
+                  @foreach($answerArray as $index => $ans)
+                  <div class="row" id="remove-section-option-pre-{{$index+1}}" style="margin-top:10px;">
+                    <div class="col-md-7 d-flex align-items-center gap-2">
+                        {{-- <strong> {{$count+1}}. </strong> --}}
+                      <input type="hidden" name="old_ques_opt[]" value="{{$ans['option']}}" />
+                      <input type="text" class="form-control" placeholder="Question Option" name="ques_opt[]" id="ques_opt{{$index+1}}" value="{{$ans['option']}}" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center gap-2">
+                        <input type="number" class="form-control" placeholder="Score" name="ques_score[]" id="ques_score{{$index+1}}" min="1" max="50" value="{{$ans['score'] ?? 1}}" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center gap-2">
+                        <input type="text" class="form-control" placeholder="Next Question Number" name="next_ques[]" id="next_ques{{$index+1}}" value="{{$ans['next_question']}}" pattern="^\d+$|^last$" title="Enter a number or the word 'last'" required>
+                        @if($index > 0)
+                          <i class="fa-solid fa-trash" style="color:red; cursor: pointer; " data-request="remove" data-target="#remove-section-option-pre-{{$index+1}}"></i>
+                        @endif
+                    </div>
+                  </div>
+                  @endforeach
+              @endif
               <div id="consDiv" style="margin-top:10px;"></div>              
               <hr />
-              <button  data-url="{{url('servicequestion/add-more-option')}}"   data-request="add-another" data-id="ques_opt" data-target="#consDiv" data-count="1" type="button" class="btn btn-info">Add More Option</button>
+              <button  data-url="{{url('servicequestion/add-more-option')}}"   data-request="add-another" data-id="ques_opt" data-target="#consDiv" data-count="{{count($answerArray)}}" type="button" class="btn btn-info">Add More Option</button>
             </div>
           </div>
 
