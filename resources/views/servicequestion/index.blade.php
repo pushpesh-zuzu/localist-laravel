@@ -56,13 +56,17 @@
             <td>{{ $aRow->question_type ?? '' }}</td>
             <td>{{ $aRow->status == 1 ? 'Active' : 'Inactive' }}</td>
             <td>
+                @can('servicequestions.edit')
                   <a href="{{ route('servicequestion.edit',$aRow->id) }}" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Edit"><i class="icon  cil-pencil"></i></a>
+                @endcan
+                @can('servicequestions.delete')
                   <a href="javascript:void(0);" onclick="jQuery(this).parent('td').find('#delete-form').submit();" data-coreui-toggle="tooltip" data-coreui-placement="top" data-coreui-original-title="Delete"><i class="icon cil-trash"></i>
                   </a>
                   <form id="delete-form" onsubmit="return confirm('Are you sure to delete?');" action="{{ route('servicequestion.destroy',$aRow->id) }}" method="post" style="display: none;">
                     {{ method_field('DELETE') }}
                     {{ csrf_field() }}
                   </form>
+                  @endcan
               </td>
           </tr>
           @endforeach
