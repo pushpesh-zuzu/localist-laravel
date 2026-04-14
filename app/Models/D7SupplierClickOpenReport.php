@@ -15,6 +15,7 @@ class D7SupplierClickOpenReport extends Model
         'click_count',
         'open_at',
         'click_at',
+        'webhook_request_id',
     ];
 
     protected $casts = [

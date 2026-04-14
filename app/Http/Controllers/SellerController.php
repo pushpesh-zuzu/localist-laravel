@@ -50,8 +50,8 @@ class SellerController extends Controller
 
         $query = User::whereIn('user_type', [1, 3])
             ->where('form_status', 1)
-            ->with('lastLogin') // eager load latest login
-            ->orderBy('id', 'DESC');
+            ->with('lastLogin'); // eager load latest login
+           // ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('created_at', [
@@ -74,8 +74,8 @@ class SellerController extends Controller
     {
         abort_if(!auth()->user()->can('leadbuyerscontact.viewlist'), 403, __('User does not have the right permissions.'));
 
-        $query = ContactUs::where('user_type', 2)
-            ->orderBy('id', 'DESC');
+        $query = ContactUs::where('user_type', 2);
+           // ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('created_at', [
@@ -194,8 +194,8 @@ class SellerController extends Controller
         abort_if(!auth()->user()->can('leadbuyers.incomplete-viewlist'), 403, __('User does not have the right permissions.'));
 
         $query = AbandonedUser::whereIn('user_type', [1, 3])
-            ->where('form_status', 0)
-            ->orderBy('id', 'DESC');
+            ->where('form_status', 0);
+           // ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('created_at', [

@@ -159,7 +159,7 @@ class D7LeadFinderService
 
     public function getSearchSuppliers()
     {
-        Log::info('Suppliers API Response');
+        //Log::info('Suppliers API Response');
         $sendEmail = EmailSetting::where('setting_name', 'D7 Supplier Send Mail')
             ->value('setting_value');
 

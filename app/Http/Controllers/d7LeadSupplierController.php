@@ -324,22 +324,13 @@ class d7LeadSupplierController extends Controller
 
                 $email = $request->input('event_message.0.email_info.to.0.email_address.address');
                 $openTime = $request->input('event_message.0.event_data.0.details.0.time');
+                $webhookId = $request->input('webhook_request_id');
 
                 $supplierLead = D7LeadSupplier::where('email', $email)
                     ->latest('id')
                     ->first();
 
-                $timestamp = \Carbon\Carbon::parse($openTime)->timestamp;
-                $bucket = floor($timestamp / 10);
-
-                $cacheKey = 'email_open:' . $messageId . ':' . $bucket;
-
-                if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
-                    return; // duplicate
-                }
                 $d7OpenEmailReport = EmailLog::where('message_id', $messageId)->first();
-
-
                 $emailDateTime = $d7OpenEmailReport->created_at->format('Y-m-d H:i:s');
 
                 if ($email && $messageId) {
@@ -349,12 +340,27 @@ class d7LeadSupplierController extends Controller
                         'supplier_email' => $email,
                     ]);
 
+                    // ✅ SAFE duplicate check (array based)
+                    $existingIds = [];
 
-                    $report->increment('open_count');
+                    if (!empty($report->webhook_request_id)) {
+                        $existingIds = explode(',', $report->webhook_request_id);
+                    }
 
+                    if (in_array($webhookId, $existingIds)) {
+                        return; // duplicate webhook
+                    }
+
+                    // add new webhook id
+                    $existingIds[] = $webhookId;
+
+                    // update + increment
                     $report->update([
+                        'webhook_request_id' => implode(',', $existingIds),
                         'open_at' => $emailDateTime
                     ]);
+
+                    $report->increment('open_count');
 
                     if ($supplierLead && $supplierLead->zoho_account_record_id) {
                         app(ZohoImportService::class)
@@ -362,33 +368,20 @@ class d7LeadSupplierController extends Controller
                     }
                 }
 
-
-
                 break;
 
             case 'email_link_click':
 
                 $email = $request->input('event_message.0.email_info.to.0.email_address.address');
                 $clickTime = $request->input('event_message.0.event_data.0.details.0.time');
+                $webhookId = $request->input('webhook_request_id');
 
-                $timestamp = \Carbon\Carbon::parse($clickTime)->timestamp;
-                $bucket = floor($timestamp / 10);
-
-                $cacheKey = 'email_open:' . $messageId . ':' . $bucket;
-                if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
-                    return; // duplicate
-                }
                 $supplierLead = D7LeadSupplier::where('email', $email)
                     ->latest('id')
                     ->first();
 
-
-
                 $d7OpenEmailReport = EmailLog::where('message_id', $messageId)->first();
-
-
                 $emailDateTime = $d7OpenEmailReport->created_at->format('Y-m-d H:i:s');
-
 
                 if ($email && $messageId) {
 
@@ -397,13 +390,29 @@ class d7LeadSupplierController extends Controller
                         'supplier_email' => $email,
                     ]);
 
+                    // ✅ SAFE duplicate check (array based)
+                    $existingIds = [];
 
+                    if (!empty($report->webhook_request_id)) {
+                        $existingIds = explode(',', $report->webhook_request_id);
+                    }
 
-                    $report->increment('click_count');
+                    if (in_array($webhookId, $existingIds)) {
+                        return; // duplicate webhook
+                    }
+
+                    // add new webhook id
+                    $existingIds[] = $webhookId;
+
+                    // optional limit (recommended)
+                    $existingIds = array_slice($existingIds, -50);
 
                     $report->update([
+                        'webhook_request_id' => implode(',', $existingIds),
                         'open_at' => $emailDateTime
                     ]);
+
+                    $report->increment('click_count');
 
                     if ($supplierLead && $supplierLead->zoho_account_record_id) {
                         app(ZohoImportService::class)

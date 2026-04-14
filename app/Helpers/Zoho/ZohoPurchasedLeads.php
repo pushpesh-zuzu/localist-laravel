@@ -2,6 +2,7 @@
 
 namespace App\Helpers\Zoho;
 
+use App\Helpers\CustomHelper;
 use App\Models\Category;
 use App\Models\LeadRequest;
 use App\Models\RecommendedLead;
@@ -89,6 +90,7 @@ class ZohoPurchasedLeads
         $lookUpId = ZohoHelper::getZohoLeadBuyerId($accessToken, $userId);
         $userName = User::find($userId)->name;
         $LeadBuyerPhone = User::find($recommendedLeads->seller_id)->phone;
+        $businessProfileName = User::find($recommendedLeads->seller_id)->business_profile_name;
         $LeadBuyerName = User::find($recommendedLeads->seller_id)->name;
         $userPhone = User::find($recommendedLeads->buyer_id)->phone;
         $userEmail = User::find($recommendedLeads->buyer_id)->email;
@@ -125,6 +127,13 @@ class ZohoPurchasedLeads
             ? implode("\n\n", $questionBlocks)
             : null;
 
+
+        $profileLink = rtrim(CustomHelper::setting_value('postlogin_react_base_url'), '/')
+            . '/view-profile/'
+            . strtolower(preg_replace('/\s+/', '-', trim($LeadBuyerName)))
+            . '/'
+            . $recommendedLeads->seller_id;
+
         return [
             'data' => [[
                 'Lead_Purchased_Id'     => $recommendedLeads->id,
@@ -144,12 +153,16 @@ class ZohoPurchasedLeads
                 'Final_Price'           => (string) ($recommendedLeads->final_price ?? ''),
                 'Lead_Post_Code'           => (string) ($postcode  ?? ''),
                 'Customer_Email'           => (string) ($userEmail ?? ''),
-                'Customer_Phone'           => $userPhone = str_starts_with($userPhone ?? '', '+44')
-                    ? '0' . substr($userPhone, 3)
+                'Customer_Phone' => str_starts_with((string) ($userPhone ?? ''), '+44')
+                    ? '0' . substr((string) $userPhone, 3)
                     : (string) ($userPhone ?? ''),
                 'Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
                 'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? ''),
                 'Question_Answers'             => $formattedQA,
+                'Profile_Link'             => $profileLink,
+                'Customer_WhatsApp_Number'  => $userPhone,
+                'Business_Profile_Name'  => $businessProfileName,
+                
 
             ]],
             'duplicate_check_fields' => ['Lead_Purchase_Id']

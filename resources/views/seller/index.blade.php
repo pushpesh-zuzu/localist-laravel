@@ -101,6 +101,10 @@ $('#dataTable').DataTable({
         },        
     ]
      ,
+     order: [
+        [0, 'desc']
+      ],
+
     "language": {
       "emptyTable": "No records found"
     }
