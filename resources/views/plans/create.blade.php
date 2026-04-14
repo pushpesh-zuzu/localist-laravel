@@ -89,7 +89,7 @@
               <select required id="plan_type"  name="plan_type" class="form-control{{ $errors->has('plan_type') ? ' is-invalid' : '' }}" >
                 <option value="">Select Any</option>
                 <option value="normal" @if($aRow && $aRow->plan_type == 'normal') selected  @endif>Normal Plan</option>
-                <option value="starter" @if($aRow && $aRow->plan_type == 'starter') selected  @endif>Starter Pack</option>
+                <!-- <option value="starter" @if($aRow && $aRow->plan_type == 'starter') selected  @endif>Starter Pack</option> -->
               </select>
              
               
