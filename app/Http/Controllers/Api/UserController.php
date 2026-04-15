@@ -901,7 +901,7 @@ class UserController extends Controller
         ]);
 
         CustomHelper::runInBackground(function() use ($userId) {
-            app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($userId);
+            app(ZohoLeadBuyers::class)->updateZohoLeadBuyerPhoneEmailDeatil($userId);
         });
         return $this->sendResponse('User Profile updated');
     }

@@ -134,6 +134,9 @@ class ZohoPurchasedLeads
             . '/'
             . $recommendedLeads->seller_id;
 
+        $leadPhone = self::formatPhone($LeadBuyerPhone);
+        $userPhoneNumber = self::formatPhone($userPhone);
+
         return [
             'data' => [[
                 'Lead_Purchased_Id'     => $recommendedLeads->id,
@@ -156,18 +159,40 @@ class ZohoPurchasedLeads
                 'Customer_Phone' => str_starts_with((string) ($userPhone ?? ''), '+44')
                     ? '0' . substr((string) $userPhone, 3)
                     : (string) ($userPhone ?? ''),
-                'Phone'         =>  (string) ($LeadBuyerPhone ?? ''),
+                'Phone'         =>  (string) ($leadPhone ?? ''),
                 'Lead_Buyer_Name'          =>  (string) ($LeadBuyerName ?? ''),
                 'Question_Answers'             => $formattedQA,
                 'Profile_Link'             => $profileLink,
-                'Customer_WhatsApp_Number'  => $userPhone,
+                'Customer_WhatsApp_Number'  => (string) ($userPhoneNumber ?? ''),
                 'Business_Profile_Name'  => $businessProfileName,
-                
+
 
             ]],
             'duplicate_check_fields' => ['Lead_Purchase_Id']
 
         ];
+    }
+
+
+    public function formatPhone($phone)
+    {
+        $phone = $phone ?? '';
+
+        // Remove only leading zeros (keep +)
+        $phone = ltrim($phone, '0');
+
+        // If starts with +44 → OK
+        if (strpos($phone, '+44') === 0) {
+            return $phone;
+        }
+
+        // If starts with 44 → add +
+        if (strpos($phone, '44') === 0) {
+            return '+' . $phone;
+        }
+
+        // Otherwise → add +44
+        return '+44' . $phone;
     }
 
     protected function upsertToZohoService($accessToken, $recommendedLeads, array $payload)
