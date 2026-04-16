@@ -729,6 +729,36 @@ class UserController extends Controller
         return $this->sendResponse('An email is on the way.');
     }
 
+    public function getUserLoginLink(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError($validator->errors());
+        }
+
+        $user = User::where('email',$request->email)->where('form_status', '1')->first();
+
+        if(empty($user)){
+            return $this->sendError('Given email not found!');
+        }
+        
+        $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
+        $user->update(['remember_token' => $token]);
+
+        $user->remember_tokens = $token;
+
+        $url = CustomHelper::setting_value("react_base_url") . "en/gb/login?client_id=" .base64_encode($token);
+
+        return response()->json([
+            'success'    => true,
+            'message'  => "User login Link",
+            'url'      => $url
+        ]);
+    }
+
 
     public function login(Request $request): JsonResponse
     {

@@ -127,6 +127,9 @@ class BuyerController extends Controller
                 ->addColumn('status', fn($user) => 'Complete')
                 ->addColumn('action', function ($user) {
                     $actions = '';
+                    $actions .= '<a href="javascript:void(0)" class="text text-primary login-link" data-user-email="'. $user->email.'" title="Get Login Link">
+                        <i class="fa-solid fa-link"></i>
+                    </a>';
 
                     if (auth()->user()->can('quotecustomers.complete-sendtozoho')) {
                         if (!$user->zoho_record_id && !empty($user->name) && !empty($user->email)) {

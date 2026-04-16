@@ -210,7 +210,8 @@ Route::prefix('users')->group(function () {
     Route::get('/page-details/{slug}', [PagesController::class, 'pageDetails']);
     Route::post('/login', [UserController::class, 'login']);
     Route::post('/create-login-magic-link', [UserController::class, 'createLoginMagicLink']);
-    Route::post('/get-seller-profile', [UserController::class, 'getSellerProfile']);
+    Route::post('/get-user-login-link', [UserController::class, 'getUserLoginLink']);
+    Route::post('/get-seller-profile', [UserController::class, 'getSellerProfile'])->name('login.link');
 
     Route::get('test-api', [ApiController::class, 'testApi']);
     Route::post('test-api', [ApiController::class, 'testApi']);

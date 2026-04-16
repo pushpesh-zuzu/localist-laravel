@@ -75,8 +75,38 @@
       </div>
     </div>
 
-</x-app-layout>
-<script>
+    <div class="modal fade" id="showLoginLinkModal" tabindex="-1" aria-labelledby="showLoginLinkModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="showLoginLinkModalLabel">Lead Buyer Login Link</h5>
+              <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Login Link</label>
+                <div class="input-group">
+                  <input type="text" id="login-link-input" class="form-control" readonly>
+                  <button class="btn btn-success" id="copy-login-link">
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">
+                Close
+              </button>
+            </div>
+          </div>
+      </div>
+    </div>
+
+
+    @push('scripts')
+    <script>
   function loadDataTable() {
     let from_date = $('#from_date').val();
     let to_date = $('#to_date').val();
@@ -280,3 +310,52 @@
 </script>
 
 <script src="{{ asset('coreui/js/common.js') }}"></script>
+
+<script>
+      $(document).on("click", ".login-link", function() {
+        
+        let email = $(this).data("user-email");
+        console.log(email);
+        let baseUrl = $("#_url").val();
+        $("#login-link-input").val('');
+        $.ajax({
+          url: baseUrl + "/api/users/get-user-login-link", // Route to get login link
+          type: "POST",
+          data:{
+            email : email
+          },
+          success: function(res) {
+            if (res.success) {
+
+              var loginLinkModalE = document.getElementById("showLoginLinkModal");
+              var loginLinkModalShow = new coreui.Modal(loginLinkModalE);
+              loginLinkModalShow.show();
+
+              $("#login-link-input").val(res.url);
+            } else {
+              alert(res.message || "Failed to fetch user credit.");
+            }
+          },
+          error: function(xhr) {
+            alert("Server error. Please try again.");
+          },
+          complete: function() {
+            $("#loader").fadeOut();
+          }
+        });
+      });
+
+      $(document).on("click", "#copy-login-link", function () {
+        let input = document.getElementById("login-link-input");
+        input.select();
+        input.setSelectionRange(0, 99999);
+
+        navigator.clipboard.writeText(input.value);
+
+        $(this).text("Copied!");
+        setTimeout(() => $(this).text("Copy"), 1500);
+      });
+    </script>
+    @endpush
+
+</x-app-layout>
