@@ -540,7 +540,7 @@ class MyRequestController extends Controller
         $data['service_id'] = $serviceId;
         $data['city'] = $request->city;
         $data['postcode'] = $reqPostcode;
-
+        $data['lead_address'] = !empty($request->address) ? $request->address : '';
         // remove null from question
         $jQuestions = $request->questions;
         $decodedQ = json_decode($jQuestions, true);
