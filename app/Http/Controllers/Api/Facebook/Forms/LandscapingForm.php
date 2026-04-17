@@ -46,6 +46,40 @@ use App\Http\Controllers\Api\Customer\MyRequestController;
 
 class LandscapingForm extends Controller
 {
+
+    
+    public function getFacebookLeadsLandscapingFormWithLeadAddress(Request $request, LeadService $leadService){
+        $payload   = $request->all();
+        $serviceId = 43;
+
+        $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
+
+        // echo "<pre>";
+        // print_r($fbArray);
+        // exit;
+
+        $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
+
+        if(!empty($fbArray['info']['time_slot'])){
+            $fData = json_decode($response->getContent(), true);
+            if (!empty($fData['success'])) {
+                $leadId = $fData['data']['request_id'];
+                
+                $ts = $fbArray['info']['time_slot'];
+                $dt = Carbon::parse($ts)->setTimezone('Europe/London'); 
+                $timeSlot = json_encode(array(array(
+                    "date" => $dt->toDateString(),
+                    "slots" => $dt->format('h:i A')
+                )));   
+                
+                $leadData['time_slots'] = $timeSlot;
+                $sId = LeadRequest::where('id', $leadId)->update($leadData);
+            }
+        }
+
+        return $response;
+    }
+
     public function getFacebookLeadsLandscapingFormWithOptionalCalendar(Request $request, LeadService $leadService){
         $payload   = $request->all();
         $serviceId = 43;
@@ -103,6 +137,7 @@ class LandscapingForm extends Controller
             $email = $fbArray['info']['email'];
             $phone = $fbArray['info']['phone_number'];
             $postcode = $fbArray['info']['post_code'];
+            $address = $fbArray['info']['address'] ?? '';
 
             $vc = CustomHelper::getCityNameFromPostcode($postcode);
             $city = $vc['valid'] ? $vc['city'] : 'N/A';
@@ -210,6 +245,7 @@ class LandscapingForm extends Controller
                 'phone'  => str_replace('+44', '', $phone),
                 'user_id' => $user->id,
                 'city'   => $city,
+                'address' => $address
             ];
 
             $request->replace($newPayload);
@@ -257,7 +293,8 @@ class LandscapingForm extends Controller
         'full_name'    => 'full_name',
         'phone_number' => 'phone_number',
         'post_code'    => 'post_code',
-        'when_are_you_available_to_receive_quotations?' => 'time_slot'
+        'when_are_you_available_to_receive_quotations?' => 'time_slot',
+        'street_address' => 'address'
     ];
 
     /**
