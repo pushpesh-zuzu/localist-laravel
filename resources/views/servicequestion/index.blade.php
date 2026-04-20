@@ -45,7 +45,7 @@
                 foreach ($optDecoded as $i => $opt) {
                   echo ($i + 1) . ". ";
                   print_r(($opt['option'] ?? ''));
-                  !empty($opt['score']) ? print_r(', Score: ' . ($opt['score'] ?? '')) : '';
+                  isset($opt['score']) && $opt['score'] !== '' ? print_r(', Score: ' . $opt['score']) : '';
                   print_r(', Next Ques: ' . ($opt['next_question'] ?? ''));
                   echo '<br/>';
                 }
