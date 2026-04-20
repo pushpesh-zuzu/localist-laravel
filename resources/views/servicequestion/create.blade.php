@@ -90,7 +90,7 @@
                       <input type="text" class="form-control" placeholder="Question Option" name="ques_opt[]" id="ques_opt{{$index+1}}" value="{{$ans['option']}}" required>
                     </div>
                     <div class="col-md-2 d-flex align-items-center gap-2">
-                        <input type="number" class="form-control" placeholder="Score" name="ques_score[]" id="ques_score{{$index+1}}" min="1" max="50" value="{{$ans['score'] ?? 1}}" required>
+                        <input type="number" class="form-control" placeholder="Score" name="ques_score[]" id="ques_score{{$index+1}}" min="0" max="100" value="{{$ans['score'] ?? 1}}" required>
                     </div>
                     <div class="col-md-2 d-flex align-items-center gap-2">
                         <input type="text" class="form-control" placeholder="Next Question Number" name="next_ques[]" id="next_ques{{$index+1}}" value="{{$ans['next_question']}}" pattern="^\d+$|^last$" title="Enter a number or the word 'last'" required>
