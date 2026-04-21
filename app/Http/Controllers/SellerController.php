@@ -499,7 +499,7 @@ class SellerController extends Controller
                 $dataPh['plan_name'] = $request->planName;
                 $dataPh['price'] = number_format($request->creditAmount, 2);
                 $dataPh['vat'] = number_format($vat, 2);
-                $dataPh['total_amount'] = $total_amount;
+                $dataPh['total_amount'] = number_format($total_amount, 2);
                 $dataPh['created_at'] = date('Y-m-d H:i:s');
                 PlanHistory::insertGetId($dataPh);
             }
@@ -511,7 +511,7 @@ class SellerController extends Controller
             $data['user_id'] = $request->user_id;
             $data['purchase_date'] = date('Y-m-d');
             if (!empty($request->creditAmount)) {
-                $data['price'] =  $total_amount;
+                $data['price'] =  number_format($total_amount, 2);
             } else {
                 $data['price'] = 0;
             }
@@ -538,7 +538,7 @@ class SellerController extends Controller
                 $dataInv['period'] = 'One off charge';
                 $dataInv['amount'] = number_format($request->creditAmount, 2);
                 $dataInv['vat'] = number_format($vat, 2);
-                $dataInv['total_amount'] = $total_amount;
+                $dataInv['total_amount'] = number_format($total_amount, 2);
 
                 $userDetails = UserDetail::where('user_id', $user_id)->first();
                 if (!empty($userDetails->billing_contact_name)) {
