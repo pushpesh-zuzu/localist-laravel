@@ -35,6 +35,7 @@ use App\Helpers\Zoho\ZohoService;
 use App\Helpers\Zoho\ZohoFinance;
 use App\Helpers\Zoho\ZohoPurchasedLeads;
 use App\Helpers\Zoho\ZohoQuoteRequest;
+use App\Models\Invoice;
 use Yajra\Datatables\Datatables;
 use Carbon\Carbon;
 
@@ -51,7 +52,7 @@ class SellerController extends Controller
         $query = User::whereIn('user_type', [1, 3])
             ->where('form_status', 1)
             ->with('lastLogin'); // eager load latest login
-           // ->orderBy('id', 'DESC');
+        // ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('created_at', [
@@ -66,7 +67,14 @@ class SellerController extends Controller
 
         $aRows = $query->get();
 
-        return view('seller.complete', compact('aRows'));
+        $plans = Plan::where('status', 1)
+            ->where('plan_type', 'normal')
+            ->orderBy('name', 'ASC')
+            ->distinct()
+            ->pluck('name');
+
+
+        return view('seller.complete', compact('aRows', 'plans'));
     }
 
 
@@ -75,7 +83,7 @@ class SellerController extends Controller
         abort_if(!auth()->user()->can('leadbuyerscontact.viewlist'), 403, __('User does not have the right permissions.'));
 
         $query = ContactUs::where('user_type', 2);
-           // ->orderBy('id', 'DESC');
+        // ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('created_at', [
@@ -195,7 +203,7 @@ class SellerController extends Controller
 
         $query = AbandonedUser::whereIn('user_type', [1, 3])
             ->where('form_status', 0);
-           // ->orderBy('id', 'DESC');
+        // ->orderBy('id', 'DESC');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('created_at', [
@@ -465,39 +473,114 @@ class SellerController extends Controller
             'add_credit' => 'required|numeric|min:1',
         ]);
 
-        $user = User::find($request->user_id);
-        $user->total_credit += $request->add_credit;
-        $user->save();
+        DB::beginTransaction(); 
 
-        $detail = "Manual " . $request->add_credit . " credit added";
-        $data['user_id'] = $request->user_id;
-        $data['purchase_date'] = date('Y-m-d');
-        $data['price'] = 0;
-        $data['credits'] = $request->add_credit;
-        $data['details'] = $detail;
-        $data['payment_type'] = 0;
-        $data['error_response'] = null;
-        $data['status'] = 1;
-        $data['created_at'] = date('Y-m-d H:i:s');
+        try {
 
-        $purchase = PurchaseHistory::create($data);
-        
-        $transactionId = $purchase->id;
+            $user = User::find($request->user_id);
+            $user->total_credit += $request->add_credit;
+            $user->save();
 
-        $userId = $user->id;
+            // return $request->credit_amount;
 
-        if ($transactionId) {
-            CustomHelper::runInBackground(function () use ($userId, $transactionId) {
-                app(ZohoFinance::class)->integratePurchaseHistory($userId, $transactionId);
-            });
+            if (!empty($request->creditAmount)) {
+
+                if ($request->includeVat == 'Y') {
+                    $vat = $request->creditAmount * 20 / 100;
+                    $total_amount = $request->creditAmount + $vat;
+                } else {
+                    $vat = 0;
+                    $total_amount = $request->creditAmount;
+                }
+
+                $dataPh['user_id'] = $request->user_id;
+                $dataPh['is_topup'] = 0;
+                $dataPh['credits'] = $request->add_credit;
+                $dataPh['plan_name'] = $request->planName;
+                $dataPh['price'] = number_format($request->creditAmount, 2);
+                $dataPh['vat'] = number_format($vat, 2);
+                $dataPh['total_amount'] = $total_amount;
+                $dataPh['created_at'] = date('Y-m-d H:i:s');
+                PlanHistory::insertGetId($dataPh);
+            }
+
+
+
+
+            $detail = "Manual " . $request->add_credit . " credit added";
+            $data['user_id'] = $request->user_id;
+            $data['purchase_date'] = date('Y-m-d');
+            if (!empty($request->creditAmount)) {
+                $data['price'] =  $total_amount;
+            } else {
+                $data['price'] = 0;
+            }
+
+            $data['credits'] = $request->add_credit;
+            $data['details'] = $detail;
+            $data['payment_type'] = 0;
+            $data['error_response'] = null;
+            $data['status'] = 1;
+            $data['created_at'] = date('Y-m-d H:i:s');
+
+            $purchase = PurchaseHistory::create($data);
+
+            $transactionId = $purchase->id;
+            $user_id = $user->id;
+
+            if (!empty($request->creditAmount)) {
+                $invoicePrefix = "4152SX7I";
+                $invoiceNumber = $invoicePrefix . "-" . $transactionId;
+                //Create invoice
+                $dataInv['user_id'] = $user_id;
+                $dataInv['invoice_number'] = $invoiceNumber;
+                $dataInv['details'] = $request->planName;
+                $dataInv['period'] = 'One off charge';
+                $dataInv['amount'] = number_format($request->creditAmount, 2);
+                $dataInv['vat'] = number_format($vat, 2);
+                $dataInv['total_amount'] = $total_amount;
+
+                $userDetails = UserDetail::where('user_id', $user_id)->first();
+                if (!empty($userDetails->billing_contact_name)) {
+                    $dataInv['name'] = $userDetails->billing_contact_name;
+                    $dataInv['address'] = $userDetails->billing_address1 . ', ' . $userDetails->billing_address2 . ', ' . $userDetails->billing_city . ' - ';
+                    $dataInv['address'] .= $userDetails->billing_postcode;
+                    $dataInv['phone'] = $userDetails->billing_phone;
+                } else {
+                    $dataInv['name'] = $user->name;
+                    $dataInv['address'] = ($user->apartment ?? '') . ', ' . (optional($userDetails)->address ?? '') . ', ' . (optional($userDetails)->city ?? '') . ' - ';
+                    $dataInv['address'] .= $user->zipcode;
+                    $dataInv['phone'] = $user->phone;
+                }
+                $dataInv['created_at'] = date('Y-m-d H:i:s');
+                $invId = Invoice::insertGetId($dataInv);
+            }
+
+            DB::commit();
+
+            if ($transactionId) {
+                CustomHelper::runInBackground(function () use ($user_id, $transactionId) {
+                    app(ZohoFinance::class)->integratePurchaseHistory($user_id, $transactionId);
+                });
+            }
+
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Credit updated successfully!',
+                'new_credit' => $user->total_credit
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack(); 
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Credit updated successfully!',
-            'new_credit' => $user->total_credit
-        ]);
     }
 
 
@@ -768,7 +851,7 @@ class SellerController extends Controller
                         ->orWhere('users.email', 'not like', '%test%');
                 })
                 ->groupBy('users.id', 'users.name', 'users.email');
-                // ->orderBy('last_login', 'DESC');
+            // ->orderBy('last_login', 'DESC');
 
             // Date filter on login history
             if ($request->from_date && $request->to_date) {
@@ -782,8 +865,8 @@ class SellerController extends Controller
             return DataTables::of($query)
                 // ->addIndexColumn()/
                 ->orderColumn('users.id', function ($query, $order) {
-    $query->orderBy('users.id', $order);
-})
+                    $query->orderBy('users.id', $order);
+                })
                 ->addColumn('last_ip', function ($row) {
                     return $row->last_ip ?? '';
                 })

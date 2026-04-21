@@ -1,6 +1,6 @@
 <x-app-layout>
   @section('title', 'Lead Buyers (Complete List)')
- <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
     <h4 class="mb-0">{{ __("Lead Buyers (Complete List)") }}</h4>
   </div>
   <div class="container-fluid py-2 px-0">
@@ -198,6 +198,25 @@
               <div class="mb-3">
                 <label for="add_credit" class="form-label">Add Credit</label>
                 <input type="number" class="form-control" id="add_credit" name="add_credit" required min="1">
+              </div>
+
+              <div class="mb-3">
+                <label for="add_credit" class="form-label">Amount</label>
+                <input type="number" class="form-control" id="credit_amount" name="credit_amount" min="1">
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="include_vat" name="include_vat" value="Y" checked>
+                <label for="include_vat" class="form-check-label">Include VAT</label>
+              </div>
+              <div class="mb-3">
+                <label for="plan_name" class="form-label">Select Plan</label>
+                <select name="plan_name" id="plan_name" class="form-control">
+                  <option value="">-- Select Plan --</option>
+                  @foreach($plans as $plan)
+                  <option value="{{ $plan }}">{{ $plan }}</option>
+                  @endforeach
+                  <option value="Custom">Custom</option>
+                </select>
               </div>
             </div>
             <div class="modal-footer">
@@ -436,8 +455,8 @@
           } // disable search on the first (#) column
         ],
         order: [
-        [0, 'desc']
-      ],
+          [0, 'desc']
+        ],
       });
 
       $(document).on("click", ".deduct-credit", function() {
@@ -510,15 +529,40 @@
         let userId = $('#user_id').val();
         let addCredit = $('#add_credit').val();
 
+        let creditAmount = $('#credit_amount').val();
+        let includeVat = $('#include_vat').is(':checked') ? 'Y' : 'N';
+        let planName = $('#plan_name').val();
 
         $('#creditMessage').html('');
         $('#add_credit').removeClass('is-invalid');
+        $('#plan_name').removeClass('is-invalid');
         $('#addCreditError').remove();
+        $('#planNameError').remove();
 
+
+        $('#creditMessage').html('');
+        $('#credit_amount').removeClass('is-invalid');
+        $('#creditAmountError').remove();
 
         if (!userId) {
           $('#creditMessage').html(
             `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
+          );
+          return;
+        }
+
+        if (creditAmount && !planName) {
+          $('#plan_name').addClass('is-invalid');
+          $('#plan_name').after(
+            `<div id="planNameError" class="invalid-feedback">Plan name is required when credit amount is entered.</div>`
+          );
+          return;
+        }
+
+        if (planName && creditAmount.trim() === '') {
+          $('#credit_amount').addClass('is-invalid');
+          $('#credit_amount').after(
+            `<div id="creditAmountError" class="invalid-feedback">Credit amount is required when a plan is selected.</div>`
           );
           return;
         }
@@ -529,7 +573,10 @@
           data: {
             _token: $('input[name=_token]').val(),
             user_id: userId,
-            add_credit: addCredit
+            add_credit: addCredit,
+            creditAmount: creditAmount,
+            includeVat: includeVat,
+            planName: planName
           },
           success: function(response) {
             if (response.success) {
@@ -538,6 +585,8 @@
               );
               $('#current_credit').text(response.new_credit);
               $('#add_credit').val('');
+              $('#credit_amount').val('');
+              $('#plan_name').val('');
             } else {
               $('#creditMessage').html(
                 `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
