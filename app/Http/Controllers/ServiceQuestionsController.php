@@ -315,9 +315,8 @@ class ServiceQuestionsController extends Controller
         abort_if(!auth()->user()->can('servicequestions.delete'), 403, __('User does not have the right permissions.'));
         $serviceQuestion = ServiceQuestion::where('id', $id)->first();
         $serviceId = $serviceQuestion->category;
-        $questionNumber = $serviceQuestion->question_no;
 
-        LeadPrefrence::where('service_id', $serviceId)->where('question_id', $questionNumber)->delete();
+        LeadPrefrence::where('service_id', $serviceId)->where('question_id', $id)->delete();
         ServiceQuestion::where('id', $id)->delete();
 
         return redirect()->route('servicequestion.index')->with('success', 'Question deleted successfully.');
