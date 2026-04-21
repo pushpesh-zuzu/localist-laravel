@@ -233,6 +233,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-preferences', [LeadPreferenceController::class, 'getleadpreferences']);
         Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
         Route::post('/get_user_locations', [LeadPreferenceController::class, 'getUserLocations']);
+        Route::post('/get_user_locations_distance_type', [LeadPreferenceController::class, 'getUserLocationsDistanceType']);        
         Route::post('/get_user_services', [LeadPreferenceController::class, 'getUserServices']);
         Route::post('/lead-preferences', [LeadPreferenceController::class, 'leadpreferences']);
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);

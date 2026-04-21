@@ -1062,6 +1062,39 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(__('User Service Data'), $finalRows);
     }
 
+    public function getUserLocationsDistanceType(Request $request): JsonResponse
+    {
+        $aVals = $request->all();
+        $user_id = $aVals['user_id'];
+        $aRows = UserServiceLocation::where('user_id', $user_id)
+            ->where('type','Distance')
+            ->orderBy('postcode')
+            ->get();
+        // echo "<pre>";print_r($aRows->toArray());exit;
+
+        // Group by postcode and miles
+        $grouped = $aRows->groupBy(function ($item) {
+            return $item->postcode . '_' . $item->miles;
+        });
+
+        $finalRows = collect();
+
+        foreach ($grouped as $items) {
+            $first = $items->first(); // representative row
+
+            // Clone the first row's attributes
+            $value = $first->toArray();
+
+            // Add custom fields
+            $value['total_services'] = $items->pluck('service_id')->unique()->count();
+            $value['leadcount'] = LeadRequest::where('postcode', $first->postcode)->count();
+            $value['service_ids'] = $items->pluck('service_id')->unique()->values();
+            $value['coordinates'] = $first->coordinates ? json_decode($first->coordinates, true) : [];
+            $finalRows->push($value);
+        }
+        return $this->sendResponse("User Locations Distance Type", $finalRows);
+    }
+
     public function editUserLocation(Request $request)
     {
         $aVals = $request->all();
