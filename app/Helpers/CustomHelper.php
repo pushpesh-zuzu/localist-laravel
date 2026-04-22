@@ -37,8 +37,10 @@ class CustomHelper
     public static function maskLead($item)
     {
         $maskPostcode = function ($postcode) {
-            $postcode = strtoupper(str_replace(' ', '', $postcode));
-            return substr($postcode, 0, 4);
+            // $postcode = strtoupper(str_replace(' ', '', $postcode));
+            // return substr($postcode, 0, 4);
+            $postcode = CustomHelper::normalizeInUKPostcodeFormate($postcode);
+            return $postcode;
         };
 
         $maskName = function ($name) {
