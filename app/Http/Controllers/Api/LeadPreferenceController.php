@@ -140,13 +140,12 @@ class LeadPreferenceController extends Controller
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
-        $allLeads = $allLeads->map(function ($item){
+        $allLeads = $allLeads->map(function ($item) {
 
             return CustomHelper::maskLead($item);
-            
-        }); 
+        });
 
-        return $this->sendResponse( count($allLeads) .' Lead Request Data', $allLeads->values());
+        return $this->sendResponse(count($allLeads) . ' Lead Request Data', $allLeads->values());
     }
 
     private function addLeadViewCount($baseLeads)
@@ -1067,7 +1066,7 @@ class LeadPreferenceController extends Controller
         $aVals = $request->all();
         $user_id = $aVals['user_id'];
         $aRows = UserServiceLocation::where('user_id', $user_id)
-            ->where('type','Distance')
+            ->where('type', 'Distance')
             ->orderBy('postcode')
             ->get();
         // echo "<pre>";print_r($aRows->toArray());exit;
@@ -1172,7 +1171,7 @@ class LeadPreferenceController extends Controller
 
             $userServiceId = $userService->id;
 
-            
+
             $isPostcodeChanged = ($aVals['postcode_old'] ?? '') != $aVals['postcode'];
             $isMilesChanged = ($aVals['miles_old'] ?? '') != $aVals['miles'];
 
@@ -1538,9 +1537,8 @@ class LeadPreferenceController extends Controller
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
-        $allLeads = $allLeads->map(function ($item){ 
-            return CustomHelper::maskLead($item); 
-            
+        $allLeads = $allLeads->map(function ($item) {
+            return CustomHelper::maskLead($item);
         });
 
         if ($allLeads->isEmpty()) {
@@ -2106,5 +2104,82 @@ class LeadPreferenceController extends Controller
         return $this->sendResponse(
             'Number of purchases synced successfully. Please reload the page to see the changes.'
         );
+    }
+
+
+
+    public function updateMultipleUserLocationsDistanceType(Request $request)
+    {
+        $request->validate([
+            'postcodes' => 'required|array',
+        ]);
+
+        $userId = $request->user_id;
+        $postcodes = $request->postcodes;
+
+        DB::beginTransaction();
+
+          try {
+
+        foreach ($postcodes as $item) {
+
+            $id = $item['id'] ?? null;
+
+            $postCode = CustomHelper::normalizeInUKPostcodeFormate($item['postcode']);
+            $city = CustomHelper::getCityNameFromPostcode($item['postcode']);
+            $cityName = $city['valid'] ? $city['city'] : 'N/A';
+            
+            if ($id) {
+
+                UserServiceLocation::where('id', $id)
+                    ->where('user_id', $userId)
+                    ->update([
+                        'miles' => $item['distance']
+                    ]);
+            } else {
+
+
+                $exists = UserServiceLocation::where([
+                    'user_id'    => $userId,
+                    'postcode'   => $postCode,
+                    'service_id' => $item['service_id'],
+                ])->exists();
+
+                
+                if (!$exists) {
+
+                    $userServiceId = UserService::where('user_id', $userId)
+                        ->where('service_id', $item['service_id'])
+                        ->value('id');
+
+
+                    if (!$userServiceId) {
+                        continue;
+                    }
+
+                    UserServiceLocation::create([
+                        'user_id'          => $userId,
+                        'service_id'       => $item['service_id'],
+                        'user_service_id'  => $userServiceId,
+                        'miles'            => $item['distance'],
+                        'nation_wide'      => 0,
+                        'postcode'         => $postCode,
+                        'city'             => $cityName,
+                        'type'             => 'Distance',
+                        'coordinates' => '{}',
+                    ]);
+                }
+            }
+        }
+
+        DB::commit();
+
+        return $this->sendResponse(__('Locations processed successfully'));
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return $this->sendError('Something went wrong');
+        }
     }
 }

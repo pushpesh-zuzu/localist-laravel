@@ -85,8 +85,9 @@ Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook
 Route::post('get-seller-list-city-wise', [ApiController::class, 'getSellerListCityWise']);
 Route::post('add-request-callback-city-wise', [ApiController::class, 'addRequestCallbackCityWise']);
 
-
+Route::get('update_multiple_user_locations_distance_type', [LeadPreferenceController::class, 'updateMultipleUserLocationsDistanceType']);
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
+
 
  Route::get('/zoho-leads-your-matches', [LeadPreferenceController::class, 'getZohoLeadYourMatches']);
  Route::get('/zoho-customer-number-of-purchases', [LeadPreferenceController::class, 'updateCustomerNumberOfPurchases']);
