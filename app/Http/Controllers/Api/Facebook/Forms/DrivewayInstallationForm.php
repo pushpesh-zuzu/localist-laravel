@@ -46,13 +46,7 @@ use App\Http\Controllers\Api\Customer\MyRequestController;
 
 class DrivewayInstallationForm extends Controller
 {
-    public function tt(Request $request){
-        $accessToken = ZohoHelper::getAccessToken();
-        $userId = User::where('email','test-lead-new-14@test.com')->value('id');
-        $zohoId = ZohoHelper::getZohoQuoteCustomerId($accessToken, $userId);
-        print_r('zohoId: ' .$zohoId);
-    }
-
+    
     public function getFacebookLeadsDrivewayInstallationFrom(Request $request, LeadService $leadService){
         $payload   = $request->all();
         $serviceId = 51;
@@ -62,6 +56,15 @@ class DrivewayInstallationForm extends Controller
         // echo "<pre>";
         // print_r($fbArray);
         // exit;
+
+        $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
+
+        
+
+        return $response;
+    }
+
+    public function insertLeads($request, $fbArray, $serviceId, $leadService){
         
         if(!empty($fbArray['questions']) && !empty($fbArray['info'])){
             $questions = json_encode($fbArray['questions']);
@@ -69,6 +72,7 @@ class DrivewayInstallationForm extends Controller
             $email = $fbArray['info']['email'];
             $phone = $fbArray['info']['phone_number'];
             $postcode = $fbArray['info']['post_code'];
+            $address = $fbArray['info']['address'] ?? '';
 
             $vc = CustomHelper::getCityNameFromPostcode($postcode);
             $city = $vc['valid'] ? $vc['city'] : 'N/A';
@@ -176,6 +180,7 @@ class DrivewayInstallationForm extends Controller
                 'phone'  => str_replace('+44', '', $phone),
                 'user_id' => $user->id,
                 'city'   => $city,
+                'address' => $address
             ];
 
             $request->replace($newPayload);
@@ -223,6 +228,8 @@ class DrivewayInstallationForm extends Controller
         'full_name'    => 'full_name',
         'phone_number' => 'phone_number',
         'post_code'    => 'post_code',
+        'when_are_you_available_to_receive_quotations?' => 'time_slot',
+        'street_address' => 'address'
     ];
 
     /**
@@ -257,8 +264,19 @@ class DrivewayInstallationForm extends Controller
          * 1️⃣ Handle info fields
          */
         if (array_key_exists($fbField['name'], $infoFieldMap)) {
-            $info[$infoFieldMap[$fbField['name']]] = trim($fbField['value']);
-            continue;
+
+            $value = $fbField['value'] ?? null;
+
+            if (is_array($value)) {
+                $value = implode(', ', $value);
+            }
+
+            $value = is_string($value) ? trim($value) : null;
+
+            // ✅ ALWAYS set key (even if null)
+            $info[$infoFieldMap[$fbField['name']]] = $value !== '' ? $value : null;
+
+            continue; // 🔴 CRITICAL: never let it go to questions
         }
 
         $fbQuestionSlug = $normalize($fbField['name']);
