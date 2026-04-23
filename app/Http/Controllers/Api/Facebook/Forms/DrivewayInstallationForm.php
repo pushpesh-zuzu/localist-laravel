@@ -47,6 +47,39 @@ use App\Http\Controllers\Api\Customer\MyRequestController;
 class DrivewayInstallationForm extends Controller
 {
     
+public function getFacebookLeadsDrivewayInstallationFromWithTimeSlot(Request $request, LeadService $leadService){
+        $payload   = $request->all();
+        $serviceId = 51;
+
+        $fbArray = $this->getFacebookQuestionsInfoArray($request, $serviceId);
+
+        // echo "<pre>";
+        // print_r($fbArray);
+        // exit;
+
+        $response = $this->insertLeads($request, $fbArray, $serviceId, $leadService);
+
+        if(!empty($fbArray['info']['time_slot'])){
+            $fData = json_decode($response->getContent(), true);
+            if (!empty($fData['success'])) {
+                $leadId = $fData['data']['request_id'];
+                
+                $ts = $fbArray['info']['time_slot'];
+                $dt = Carbon::parse($ts)->setTimezone('Europe/London'); 
+                $timeSlot = json_encode(array(array(
+                    "date" => $dt->toDateString(),
+                    "slots" => $dt->format('h:i A')
+                )));   
+                
+                $leadData['time_slots'] = $timeSlot;
+                $sId = LeadRequest::where('id', $leadId)->update($leadData);
+            }
+        }
+
+        return $response;
+    }
+
+
     public function getFacebookLeadsDrivewayInstallationFrom(Request $request, LeadService $leadService){
         $payload   = $request->all();
         $serviceId = 51;

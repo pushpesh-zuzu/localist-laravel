@@ -33,6 +33,7 @@ use App\Http\Controllers\d7LeadSupplierController;
 
 
 Route::post('get-facebook-leads-driveway-installation-from',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFrom']);
+Route::post('get-facebook-leads-driveway-installation-from-with-timeslot',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFromWithTimeSlot']);
 Route::post('get-facebook-leads-roofing-from',[RoofingForm::class,'getFacebookLeadsRoofingFrom']);
 Route::post('get-facebook-leads-fence-and-gate-from',[FenceAndGateForm::class,'getFacebookLeadsFenceAndGateForm']);
 Route::post('get-facebook-leads-landscaping-from',[LandscapingForm::class,'getFacebookLeadsLandscapingForm']);
