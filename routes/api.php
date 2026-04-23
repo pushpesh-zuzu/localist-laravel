@@ -86,7 +86,6 @@ Route::post('zeptomail/webhook', [d7LeadSupplierController::class, 'zeptoWebhook
 Route::post('get-seller-list-city-wise', [ApiController::class, 'getSellerListCityWise']);
 Route::post('add-request-callback-city-wise', [ApiController::class, 'addRequestCallbackCityWise']);
 
-Route::get('update_multiple_user_locations_distance_type', [LeadPreferenceController::class, 'updateMultipleUserLocationsDistanceType']);
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
 
 
@@ -202,6 +201,7 @@ Route::prefix('users')->group(function () {
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::get('/home-services', [ApiController::class, 'homeServices']);
     Route::post('/user-available-popular-services', [ApiController::class, 'popularUserServices']);
+    Route::post('update_multiple_user_locations_distance_type', [LeadPreferenceController::class, 'updateMultipleUserLocationsDistanceType']);
 
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::post('/search-available-services', [ApiController::class, 'searchAvailableServices']);
