@@ -2117,9 +2117,9 @@ class LeadPreferenceController extends Controller
         $userId = $request->user_id;
         $postcodes = $request->postcodes;
 
-       // DB::beginTransaction();
+        DB::beginTransaction();
 
-        //  try {
+          try {
 
         foreach ($postcodes as $item) {
 
@@ -2153,9 +2153,9 @@ class LeadPreferenceController extends Controller
                         ->value('id');
 
 
-                    // if (!$userServiceId) {
-                    //     continue;
-                    // }
+                    if (!$userServiceId) {
+                        continue;
+                    }
 
                     UserServiceLocation::create([
                         'user_id'          => $userId,
@@ -2172,14 +2172,14 @@ class LeadPreferenceController extends Controller
             }
         }
 
-       // DB::commit();
+        DB::commit();
 
         return $this->sendResponse(__('Locations processed successfully'));
-        // } catch (\Exception $e) {
+        } catch (\Exception $e) {
 
-        //  //   DB::rollBack();
+            DB::rollBack();
 
-        //     return $this->sendError('Something went wrong');
-        // }
+            return $this->sendError('Something went wrong');
+        }
     }
 }

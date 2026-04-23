@@ -32,16 +32,16 @@ use App\Http\Controllers\d7LeadSupplierController;
 // use App\Http\Controllers\Api\ZohoController;
 
 
-Route::post('get-facebook-leads-driveway-installation-from',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFrom']);
-Route::post('get-facebook-leads-driveway-installation-from-with-timeslot',[DrivewayInstallationForm::class,'getFacebookLeadsDrivewayInstallationFromWithTimeSlot']);
-Route::post('get-facebook-leads-roofing-from',[RoofingForm::class,'getFacebookLeadsRoofingFrom']);
-Route::post('get-facebook-leads-fence-and-gate-from',[FenceAndGateForm::class,'getFacebookLeadsFenceAndGateForm']);
-Route::post('get-facebook-leads-landscaping-from',[LandscapingForm::class,'getFacebookLeadsLandscapingForm']);
-Route::post('get-facebook-leads-tree-surgery-from',[TreeSurgeryForm::class,'getFacebookLeadsTreeSurgeryForm']);
-Route::post('get-facebook-leads-landscaping-from-with-optional-calendar',[LandscapingForm::class,'getFacebookLeadsLandscapingFormWithOptionalCalendar']);
-Route::post('get-facebook-leads-landscaping-from-with-lead-address',[LandscapingForm::class,'getFacebookLeadsLandscapingFormWithLeadAddress']);
+Route::post('get-facebook-leads-driveway-installation-from', [DrivewayInstallationForm::class, 'getFacebookLeadsDrivewayInstallationFrom']);
+Route::post('get-facebook-leads-driveway-installation-from-with-timeslot', [DrivewayInstallationForm::class, 'getFacebookLeadsDrivewayInstallationFromWithTimeSlot']);
+Route::post('get-facebook-leads-roofing-from', [RoofingForm::class, 'getFacebookLeadsRoofingFrom']);
+Route::post('get-facebook-leads-fence-and-gate-from', [FenceAndGateForm::class, 'getFacebookLeadsFenceAndGateForm']);
+Route::post('get-facebook-leads-landscaping-from', [LandscapingForm::class, 'getFacebookLeadsLandscapingForm']);
+Route::post('get-facebook-leads-tree-surgery-from', [TreeSurgeryForm::class, 'getFacebookLeadsTreeSurgeryForm']);
+Route::post('get-facebook-leads-landscaping-from-with-optional-calendar', [LandscapingForm::class, 'getFacebookLeadsLandscapingFormWithOptionalCalendar']);
+Route::post('get-facebook-leads-landscaping-from-with-lead-address', [LandscapingForm::class, 'getFacebookLeadsLandscapingFormWithLeadAddress']);
 
-Route::post('get-facebook-leads-tt',[DrivewayInstallationForm::class,'tt']);
+Route::post('get-facebook-leads-tt', [DrivewayInstallationForm::class, 'tt']);
 
 
 Route::get('/user', function (Request $request) {
@@ -74,7 +74,7 @@ Route::post('/contact-us', [ContactUsController::class, 'store']);
 Route::get('lead-purchase-status-update-log/{lead_id}/{seller_id}/{buyer_id}/{log}', [UserController::class, 'leadPurchaseStatusUpdateLog']);
 Route::get('email-customer-request-top-five-matches/{lead_id}/{buyer_id}', [UserController::class, 'emailRequestTopFiveMatches']);
 Route::get('customer-lead-status-update/{lead_id}/{seller_id?}/{customer_id}/{status}', [UserController::class, 'customerUpdateLeadStatus']);
-Route::get('unsubscribe-status-update/{id}/{type}', [UserController::class, 'unsubscribeStatusUpdate']) ->name('unsubscribe.status.update');
+Route::get('unsubscribe-status-update/{id}/{type}', [UserController::class, 'unsubscribeStatusUpdate'])->name('unsubscribe.status.update');
 
 
 Route::post('request-otp', [ApiController::class, 'requestOtp']);
@@ -89,8 +89,8 @@ Route::post('add-request-callback-city-wise', [ApiController::class, 'addRequest
 Route::get('zoho-leads-available', [LeadPreferenceController::class, 'zohoLeadsAvailable']);
 
 
- Route::get('/zoho-leads-your-matches', [LeadPreferenceController::class, 'getZohoLeadYourMatches']);
- Route::get('/zoho-customer-number-of-purchases', [LeadPreferenceController::class, 'updateCustomerNumberOfPurchases']);
+Route::get('/zoho-leads-your-matches', [LeadPreferenceController::class, 'getZohoLeadYourMatches']);
+Route::get('/zoho-customer-number-of-purchases', [LeadPreferenceController::class, 'updateCustomerNumberOfPurchases']);
 
 Route::post('get-city-name', [ApiController::class, 'getCityName']);
 Route::post('get-address-list-from-postcode', [ApiController::class, 'getAddressesListFromPostcode']);
@@ -201,7 +201,6 @@ Route::prefix('users')->group(function () {
     Route::get('/popular-services', [ApiController::class, 'popularServices']);
     Route::get('/home-services', [ApiController::class, 'homeServices']);
     Route::post('/user-available-popular-services', [ApiController::class, 'popularUserServices']);
-    Route::post('update_multiple_user_locations_distance_type', [LeadPreferenceController::class, 'updateMultipleUserLocationsDistanceType']);
 
     Route::post('/search-services', [ApiController::class, 'searchServices']);
     Route::post('/search-available-services', [ApiController::class, 'searchAvailableServices']);
@@ -235,7 +234,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-lead-preferences', [LeadPreferenceController::class, 'getleadpreferences']);
         Route::post('/sort-by-credit-value', [LeadPreferenceController::class, 'sortByCreditValue']);
         Route::post('/get_user_locations', [LeadPreferenceController::class, 'getUserLocations']);
-        Route::post('/get_user_locations_distance_type', [LeadPreferenceController::class, 'getUserLocationsDistanceType']);        
+        Route::post('/get_user_locations_distance_type', [LeadPreferenceController::class, 'getUserLocationsDistanceType']);
         Route::post('/get_user_services', [LeadPreferenceController::class, 'getUserServices']);
         Route::post('/lead-preferences', [LeadPreferenceController::class, 'leadpreferences']);
         Route::post('/get-lead-request', [LeadPreferenceController::class, 'getLeadRequest']);
@@ -248,6 +247,7 @@ Route::prefix('users')->group(function () {
         Route::post('/get-hired-leads', [LeadPreferenceController::class, 'getHiredLeads']);
         Route::post('/add-hired-leads', [LeadPreferenceController::class, 'addHiredLeads']);
         Route::post('/submit-leads', [LeadPreferenceController::class, 'submitLeads']);
+        Route::post('update_multiple_user_locations_distance_type', [LeadPreferenceController::class, 'updateMultipleUserLocationsDistanceType']);
 
 
         Route::post('/remove-location', [LeadPreferenceController::class, 'removeLocation']);
