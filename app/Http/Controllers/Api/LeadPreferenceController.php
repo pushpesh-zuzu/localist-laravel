@@ -2153,9 +2153,9 @@ class LeadPreferenceController extends Controller
                         ->value('id');
 
 
-                    if (!$userServiceId) {
-                        continue;
-                    }
+                    // if (!$userServiceId) {
+                    //     continue;
+                    // }
 
                     UserServiceLocation::create([
                         'user_id'          => $userId,
