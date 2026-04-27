@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\LeadBuyerServiceLocationsListExport;
 use App\Exports\LoginHistoryListExport;
 use Illuminate\Http\Request;
 use App\Models\UserServiceLocation;
@@ -473,7 +474,7 @@ class SellerController extends Controller
             'add_credit' => 'required|numeric|min:1',
         ]);
 
-        DB::beginTransaction(); 
+        DB::beginTransaction();
 
         try {
 
@@ -570,10 +571,9 @@ class SellerController extends Controller
                 'message' => 'Credit updated successfully!',
                 'new_credit' => $user->total_credit
             ]);
-
         } catch (\Exception $e) {
 
-            DB::rollBack(); 
+            DB::rollBack();
 
             return response()->json([
                 'success' => false,
@@ -1014,5 +1014,83 @@ class SellerController extends Controller
                 'message' => 'Something went wrong.'
             ]);
         }
+    }
+
+
+
+
+    public function exportLeadBuyerPostCodesList(Request $request)
+    {
+        abort_if(!auth()->user()->can('leadbuyerpostcodes.viewlist'), 403);
+
+        if ($request->ajax()) {
+
+            $query = UserServiceLocation::with('serviceCategory')->latest();
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+
+                ->addColumn('service_type', function ($serviceLocation) {
+                    return $serviceLocation->serviceCategory->name ?? 'No Service';
+                })
+
+                // ✅ Postcode Flexible Search (BEST APPROACH)
+                ->filterColumn('postcode', function ($query, $keyword) {
+
+                    // normalize input (remove space + uppercase + remove special chars)
+                    $keyword = preg_replace('/[^A-Za-z0-9]/', '', strtoupper($keyword));
+
+                    $query->whereRaw("
+                    REPLACE(REPLACE(UPPER(postcode), ' ', ''), '-', '') LIKE ?
+                ", ["%{$keyword}%"]);
+                })
+
+                ->addColumn('created_at', function ($serviceLocation) {
+                    return \Carbon\Carbon::parse($serviceLocation->created_at)->format('m-d-Y');
+                })
+
+                ->filterColumn('created_at', function ($query, $keyword) {
+                    try {
+                        $date = \Carbon\Carbon::createFromFormat('m-d-Y', $keyword)->format('Y-m-d');
+                        \Log::info('Parsed Date:', ['original' => $keyword, 'parsed' => $date]);
+
+                        $query->whereDate('created_at', $date);
+                    } catch (\Exception $e) {
+                        \Log::error('Date Parse Error:', ['input' => $keyword, 'error' => $e->getMessage()]);
+                    }
+                })
+
+                ->rawColumns(['service_type'])
+                ->make(true);
+        }
+
+        return view('seller.export-lead-buyer-postcodes');
+    }
+
+    public function exportLeadBuyerPostCodesExcel(Request $request)
+    {
+
+        $search = $request->search ?? null;
+
+
+
+        $fileName = 'lead-buyer-service-postcodes.xlsx';
+
+
+
+        return Excel::download(new LeadBuyerServiceLocationsListExport($search), $fileName);
+    }
+
+    public function exportLeadBuyerPostCodesCsv(Request $request)
+    {
+
+        $search = $request->search ?? null;
+
+
+
+        $fileName = 'lead-buyer-service-postcodes.csv';
+
+
+        return Excel::download(new LeadBuyerServiceLocationsListExport($search), $fileName);
     }
 }

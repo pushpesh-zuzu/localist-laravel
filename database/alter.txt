@@ -237,3 +237,9 @@ ALTER TABLE `d7_lead_suppliers` CHANGE `zoho_aacount_record_id` `zoho_account_re
 
 
 INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Import Marketing Contacts', 'import-marketing-contacts', 'Import Marketing Contacts', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
+
+
+
+
+
+INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'Export Buyer Postcodes List', 'leadbuyerpostcodes.viewlist', 'View List', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16'), (NULL, 'Export Buyer Postcodes List', 'leadbuyerpostcodes.excelexport', 'Excel Export', 'admin', NULL, NULL), (NULL, 'Export Buyer Postcodes List', 'leadbuyerpostcodes.csvexport', 'Csv Export', 'admin', NULL, NULL);

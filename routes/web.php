@@ -198,6 +198,13 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::get('/zoho-import', [ZohoAccountImportController::class, 'importZoho'])->name('zoho.viewimport');
     Route::post('/zoho-import', [ZohoAccountImportController::class, 'importZohoAccounts'])->name('zoho.import');
+
+    Route::get('export-leadbuyer-service-postcodes', [SellerController::class, 'exportLeadBuyerPostCodesList'])->name('export.leadbuyer.service.postcodes');
+
+    Route::get('/export-service-postcodes-excel', [SellerController::class, 'exportLeadBuyerPostCodesExcel'])
+        ->name('export.service.postcodes.excel');
+    Route::get('/export-service-postcodes-csv', [SellerController::class, 'exportLeadBuyerPostCodesCsv'])
+        ->name('export.service.postcodes.csv');
 });
 
 

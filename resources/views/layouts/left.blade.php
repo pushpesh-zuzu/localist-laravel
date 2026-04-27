@@ -206,6 +206,16 @@
     @endcan
 
 
+    @can('leadbuyerpostcodes.viewlist')
+    <li class="nav-item">
+      <a href="{{ route('export.leadbuyer.service.postcodes') }}" class="nav-link {{ request()->routeIs('export.leadbuyer.service.postcodes') ? 'active' : '' }}">
+        <i class="fa-solid fa-file-export nav-icon"></i>
+        {{ __('Export Buyer PostCodes') }}
+      </a>
+    </li>
+    @endcan
+
+
     @can('blog.viewlist')
     <li class="nav-item">
       <a href="{{ route('blogs.index') }}" class="nav-link {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
