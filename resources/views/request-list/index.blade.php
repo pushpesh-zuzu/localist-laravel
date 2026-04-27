@@ -27,6 +27,7 @@
               <th>Additional Dtails</th>
               <th>Hired User</th>
               <th>Final Price and Unit</th>
+              <th>Lead Address</th>
             </thead>
             <tbody>
             </tbody>
@@ -130,7 +131,10 @@
             data: 'price_unit',
             name: 'price_unit'
           },
-         
+         {
+            data: 'lead_address',
+            name: 'lead_address'
+          },
 
 
 
