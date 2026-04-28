@@ -671,7 +671,7 @@ class ApiController extends Controller
                         });
 
                         if ($matchedTag) {                           
-                            $cat->name = $cat->name . '.' . trim($matchedTag);
+                            $cat->name = $cat->name . ' : ' . trim($matchedTag);
                         }
 
                         return $cat;
