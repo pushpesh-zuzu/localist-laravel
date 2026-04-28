@@ -2236,7 +2236,7 @@ class LeadPreferenceController extends Controller
                 ]);
 
                 return $this->sendResponse(
-                    'Address synced successfully. Please reload the page to see the changes.'
+                    'Address and availability verification synced successfully. Please reload the page to see the changes.'
                 );
             } else {
 
