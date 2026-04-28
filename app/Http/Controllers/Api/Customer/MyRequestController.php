@@ -87,7 +87,7 @@ class MyRequestController extends Controller
         if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
-        
+
         $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
 
         if ($request->form_status == "1") {
@@ -122,7 +122,7 @@ class MyRequestController extends Controller
                     $dataUser['phone'] = $cleanPhone;
                 }
             }
-            
+
             $dataUser['zipcode'] = $reqPostcode;
             $dataUser['city'] = $request->city;
             $dataUser['questions'] = $request->questions;
@@ -573,6 +573,15 @@ class MyRequestController extends Controller
         //evaluate Lead Badges
         $userPhoneVerified = User::where('id', $euId)->value('phone_verified');
         $data['is_phone_verified'] = $userPhoneVerified ? 1 : 0;
+
+      
+
+        $userFullCrmAddress = UserDetail::where('user_id', $euId)->value('full_crm_address');
+
+        $data['is_availability_verified'] = !empty(trim($userFullCrmAddress)) ? 1 : 0;
+       
+        $data['is_address_verified'] = !empty(trim($userFullCrmAddress)) ? 1 : 0;
+
 
         $leadCount = LeadRequest::where('customer_id', $euId)->where('created_at', '>=', Carbon::now()->subMonths(3))->count();
         $data['is_frequent_user'] = $leadCount > 0 ? 1 : 0;

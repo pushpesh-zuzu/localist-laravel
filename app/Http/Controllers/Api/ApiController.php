@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Bid;
@@ -23,7 +24,13 @@ use App\Models\AbandonedUser;
 use App\Models\UserServiceLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{
-    Auth, Hash, DB , Log as FacadesLog, Mail, Validator, Http
+    Auth,
+    Hash,
+    DB,
+    Log as FacadesLog,
+    Mail,
+    Validator,
+    Http
 };
 use Illuminate\Support\Facades\Storage;
 use Log;
@@ -79,9 +86,9 @@ class ApiController extends Controller
                 }
             }
         }
-        if(empty($dbPostcode->address_list)){
+        if (empty($dbPostcode->address_list)) {
             try {
-                $response = Http::timeout(5)->get("https://api.ideal-postcodes.co.uk/v1/postcodes/" .$postcode ."?api_key=" .$apiKey);
+                $response = Http::timeout(5)->get("https://api.ideal-postcodes.co.uk/v1/postcodes/" . $postcode . "?api_key=" . $apiKey);
 
                 $data = $response->json();
                 // print_r($data);
@@ -91,18 +98,18 @@ class ApiController extends Controller
                     return $this->sendError('Postcode not found.');
                 }
 
-            
+
                 // Handle other API failures
                 if (!$response->successful()) {
                     $errMsg = "Unable to fetch address list";
-                    if(!empty($data['message'])){
+                    if (!empty($data['message'])) {
                         $errMsg = $data['message'];
                     }
-                    return $this->sendError('Error: ' .$errMsg);
+                    return $this->sendError('Error: ' . $errMsg);
                 }
 
                 $results = $data['result'] ?? [];
-                
+
 
                 $addressList = collect($results)
                     ->map(function ($item) {
@@ -126,8 +133,7 @@ class ApiController extends Controller
 
                         // CASE 2: Residential
                         return [
-                            'house_name' => !empty($item['building_number']) ? $item['building_number'] : 
-                                (!empty($item['building_name']) ? $item['building_name'] : null),
+                            'house_name' => !empty($item['building_number']) ? $item['building_number'] : (!empty($item['building_name']) ? $item['building_name'] : null),
                             'street_address' => implode(', ', array_filter([
                                 $item['thoroughfare'] ?? null,
                                 $item['post_town'] ?? null,
@@ -141,18 +147,16 @@ class ApiController extends Controller
                     })
                     ->values()
                     ->toArray();
-                Postcode::where('postcode',$postcode)->update(array(
+                Postcode::where('postcode', $postcode)->update(array(
                     'address_list' => json_encode($addressList)
                 ));
                 return $this->sendResponse('Address List.', $addressList);
-
-            }  catch (\Exception $e) {
-                return $this->sendError('Error: ' .$e->getMessage());
+            } catch (\Exception $e) {
+                return $this->sendError('Error: ' . $e->getMessage());
             }
-        }else{
+        } else {
             return $this->sendResponse('Address List.', json_decode($dbPostcode->address_list));
         }
-        
     }
 
 
@@ -259,8 +263,8 @@ class ApiController extends Controller
                 $items->services = $categories;
                 return $items;
             });
-        
-        
+
+
         $sellers = collect($sellers); // ensure it's a collection
 
         $recommendedCount = (int) CustomHelper::setting_value("recommended_list_count", 0);
@@ -304,7 +308,8 @@ class ApiController extends Controller
         return $this->sendResponse('Seller List City Wise.', $data);
     }
 
-    public function addRequestCallbackCityWise(Request $request){
+    public function addRequestCallbackCityWise(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'seller_id' => 'required|integer|exists:users,id',
             'service_id' => 'required|integer|exists:categories,id',
@@ -312,13 +317,13 @@ class ApiController extends Controller
             'name' => 'required|string',
             'email' => 'required|email',
             'phone' => 'required|numeric',
-            
+
         ], [
             'seller_id.exists' => 'Provided User does not exists.',
             'service_id.exists' => 'Provided service does not exists.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -330,10 +335,10 @@ class ApiController extends Controller
         $data['phone'] = $request->phone;
         CallbackRequest::insertGetId($data);
         return $this->sendResponse('Request Callback Added Successfully.');
-
     }
 
-    public function testNewLeadFunction(Request $request, LeadService $leadService){
+    public function testNewLeadFunction(Request $request, LeadService $leadService)
+    {
         $baseQuery = $leadService->getSellerLeadsBaseQuery($request->user_id);
         $leads = $baseQuery->orderBy('id', 'desc')->get()->toArray();
 
@@ -341,7 +346,8 @@ class ApiController extends Controller
         print_r($leads);
     }
 
-    public function getProgressPercentage(Request $request){
+    public function getProgressPercentage(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|integer|exists:categories,id',
             'questions' => 'required'
@@ -349,22 +355,22 @@ class ApiController extends Controller
             'service_id.exists' => 'Provided service id does not exists.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
-        $sQuestions = ServiceQuestion::where('category',$request->service_id)->get()->toArray();
+        $sQuestions = ServiceQuestion::where('category', $request->service_id)->get()->toArray();
         $requestQuestions = json_decode($request->questions, true);
         $serviceQuestions = [];
         $leadQuestions = [];
 
-        foreach($sQuestions as $sq){
+        foreach ($sQuestions as $sq) {
             $temp['question_no'] = $sq['question_no'];
             $temp['ques'] = $sq['questions'];
             $temp['question_type'] = $sq['question_type'];
             $ans = [];
             $ansDecoded = json_decode($sq['answer'], true);
-            foreach($ansDecoded as $a){
+            foreach ($ansDecoded as $a) {
                 $temp2['option'] = $a['option'];
                 $temp2['next_question'] = $a['next_question'];
                 $ans[] = $temp2;
@@ -373,7 +379,7 @@ class ApiController extends Controller
             $serviceQuestions[] = $temp;
         }
 
-        foreach($requestQuestions as $rq){
+        foreach ($requestQuestions as $rq) {
             $temp3['ques'] = $rq['ques'];
             $temp3['ans'] = $rq['ans'];
             $leadQuestions[] = $temp3;
@@ -430,39 +436,40 @@ class ApiController extends Controller
     }
 
 
-    public function getCityName(Request $request){
+    public function getCityName(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'postcode' => 'required'
-            ], [
+        ], [
             'postcode.required' => 'Postcode is required.'
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
         $reqPostcode = CustomHelper::normalizeInUKPostcodeFormate($request->postcode);
         $res = CustomHelper::getCityNameFromPostcode($reqPostcode);
-        if(!empty($res['valid']) && $res['valid'] == true){
-            return $this->sendResponse('City Name Found', $res);        
-        }else{
+        if (!empty($res['valid']) && $res['valid'] == true) {
+            return $this->sendResponse('City Name Found', $res);
+        } else {
             return $this->sendError('City Name Not Found', $res);
         }
     }
     public function getCategories()
     {
-        $aRows = Category::where('status',1)->get();
-        return $this->sendResponse(__('Category Data'),$aRows);
+        $aRows = Category::where('status', 1)->get();
+        return $this->sendResponse(__('Category Data'), $aRows);
     }
 
     public function homeServices()
     {
 
-        $aRows = Category::where('is_home',1)->where('parent_id','<>', 0)->orderBy('id','DESC')->where('status',1)->get();
-        foreach($aRows as $value){
-            $value['baseurl'] = url('/').Storage::url('app/public/images/category');
+        $aRows = Category::where('is_home', 1)->where('parent_id', '<>', 0)->orderBy('id', 'DESC')->where('status', 1)->get();
+        foreach ($aRows as $value) {
+            $value['baseurl'] = url('/') . Storage::url('app/public/images/category');
         }
 
-        return $this->sendResponse(__('Home Services'),$aRows);
+        return $this->sendResponse(__('Home Services'), $aRows);
     }
 
     public function popularServices()
@@ -513,7 +520,8 @@ class ApiController extends Controller
         return $this->sendResponse(__('Popular User Services'), $aRows);
     }
 
-    private function flattenCategories($categories) {
+    private function flattenCategories($categories)
+    {
         $result = [];
 
         foreach ($categories as $category) {
@@ -563,23 +571,23 @@ class ApiController extends Controller
             $categories = [];
             return $this->sendResponse(__('Category Data'), $categories);
         }
-        if(!empty($serviceid)){
+        if (!empty($serviceid)) {
             // Convert serviceid into an array
             $serviceIds = explode(',', $serviceid);
             $categories = Category::where('status', 1)
-                            ->whereNotIn('id', $serviceIds)
-                            ->where(function ($query) use ($search) {
-                                $query->where('name', 'LIKE', "%{$search}%")
-                                    ->orWhere('description', 'LIKE', "%{$search}%");
-                            })
-                            ->get();
-        }else{
+                ->whereNotIn('id', $serviceIds)
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                })
+                ->get();
+        } else {
             $categories = Category::where('status', 1)
-                              ->where(function ($query) use ($search) {
-                                  $query->where('name', 'LIKE', "%{$search}%")
-                                        ->orWhere('description', 'LIKE', "%{$search}%");
-                              })
-                              ->get();
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                })
+                ->get();
         }
 
 
@@ -596,48 +604,79 @@ class ApiController extends Controller
 
         $serviceid = $request->serviceid; // Get search keyword from request
         $base = Category::query()
-        ->where('status', 1)
-        ->where('show_in_search', 1);
+            ->where('status', 1)
+            ->where('show_in_search', 1);
 
-            if ($serviceid > 0) {
-                $base->where('id', '!=', $serviceid);
-            }
+        if ($serviceid > 0) {
+            $base->where('id', '!=', $serviceid);
+        }
 
-            // if (!empty($serviceTitle)  || $serviceTitle != null) {
-            //     $base->where('slug', '!=', $serviceTitle);
-            // }
+        // if (!empty($serviceTitle)  || $serviceTitle != null) {
+        //     $base->where('slug', '!=', $serviceTitle);
+        // }
 
         // Check if search keyword is provided; otherwise, return empty
         if ($search === '') {
-        // You can order as you like; name asc is common for dropdowns
+            // You can order as you like; name asc is common for dropdowns
             $categories = $base
                 ->orderBy('name')
                 ->get(['id', 'name', 'description']); // keep payload lean if you want
 
             return $this->sendResponse(__('Category Data'), $categories);
         }
-        if(!empty($serviceid)){
+        if (!empty($serviceid)) {
             $categories = Category::where('status', 1)
-            ->where('id', '!=', $serviceid)
-            ->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('tags', 'LIKE', "%{$search}%")
-                      ->orWhere('description', 'LIKE', "%{$search}%");
-            })
-            ->where('show_in_search', '1')
-            ->get();
-        }else{
+                ->where('id', '!=', $serviceid)
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('tags', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                })
+                ->where('show_in_search', '1')
+                ->get();
+        } else {
+            // $categoriess = Category::where('status', 1)
+            //                   ->where(function ($query) use ($search) {
+            //                       $query->where('name', 'LIKE', "%{$search}%")
+            //                             ->orWhere('tags', 'LIKE', "%{$search}%")
+            //                             ->orWhere('description', 'LIKE', "%{$search}%");
+            //                   });
+            //                 //   if (!empty($serviceTitle)  || $serviceTitle != null) {
+            //                 //         $categoriess->where('slug', '!=', $serviceTitle);
+            //                 //     }
+            //                   $categoriess->where('show_in_search', '1');
+            //              $categories= $categoriess->get();
+
             $categoriess = Category::where('status', 1)
-                              ->where(function ($query) use ($search) {
-                                  $query->where('name', 'LIKE', "%{$search}%")
-                                        ->orWhere('tags', 'LIKE', "%{$search}%")
-                                        ->orWhere('description', 'LIKE', "%{$search}%");
-                              });
-                            //   if (!empty($serviceTitle)  || $serviceTitle != null) {
-                            //         $categoriess->where('slug', '!=', $serviceTitle);
-                            //     }
-                              $categoriess->where('show_in_search', '1');
-                         $categories= $categoriess->get();
+                ->where('show_in_search', '1')
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                });
+
+            $categories = $categoriess->get();
+
+            if ($categories->isEmpty()) {
+               
+                $categories = Category::where('status', 1)
+                    ->where('show_in_search', '1')
+                    ->where('tags', 'LIKE', "%{$search}%")
+                    ->get()
+                    ->map(function ($cat) use ($search) {
+
+                        $tagsArray = explode(',', $cat->tags);
+
+                        $matchedTag = collect($tagsArray)->first(function ($tag) use ($search) {
+                            return stripos($tag, $search) !== false;
+                        });
+
+                        if ($matchedTag) {                           
+                            $cat->name = $cat->name . '.' . trim($matchedTag);
+                        }
+
+                        return $cat;
+                    });
+            }
         }
 
 
@@ -647,52 +686,53 @@ class ApiController extends Controller
 
     public function searchAvailableServices(Request $request)
     {
-    $search = $request->search;
-    $serviceid = $request->serviceid;
-    $userId = $request->user_id; // frontend should pass user_id
+        $search = $request->search;
+        $serviceid = $request->serviceid;
+        $userId = $request->user_id; // frontend should pass user_id
 
-    if (empty($search)) {
-        return $this->sendResponse(__('Category Data'), []);
-    }
+        if (empty($search)) {
+            return $this->sendResponse(__('Category Data'), []);
+        }
 
-    // Fetch user's existing services
-    $userServices = UserService::where('user_id', $userId)
-        ->pluck('service_id')
-        ->toArray();
+        // Fetch user's existing services
+        $userServices = UserService::where('user_id', $userId)
+            ->pluck('service_id')
+            ->toArray();
 
-    $query = Category::select('categories.*')
-        ->join('service_questions', 'categories.id', '=', 'service_questions.category')
-        ->where('categories.status', 1)
-        ->where(function ($q) use ($search) {
-            $q->where('categories.name', 'LIKE', "%{$search}%")
-              ->orWhere('categories.description', 'LIKE', "%{$search}%");
-        })
-        ->where('show_in_search', '1')
-        ->distinct();
+        $query = Category::select('categories.*')
+            ->join('service_questions', 'categories.id', '=', 'service_questions.category')
+            ->where('categories.status', 1)
+            ->where(function ($q) use ($search) {
+                $q->where('categories.name', 'LIKE', "%{$search}%")
+                    ->orWhere('categories.description', 'LIKE', "%{$search}%");
+            })
+            ->where('show_in_search', '1')
+            ->distinct();
 
-    if (!empty($serviceid)) {
-        $query->where('categories.id', '!=', $serviceid);
-    }
+        if (!empty($serviceid)) {
+            $query->where('categories.id', '!=', $serviceid);
+        }
 
-    // ✅ apply exclusion only if user already has services
-    if (!empty($userServices)) {
-        $query->whereNotIn('categories.id', $userServices);
-    }
-    $categories = $query->get();
+        // ✅ apply exclusion only if user already has services
+        if (!empty($userServices)) {
+            $query->whereNotIn('categories.id', $userServices);
+        }
+        $categories = $query->get();
 
-    return $this->sendResponse(__('Category Data'), $categories);
+        return $this->sendResponse(__('Category Data'), $categories);
     }
 
 
     //
 
-    public function requestOtp(Request $request){
+    public function requestOtp(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'phone_number' => 'required|min:10',
         ], [
             'phone_number.required' => 'Phone number is required.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -712,7 +752,7 @@ class ApiController extends Controller
 
                 if ($user && $user->otp) {
 
-                    CustomHelper::runInBackground(function() use ($user_id) {
+                    CustomHelper::runInBackground(function () use ($user_id) {
                         app(ZohoLeadBuyers::class)->integrateZohoLeadBuyers($user_id);
                     });
                     return $this->sendResponse('OTP created successfully');
@@ -720,32 +760,32 @@ class ApiController extends Controller
                 return $this->sendError('OTP creation failed');
             }
             return $this->sendError('OTP creation failed');
-
         }
         return $this->sendError('OTP creation failed');
     }
 
 
-    public function verifyOtp(Request $request){
+    public function verifyOtp(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'phone_number' => 'required|min:10',
             'otp' => 'required|min:4',
         ], [
             'phone_number.required' => 'Phone number is required.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
         $dbOtp = Otp::where('phone_number', $request->phone_number)
             ->where('otp_used', '0')
-            ->orderBy('id','desc')->first();
-        if(!empty($dbOtp)){
-            if($dbOtp->otp == $request->otp){
+            ->orderBy('id', 'desc')->first();
+        if (!empty($dbOtp)) {
+            if ($dbOtp->otp == $request->otp) {
                 $data['otp_used'] = 1;
                 Otp::where('id', $dbOtp->id)->update($data);
                 return $this->sendResponse('OTP verified successfully');
-            }else{
+            } else {
                 return $this->sendError('Wrong OTP, try again!');
             }
         }
@@ -753,12 +793,14 @@ class ApiController extends Controller
         return $this->sendError('Otp not found! Please generate OTP first.');
     }
 
-    public function regOtps(Request $request, $email){
+    public function regOtps(Request $request, $email)
+    {
         $aRows = AbandonedUser::where('email', $email)->select(['name', 'email', 'otp'])->get();
-        return $this->sendResponse('OTP Data',$aRows);
+        return $this->sendResponse('OTP Data', $aRows);
     }
 
-    public function mailTest(Request $request){
+    public function mailTest(Request $request)
+    {
         $dataUser['email'] = 'pushpeshsh@zuzucodes.com';
         $dataUser['fullName'] = 'Pushpesh Sharma';
         $dataUser['subject'] = "Thank you for contacting Localists – We've received your request";
@@ -843,27 +885,28 @@ class ApiController extends Controller
         exit;
     }
 
-    public function resendOtpEnable(Request $request){
+    public function resendOtpEnable(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required',
         ], [
             'user_id.required' => 'Something Went wrong.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
         $userId = $request->input('user_id');
 
         return response()->json([
-                'status' =>200,
-                'user_id' =>$userId,
-                'enable' => true,
-                'message' => 'Resend Otp Button Enable Now'
-            ], 400);
-
+            'status' => 200,
+            'user_id' => $userId,
+            'enable' => true,
+            'message' => 'Resend Otp Button Enable Now'
+        ], 400);
     }
 
-    public function resendOtp(Request $request){
+    public function resendOtp(Request $request)
+    {
 
 
         $validator = Validator::make($request->all(), [
@@ -871,7 +914,7 @@ class ApiController extends Controller
         ], [
             'user_id.required' => 'Something Went wrong.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
         $userId = $request->input('user_id');
@@ -883,45 +926,43 @@ class ApiController extends Controller
         }
 
         try {
-        // Find user
-        $user = AbandonedUser::find($userId);
+            // Find user
+            $user = AbandonedUser::find($userId);
 
 
 
-        if (! $user) {
+            if (! $user) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            // Generate OTP (4 digits)
+            $phoneOtp = random_int(1000, 9999);
+
+            // Update user record
+            $user->otp = $phoneOtp;   // make sure this column exists in your users table
+
+            $user->save();
+
+            if ($user->phone) {
+                $this->sendOtpDirect($user->phone, $phoneOtp, $userId);
+            }
+
+            // (Optional) send OTP via SMS here, e.g. using your Sinch function
+
+
+            CustomHelper::runInBackground(function () use ($userId) {
+                app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId, 'abandon');
+            });
+            return $this->sendResponse('OTP resent Successfully');
+        } catch (\Throwable $e) {
             return response()->json([
                 'ok' => false,
-                'message' => 'User not found'
-            ], 404);
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Generate OTP (4 digits)
-        $phoneOtp = random_int(1000, 9999);
-
-        // Update user record
-        $user->otp = $phoneOtp;   // make sure this column exists in your users table
-
-        $user->save();
-
-        if($user->phone){
-            $this->sendOtpDirect($user->phone,$phoneOtp,$userId);
-        }
-
-        // (Optional) send OTP via SMS here, e.g. using your Sinch function
-
-
-        CustomHelper::runInBackground(function() use ($userId) {
-            app(ZohoQuoteCustomers::class)->integrateQuoteCustomer($userId,'abandon');
-        });
-        return $this->sendResponse('OTP resent Successfully');
-
-    } catch (\Throwable $e) {
-        return response()->json([
-            'ok' => false,
-            'message' => 'Server error: ' . $e->getMessage()
-        ], 500);
-    }
-
     }
 
 
@@ -933,7 +974,7 @@ class ApiController extends Controller
         ], [
             'quote_id.required' => 'Something Went wrong.'
         ]);
-        if($validator->fails()){
+        if ($validator->fails()) {
             return $this->sendError($validator->errors());
         }
 
@@ -987,7 +1028,7 @@ class ApiController extends Controller
         $sinchKey    = CustomHelper::setting_value('sinch_key'); //"morB1J2tPJPO8kkvx0A8";
         $sinchSecret = CustomHelper::setting_value('sinch_secret'); //"OvgetB5Fx6gwCxwRA719yrJEV6gVco";
 
-        $user = AbandonedUser::where('id',$userId)->first();
+        $user = AbandonedUser::where('id', $userId)->first();
         $quoteId = $user->zoho_record_id;
 
         $maxAttempts = 30;
@@ -1054,13 +1095,13 @@ class ApiController extends Controller
 
             Log::info('First Response insert database');
 
-            
+
 
             $finalStatus = $initialStatus;
 
             if ($messageId) {
 
-                CustomHelper::runInBackground(function() use ($messageId, $quoteId, $client, $authHeader, $smsLog, $toNumber, $messageText, $otpCode) {
+                CustomHelper::runInBackground(function () use ($messageId, $quoteId, $client, $authHeader, $smsLog, $toNumber, $messageText, $otpCode) {
                     $statusUrl = "https://api.messagemedia.com/v1/messages/{$messageId}";
 
                     // Wait 30 seconds before checking status
@@ -1099,7 +1140,7 @@ class ApiController extends Controller
                                 $moduleAPIName = "twiliosmsextension0__Sent_SMS";
 
                                 $recordData = [
-                                    "Message" => $messageText .'test',
+                                    "Message" => $messageText . 'test',
                                     "Name" => "Sinch Sms",
                                     "twiliosmsextension0__Status" => $curStatus,
                                     "twiliosmsextension0__Activity_ID" => $messageId,
@@ -1129,7 +1170,6 @@ class ApiController extends Controller
                         }
                     }
                 });
-                
             }
 
 
@@ -1157,15 +1197,13 @@ class ApiController extends Controller
                 'sms_log_id' => $smsLog->id,
                 'send_response' => $sendBody
             ], 200);
-
         } catch (Exception $e) {
             Log::error('DirectSinch sendOtpDirect error: ' . $e->getMessage(), [
-                'to' => $toNumber, 'quoteId' => $quoteId, 'otp' => $otpCode
+                'to' => $toNumber,
+                'quoteId' => $quoteId,
+                'otp' => $otpCode
             ]);
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
-
-
 }

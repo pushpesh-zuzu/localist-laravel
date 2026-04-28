@@ -2206,9 +2206,6 @@ class LeadPreferenceController extends Controller
 
             $result = $response->json();
 
-
-
-
             if (empty($result['data'][0])) {
                 return $this->sendError('Customer not found in Zoho.');
             }
