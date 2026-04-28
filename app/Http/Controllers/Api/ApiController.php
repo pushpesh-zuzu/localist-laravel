@@ -635,18 +635,7 @@ class ApiController extends Controller
                 ->where('show_in_search', '1')
                 ->get();
         } else {
-            // $categoriess = Category::where('status', 1)
-            //                   ->where(function ($query) use ($search) {
-            //                       $query->where('name', 'LIKE', "%{$search}%")
-            //                             ->orWhere('tags', 'LIKE', "%{$search}%")
-            //                             ->orWhere('description', 'LIKE', "%{$search}%");
-            //                   });
-            //                 //   if (!empty($serviceTitle)  || $serviceTitle != null) {
-            //                 //         $categoriess->where('slug', '!=', $serviceTitle);
-            //                 //     }
-            //                   $categoriess->where('show_in_search', '1');
-            //              $categories= $categoriess->get();
-
+            
             $categoriess = Category::where('status', 1)
                 ->where('show_in_search', '1')
                 ->where(function ($query) use ($search) {
@@ -656,8 +645,17 @@ class ApiController extends Controller
 
             $categories = $categoriess->get();
 
+            $categories = $categories->map(function ($cat) use ($search) {
+
+                if (stripos($cat->name, 'tree surgery') !== false) {
+                    $cat->name = str_ireplace('tree surgery', 'Tree surgeons', $cat->name);
+                }
+
+                return $cat;
+            });
+
             if ($categories->isEmpty()) {
-               
+
                 $categories = Category::where('status', 1)
                     ->where('show_in_search', '1')
                     ->where('tags', 'LIKE', "%{$search}%")
@@ -670,7 +668,7 @@ class ApiController extends Controller
                             return stripos($tag, $search) !== false;
                         });
 
-                        if ($matchedTag) {                           
+                        if ($matchedTag) {
                             $cat->name = $cat->name . ' : ' . trim($matchedTag);
                         }
 
