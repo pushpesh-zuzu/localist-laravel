@@ -38,7 +38,8 @@ class UserDetail extends Model
                             'billing_vat_register',
                             'magic_link',
                             'quote_request_url',
-                            'plan_password'
+                            'plan_password',
+                            'full_crm_address'
                         ];
     public function users()
     {

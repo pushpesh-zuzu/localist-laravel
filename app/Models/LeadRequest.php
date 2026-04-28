@@ -13,7 +13,7 @@ class LeadRequest extends Model
    // use SoftDeletes; // Enable soft deletes
     use HasSlug;
 
-    protected $fillable = ['customer_id','service_id','city','postcode','questions','arrayed_questions','phone','details','images','recevive_online','professional_letin','credit_score','is_urgent','is_high_hiring','is_phone_verified','has_additional_details','is_frequent_user','is_updated','zoho_quote_request_id','status','time_slots', 'lead_address'];
+    protected $fillable = ['customer_id','service_id','city','postcode','questions','arrayed_questions','phone','details','images','recevive_online','professional_letin','credit_score','is_urgent','is_high_hiring','is_phone_verified','has_additional_details','is_frequent_user','is_updated','zoho_quote_request_id','status','time_slots', 'lead_address','is_address_verified','is_availability_verified'];
 
     public function customer()
     {

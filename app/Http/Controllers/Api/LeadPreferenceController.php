@@ -2119,67 +2119,138 @@ class LeadPreferenceController extends Controller
 
         DB::beginTransaction();
 
-          try {
+        try {
 
-        foreach ($postcodes as $item) {
+            foreach ($postcodes as $item) {
 
-            $id = $item['id'] ?? null;
+                $id = $item['id'] ?? null;
 
-            $postCode = CustomHelper::normalizeInUKPostcodeFormate($item['postcode']);
-            $city = CustomHelper::getCityNameFromPostcode($item['postcode']);
-            $cityName = $city['valid'] ? $city['city'] : 'N/A';
-            
-            if ($id) {
+                $postCode = CustomHelper::normalizeInUKPostcodeFormate($item['postcode']);
+                $city = CustomHelper::getCityNameFromPostcode($item['postcode']);
+                $cityName = $city['valid'] ? $city['city'] : 'N/A';
 
-                UserServiceLocation::where('id', $id)
-                    ->where('user_id', $userId)
-                    ->update([
-                        'miles' => $item['distance']
-                    ]);
-            } else {
+                if ($id) {
 
-
-                $exists = UserServiceLocation::where([
-                    'user_id'    => $userId,
-                    'postcode'   => $postCode,
-                    'service_id' => $item['service_id'],
-                ])->exists();
-
-                
-                if (!$exists) {
-
-                    $userServiceId = UserService::where('user_id', $userId)
-                        ->where('service_id', $item['service_id'])
-                        ->value('id');
+                    UserServiceLocation::where('id', $id)
+                        ->where('user_id', $userId)
+                        ->update([
+                            'miles' => $item['distance']
+                        ]);
+                } else {
 
 
-                    if (!$userServiceId) {
-                        continue;
+                    $exists = UserServiceLocation::where([
+                        'user_id'    => $userId,
+                        'postcode'   => $postCode,
+                        'service_id' => $item['service_id'],
+                    ])->exists();
+
+
+                    if (!$exists) {
+
+                        $userServiceId = UserService::where('user_id', $userId)
+                            ->where('service_id', $item['service_id'])
+                            ->value('id');
+
+
+                        if (!$userServiceId) {
+                            continue;
+                        }
+
+                        UserServiceLocation::create([
+                            'user_id'          => $userId,
+                            'service_id'       => $item['service_id'],
+                            'user_service_id'  => $userServiceId,
+                            'miles'            => $item['distance'],
+                            'nation_wide'      => 0,
+                            'postcode'         => $postCode,
+                            'city'             => $cityName,
+                            'type'             => 'Distance',
+                            'coordinates' => '{}',
+                        ]);
                     }
-
-                    UserServiceLocation::create([
-                        'user_id'          => $userId,
-                        'service_id'       => $item['service_id'],
-                        'user_service_id'  => $userServiceId,
-                        'miles'            => $item['distance'],
-                        'nation_wide'      => 0,
-                        'postcode'         => $postCode,
-                        'city'             => $cityName,
-                        'type'             => 'Distance',
-                        'coordinates' => '{}',
-                    ]);
                 }
             }
-        }
 
-        DB::commit();
+            DB::commit();
 
-        return $this->sendResponse(__('Locations processed successfully'));
+            return $this->sendResponse(__('Locations processed successfully'));
         } catch (\Exception $e) {
 
             DB::rollBack();
 
             return $this->sendError('Something went wrong');
+        }
+    }
+
+
+    public function updateCustomerFullAddressVerification(Request $request)
+    {
+
+        try {
+
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return $this->sendError('User not found');
+            }
+
+            $userId = $user->id;
+
+            $access_token = ZohoHelper::getAccessToken();
+
+            $response = Http::withToken($access_token)
+                ->get('https://www.zohoapis.eu/crm/v2/Quote_Customers/search', [
+                    'email' => $request->email
+                ]);
+
+            $result = $response->json();
+
+
+
+
+            if (empty($result['data'][0])) {
+                return $this->sendError('Customer not found in Zoho.');
+            }
+
+            $zohoData = $result['data'][0];
+
+            $fullAddress = $zohoData['Full_Address'] ?? null;
+
+
+            if (!empty($fullAddress)) {
+
+
+                $userDetail = UserDetail::where('user_id', $userId)->first();
+
+                if ($userDetail) {
+                    $userDetail->update([
+                        'full_crm_address' => $fullAddress
+                    ]);
+                }
+
+
+                LeadRequest::where('customer_id', $userId)->update([
+                    'is_address_verified' => 1,
+                    'is_availability_verified' => 1
+                ]);
+
+                return $this->sendResponse(
+                    'Address synced successfully. Please reload the page to see the changes.'
+                );
+            } else {
+
+                return $this->sendError(
+                    'Address not found or empty from Zoho.'
+                );
+            }
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching from Zoho',
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

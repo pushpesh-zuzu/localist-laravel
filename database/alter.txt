@@ -132,6 +132,15 @@ INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `crea
 INSERT INTO `permissions` (`id`, `heading`, `name`, `title`, `guard_name`, `created_at`, `updated_at`) VALUES (NULL, 'D7 Lead Suppliers List', 'd7leadsuppliers.excelexport', 'Excel Export', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16'), (NULL, 'D7 Lead Suppliers List', 'd7leadsuppliers.csvexport', 'Csv Export', 'admin', NULL, NULL), (NULL, 'D7 Lead Suppliers List', 'd7leadsuppliers.viewlist', 'View List', 'admin', '2025-10-29 15:58:16', '2025-10-29 15:58:16');
 
 
+ALTER TABLE `user_details` ADD `full_crm_address` TEXT NULL AFTER `plan_password`;
+
+ALTER TABLE `lead_requests` ADD `is_address_verified` TINYINT NOT NULL DEFAULT '0' COMMENT '0=not verified,1=verified' AFTER `time_slots`;
+
+ALTER TABLE `lead_requests` ADD `is_availability_verified` TINYINT NOT NULL DEFAULT '0' COMMENT '0=not verified,1=verified' AFTER `time_slots`;
+
+
+
+
 
 
 
