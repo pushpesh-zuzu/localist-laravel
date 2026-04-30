@@ -635,46 +635,40 @@ class ApiController extends Controller
                 ->where('show_in_search', '1')
                 ->get();
         } else {
-            
-            $categoriess = Category::where('status', 1)
+
+            $categories = Category::where('status', 1)
                 ->where('show_in_search', '1')
                 ->where(function ($query) use ($search) {
                     $query->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('description', 'LIKE', "%{$search}%");
-                });
+                        ->orWhere('description', 'LIKE', "%{$search}%")
+                        ->orWhere('tags', 'LIKE', "%{$search}%"); 
+                })
+                ->get()
+                ->flatMap(function ($cat) use ($search) {
 
-            $categories = $categoriess->get();
+                    $results = collect();
 
-            $categories = $categories->map(function ($cat) use ($search) {
-
-                if (stripos($cat->name, 'tree surgery') !== false) {
-                    $cat->name = str_ireplace('tree surgery', 'Tree surgeons', $cat->name);
-                }
-
-                return $cat;
-            });
-
-            if ($categories->isEmpty()) {
-
-                $categories = Category::where('status', 1)
-                    ->where('show_in_search', '1')
-                    ->where('tags', 'LIKE', "%{$search}%")
-                    ->get()
-                    ->map(function ($cat) use ($search) {
-
+                    if (stripos($cat->name, $search) !== false || stripos($cat->description, $search) !== false) {
+                        $results->push($cat);
+                    }
+                    
+                    if ($cat->tags) {
                         $tagsArray = explode(',', $cat->tags);
 
-                        $matchedTag = collect($tagsArray)->first(function ($tag) use ($search) {
+                        $matchedTags = collect($tagsArray)->filter(function ($tag) use ($search) {
                             return stripos($tag, $search) !== false;
                         });
 
-                        if ($matchedTag) {
-                            $cat->name = $cat->name . ' : ' . trim($matchedTag);
+                        foreach ($matchedTags as $tag) {
+                            $newCat = clone $cat;
+                            $newCat->name = $cat->name . ' : ' . trim($tag);
+                            $results->push($newCat);
                         }
+                    }
 
-                        return $cat;
-                    });
-            }
+                    return $results;
+                })
+                ->values();
         }
 
 
