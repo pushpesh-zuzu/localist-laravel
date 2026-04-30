@@ -620,7 +620,7 @@ class ApiController extends Controller
             // You can order as you like; name asc is common for dropdowns
             $categories = $base
                 ->orderBy('name')
-                ->get(['id', 'name', 'description']); // keep payload lean if you want
+                ->get(['id', 'name', 'description','breadcrumb_title']); // keep payload lean if you want
 
             return $this->sendResponse(__('Category Data'), $categories);
         }
