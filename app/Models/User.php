@@ -265,4 +265,12 @@ class User extends Authenticatable
             ->where('is_subscribed', 1)
             ->exists();
     }
+    
+    protected $appends = ['full_crm_address'];
+
+    public function getFullCrmAddressAttribute()
+    {
+        return \App\Models\UserDetail::where('user_id', $this->id)
+            ->value('full_crm_address') ?? '';
+    }
 }
