@@ -59,6 +59,7 @@ class SectorController extends Controller{
             $data['banner_image'] = CustomHelper::fileUpload($request->banner_image,'category');
         }
         $data['credit_score_model'] = $request->credit_score_model;
+        $data['lead_slot_count'] = $request->lead_slot_count ?? 0;
 
         Category::create($data);
         return redirect()->route('sectors.index')->with('success', 'Sector created successfully.');
@@ -116,6 +117,7 @@ class SectorController extends Controller{
             $data['banner_image'] = CustomHelper::fileUpload($request->banner_image,'category');
         }
         $data['credit_score_model'] = $request->credit_score_model;
+        $data['lead_slot_count'] = $request->lead_slot_count ?? 0;
 
         Category::where('id', $id)->update($data);
         return redirect()->route('sectors.index')->with('success', 'Sector updated successfully.');

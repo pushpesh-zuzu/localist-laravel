@@ -166,6 +166,13 @@
                   </span>
               @endif
             </div>  
+            <div class="col-md-6">
+              <label class="form-label" for="seo_title">Lead Slot Count</label>
+              <input type="number" id="lead_slot_count" class="form-control" name="lead_slot_count" class="form-control{{ $errors->has('lead_slot_count') ? ' is-invalid' : '' }}"
+              value="{{ $sector ? $sector['lead_slot_count'] : old('lead_slot_count') }}" min="0" max="100" placeholder="Lead Slot Count">
+            </div>
+      
+
           </div>
 
 
