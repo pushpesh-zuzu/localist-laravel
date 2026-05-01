@@ -112,6 +112,7 @@ class LeadService
 
         $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
         $baseQuery = LeadRequest::with(['customer', 'category'])
+            ->selectRaw('CEIL(CAST(credit_score AS UNSIGNED) * 2.5) as exclusive_credit_score')
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
@@ -363,6 +364,7 @@ class LeadService
             ->toArray();
 
         $baseQuery = LeadRequest::select('lead_requests.*')
+            ->selectRaw('CEIL(CAST(credit_score AS UNSIGNED) * 2.5) as exclusive_credit_score')
             ->selectRaw(
                 "
                 CASE
