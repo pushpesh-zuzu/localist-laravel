@@ -249,4 +249,11 @@ class PaymentController extends Controller
             ]);
         }
     }
+
+    public function getCostofOneCredit(Request $request) 
+    {        
+        $costOfOneCredit = CustomHelper::setting_value('cost_of_one_credit');
+        return $this->sendResponse('cost_of_one_credit', $costOfOneCredit);
+    }
+      
 }

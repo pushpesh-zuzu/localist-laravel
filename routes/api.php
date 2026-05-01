@@ -98,6 +98,9 @@ Route::post('get-address-list-from-postcode', [ApiController::class, 'getAddress
 
 Route::post('get-progress-percentage', [ApiController::class, 'getProgressPercentage']);
 
+Route::get('/cost-of-one-credit', [PaymentController::class, 'getCostofOneCredit']);
+
+
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
 Route::prefix('check')->group(function () {
     Route::post('/email-id', [UserController::class, 'checkEmailId']);
