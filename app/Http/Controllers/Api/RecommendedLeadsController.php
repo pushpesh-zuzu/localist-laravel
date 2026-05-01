@@ -616,8 +616,18 @@ class RecommendedLeadsController extends Controller
         if(!isset($aVals['bidtype']) || empty($aVals['bidtype'])){
             return $this->sendError(__('Lead request not found'), 404);
         }
+        $isLeadAlreadyExclusive = (int) LeadRequest::where('id', $aVals['lead_id'])->value('is_exclusive');
+        if($isLeadAlreadyExclusive){
+            return $this->sendError("This is already a exclusive lead", 404);
+        }
+
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
-        $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
+        $isExclusive = (isset($aVals['is_exclusive']) && (int)$aVals['is_exclusive'] === 1) ? 1 : 0;
+        $creditScore = (int) LeadRequest::where('id', $aVals['lead_id'])->value('credit_score');
+        if ($isExclusive) {
+            $creditScore = (int) ceil($creditScore * 2.5);
+        }
+
         $categoryId = LeadRequest::where('id',$aVals['lead_id'])->value('service_id');
 
         $leadSlotCountGeneral = (int) CustomHelper::setting_value("lead_slot_count", 5);
@@ -699,9 +709,16 @@ class RecommendedLeadsController extends Controller
         //create transaction log
         $tId =CustomHelper::createTrasactionLog($sellerId, 0, $creditScore, $trInfo, 1, 1, $error_response='');
 
+        if($isExclusive){
+            LeadRequest::where('id',$aVals['lead_id'])->update([
+                'is_exclusive' => 1,
+                'status'=>'pending'
+            ]);
+        }else{
+            LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
+        }
 
-
-        LeadRequest::where('id',$aVals['lead_id'])->update(['status'=>'pending']);
+        
 
         //remove from save for later
         SaveForLater::where('seller_id',$sellerId)
