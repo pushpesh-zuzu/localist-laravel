@@ -618,8 +618,16 @@ class RecommendedLeadsController extends Controller
         }
         $leadTime = LeadRequest::where('id',$aVals['lead_id'])->pluck('created_at')->first();
         $creditScore = LeadRequest::where('id',$aVals['lead_id'])->value('credit_score');
+        $categoryId = LeadRequest::where('id',$aVals['lead_id'])->value('service_id');
 
-        $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
+        $leadSlotCountGeneral = (int) CustomHelper::setting_value("lead_slot_count", 5);
+        $leadSlotCount = $leadSlotCountGeneral;
+
+        // if category has lead_slot_count > 0 then use category slot count else use general slot count
+        $leadSlotCountSector = Category::where('id', $categoryId)->value('lead_slot_count');
+        if ($leadSlotCountSector !== null && (int)$leadSlotCountSector > 0) {
+            $leadSlotCount = (int) $leadSlotCountSector;
+        }
 
         $sellerId = ($aVals['bidtype'] == 'purchase_leads') ? $aVals['user_id'] : $aVals['seller_id'];
         $buyerId = ($aVals['bidtype'] == 'purchase_leads') ? $aVals['buyer_id'] : $aVals['user_id'];
