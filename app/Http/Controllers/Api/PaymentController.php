@@ -149,7 +149,7 @@ class PaymentController extends Controller
                 $registeredAt = \Carbon\Carbon::parse($user->created_at);
 
                 if ($planCount == 1 && $registeredAt->diffInDays(now()) <= 365 && !empty($user->awc)) {
-                   
+
                     CustomHelper::runInBackground(function () use ($user, $total_amount, $invoiceNumber) {
                         self::sendAwinConversion($user, $total_amount, $invoiceNumber);
                     });
@@ -228,7 +228,7 @@ class PaymentController extends Controller
             $url .= "&testmode=0&vc=" . $voucherCode;
             $url .= "&cks=" . $awc;
 
-          //  \Log::info("AWIN URL:", ['url' => $url]);
+            //  \Log::info("AWIN URL:", ['url' => $url]);
 
             $c = curl_init();
             curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 10);
@@ -241,8 +241,6 @@ class PaymentController extends Controller
                 'response' => $response,
                 'http_code' => curl_getinfo($c, CURLINFO_HTTP_CODE)
             ]);
-           
-
         } catch (\Exception $e) {
             \Log::error("AWIN Exception:", [
                 'message' => $e->getMessage()
@@ -250,10 +248,18 @@ class PaymentController extends Controller
         }
     }
 
-    public function getCostofOneCredit(Request $request) 
-    {        
+    public function getCostofOneCredit(Request $request)
+    {
         $costOfOneCredit = CustomHelper::setting_value('cost_of_one_credit');
-        return $this->sendResponse('cost_of_one_credit', $costOfOneCredit);
+
+        $value = [];
+        $value['cost_of_one_credit'] = $costOfOneCredit;
+
+        $isVat = UserDetail::where('user_id', $request->user_id)
+            ->value('billing_vat_register');
+
+        $value['billing_vat_register'] = $isVat ? 1 : 0;
+
+        return $this->sendResponse('cost_of_one_credit', $value);
     }
-      
 }

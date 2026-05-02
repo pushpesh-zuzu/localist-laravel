@@ -98,7 +98,7 @@ Route::post('get-address-list-from-postcode', [ApiController::class, 'getAddress
 
 Route::post('get-progress-percentage', [ApiController::class, 'getProgressPercentage']);
 
-Route::get('/cost-of-one-credit', [PaymentController::class, 'getCostofOneCredit']);
+
 
 
 // Route::get('zoho/callback', [ZohoController::class, 'handleCallback']);
@@ -326,5 +326,7 @@ Route::prefix('users')->group(function () {
         Route::post('/facebook/create-token', [FacebookController::class, 'exchangeToken']);
         Route::post('/facebook/get-token', [FacebookController::class, 'getSellerToken']);
         Route::post('/facebook/fetch-reviews', [FacebookController::class, 'fetchReviews']);
+
+        Route::get('/cost-of-one-credit', [PaymentController::class, 'getCostofOneCredit']);
     });
 });
