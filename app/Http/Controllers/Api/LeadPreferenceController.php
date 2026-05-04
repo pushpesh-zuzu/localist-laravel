@@ -393,8 +393,28 @@ class LeadPreferenceController extends Controller
             $savedLeadIds = SaveForLater::where('seller_id', $user_id)
                 ->pluck('lead_id')
                 ->toArray();
-
-            $baseQuery = LeadRequest::with(['customer', 'category'])
+            $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
+            $leadSlotCount = CustomHelper::setting_value('lead_slot_count', 5);
+            $slotFullLeadIds = DB::table('recommended_leads')
+                ->select('lead_id')
+                ->groupBy('lead_id')
+                ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
+                ->pluck('lead_id')
+                ->toArray();
+            $baseQuery = LeadRequest::select('lead_requests.*')
+                ->selectRaw('CEIL(CAST(credit_score AS UNSIGNED) * 2.5) as exclusive_credit_score')
+                ->selectRaw(
+                    "
+                    CASE
+                        WHEN lead_requests.created_at <= ?
+                            OR lead_requests.id IN (" . (count($slotFullLeadIds) ? implode(',', $slotFullLeadIds) : 'NULL') . ")
+                        THEN 1
+                        ELSE 0
+                    END AS is_expired
+                    ",
+                    [Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()]
+                )
+                ->with(['customer', 'category'])
                 ->whereIn('id', $savedLeadIds);
 
             $relType = "Saved Leads";
