@@ -636,39 +636,41 @@ class ApiController extends Controller
                 ->get();
         } else {
 
-            $categories = Category::where('status', 1)
+            $categoriesId = Category::where('status', 1)
                 ->where('show_in_search', '1')
                 ->where(function ($query) use ($search) {
                     $query->where('name', 'LIKE', "%{$search}%")
                         ->orWhere('description', 'LIKE', "%{$search}%")
                         ->orWhere('tags', 'LIKE', "%{$search}%"); 
                 })
-                ->get()
-                ->flatMap(function ($cat) use ($search) {
-
-                    $results = collect();
-
-                    if (stripos($cat->name, $search) !== false || stripos($cat->description, $search) !== false) {
-                        $results->push($cat);
-                    }
+                ->pluck('id')->toArray();
+                $categories = array();    
+                foreach($categoriesId as $id){
+                    unset($tempCat);
+                    $cat = Category::where('id', $id)->first();
+                    $tempCat = array(
+                        'id' => $id,
+                        'name' => $cat->name,
+                        'breadcrumb_title' => $cat->breadcrumb_title 
+                    );
+                    array_push($categories, $tempCat);
                     
-                    if ($cat->tags) {
-                        $tagsArray = explode(',', $cat->tags);
-
-                        $matchedTags = collect($tagsArray)->filter(function ($tag) use ($search) {
-                            return stripos($tag, $search) !== false;
-                        });
-
-                        foreach ($matchedTags as $tag) {
-                            $newCat = clone $cat;
-                            $newCat->name = $cat->name . ' : ' . trim($tag);
-                            $results->push($newCat);
+                    if(!empty($cat->tags)){
+                        $tagsArray = explode(",", $cat->tags);
+                        foreach($tagsArray as $tag){
+                            unset($tempTags);
+                            $tempTags = array(
+                                'id' => $id,
+                                'name' => $cat->name ." : " .$tag,
+                                'breadcrumb_title' => $cat->breadcrumb_title
+                            );
+                            array_push($categories, $tempTags);
+                            
                         }
                     }
 
-                    return $results;
-                })
-                ->values();
+                }
+
         }
 
 
