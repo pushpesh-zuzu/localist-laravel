@@ -169,10 +169,6 @@ class RecommendedLeadsController extends Controller
             }
         }
 
-        $result = collect($result)->map(function ($item){
-            return CustomHelper::maskLead((object) $item);
-        });
-
         return $this->sendResponse(__('AutoBid Data'), $result);
     }
 
