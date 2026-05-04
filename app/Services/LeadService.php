@@ -111,8 +111,27 @@ class LeadService
         }
 
         $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
-        $baseQuery = LeadRequest::with(['customer', 'category'])
+        $leadSlotCount = CustomHelper::setting_value('lead_slot_count', 5);
+        $slotFullLeadIds = DB::table('recommended_leads')
+            ->select('lead_id')
+            ->groupBy('lead_id')
+            ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
+            ->pluck('lead_id')
+            ->toArray();
+        $baseQuery = LeadRequest::select('lead_requests.*')
             ->selectRaw('CEIL(CAST(credit_score AS UNSIGNED) * 2.5) as exclusive_credit_score')
+            ->selectRaw(
+                "
+                CASE
+                    WHEN lead_requests.created_at <= ?
+                        OR lead_requests.id IN (" . (count($slotFullLeadIds) ? implode(',', $slotFullLeadIds) : 'NULL') . ")
+                    THEN 1
+                    ELSE 0
+                END AS is_expired
+                ",
+                [Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()]
+            )
+            ->with(['customer', 'category'])
             ->whereHas('customer', function ($query) {
                 $query->where('form_status', 1);
             })
@@ -120,8 +139,8 @@ class LeadService
             ->where('customer_id', '<>', $user_id) //do not include self request leads
 
             //closure condition
-            ->where('status', '!=', 'hired') // do not include hired leads
-            ->where('created_at', '>', Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()); // do not include leads which are older than n days
+            ->where('status', '!=', 'hired'); // do not include hired leads
+
         $leadSlotCount = CustomHelper::setting_value("lead_slot_count", 5);
         $slotFullLeads = DB::table('recommended_leads')
             ->select('lead_id')
