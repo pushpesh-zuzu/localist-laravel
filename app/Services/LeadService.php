@@ -1221,11 +1221,12 @@ class LeadService
         })->pipe(function () use (&$seen) {
             return collect(array_values($seen));
         });
-
+        $isExclusiveLead = LeadRequest::where('id', $lead->id)->value('is_exclusive');
         return [
             'empty'   => $finalUniqueSellers->isEmpty(),
             'response' => [
                 'service_name'  => $serviceName,
+                'is_exclusive'  => $isExclusiveLead ?? 0,
                 'sellersCount'  => $finalUniqueSellers->count(),
                 'sellers'       => $finalUniqueSellers,
                 'displayCount'  => $recommendedCount,
