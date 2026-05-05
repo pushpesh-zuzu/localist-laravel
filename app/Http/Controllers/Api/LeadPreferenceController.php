@@ -2294,7 +2294,7 @@ class LeadPreferenceController extends Controller
         }
     
     
-         $totalBids = RecommendedLead::where('lead_id', $lead->lead_id)          
+         $totalBids = RecommendedLead::where('lead_id', $lead['id'])          
             ->count();
      
         $lead->bid_status = $totalBids . '/' . $leadSlotCount;
