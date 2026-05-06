@@ -116,6 +116,7 @@ class LeadPreferenceController extends Controller
         //filters
         $filters['searchName'] = $aVals['name'] ?? null;
         $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
+        $filters['leadType'] = $aVals['lead_type'] ?? null;
         $filters['lead_time'] = $aVals['lead_time'] ?? null;
         $filters['services'] = $aVals['service_id'] ?? null;
         $filters['creditFilter'] = $aVals['credits'] ?? null;
@@ -139,8 +140,6 @@ class LeadPreferenceController extends Controller
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
-
-        $allLeads = $this->addLeadBidProgress($allLeads);
 
         $allLeads = $allLeads->map(function ($item) {
 
@@ -393,28 +392,8 @@ class LeadPreferenceController extends Controller
             $savedLeadIds = SaveForLater::where('seller_id', $user_id)
                 ->pluck('lead_id')
                 ->toArray();
-            $closeLeadsAfterDays = CustomHelper::setting_value("close_leads_after_days", 14);
-            $leadSlotCount = CustomHelper::setting_value('lead_slot_count', 5);
-            $slotFullLeadIds = DB::table('recommended_leads')
-                ->select('lead_id')
-                ->groupBy('lead_id')
-                ->havingRaw('COUNT(*) >= ?', [$leadSlotCount])
-                ->pluck('lead_id')
-                ->toArray();
-            $baseQuery = LeadRequest::select('lead_requests.*')
-                ->selectRaw('CEIL(CAST(credit_score AS UNSIGNED) * 2.5) as exclusive_credit_score')
-                ->selectRaw(
-                    "
-                    CASE
-                        WHEN lead_requests.created_at <= ?
-                            OR lead_requests.id IN (" . (count($slotFullLeadIds) ? implode(',', $slotFullLeadIds) : 'NULL') . ")
-                        THEN 1
-                        ELSE 0
-                    END AS is_expired
-                    ",
-                    [Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()]
-                )
-                ->with(['customer', 'category'])
+
+            $baseQuery = LeadRequest::with(['customer', 'category'])
                 ->whereIn('id', $savedLeadIds);
 
             $relType = "Saved Leads";
@@ -442,8 +421,6 @@ class LeadPreferenceController extends Controller
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
-
-        $allLeads = $this->addLeadBidProgress($allLeads);
 
         return $this->sendResponse($relType . ' Request Data', $allLeads->values());
     }
@@ -1561,8 +1538,6 @@ class LeadPreferenceController extends Controller
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
 
-        $allLeads = $this->addLeadBidProgress($allLeads);
-
         $allLeads = $allLeads->map(function ($item) {
             return CustomHelper::maskLead($item);
         });
@@ -2275,34 +2250,5 @@ class LeadPreferenceController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
-    }
-
-
-    public function addLeadBidProgress($leads)
-    {
-        return $leads->map(function ($lead) {
-
-            $categoryId = LeadRequest::where('id', $lead['id'])->value('service_id');
-
-            $leadSlotCountGeneral = (int) CustomHelper::setting_value("lead_slot_count", 5);
-            $leadSlotCount = $leadSlotCountGeneral;
-
-            // if category has lead_slot_count > 0 then use category slot count else use general slot count
-            $leadSlotCountSector = Category::where('id', $categoryId)->value('lead_slot_count');
-
-            if ($leadSlotCountSector !== null && (int)$leadSlotCountSector > 0) {
-                $leadSlotCount = (int) $leadSlotCountSector;
-            }
-
-
-            $totalBids = RecommendedLead::where('lead_id', $lead['id'])
-                ->count();
-
-            $lead->bid_count = $totalBids;
-            $lead->max_bid = $leadSlotCount;
-
-
-            return $lead;
-        });
     }
 }
