@@ -140,7 +140,7 @@ class LeadPreferenceController extends Controller
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
-
+        $allLeads = $this->addLeadBidProgress($allLeads);
         $allLeads = $allLeads->map(function ($item) {
 
             return CustomHelper::maskLead($item);
@@ -421,6 +421,7 @@ class LeadPreferenceController extends Controller
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
+        $allLeads = $this->addLeadBidProgress($allLeads);
 
         return $this->sendResponse($relType . ' Request Data', $allLeads->values());
     }
@@ -1538,6 +1539,8 @@ class LeadPreferenceController extends Controller
 
         //add lead view count
         $allLeads = $this->addLeadViewCount($allLeads);
+
+        $allLeads = $this->addLeadBidProgress($allLeads);
 
         $allLeads = $allLeads->map(function ($item) {
             return CustomHelper::maskLead($item);
