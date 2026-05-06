@@ -542,14 +542,11 @@ class LeadService
         }
 
         if (!empty($filters['leadType'])) {
-            $baseQuery = $baseQuery->where(function ($query) use ($filters) {
-                if ($filters['leadType'] === 'live') {
-                    $query->where('is_expired', 0);
-                } elseif ($filters['leadType'] === 'expired') {
-                    $query->where('is_expired', 1);
-                }
-                // "all" → no condition
-            });
+            if ($filters['leadType'] === 'live') {
+                $baseQuery = $baseQuery->having('is_expired', 0);
+            } elseif ($filters['leadType'] === 'expired') {
+                $baseQuery = $baseQuery->having('is_expired', 1);
+            }
         }
 
 
