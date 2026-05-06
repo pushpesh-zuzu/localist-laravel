@@ -1518,6 +1518,7 @@ class LeadPreferenceController extends Controller
         //filters
         $filters['searchName'] = $aVals['name'] ?? null;
         $filters['spotlightFilter'] = $aVals['lead_spotlights'] ?? null;
+        $filters['leadType'] = $aVals['lead_type'] ?? null;
         $filters['lead_time'] = $aVals['lead_time'] ?? null;
         $filters['services'] = $aVals['service_id'] ?? null;
         $filters['creditFilter'] = $aVals['credits'] ?? null;
