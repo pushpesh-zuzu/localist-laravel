@@ -393,7 +393,20 @@ class LeadPreferenceController extends Controller
                 ->pluck('lead_id')
                 ->toArray();
 
-            $baseQuery = LeadRequest::with(['customer', 'category'])
+            $baseQuery = LeadRequest::select('lead_requests.*')
+                ->selectRaw('CEIL(CAST(credit_score AS UNSIGNED) * 2.5) as exclusive_credit_score')
+                ->selectRaw(
+                    "
+                    CASE
+                        WHEN lead_requests.created_at <= ?
+                            OR lead_requests.id IN (" . (count($slotFullLeadIds) ? implode(',', $slotFullLeadIds) : 'NULL') . ")
+                        THEN 1
+                        ELSE 0
+                    END AS is_expired
+                    ",
+                    [Carbon::now()->subDays($closeLeadsAfterDays)->toDateString()]
+                )
+                ->with(['customer', 'category'])
                 ->whereIn('id', $savedLeadIds);
 
             $relType = "Saved Leads";
