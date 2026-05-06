@@ -541,15 +541,7 @@ class LeadService
             });
         }
 
-        if (!empty($filters['leadType'])) {
-            if ($filters['leadType'] === 'live') {
-                $baseQuery = $baseQuery->having('is_expired', 0);
-            } elseif ($filters['leadType'] === 'expired') {
-                $baseQuery = $baseQuery->having('is_expired', 1);
-            }
-        }
-
-
+        
         if (!empty($filters['spotlightFilter'])) {
             $splghts = explode(',', $filters['spotlightFilter']);
             $baseQuery = $baseQuery->where(function ($query) use ($splghts) {
@@ -615,6 +607,21 @@ class LeadService
             });
         }
 
+
+        if (!empty($filters['leadType'])) {
+
+            if ($filters['leadType'] === 'live') {
+
+                $baseQuery = $baseQuery->having('is_expired', '=', 0)
+                    ->having('is_exclusive', '=', 0);
+
+            } elseif ($filters['leadType'] === 'expired') {
+
+                $baseQuery = $baseQuery->havingRaw(
+                    '(is_expired = 1 OR is_exclusive = 1)'
+                );
+            }
+        }
 
 
         return $baseQuery;
