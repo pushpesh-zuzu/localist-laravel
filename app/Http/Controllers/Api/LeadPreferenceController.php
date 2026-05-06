@@ -2278,29 +2278,31 @@ class LeadPreferenceController extends Controller
     }
 
 
-   public function addLeadBidProgress($leads){
-    return $leads->map(function ($lead) {    
-    
-       $categoryId = LeadRequest::where('id',$lead['id'])->value('service_id');
+    public function addLeadBidProgress($leads)
+    {
+        return $leads->map(function ($lead) {
 
-        $leadSlotCountGeneral = (int) CustomHelper::setting_value("lead_slot_count", 5);
-        $leadSlotCount = $leadSlotCountGeneral;
+            $categoryId = LeadRequest::where('id', $lead['id'])->value('service_id');
 
-        // if category has lead_slot_count > 0 then use category slot count else use general slot count
-        $leadSlotCountSector = Category::where('id', $categoryId)->value('lead_slot_count');
+            $leadSlotCountGeneral = (int) CustomHelper::setting_value("lead_slot_count", 5);
+            $leadSlotCount = $leadSlotCountGeneral;
 
-        if ($leadSlotCountSector !== null && (int)$leadSlotCountSector > 0) {
-            $leadSlotCount = (int) $leadSlotCountSector;
-        }
-    
-    
-         $totalBids = RecommendedLead::where('lead_id', $lead['id'])          
-            ->count();
-     
-        $lead->bid_status = $totalBids . '/' . $leadSlotCount;
-              
+            // if category has lead_slot_count > 0 then use category slot count else use general slot count
+            $leadSlotCountSector = Category::where('id', $categoryId)->value('lead_slot_count');
 
-        return $lead;
-    });
-   }
+            if ($leadSlotCountSector !== null && (int)$leadSlotCountSector > 0) {
+                $leadSlotCount = (int) $leadSlotCountSector;
+            }
+
+
+            $totalBids = RecommendedLead::where('lead_id', $lead['id'])
+                ->count();
+
+            $lead->total_bid = $totalBids;
+            $lead->max_bid = $leadSlotCount;
+
+
+            return $lead;
+        });
+    }
 }
