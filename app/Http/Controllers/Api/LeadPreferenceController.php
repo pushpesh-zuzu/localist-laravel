@@ -2274,8 +2274,7 @@ class LeadPreferenceController extends Controller
             $totalBids = RecommendedLead::where('lead_id', $lead['id'])
                 ->count();
 
-            $lead->bid_count = $totalBids;
-            
+            $lead->bid_count = $totalBids;            
             $lead->max_bid = $leadSlotCount;
 
 
