@@ -2252,4 +2252,34 @@ class LeadPreferenceController extends Controller
             ]);
         }
     }
+
+
+    public function addLeadBidProgress($leads)
+    {
+        return $leads->map(function ($lead) {
+
+            $categoryId = LeadRequest::where('id', $lead['id'])->value('service_id');
+
+            $leadSlotCountGeneral = (int) CustomHelper::setting_value("lead_slot_count", 5);
+            $leadSlotCount = $leadSlotCountGeneral;
+
+            // if category has lead_slot_count > 0 then use category slot count else use general slot count
+            $leadSlotCountSector = Category::where('id', $categoryId)->value('lead_slot_count');
+
+            if ($leadSlotCountSector !== null && (int)$leadSlotCountSector > 0) {
+                $leadSlotCount = (int) $leadSlotCountSector;
+            }
+
+
+            $totalBids = RecommendedLead::where('lead_id', $lead['id'])
+                ->count();
+
+            $lead->bid_count = $totalBids;
+            
+            $lead->max_bid = $leadSlotCount;
+
+
+            return $lead;
+        });
+    }
 }
