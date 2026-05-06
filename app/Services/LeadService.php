@@ -610,16 +610,39 @@ class LeadService
 
         if (!empty($filters['leadType'])) {
 
+            $expiredDate = Carbon::now()
+                ->subDays($closeLeadsAfterDays)
+                ->toDateString();
+
+            $expiredLeadIdsSql = count($slotFullLeadIds)
+                ? implode(',', $slotFullLeadIds)
+                : 'NULL';
+
             if ($filters['leadType'] === 'live') {
 
-                $baseQuery = $baseQuery->having('is_expired', '=', 0)
-                    ->having('is_exclusive', '=', 0);
+                $baseQuery = $baseQuery
+                    ->where('is_exclusive', 0)
+                    ->whereRaw("
+                        (
+                            lead_requests.created_at > ?
+                            AND lead_requests.id NOT IN ($expiredLeadIdsSql)
+                        )
+                    ", [$expiredDate]);
 
             } elseif ($filters['leadType'] === 'expired') {
 
-                $baseQuery = $baseQuery->havingRaw(
-                    '(is_expired = 1 OR is_exclusive = 1)'
-                );
+                $baseQuery = $baseQuery->where(function ($query) use ($expiredDate, $expiredLeadIdsSql) {
+
+                    $query->where('is_exclusive', 1)
+                        ->orWhereRaw("
+                                (
+                                    lead_requests.created_at <= ?
+                                    OR lead_requests.id IN ($expiredLeadIdsSql)
+                                )
+                        ", [$expiredDate]);
+
+                });
+
             }
         }
 
