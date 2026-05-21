@@ -782,6 +782,8 @@ class UserController extends Controller
                 {
                     return $this->sendError("User is inactive");
                 }
+                $service_names = 
+
                  // Update last_login
                 $user->last_login = Carbon::now();
                 $user->save();
@@ -801,6 +803,13 @@ class UserController extends Controller
                 $token = $user->createToken('authToken', ['user_id' => $user->id])->plainTextToken;
                 $user->update(['remember_token' => $token]);
                 $user->remember_tokens = $token;
+                $user->services = UserService::where('user_id', $user->id)
+                    ->join('categories', 'categories.id', '=', 'user_services.service_id')
+                    ->select(
+                        'user_services.service_id',
+                        'categories.name'
+                    )
+                    ->get();
                 return $this->sendResponse('Login Successfully.', $user);
         } else {
                 return $this->sendError('You are not register or invalid user');
