@@ -690,7 +690,7 @@ class SellerController extends Controller
         $fData = json_decode($fResponse->getContent(), true);
         if(!empty($fData)){
             if (!empty($fData['success'])) {
-                return $this->sendResponse("Lead Assigned Successfylly!");
+                return $this->sendResponse("Lead Assigned Successfully!");
             }else{
                 return $fData;
             }
