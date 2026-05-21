@@ -53,9 +53,57 @@
             background-color: #e6f7fc !important; /* match image background */
           }
         </style>
+        <style>
+          #loader {
+              position: fixed;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(255,255,255,0.85);
+              z-index: 999999;
+
+              display: none;
+          }
+
+          #loader .loader-content {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;
+          }
+
+          #loader .loader-spinner {
+              width: 60px;
+              height: 60px;
+              border: 5px solid #e5e5e5;
+              border-top: 5px solid #696cff;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 15px;
+          }
+
+          #loader .loader-text {
+              font-size: 18px;
+              font-weight: 600;
+              color: #333;
+          }
+
+          @keyframes spin {
+              100% {
+                  transform: rotate(360deg);
+              }
+          }
+      </style>
         @yield('css')
   </head>
   <body>
+    <div id="loader" style="display:none;">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Loading...</div>
+        </div>
+    </div>
   @include('layouts.left')  
 
     <div class="wrapper d-flex flex-column min-vh-100">

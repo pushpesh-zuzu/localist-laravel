@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Plan;
 use App\Models\RecommendedLead;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use App\Models\AbandonedUser;
 use App\Models\ContactUs;
 use App\Models\PlanHistory;
@@ -39,6 +40,8 @@ use App\Helpers\Zoho\ZohoQuoteRequest;
 use App\Models\Invoice;
 use Yajra\Datatables\Datatables;
 use Carbon\Carbon;
+use App\Services\LeadService;
+use App\Http\Controllers\Api\RecommendedLeadsController;
 
 class SellerController extends Controller
 {
@@ -631,6 +634,69 @@ class SellerController extends Controller
         ]);
     }
 
+    public function getAssignLeadsList(Request $request, $userId, LeadService $leadService){
+
+        $baseQuery = $leadService->getSellerLeadsBaseQuery($userId);
+        $allLeads = $baseQuery
+            ->where('is_exclusive', 0)
+            ->having('is_expired', '=', 0)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        //Macting as per seller pref
+        $allLeads = $leadService->leadsAccordingTOSellerPref($userId, $allLeads);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Assign Leads List',
+            'data' => $allLeads->toArray()
+        ]);
+    }
+
+
+    public function assignLeads(Request $request, LeadService $leadService){
+
+        if (!auth()->user()->can('leadbuyers.assign-leads')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('User does not have the right permissions.'),
+            ], 403);
+        }
+
+        $userId = $request->user_id;
+        $leadId = $request->lead_id;
+
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'lead_id' => 'required|exists:lead_requests,id'
+          ], [
+            'lead_id.exists' => 'Lead doe not exists.'
+        ]);
+
+        $validator->validate();
+
+        $lead = LeadRequest::where('id', $leadId)->first();
+        $recommendedController = new RecommendedLeadsController();
+
+        $request->replace($request->only(['abc']));
+        $request['bidtype'] = 'purchase_leads';
+        $request['is_admin'] = 1;
+        $request['lead_id'] = $leadId;
+        $request['service_id'] = $lead->service_id;
+        $request['distance'] = 0;
+        $request['user_id'] = $userId;
+        $request['buyer_id'] = $lead->customer_id;
+        $fResponse =  $recommendedController->addManualBid($request);
+        $fData = json_decode($fResponse->getContent(), true);
+        if(!empty($fData)){
+            if (!empty($fData['success'])) {
+                return $this->sendResponse("Lead Assigned Successfylly!");
+            }else{
+                return $fData;
+            }
+        }
+        return $this->sendError("Something went wrong");
+    }
 
 
     public function exportCompleteSellerExcel(Request $request)

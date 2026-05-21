@@ -160,6 +160,14 @@
                     <i class="fa-solid fa-star"></i>
                   </a>
                   @endcan
+                  @can('leadbuyers.assign-leads')
+                    <a href="javascript:void(0)"
+                      class="text text-primary assign-leads"
+                      data-user-id="{{ $aRow->id }}"
+                      title="Assign Leads">
+                      <i class="fa-solid fa-user-plus"></i>
+                    </a>&nbsp;
+                  @endcan
                   @can('leadbuyers.complete-delete')
                   <a href="javascript:void(0)"
                     onclick="deleteUser('{{ $aRow->id }}', 'complete', '')"
@@ -394,6 +402,40 @@
                 Close
               </button>
             </div>
+          </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="assignLeadsModal" tabindex="-1" aria-labelledby="assignLeadsModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="assignLeadsModalLabel">Assign Leads</h5>
+              <button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="assignLeadsMessage"></div>
+            <form id="assignLeadsForm">
+              @csrf
+              <input type="hidden" id="assign_lead_user_id" name="user_id">
+              <div class="modal-body">
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                      <div class="form-group">
+                          <label>Lead <span class="required">*</span></label>
+                          <select class="form-control select2" name="lead_id" id="assign_lead_id" style="width: 100%;">
+                              <option selected="selected" disabled>Select Lead</option>
+                              
+                          </select>
+                      </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Assign Leads</button>
+                <button type="button" class="btn btn-secondary" data-coreui-dismiss="modal">Close</button>
+              </div>
+            </form>            
           </div>
       </div>
     </div>
@@ -795,6 +837,133 @@
             } else {
               // Other server errors
               $('#creditDeductionMessage').html(
+                `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
+              );
+            }
+          }
+        });
+      });
+
+      $(document).on("click", ".assign-leads", function() {
+        $("#loader").fadeIn();
+        let userId = $(this).data("user-id");
+        let baseUrl = $("#_url").val();
+        $("#assign_lead_user_id").val('');
+        $('#assignLeadsMessage').html('');
+        $.ajax({
+          url: baseUrl + "/seller/get-assign-leads-list/" + userId, // Route to get user credit
+          type: "GET",
+          success: function(res) {
+            console.log(res);
+            if (res.success) {
+              $('#assign_lead_id').html(
+                  '<option selected disabled>Select Lead</option>'
+              );
+
+              $.each(res.data, function(index, lead) {
+
+                  let optionText =
+                      '#' + lead.id +
+                      ' - ' + lead.customer.name +
+                      ' - ' + lead.category.name +
+                      ' - ' + lead.postcode +
+                      ' - Score: ' + lead.credit_score;
+                  
+
+                  $('#assign_lead_id').append(
+                      `<option value="${lead.id}">${optionText}</option>`
+                  );
+              });
+
+              $("#assign_lead_user_id").val(userId);
+
+              $('#assign_lead_id').trigger('change');
+
+              var assignLeadsModalE = document.getElementById("assignLeadsModal");
+              var assignLeadsModalShow = new coreui.Modal(assignLeadsModalE);
+              assignLeadsModalShow.show();
+
+          } else {
+              alert(res.message || "Failed to fetch leads");
+          }
+          },
+          error: function(xhr) {
+            console.log(xhr.responseJSON);
+            alert("Server error. Please try again.");
+          },
+          complete: function() {
+            $("#loader").fadeOut();
+          }
+        });
+      });
+
+
+      $('#assignLeadsForm').submit(function(e) {
+        e.preventDefault();
+
+        let userId = $('#assign_lead_user_id').val();
+        let leadId = $('#assign_lead_id').val();
+
+        $('#assignLeadsMessage').html('');
+        $('#assign_lead_id').removeClass('is-invalid');
+        $('#addAssignLeadError').remove();
+
+
+        if(!userId) {
+          $('#assignLeadsMessage').html(
+            `<div class="alert alert-danger">User ID is missing. Please try again.</div>`
+          );
+          return;
+        }
+
+        if(!leadId) {
+          $('#assignLeadsMessage').html(
+            `<div class="alert alert-danger">Please select a lead.</div>`
+          );
+          return;
+        }
+
+        $.ajax({
+          url: "{{ route('seller.assignLeads') }}",
+          type: "POST",
+          data: {
+            _token: $('input[name=_token]').val(),
+            user_id: userId,
+            lead_id: leadId
+          },
+          success: function(response) {
+            if (response.success) {
+              $('#assignLeadsMessage').html(
+                `<div class="alert alert-success">${response.message || 'Lead Assigned!'}</div>`
+              );
+              $('#assign_lead_id option:selected').remove();
+              $('#assign_lead_id').prop('selectedIndex', 0).trigger('change');
+            } else {
+              $('#assignLeadsMessage').html(
+                `<div class="alert alert-warning">${response.message || 'Something went wrong.'}</div>`
+              );
+            }
+          },
+          error: function(xhr) {
+            console.log(xhr);
+            if (xhr.status === 422) {
+              // Validation errors
+              let errors = xhr.responseJSON.errors;
+              if (errors.lead_id) {
+                $('#assign_lead_id').addClass('is-invalid');
+                $('#assign_lead_id').after(
+                  `<div id="addAssignLeadError" class="invalid-feedback">${errors.lead_id[0]}</div>`
+                );
+              }
+            } else if (xhr.status === 403) {
+              // Permission denied (no access)
+              let message = xhr.responseJSON?.message || 'You do not have permission to perform this action.';
+              $('#assignLeadsMessage').html(
+                `<div class="alert alert-danger">${message}</div>`
+              );
+            } else {
+              // Other server errors
+              $('#assignLeadsMessage').html(
                 `<div class="alert alert-danger">Server error occurred. Please try again.</div>`
               );
             }

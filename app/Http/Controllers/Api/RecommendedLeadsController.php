@@ -680,6 +680,10 @@ class RecommendedLeadsController extends Controller
 
         }else if($aVals['bidtype'] == 'purchase_leads'){
             $pType = "Manual Bid";
+            $isAdmin = $request->is_admin;
+            if(!empty($isAdmin) && $isAdmin == 1 ){
+                $pType = "Admin Bid";
+            }
             $trInfo = $creditScore . " credit deducted for Contacting to Customer";
             self::addActivityLog($aVals['user_id'],$aVals['buyer_id'],$aVals['lead_id'],$sellerName .' contacted '. $buyerName, "Manual Bid", $leadTime);
         }else{
